@@ -1,7 +1,7 @@
 ## 1. Schema and validation
 
 - [ ] 1.1 Add declarative schema (YAML/JSON Schema or Pydantic models) for HITL: interrupt kinds (`simple_feedback`, `tool_call_review`), ordering hooks, and resume payload shapes.
-- [ ] 1.2 Document example Helm/values fragments aligned with `this repository` conventions.
+- [ ] 1.2 Document example Helm/values fragments aligned with [declarative-agent-library-chart](https://github.com/jfeldstein/declarative-agent-library-chart) conventions.
 
 ## 2. LangGraph functional workflow
 
