@@ -8,6 +8,14 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ## 2026-04-11
 
+**Scraper Prometheus metrics (`agent_runtime_scraper_*`)** — completes OpenSpec **`agent-runtime-components`** task 3.4 (`runtime-scrapers`).
+
+- Runtime: `hosted_agents/scrapers/metrics.py` plus instrumented **`reference_job`**: counters/histogram per spec; optional **`GET /metrics`** when **`SCRAPER_METRICS_ADDR`** is set (Helm sets **`0.0.0.0:9091`** for the reference job, with **`SCRAPER_METRICS_GRACE_SECONDS`** so Job pods stay up briefly for scrapes).
+- Helm: reference scraper **`containerPort` 9091**, env vars, and **`prometheus.io/*`** pod annotations when **`o11y.prometheusAnnotations.enabled`**.
+- Docs: **`docs/observability.md`** table for scraper metrics; unit tests assert metric text in **`REGISTRY`**.
+
+## 2026-04-11
+
 **LangChain supervisor + subagent tools** ([`1ffcc4b`](https://github.com/jfeldstein/declarative-agent-library-chart/commit/1ffcc4b)).
 
 - Runtime: root agent uses LangChain `create_agent`; configured subagents are tools backed by LangGraph subgraphs (`supervisor.py`, `subagent_exec.py`, and related modules).

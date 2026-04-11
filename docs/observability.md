@@ -88,7 +88,19 @@ Configured subagents are **tools** on the root agent ([LangChain subagents](http
 
 **`agent_runtime_subagent_*`**, **`agent_runtime_skill_*`**, and **`agent_runtime_mcp_tool_*`** increment when those tools or the legacy direct **`tool`** / **`load_skill`** paths run through the trigger pipeline.
 
-Additional metrics (**scrapers**, etc.) can live on their own workloads; extend dashboards as needed.
+### Metric names (reference scraper CronJob)
+
+The **reference** scraper container listens on **`SCRAPER_METRICS_ADDR`** (Helm sets **`0.0.0.0:9091`**) and exposes **`GET /metrics`**. After a successful run it waits **`SCRAPER_METRICS_GRACE_SECONDS`** (default **35** in the chart) so Prometheus can scrape the Job pod before exit. Stub scraper jobs do not expose this endpoint.
+
+| Metric | Labels | Description |
+|--------|--------|-------------|
+| `agent_runtime_scraper_runs_total` | `integration`, `result` = `success` \| `error` | One scrape per CronJob execution |
+| `agent_runtime_scraper_run_duration_seconds` | `integration` | End-to-end wall time for the job |
+| `agent_runtime_scraper_rag_submissions_total` | `integration`, `result` = `success` \| `client_error` \| `server_error` | Attempts to call RAG **`POST /v1/embed`** (same result mapping as RAG metrics) |
+
+`integration` is a **bounded** type name (e.g. **`reference`**); use **`SCRAPER_INTEGRATION`** to override the default **`reference`**.
+
+When **`o11y.prometheusAnnotations.enabled`** is true, the chart adds **`prometheus.io/*`** annotations on **reference** scraper Job pods (port **9091**, path **`/metrics`**) alongside agent and RAG targets.
 
 ## Integration test (kind + Prometheus)
 
