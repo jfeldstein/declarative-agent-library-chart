@@ -1,4 +1,7 @@
-"""Observability: Prometheus metrics and request correlation."""
+"""Observability: Prometheus metrics and request correlation.
+
+Traceability: [CFHA-VER-002] (with helm unittest suites under ``examples/*/tests/``).
+"""
 
 from __future__ import annotations
 
@@ -24,6 +27,7 @@ def _metrics_text(client: TestClient) -> str:
 
 
 def test_metrics_endpoint_exposes_registry() -> None:
+    """[CFHA-REQ-O11Y-SCRAPE-001]"""
     app = create_app(system_prompt='Respond, "Hi"')
     client = TestClient(app)
     text = _metrics_text(client)
@@ -32,6 +36,7 @@ def test_metrics_endpoint_exposes_registry() -> None:
 
 
 def test_trigger_success_increments_counter() -> None:
+    """[CFHA-REQ-O11Y-SCRAPE-002]"""
     app = create_app(system_prompt='Respond, "Hi"')
     client = TestClient(app)
     before = _metrics_text(client)
@@ -47,6 +52,7 @@ def test_trigger_success_increments_counter() -> None:
 def test_trigger_client_error_increments_client_error(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """[CFHA-REQ-O11Y-SCRAPE-002]"""
     from hosted_agents.env import SYSTEM_PROMPT_ENV_KEY
 
     monkeypatch.setenv(SYSTEM_PROMPT_ENV_KEY, "   ")
@@ -60,6 +66,7 @@ def test_trigger_client_error_increments_client_error(
 
 
 def test_x_request_id_echo_and_generation() -> None:
+    """[CFHA-REQ-O11Y-LOGS-002]"""
     app = create_app(system_prompt='Respond, "x"')
     client = TestClient(app)
     r = client.post("/api/v1/trigger", headers={"X-Request-Id": "fixed-id"})
@@ -104,6 +111,7 @@ def test_trigger_forwards_x_request_id_to_rag(monkeypatch: pytest.MonkeyPatch) -
 
 
 def test_subagent_and_skill_and_mcp_metrics(monkeypatch: pytest.MonkeyPatch) -> None:
+    """[CFHA-REQ-O11Y-SCRAPE-003]"""
     reset_skill_unlocked_tools()
     monkeypatch.setenv(
         "HOSTED_AGENT_SUBAGENTS_JSON",
@@ -176,6 +184,7 @@ def test_subagent_and_skill_and_mcp_metrics(monkeypatch: pytest.MonkeyPatch) -> 
 
 
 def test_json_log_format_emits_message_key() -> None:
+    """[CFHA-REQ-O11Y-LOGS-001]"""
     runtime = Path(__file__).resolve().parent.parent
     env = os.environ.copy()
     env["HOSTED_AGENT_LOG_FORMAT"] = "json"

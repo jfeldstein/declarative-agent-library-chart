@@ -1,0 +1,32 @@
+# Traceability: [CFHA-VER-004] — scheduled tier for kind + Prometheus integration (see docs/spec-test-traceability.md).
+name: Scheduled o11y integration
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  kind-prometheus:
+    name: kind + Prometheus (RUN_KIND_O11Y_INTEGRATION)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: runtime
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --all-groups
+
+      - name: Run integration test
+        run: |
+          RUN_KIND_O11Y_INTEGRATION=1 uv run pytest tests/integration/test_kind_o11y_prometheus.py -v --no-cov

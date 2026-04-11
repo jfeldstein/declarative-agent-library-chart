@@ -92,7 +92,7 @@
   "time": { "from": "now-6h", "to": "now" },
   "timepicker": {},
   "timezone": "browser",
-  "title": "CFHA agent — overview",
+  "title": "CFHA agent — overview [CFHA-REQ-O11Y-LOGS-003]",
   "uid": "cfha-agent-overview",
   "version": 1,
   "weekStart": ""

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Traceability: [CFHA-REQ-HELM-UNITTEST-003] [CFHA-REQ-CHART-CT-001] [CFHA-REQ-CHART-CT-002] [CFHA-VER-004]
 set -euo pipefail
 
 echo "=== CI: declarative-agent-library-chart ==="
@@ -72,5 +73,8 @@ if command -v helm &>/dev/null; then
 else
   echo "==> helm not installed; skipping chart lint/unittest (install Helm + ct + helm-unittest to run charts CI)"
 fi
+
+echo "==> spec traceability (openspec/specs + docs/spec-test-traceability.md)"
+python3 scripts/check_spec_traceability.py
 
 echo "✓ CI passed"

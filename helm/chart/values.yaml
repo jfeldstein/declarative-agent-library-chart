@@ -38,6 +38,7 @@ o11y:
     scrapeTimeout: 10s
     extraLabels: {}
 
+# Traceability: [CFHA-REQ-RAG-SCRAPERS-003] (RAG tunables under ``scrapers.ragService``).
 # Scheduled scrapers (CronJobs). When at least one job has enabled: true, the chart also
 # deploys the managed RAG HTTP service (see scrapers.ragService). Reference job POSTs to RAG_SERVICE_URL.
 scrapers:

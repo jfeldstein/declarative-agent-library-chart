@@ -1,5 +1,7 @@
 # Observability (CFHA runtime)
 
+<!-- Traceability: [CFHA-REQ-O11Y-LOGS-004] -->
+
 ## Metrics (Prometheus)
 
 The agent HTTP server exposes **`GET /metrics`** on the same port as the API (default **8088**), in Prometheus text format.

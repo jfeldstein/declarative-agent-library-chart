@@ -34,6 +34,8 @@ Locked design choices: [docs/adrs/](docs/adrs/README.md) (`NNNN-short-title.md`;
 
 ## Local CI (Python + chart render)
 
+Traceability: [CFHA-REQ-HELM-UNITTEST-003] [CFHA-REQ-CHART-CT-002] [CFHA-REQ-O11Y-LOGS-004] — see [docs/spec-test-traceability.md](docs/spec-test-traceability.md) for the full matrix and CI tiers.
+
 From a clone of [github.com/jfeldstein/declarative-agent-library-chart](https://github.com/jfeldstein/declarative-agent-library-chart):
 
 ```bash
