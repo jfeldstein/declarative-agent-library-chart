@@ -10,3 +10,6 @@ data:
   subagents.json: {{ .Values.subagents | toJson | quote }}
   skills.json: {{ .Values.skills | toJson | quote }}
   enabled-mcp-tools.json: {{ .Values.mcp.enabledTools | toJson | quote }}
+  label-registry.json: {{ .Values.observability.labelRegistry | toJson | quote }}
+  slack-emoji-label-map.json: {{ .Values.observability.slackFeedback.emojiLabelMap | toJson | quote }}
+  shadow-allow-tenants.json: {{ .Values.observability.shadow.allowTenants | toJson | quote }}

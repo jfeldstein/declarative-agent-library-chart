@@ -24,6 +24,8 @@ class TriggerBody(BaseModel):
     load_skill: str | None = Field(default=None, min_length=1, max_length=256)
     tool: str | None = Field(default=None, min_length=1, max_length=256)
     tool_arguments: dict[str, Any] = Field(default_factory=dict)
+    thread_id: str | None = Field(default=None, min_length=1, max_length=256)
+    ephemeral: bool = False
 
 
 class RagQueryBody(BaseModel):

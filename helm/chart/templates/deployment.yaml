@@ -59,6 +59,63 @@ spec:
             - name: HOSTED_AGENT_LOG_FORMAT
               value: "json"
             {{- end }}
+            {{- if .Values.observability.checkpoints.enabled }}
+            - name: HOSTED_AGENT_CHECKPOINTS_ENABLED
+              value: "true"
+            - name: HOSTED_AGENT_CHECKPOINT_BACKEND
+              value: {{ .Values.observability.checkpoints.backend | quote }}
+            {{- if .Values.observability.checkpoints.postgresUrl }}
+            - name: HOSTED_AGENT_CHECKPOINT_POSTGRES_URL
+              value: {{ .Values.observability.checkpoints.postgresUrl | quote }}
+            {{- end }}
+            {{- end }}
+            {{- if .Values.observability.wandb.enabled }}
+            - name: HOSTED_AGENT_WANDB_ENABLED
+              value: "true"
+            {{- if .Values.observability.wandb.project }}
+            - name: WANDB_PROJECT
+              value: {{ .Values.observability.wandb.project | quote }}
+            {{- end }}
+            {{- if .Values.observability.wandb.entity }}
+            - name: WANDB_ENTITY
+              value: {{ .Values.observability.wandb.entity | quote }}
+            {{- end }}
+            {{- end }}
+            {{- if .Values.observability.slackFeedback.enabled }}
+            - name: HOSTED_AGENT_SLACK_FEEDBACK_ENABLED
+              value: "true"
+            - name: HOSTED_AGENT_SLACK_EMOJI_LABEL_MAP_JSON
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "declarative-agent-library.fullname" . }}-config
+                  key: slack-emoji-label-map.json
+            {{- end }}
+            {{- if .Values.observability.atifExport.enabled }}
+            - name: HOSTED_AGENT_ATIF_EXPORT_ENABLED
+              value: "true"
+            {{- end }}
+            {{- if .Values.observability.shadow.enabled }}
+            - name: HOSTED_AGENT_SHADOW_ENABLED
+              value: "true"
+            - name: HOSTED_AGENT_SHADOW_SAMPLE_RATE
+              value: {{ .Values.observability.shadow.sampleRate | quote }}
+            {{- if .Values.observability.shadow.variantJson }}
+            - name: HOSTED_AGENT_SHADOW_VARIANT_JSON
+              value: {{ .Values.observability.shadow.variantJson | quote }}
+            {{- end }}
+            - name: HOSTED_AGENT_SHADOW_ALLOW_TENANTS_JSON
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "declarative-agent-library.fullname" . }}-config
+                  key: shadow-allow-tenants.json
+            {{- end }}
+            {{- if .Values.observability.labelRegistry }}
+            - name: HOSTED_AGENT_LABEL_REGISTRY_JSON
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "declarative-agent-library.fullname" . }}-config
+                  key: label-registry.json
+            {{- end }}
           {{- with .Values.resources }}
           resources:
             {{- toYaml . | nindent 12 }}

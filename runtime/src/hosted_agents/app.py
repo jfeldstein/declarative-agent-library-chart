@@ -14,6 +14,12 @@ from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from hosted_agents.agent_models import RagQueryBody, TriggerBody
 from hosted_agents.env import system_prompt_from_env
 from hosted_agents.metrics import observe_http_trigger
+from hosted_agents.observability.atif import export_atif_batch
+from hosted_agents.observability.feedback import feedback_store
+from hosted_agents.observability.settings import ObservabilitySettings
+from hosted_agents.observability.side_effects import side_effect_checkpoints
+from hosted_agents.observability.slack_ingest import handle_slack_reaction_event
+from hosted_agents.observability.trajectory import trajectory_recorder
 from hosted_agents.o11y_logging import configure_request_logging
 from hosted_agents.o11y_middleware import ObservabilityMiddleware
 from hosted_agents.runtime_config import RuntimeConfig
@@ -21,6 +27,8 @@ from hosted_agents.skills_state import unlocked_tools
 from hosted_agents.trigger_graph import (
     TriggerContext,
     TriggerHttpError,
+    get_thread_state,
+    get_thread_state_history,
     run_trigger_graph,
 )
 
@@ -79,11 +87,26 @@ def create_app(*, system_prompt: str | None = None) -> FastAPI:
             system_prompt if system_prompt is not None else system_prompt_from_env()
         )
         cfg = RuntimeConfig.from_env()
+        obs = ObservabilitySettings.from_env()
+        run_id = str(uuid.uuid4())
+        req_id = _request_id(request)
+        ephemeral = bool(payload.ephemeral) if payload is not None else False
+        thread_id = (
+            (payload.thread_id.strip() if payload and payload.thread_id else "")
+            or (request.headers.get("x-agent-thread-id") or "").strip()
+            or run_id
+        )
+        tenant_hdr = (request.headers.get("x-tenant-id") or "").strip()
         ctx = TriggerContext(
             cfg=cfg,
             body=payload,
             system_prompt=prompt,
-            request_id=_request_id(request),
+            request_id=req_id,
+            thread_id=thread_id,
+            run_id=run_id,
+            ephemeral=ephemeral,
+            tenant_id=tenant_hdr or None,
+            observability=obs,
         )
 
         try:
@@ -106,6 +129,7 @@ def create_app(*, system_prompt: str | None = None) -> FastAPI:
     @app.get("/api/v1/runtime/summary")
     def runtime_summary() -> JSONResponse:
         cfg = RuntimeConfig.from_env()
+        obs = ObservabilitySettings.from_env()
         return JSONResponse(
             {
                 "rag_configured": bool(cfg.rag_base_url),
@@ -115,8 +139,118 @@ def create_app(*, system_prompt: str | None = None) -> FastAPI:
                 "skill_unlocked_tools": sorted(unlocked_tools()),
                 "launch_path": "POST /api/v1/trigger",
                 "orchestration": "langgraph",
+                "observability": {
+                    "checkpoints_enabled": obs.checkpoints_enabled,
+                    "checkpoint_backend": obs.checkpoint_backend,
+                    "wandb_enabled": obs.wandb_enabled,
+                    "slack_feedback_enabled": obs.slack_feedback_enabled,
+                    "atif_export_enabled": obs.atif_export_enabled,
+                    "shadow_enabled": obs.shadow_enabled,
+                },
             },
         )
+
+    @app.get("/api/v1/runtime/threads/{thread_id}/state")
+    def thread_state(thread_id: str) -> JSONResponse:
+        try:
+            snap = get_thread_state(thread_id)
+        except RuntimeError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
+        values = getattr(snap, "values", {}) or {}
+        nxt = getattr(snap, "next", ()) or ()
+        cfg = getattr(snap, "config", {}) or {}
+        return JSONResponse(
+            {
+                "thread_id": thread_id,
+                "values": values,
+                "next": list(nxt) if not isinstance(nxt, list) else nxt,
+                "config": cfg,
+            }
+        )
+
+    @app.get("/api/v1/runtime/threads/{thread_id}/checkpoints")
+    def thread_checkpoints(thread_id: str) -> JSONResponse:
+        try:
+            hist = get_thread_state_history(thread_id)
+        except RuntimeError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
+        out: list[dict] = []
+        for h in hist:
+            out.append(
+                {
+                    "values": getattr(h, "values", {}) or {},
+                    "config": getattr(h, "config", {}) or {},
+                    "metadata": getattr(h, "metadata", {}) or {},
+                }
+            )
+        return JSONResponse({"thread_id": thread_id, "checkpoints": out})
+
+    @app.get("/api/v1/runtime/threads/{thread_id}/side-effects")
+    def thread_side_effects(thread_id: str) -> JSONResponse:
+        recs = side_effect_checkpoints.by_thread(thread_id)
+        return JSONResponse(
+            {
+                "thread_id": thread_id,
+                "side_effects": [
+                    {
+                        "checkpoint_id": r.checkpoint_id,
+                        "run_id": r.run_id,
+                        "tool_call_id": r.tool_call_id,
+                        "tool_name": r.tool_name,
+                        "external_ref": r.external_ref,
+                        "created_at": r.created_at,
+                    }
+                    for r in recs
+                ],
+            }
+        )
+
+    @app.post("/api/v1/integrations/slack/reactions")
+    async def slack_reactions(request: Request) -> JSONResponse:
+        obs = ObservabilitySettings.from_env()
+        try:
+            raw = await request.json()
+        except json.JSONDecodeError as exc:
+            raise HTTPException(status_code=400, detail="Invalid JSON body") from exc
+        if not isinstance(raw, dict):
+            raise HTTPException(status_code=400, detail="JSON body must be an object")
+        result = handle_slack_reaction_event(raw, settings=obs)
+        return JSONResponse(result)
+
+    @app.get("/api/v1/runtime/feedback/human")
+    def list_human_feedback() -> JSONResponse:
+        evs = feedback_store.human_events()
+        return JSONResponse(
+            {
+                "events": [
+                    {
+                        "registry_id": e.registry_id,
+                        "schema_version": e.schema_version,
+                        "label_id": e.label_id,
+                        "tool_call_id": e.tool_call_id,
+                        "checkpoint_id": e.checkpoint_id,
+                        "run_id": e.run_id,
+                        "thread_id": e.thread_id,
+                        "feedback_source": e.feedback_source,
+                        "agent_id": e.agent_id,
+                    }
+                    for e in evs
+                ]
+            }
+        )
+
+    @app.get("/api/v1/runtime/exports/atif")
+    def export_atif(run_id: str) -> JSONResponse:
+        obs = ObservabilitySettings.from_env()
+        if not obs.atif_export_enabled:
+            raise HTTPException(status_code=503, detail="ATIF export is disabled")
+        if not run_id.strip():
+            raise HTTPException(status_code=400, detail="run_id is required")
+        tr = trajectory_recorder.get(run_id.strip())
+        if tr is None:
+            raise HTTPException(status_code=404, detail="run_id not found")
+        docs = export_atif_batch([tr])
+        return JSONResponse({"documents": docs})
 
     @app.post("/api/v1/rag/query")
     def rag_query(request: Request, body: RagQueryBody) -> JSONResponse:
