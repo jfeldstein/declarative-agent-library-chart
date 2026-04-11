@@ -19,6 +19,7 @@ Standalone repository for **YAML-configured** hosted agents: a **Helm library ch
 | `Dockerfile` | Production-style image for the Python runtime |
 | `skaffold.yaml` / `devspace.yaml` | Local deploy + **port-forward `localhost:8088` → service :8088** |
 | `docs/observability.md` | Metrics (`/metrics`), structured logs, Helm scrape hints, Grafana import |
+| `docs/development-log.md` | Notable chart/runtime changes (breaking API, env, values); ADRs live under `docs/adrs/` |
 | `grafana/` | Starter Grafana dashboard JSON + import notes |
 
 ## Decisions
