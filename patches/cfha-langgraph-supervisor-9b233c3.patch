@@ -1,0 +1,1589 @@
+From 9b233c3cda57168d5a5d372cd30379725ffc4dee Mon Sep 17 00:00:00 2001
+From: Jordan Feldstein <jfeldstein@gmail.com>
+Date: Sat, 11 Apr 2026 08:47:48 -0400
+Subject: [PATCH] feat(cfha): LangChain supervisor + subagent tools on trigger
+
+- Remove TriggerBody.subagent; add message; reject legacy subagent with 400
+- Supervisor via langchain.agents.create_agent; subagents as LangGraph subgraph tools
+- Split subagent execution (subagent_exec), MCP/skill steps (trigger_steps)
+- Helm: chatModel -> HOSTED_AGENT_CHAT_MODEL; schema description/exposeAsTool
+- README + observability docs; tests use fake chat model for tool routing
+---
+ .../cfha-langgraph-native-subagents/tasks.md  |  30 +--
+ README.md |  32 ++-
+ .../docs/observability.md                     |  10 +-
+ .../helm/chart/templates/deployment.yaml      |   4 +
+ .../helm/chart/values.schema.json             |  16 +-
+ .../helm/chart/values.yaml                    |   7 +-
+ .../runtime/pyproject.toml                    |   1 +
+ .../runtime/src/hosted_agents/agent_models.py |  22 +-
+ .../runtime/src/hosted_agents/app.py          |  56 ++++-
+ .../runtime/src/hosted_agents/chat_model.py   |  93 ++++++++
+ .../src/hosted_agents/subagent_exec.py        |  81 +++++++
+ .../src/hosted_agents/subagent_units.py       |  47 ++++
+ .../runtime/src/hosted_agents/supervisor.py   | 204 ++++++++++++++++++
+ .../src/hosted_agents/trigger_context.py      |  16 ++
+ .../src/hosted_agents/trigger_errors.py       |  10 +
+ .../src/hosted_agents/trigger_graph.py        | 174 +++------------
+ .../src/hosted_agents/trigger_steps.py        |  42 ++++
+ .../runtime/tests/__init__.py                 |   1 +
+ .../runtime/tests/conftest.py                 |  47 ++++
+ .../runtime/tests/test_agent_extensions.py    |  34 ++-
+ .../runtime/tests/test_o11y_metrics.py        |  75 ++++++-
+ .../runtime/tests/test_subagent_roles.py      |  67 ++++--
+ .../runtime/uv.lock                           |  16 ++
+ 23 files changed, 848 insertions(+), 237 deletions(-)
+ create mode 100644 runtime/src/hosted_agents/chat_model.py
+ create mode 100644 runtime/src/hosted_agents/subagent_exec.py
+ create mode 100644 runtime/src/hosted_agents/subagent_units.py
+ create mode 100644 runtime/src/hosted_agents/supervisor.py
+ create mode 100644 runtime/src/hosted_agents/trigger_context.py
+ create mode 100644 runtime/src/hosted_agents/trigger_errors.py
+ create mode 100644 runtime/src/hosted_agents/trigger_steps.py
+ create mode 100644 runtime/tests/__init__.py
+
+diff --git a/openspec/changes/cfha-langgraph-native-subagents/tasks.md b/openspec/changes/cfha-langgraph-native-subagents/tasks.md
+index 9aa1d9e..d30ff0b 100644
+--- a/openspec/changes/cfha-langgraph-native-subagents/tasks.md
++++ b/openspec/changes/cfha-langgraph-native-subagents/tasks.md
+@@ -1,29 +1,29 @@
+ ## 1. Contracts and breaking changes
+ 
+-- [ ] 1.1 Remove **`subagent`** from **`TriggerBody`**; add **`message`** (or agreed user-input field); document **400** on legacy `subagent` if extra fields forbidden
+-- [ ] 1.2 Extend **subagent JSON** + **`values.schema.json`**: require or recommend **`description`** for tool schema; optional **`exposeAsTool`** (default true) to omit **`metrics`** from default tool list
+-- [ ] 1.3 Document **root `systemPrompt`** as **supervisor** instructions; append or merge **available subagents** list per LangChain **system prompt enumeration** guidance
++- [x] 1.1 Remove **`subagent`** from **`TriggerBody`**; add **`message`** (or agreed user-input field); document **400** on legacy `subagent` if extra fields forbidden
++- [x] 1.2 Extend **subagent JSON** + **`values.schema.json`**: require or recommend **`description`** for tool schema; optional **`exposeAsTool`** (default true) to omit **`metrics`** from default tool list
++- [x] 1.3 Document **root `systemPrompt`** as **supervisor** instructions; append or merge **available subagents** list per LangChain **system prompt enumeration** guidance
+ 
+ ## 2. Main agent and tools
+ 
+-- [ ] 2.1 Implement **main agent** with **`create_agent`** (or pinned equivalent) using **`HOSTED_AGENT_SYSTEM_PROMPT`** from root values / env
+-- [ ] 2.2 For each configured subagent, register a **LangChain tool** that wraps invocation of the subagent unit (sync return string to supervisor)
+-- [ ] 2.3 Implement subagent units using **LangGraph subgraphs** or dedicated runnables per **`role`**, reusing **`_run_subagent_text`** logic inside tool bodies where possible
+-- [ ] 2.4 Ensure **no router node**: outer graph is **invoke main agent** (single node or minimal wrapper), not **classify → branch**
++- [x] 2.1 Implement **main agent** with **`create_agent`** (or pinned equivalent) using **`HOSTED_AGENT_SYSTEM_PROMPT`** from root values / env
++- [x] 2.2 For each configured subagent, register a **LangChain tool** that wraps invocation of the subagent unit (sync return string to supervisor)
++- [x] 2.3 Implement subagent units using **LangGraph subgraphs** or dedicated runnables per **`role`**, reusing **`_run_subagent_text`** logic inside tool bodies where possible
++- [x] 2.4 Ensure **no router node**: outer graph is **invoke main agent** (single node or minimal wrapper), not **classify → branch**
+ 
+ ## 3. Trigger path and observability
+ 
+-- [ ] 3.1 Map **`POST /api/v1/trigger`** to **`main_agent.invoke`** with user message from JSON (and **`request_id`** in configurable / headers for RAG inside tools)
+-- [ ] 3.2 Preserve **`observe_http_trigger`** and **`agent_runtime_subagent_*`** inside subagent tool execution
+-- [ ] 3.3 Resolve **hello-world** without remote LLM: e.g. **empty subagents** → keep deterministic **`trigger_reply_text`** path, or document required model env
++- [x] 3.1 Map **`POST /api/v1/trigger`** to **`main_agent.invoke`** with user message from JSON (and **`request_id`** in configurable / headers for RAG inside tools)
++- [x] 3.2 Preserve **`observe_http_trigger`** and **`agent_runtime_subagent_*`** inside subagent tool execution
++- [x] 3.3 Resolve **hello-world** without remote LLM: e.g. **empty subagents** → keep deterministic **`trigger_reply_text`** path, or document required model env
+ 
+ ## 4. Skills, MCP, RAG
+ 
+-- [ ] 4.1 Integrate **`load_skill`** / allowlisted **`tool`** with **main agent** tool list (merge order documented)
+-- [ ] 4.2 Keep **`POST /api/v1/rag/query`** as non-launch utility; RAG **subagent tool** still uses **`X-Request-Id`** on outbound HTTP
++- [x] 4.1 Integrate **`load_skill`** / allowlisted **`tool`** with **main agent** tool list (merge order documented)
++- [x] 4.2 Keep **`POST /api/v1/rag/query`** as non-launch utility; RAG **subagent tool** still uses **`X-Request-Id`** on outbound HTTP
+ 
+ ## 5. Tests and docs
+ 
+-- [ ] 5.1 Replace tests that POST **`subagent`** with **message**-only trigger + mocked model or deterministic stub asserting **tool** routing
+-- [ ] 5.2 Add tests: **legacy `subagent` key** rejected or no-op per spec; **subagent tool** increments **`agent_runtime_subagent_*`**
+-- [ ] 5.3 Update **README**, **observability**, link **LangChain subagents** doc; run **`pytest`** + **`ruff`**
++- [x] 5.1 Replace tests that POST **`subagent`** with **message**-only trigger + mocked model or deterministic stub asserting **tool** routing
++- [x] 5.2 Add tests: **legacy `subagent` key** rejected or no-op per spec; **subagent tool** increments **`agent_runtime_subagent_*`**
++- [x] 5.3 Update **README**, **observability**, link **LangChain subagents** doc; run **`pytest`** + **`ruff`**
+diff --git a/README.md b/README.md
+index 5e34888..f4efa10 100644
+--- a/README.md
++++ b/README.md
+@@ -1,6 +1,6 @@
+ # config-first-hosted-agents
+ 
+-Prototype **YAML-configured** hosted agents: a **Helm library chart** (`helm/chart/`) consumed by application charts, a **hello-world** example (`examples/hello-world/`), and a **Python** runtime (`hosted_agents`) that exposes **`POST /api/v1/trigger`** as the **only HTTP entry for launching agent work** (LangGraph-orchestrated). The main reply reads `HOSTED_AGENT_SYSTEM_PROMPT` from the environment (ConfigMap in-cluster). Optional JSON on the trigger selects **skill load**, **subagent**, or **tool** steps (see below).
++Prototype **YAML-configured** hosted agents: a **Helm library chart** (`helm/chart/`) consumed by application charts, a **hello-world** example (`examples/hello-world/`), and a **Python** runtime (`hosted_agents`) that exposes **`POST /api/v1/trigger`** as the **only HTTP entry for launching agent work** (LangGraph-orchestrated). The root agent reads **`HOSTED_AGENT_SYSTEM_PROMPT`** from the environment (ConfigMap in-cluster) as **supervisor** instructions when **`subagents`** is configured; optional JSON can carry **`message`** (user input), **`load_skill`**, or a direct **`tool`** step (see below). This matches the LangChain **subagents** pattern ([docs](https://docs.langchain.com/oss/python/langchain/multi-agent/subagents)): specialists are **tools** on that root agent, not an HTTP-selected subagent.
+ 
+ ## Layout
+ 
+@@ -113,12 +113,17 @@ Values keys under the **`declarative-agent-library`** subchart configure these r
+ | Values key | Role |
+ |------------|------|
+ | `scrapers.jobs` | **CronJobs** that push normalized content (and graph edges when known) into RAG; built-in **`reference`** job posts a fixture document + `contained_in` edge. If **at least one** job has **`enabled: true`**, the chart also deploys the **managed RAG HTTP** Deployment + Service (`/v1/embed`, `/v1/query`, `/v1/relate`) — see [docs/rag-http-api.md](docs/rag-http-api.md). Tune RAG replicas/port/resources under **`scrapers.ragService`**. |
+-| `mcp.enabledTools` | Allowlisted **in-process tools** invoked via **`POST /api/v1/trigger`** with JSON `{"tool":"…","tool_arguments":{…}}` (e.g. `sample.echo`). Layout: [runtime/src/hosted_agents/tools_impl/README.md](runtime/src/hosted_agents/tools_impl/README.md). |
+-| `subagents` | JSON list of subagent definitions used by **`POST /api/v1/trigger`** with `{"subagent":"<name>", …}` (**supervisor-style** boundary; aligns with [LangChain Subagents](https://docs.langchain.com/oss/python/langchain/multi-agent/subagents)). Optional **`role`**: omit or **`default`** (uses `systemPrompt` like the main trigger); **`metrics`** (returns agent Prometheus text); **`rag`** (include `query` and optional RAG fields in the trigger JSON to proxy to RAG `/v1/query`). |
++| `mcp.enabledTools` | Allowlisted **in-process tools** merged into the **supervisor** tool list (and still invokable directly via **`POST /api/v1/trigger`** with `{"tool":"…","tool_arguments":{…}}`). Layout: [runtime/src/hosted_agents/tools_impl/README.md](runtime/src/hosted_agents/tools_impl/README.md). **Merge order:** subagent tools (config order) then MCP tools (sorted by id). |
++| `subagents` | JSON list of specialists compiled into **LangGraph subgraphs** and registered as **LangChain tools** on the root agent ([LangChain subagents](https://docs.langchain.com/oss/python/langchain/multi-agent/subagents)). **Recommended:** **`description`** for each entry (tool schema text). **`exposeAsTool`**: omit or **`true`** to register the tool; **`role: metrics`** defaults to **`exposeAsTool: false`** so Prometheus snapshots stay off the default tool list unless you opt in. Optional **`role`**: **`default`** (uses `systemPrompt` + optional task text from the tool call); **`metrics`** (returns agent Prometheus text inside the tool); **`rag`** (tool arguments carry `query` / RAG fields; proxies to RAG `/v1/query` with **`X-Request-Id`**). |
+ | `skills` | JSON catalog `{ "name", "prompt", "extraTools"? }` — load with **`POST /api/v1/trigger`** and `{"load_skill":"<name>"}` (progressive disclosure; aligns with [LangChain Skills](https://docs.langchain.com/oss/python/langchain/multi-agent/skills)). |
++| `chatModel` | Optional Helm value → **`HOSTED_AGENT_CHAT_MODEL`** when **`subagents`** is non-empty (e.g. `openai:gpt-4o-mini`). Requires the matching LangChain provider package and credentials in your image. **Hello-world** keeps **`subagents: []`** so the trigger stays deterministic without a remote LLM. |
+ 
+ The agent Pod receives `HOSTED_AGENT_RAG_BASE_URL` pointing at the in-cluster RAG Service when **any scraper job is enabled** (empty otherwise). ConfigMap keys `subagents.json`, `skills.json`, and `enabled-mcp-tools.json` mirror the arrays above.
+ 
++**Breaking (HTTP):** JSON field **`subagent`** on **`POST /api/v1/trigger`** is **rejected with 400**. Send **`message`** to the supervisor instead; RAG parameters move to the **`rag`** specialist’s tool arguments when the model invokes that tool.
++
++**Environment (supervisor):** `HOSTED_AGENT_CHAT_MODEL` selects the chat model when `HOSTED_AGENT_SUBAGENTS_JSON` is non-empty. `HOSTED_AGENT_FAKE_CHAT_SEQUENCE` is reserved for tests (JSON array of scripted assistant turns).
++
+ ### RAG + agent locally
+ 
+ ```bash
+@@ -151,24 +156,15 @@ declarative-agent-library:
+   subagents:
+     - name: metrics
+       role: metrics
++      exposeAsTool: true
++      description: Return the agent process Prometheus snapshot
+     - name: rag
+       role: rag
+       systemPrompt: ""
++      description: Query the managed RAG HTTP API
+ ```
+ 
+-Invoke examples (all via **trigger**):
+-
+-```bash
+-# Agent process metrics (subagent snapshot; also increments subagent_* series)
+-curl -s -X POST http://127.0.0.1:8088/api/v1/trigger \
+-  -H 'content-type: application/json' \
+-  -d '{"subagent":"metrics"}' | head
+-
+-# RAG query via subagent (requires in-cluster RAG — e.g. an enabled scraper job — and DNS or port-forward)
+-curl -s -X POST http://127.0.0.1:8088/api/v1/trigger \
+-  -H 'content-type: application/json' \
+-  -d '{"subagent":"rag","query":"banana","scope":"default","expand_relationships":true}'
+-```
++With a configured chat model, the supervisor chooses tools; **`message`** is the user turn. For **`metrics`**, set **`exposeAsTool: true`** (hidden by default for `role: metrics`). For **`rag`**, the model passes **`query`** / scope fields as tool arguments. **`POST /api/v1/rag/query`** remains a non-launch utility that proxies to RAG with **`X-Request-Id`**.
+ 
+ ### Example: two classic prompt-only subagents
+ 
+@@ -176,9 +172,11 @@ curl -s -X POST http://127.0.0.1:8088/api/v1/trigger \
+ declarative-agent-library:
+   subagents:
+     - name: research
++      description: Research specialist
+       systemPrompt: |
+         Respond, "Research subagent"
+     - name: jira
++      description: Jira specialist
+       systemPrompt: |
+         Respond, "Jira subagent"
+ ```
+@@ -187,7 +185,7 @@ declarative-agent-library:
+ 
+ 1. **Scraper → RAG:** CronJob `reference` calls `python -m hosted_agents.scrapers.reference_job` with `RAG_SERVICE_URL` set to the RAG Service (`http://<release>-rag:8090` when an enabled scraper job has deployed RAG).
+ 2. **Agent → RAG (utility HTTP):** `POST /api/v1/rag/query` proxies to RAG `/v1/query` (not the agent *launch* path; use **trigger** for orchestrated runs).
+-3. **Tool:** With `mcp.enabledTools` including `sample.echo`, `POST /api/v1/trigger` with `{"tool":"sample.echo","tool_arguments":{"message":"hi"}}`.
++3. **Tool:** With `mcp.enabledTools` including `sample.echo`, either ask the supervisor in natural language or call `POST /api/v1/trigger` with `{"tool":"sample.echo","tool_arguments":{"message":"hi"}}` (direct path bypasses the LLM).
+ 
+ ### Scrapers: verifying CronJobs
+ 
+diff --git a/docs/observability.md b/docs/observability.md
+index 866a16b..bf825d4 100644
+--- a/docs/observability.md
++++ b/docs/observability.md
+@@ -60,7 +60,7 @@ Recommended pipeline labels:
+ - **`level`** from the `level` field.
+ - **`request_id`** from the `request_id` field when present.
+ 
+-Clients may send **`X-Request-Id`**; the server echoes it on responses and includes it in structured logs for the request. Outbound HTTP from the agent to RAG (trigger **rag** subagent path and **`POST /api/v1/rag/query`**) sends the same **`X-Request-Id`** on the upstream request.
++Clients may send **`X-Request-Id`**; the server echoes it on responses and includes it in structured logs for the request. Outbound HTTP from the agent to RAG (**`rag`** specialist tool execution inside **`POST /api/v1/trigger`** and **`POST /api/v1/rag/query`**) sends the same **`X-Request-Id`** on the upstream request.
+ 
+ ## Dashboards
+ 
+@@ -81,12 +81,12 @@ Helm: set **`o11y.prometheusAnnotations.enabled: true`** under `declarative-agen
+ 
+ ### Subagent roles (agent process)
+ 
+-Configured subagents may set **`role`**. Both are reached only through **`POST /api/v1/trigger`** with a JSON body:
++Configured subagents are **tools** on the root agent ([LangChain subagents](https://docs.langchain.com/oss/python/langchain/multi-agent/subagents)). They run when the supervisor invokes them during **`POST /api/v1/trigger`** (after a **`message`** turn), or when exercising them via unit tests with a scripted model.
+ 
+-- **`metrics`**: e.g. `{"subagent":"metrics"}` returns the agent process **Prometheus snapshot** (same registry as `GET /metrics` on the agent). Use a dedicated subagent name (e.g. `metrics`) for scrape debugging.
+-- **`rag`**: e.g. `{"subagent":"rag","query":"…","scope":"default",…}` calls the managed RAG **`/v1/query`**; the HTTP body is plain-text JSON from RAG. Requires `HOSTED_AGENT_RAG_BASE_URL` and a separate scrape target for **`agent_runtime_rag_*`** on the RAG pod.
++- **`metrics`**: tool body returns the agent process **Prometheus snapshot** (same registry as `GET /metrics`). **`role: metrics`** is omitted from the default tool list unless **`exposeAsTool: true`** is set on that entry.
++- **`rag`**: tool arguments carry **`query`** and optional RAG fields; execution proxies to managed RAG **`/v1/query`**. Requires `HOSTED_AGENT_RAG_BASE_URL` and a separate scrape target for **`agent_runtime_rag_*`** on the RAG pod.
+ 
+-Subagent, skill, and tool steps still increment **`agent_runtime_subagent_*`**, **`agent_runtime_skill_*`**, and **`agent_runtime_mcp_tool_*`** when executed via the trigger pipeline.
++**`agent_runtime_subagent_*`**, **`agent_runtime_skill_*`**, and **`agent_runtime_mcp_tool_*`** increment when those tools or the legacy direct **`tool`** / **`load_skill`** paths run through the trigger pipeline.
+ 
+ Additional metrics (**scrapers**, etc.) can live on their own workloads; extend dashboards as needed.
+ 
+diff --git a/helm/chart/templates/deployment.yaml b/helm/chart/templates/deployment.yaml
+index 5e9cd55..e35796d 100644
+--- a/helm/chart/templates/deployment.yaml
++++ b/helm/chart/templates/deployment.yaml
+@@ -34,6 +34,10 @@ spec:
+                 configMapKeyRef:
+                   name: {{ include "declarative-agent-library.fullname" . }}-config
+                   key: system-prompt
++            {{- if .Values.chatModel }}
++            - name: HOSTED_AGENT_CHAT_MODEL
++              value: {{ .Values.chatModel | quote }}
++            {{- end }}
+             - name: HOSTED_AGENT_RAG_BASE_URL
+               value: {{ include "declarative-agent-library.ragInternalBaseUrl" . | quote }}
+             - name: HOSTED_AGENT_SUBAGENTS_JSON
+diff --git a/helm/chart/values.schema.json b/helm/chart/values.schema.json
+index ad42a2e..efb4b99 100644
+--- a/helm/chart/values.schema.json
++++ b/helm/chart/values.schema.json
+@@ -14,7 +14,11 @@
+     },
+     "systemPrompt": {
+       "type": "string",
+-      "description": "Rendered into ConfigMap; wired to HOSTED_AGENT_SYSTEM_PROMPT"
++      "description": "Supervisor instructions; rendered into ConfigMap as HOSTED_AGENT_SYSTEM_PROMPT (root agent when subagents are configured)"
++    },
++    "chatModel": {
++      "type": "string",
++      "description": "Optional LangChain chat model id when subagents are non-empty (e.g. openai:gpt-4o-mini) → HOSTED_AGENT_CHAT_MODEL; requires provider package + credentials in the image"
+     },
+     "service": {
+       "type": "object",
+@@ -106,14 +110,22 @@
+     },
+     "subagents": {
+       "type": "array",
+-      "description": "Supervisor subagents as JSON (name, systemPrompt, optional role metrics|rag|default, optional capability flags)",
++      "description": "Specialists exposed as LangChain tools on the root agent (name, description recommended, optional role metrics|rag|default, optional exposeAsTool)",
+       "items": {
+         "type": "object",
+         "properties": {
+           "name": { "type": "string" },
++          "description": {
++            "type": "string",
++            "description": "Recommended: tool schema / supervisor discovery text (LangChain subagents enumeration)"
++          },
+           "systemPrompt": { "type": "string" },
+           "system_prompt": { "type": "string" },
+           "role": { "type": "string" },
++          "exposeAsTool": {
++            "type": "boolean",
++            "description": "When false, omit this subagent from the default tool list (metrics defaults to false unless set true)"
++          },
+           "scrapers": { "type": "array" },
+           "tools": { "type": "array" }
+         }
+diff --git a/helm/chart/values.yaml b/helm/chart/values.yaml
+index 6e9b8d9..3f5ff47 100644
+--- a/helm/chart/values.yaml
++++ b/helm/chart/values.yaml
+@@ -5,10 +5,15 @@ image:
+   tag: local
+   pullPolicy: IfNotPresent
+ 
+-# Maps to HOSTED_AGENT_SYSTEM_PROMPT (ConfigMap + env)
++# Maps to HOSTED_AGENT_SYSTEM_PROMPT (ConfigMap + env).
++# This is the **supervisor** system prompt when ``subagents`` is non-empty (LangChain subagents pattern).
+ systemPrompt: |
+   Respond, "Hello :wave:"
+ 
++# Optional chat model for the supervisor when ``subagents`` is non-empty, e.g. ``openai:gpt-4o-mini``.
++# Maps to HOSTED_AGENT_CHAT_MODEL. Install the matching LangChain provider package in the image.
++chatModel: ""
++
+ service:
+   type: ClusterIP
+   port: 8088
+diff --git a/runtime/pyproject.toml b/runtime/pyproject.toml
+index bcdce76..3446828 100644
+--- a/runtime/pyproject.toml
++++ b/runtime/pyproject.toml
+@@ -6,6 +6,7 @@ requires-python = ">=3.11"
+ dependencies = [
+     "fastapi>=0.115.0",
+     "httpx>=0.28.0",
++    "langchain>=1.2.15",
+     "langchain-core>=1.2.28",
+     "langgraph>=1.1.6",
+     "prometheus-client>=0.21.0",
+diff --git a/runtime/src/hosted_agents/agent_models.py b/runtime/src/hosted_agents/agent_models.py
+index 12f9f03..c0a3d00 100644
+--- a/runtime/src/hosted_agents/agent_models.py
++++ b/runtime/src/hosted_agents/agent_models.py
+@@ -4,22 +4,26 @@ from __future__ import annotations
+ 
+ from typing import Any
+ 
+-from pydantic import BaseModel, Field
++from pydantic import BaseModel, ConfigDict, Field
+ 
+ 
+ class TriggerBody(BaseModel):
+-    """JSON body for ``POST /api/v1/trigger`` (LangGraph pipeline)."""
++    """JSON body for ``POST /api/v1/trigger`` (LangGraph pipeline).
+ 
++    Root ``systemPrompt`` (``HOSTED_AGENT_SYSTEM_PROMPT``) is the **supervisor**; configured
++    subagents are exposed only as **tools** on that agent (see README). User input for the
++    supervisor is ``message``.
++
++    Legacy field ``subagent`` is rejected with **400** before this model is validated
++    (see :mod:`hosted_agents.app`).
++    """
++
++    model_config = ConfigDict(extra="forbid")
++
++    message: str | None = Field(default=None, max_length=50_000)
+     load_skill: str | None = Field(default=None, min_length=1, max_length=256)
+-    subagent: str | None = Field(default=None, min_length=1, max_length=256)
+     tool: str | None = Field(default=None, min_length=1, max_length=256)
+     tool_arguments: dict[str, Any] = Field(default_factory=dict)
+-    query: str | None = Field(default=None, max_length=10_000)
+-    scope: str = Field(default="default", min_length=1, max_length=256)
+-    top_k: int = Field(default=5, ge=1, le=50)
+-    expand_relationships: bool = False
+-    relationship_types: list[str] | None = None
+-    max_hops: int = Field(default=1, ge=1, le=3)
+ 
+ 
+ class RagQueryBody(BaseModel):
+diff --git a/runtime/src/hosted_agents/app.py b/runtime/src/hosted_agents/app.py
+index 27d6c36..8f06bb0 100644
+--- a/runtime/src/hosted_agents/app.py
++++ b/runtime/src/hosted_agents/app.py
+@@ -2,11 +2,12 @@
+ 
+ from __future__ import annotations
+ 
++import json
+ import time
+ import uuid
+ 
+ import httpx
+-from fastapi import Body, FastAPI, HTTPException, Request
++from fastapi import FastAPI, HTTPException, Request
+ from fastapi.responses import JSONResponse, PlainTextResponse, Response
+ from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
+ 
+@@ -17,11 +18,41 @@ from hosted_agents.o11y_logging import configure_request_logging
+ from hosted_agents.o11y_middleware import ObservabilityMiddleware
+ from hosted_agents.runtime_config import RuntimeConfig
+ from hosted_agents.skills_state import unlocked_tools
+-from hosted_agents.trigger_graph import TriggerContext, TriggerHttpError, run_trigger_graph
++from hosted_agents.trigger_graph import (
++    TriggerContext,
++    TriggerHttpError,
++    run_trigger_graph,
++)
++
++
++async def _parse_trigger_json(request: Request) -> dict | None:
++    body = await request.body()
++    if not body:
++        return None
++    try:
++        data = json.loads(body)
++    except json.JSONDecodeError as exc:
++        raise HTTPException(status_code=400, detail="Invalid JSON body") from exc
++    if not isinstance(data, dict):
++        raise HTTPException(
++            status_code=400, detail="Trigger JSON body must be an object"
++        )
++    if "subagent" in data:
++        raise HTTPException(
++            status_code=400,
++            detail=(
++                "The 'subagent' field is no longer supported. "
++                "Use 'message' for the root supervisor; configured specialists are tools "
++                "of that agent (LangChain subagents pattern)."
++            ),
++        )
++    return data
+ 
+ 
+ def _request_id(request: Request) -> str:
+-    rid = getattr(request.state, "request_id", None) or request.headers.get("x-request-id")
++    rid = getattr(request.state, "request_id", None) or request.headers.get(
++        "x-request-id"
++    )
+     return str(rid) if rid else str(uuid.uuid4())
+ 
+ 
+@@ -40,12 +71,13 @@ def create_app(*, system_prompt: str | None = None) -> FastAPI:
+         return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
+ 
+     @app.post("/api/v1/trigger", response_class=PlainTextResponse)
+-    def post_trigger(
+-        request: Request,
+-        payload: TriggerBody | None = Body(None),
+-    ) -> str:
++    async def post_trigger(request: Request) -> str:
+         start = time.perf_counter()
+-        prompt = system_prompt if system_prompt is not None else system_prompt_from_env()
++        raw = await _parse_trigger_json(request)
++        payload = TriggerBody.model_validate(raw) if raw is not None else None
++        prompt = (
++            system_prompt if system_prompt is not None else system_prompt_from_env()
++        )
+         cfg = RuntimeConfig.from_env()
+         ctx = TriggerContext(
+             cfg=cfg,
+@@ -90,7 +122,9 @@ def create_app(*, system_prompt: str | None = None) -> FastAPI:
+     def rag_query(request: Request, body: RagQueryBody) -> JSONResponse:
+         cfg = RuntimeConfig.from_env()
+         if not cfg.rag_base_url:
+-            raise HTTPException(status_code=503, detail="HOSTED_AGENT_RAG_BASE_URL is not set")
++            raise HTTPException(
++                status_code=503, detail="HOSTED_AGENT_RAG_BASE_URL is not set"
++            )
+         url = f"{cfg.rag_base_url.rstrip('/')}/v1/query"
+         payload_json = body.model_dump(exclude_none=True)
+         rid = _request_id(request)
+@@ -99,7 +133,9 @@ def create_app(*, system_prompt: str | None = None) -> FastAPI:
+                 resp = client.post(url, json=payload_json)
+                 resp.raise_for_status()
+         except httpx.HTTPError as exc:
+-            raise HTTPException(status_code=502, detail=f"rag request failed: {exc!s}") from exc
++            raise HTTPException(
++                status_code=502, detail=f"rag request failed: {exc!s}"
++            ) from exc
+         return JSONResponse(resp.json())
+ 
+     return app
+diff --git a/runtime/src/hosted_agents/chat_model.py b/runtime/src/hosted_agents/chat_model.py
+new file mode 100644
+index 0000000..bbdc270
+--- /dev/null
++++ b/runtime/src/hosted_agents/chat_model.py
+@@ -0,0 +1,93 @@
++"""Chat model resolution for the supervisor (``create_agent``)."""
++
++from __future__ import annotations
++
++import json
++import os
++from typing import Any, cast, override
++
++from langchain.chat_models import init_chat_model
++from langchain_core.language_models.chat_models import SimpleChatModel
++from langchain_core.messages import AIMessage, BaseMessage
++from langchain_core.outputs import ChatGeneration, ChatResult
++
++
++class FakeToolChatModel(SimpleChatModel):
++    """Test double: supports ``bind_tools`` and scripted ``AIMessage`` turns."""
++
++    responses: list[AIMessage]
++    i: int = 0
++
++    @property
++    @override
++    def _llm_type(self) -> str:
++        return "cfha-fake-tool-chat"
++
++    def bind_tools(self, tools: Any, **kwargs: Any) -> FakeToolChatModel:
++        return self
++
++    @override
++    def _call(
++        self,
++        messages: list[BaseMessage],
++        stop: list[str] | None = None,
++        run_manager: Any = None,
++        **kwargs: Any,
++    ) -> str:
++        raise NotImplementedError
++
++    @override
++    def _generate(
++        self,
++        messages: list[BaseMessage],
++        stop: list[str] | None = None,
++        run_manager: Any = None,
++        **kwargs: Any,
++    ) -> ChatResult:
++        response = self.responses[self.i]
++        if self.i < len(self.responses) - 1:
++            self.i += 1
++        return ChatResult(generations=[ChatGeneration(message=response)])
++
++
++def resolve_chat_model() -> Any:
++    """Return a chat model for the supervisor.
++
++    Uses ``HOSTED_AGENT_CHAT_MODEL`` (e.g. ``openai:gpt-4o-mini``) via
++    :func:`langchain.chat_models.init_chat_model`. Install the matching provider
++    package (e.g. ``langchain-openai``) when using a remote model.
++
++    For tests, monkeypatch this function or set ``HOSTED_AGENT_FAKE_CHAT_SEQUENCE``
++    to a JSON list of serialized turns (see :func:`fake_model_from_env`).
++    """
++    fake = fake_model_from_env()
++    if fake is not None:
++        return fake
++    spec = os.environ.get("HOSTED_AGENT_CHAT_MODEL", "").strip()
++    if not spec:
++        msg = (
++            "HOSTED_AGENT_CHAT_MODEL is required when subagents are configured "
++            "(e.g. openai:gpt-4o-mini). Install the provider integration package."
++        )
++        raise ValueError(msg)
++    return init_chat_model(spec)
++
++
++def fake_model_from_env() -> FakeToolChatModel | None:
++    raw = os.environ.get("HOSTED_AGENT_FAKE_CHAT_SEQUENCE", "").strip()
++    if not raw:
++        return None
++    data = json.loads(raw)
++    if not isinstance(data, list):
++        msg = "HOSTED_AGENT_FAKE_CHAT_SEQUENCE must be a JSON array"
++        raise ValueError(msg)
++    responses: list[AIMessage] = []
++    for item in data:
++        if isinstance(item, str):
++            responses.append(AIMessage(content=item))
++        elif isinstance(item, dict):
++            responses.append(cast(AIMessage, AIMessage(**item)))
++        else:
++            msg = "Each element must be a string or AIMessage-shaped object"
++            raise ValueError(msg)
++    return FakeToolChatModel(responses=responses)
+diff --git a/runtime/src/hosted_agents/subagent_exec.py b/runtime/src/hosted_agents/subagent_exec.py
+new file mode 100644
+index 0000000..771212c
+--- /dev/null
++++ b/runtime/src/hosted_agents/subagent_exec.py
+@@ -0,0 +1,81 @@
++"""Execute configured subagent roles (metrics, rag, default)."""
++
++from __future__ import annotations
++
++import time
++import httpx
++from prometheus_client import generate_latest
++
++from hosted_agents.agent_models import SubagentInvokeBody
++from hosted_agents.metrics import observe_subagent
++from hosted_agents.reply import trigger_reply_text
++from hosted_agents.runtime_config import RuntimeConfig, subagent_system_prompt
++from hosted_agents.trigger_errors import TriggerHttpError
++
++
++def _httpx_headers(request_id: str) -> dict[str, str]:
++    return {"X-Request-Id": request_id}
++
++
++def _run_subagent_text(
++    cfg: RuntimeConfig,
++    name: str,
++    rag_payload: SubagentInvokeBody | None,
++    request_id: str,
++    *,
++    default_task: str | None = None,
++) -> str:
++    start = time.perf_counter()
++    entry = next((s for s in cfg.subagents if str(s.get("name")) == name), None)
++    if entry is None:
++        observe_subagent(name, "error", start)
++        raise TriggerHttpError(404, "subagent not found")
++
++    role = str(entry.get("role") or "default").strip().lower()
++
++    if role == "metrics":
++        observe_subagent(name, "success", start)
++        return generate_latest().decode("utf-8")
++
++    if role == "rag":
++        if not cfg.rag_base_url:
++            observe_subagent(name, "error", start)
++            raise TriggerHttpError(503, "HOSTED_AGENT_RAG_BASE_URL is not set")
++        rb = rag_payload or SubagentInvokeBody()
++        q = (rb.query or "").strip()
++        if not q:
++            observe_subagent(name, "error", start)
++            raise TriggerHttpError(
++                400,
++                "non-empty 'query' argument is required for rag role",
++            )
++        url = f"{cfg.rag_base_url.rstrip('/')}/v1/query"
++        req_json = rb.model_dump(exclude_none=True)
++        req_json["query"] = q
++        try:
++            with httpx.Client(
++                timeout=30.0,
++                headers=_httpx_headers(request_id),
++            ) as client:
++                resp = client.post(url, json=req_json)
++                resp.raise_for_status()
++        except httpx.HTTPError as exc:
++            observe_subagent(name, "error", start)
++            msg = f"rag subagent request failed: {exc!s}"
++            raise TriggerHttpError(502, msg) from exc
++        observe_subagent(name, "success", start)
++        return resp.text
++
++    prompt = subagent_system_prompt(entry)
++    if default_task and default_task.strip():
++        prompt = f"{prompt}\n\nUser task:\n{default_task.strip()}"
++    if not prompt.strip():
++        observe_subagent(name, "error", start)
++        raise TriggerHttpError(400, "subagent has empty system prompt")
++    try:
++        out = trigger_reply_text(prompt)
++    except ValueError as exc:
++        observe_subagent(name, "error", start)
++        raise TriggerHttpError(400, str(exc)) from exc
++    observe_subagent(name, "success", start)
++    return out
+diff --git a/runtime/src/hosted_agents/subagent_units.py b/runtime/src/hosted_agents/subagent_units.py
+new file mode 100644
+index 0000000..6fe4293
+--- /dev/null
++++ b/runtime/src/hosted_agents/subagent_units.py
+@@ -0,0 +1,47 @@
++"""LangGraph subgraphs per configured subagent (invoked from supervisor tools)."""
++
++from __future__ import annotations
++
++from typing import Any
++
++from langgraph.config import get_config
++from langgraph.graph import END, START, StateGraph
++
++from hosted_agents.agent_models import SubagentInvokeBody
++from hosted_agents.subagent_exec import _run_subagent_text
++from hosted_agents.trigger_context import TriggerContext
++
++
++def compile_subagent_subgraph(entry: dict[str, Any]) -> Any:
++    """Compile a one-node graph that runs :func:`hosted_agents.subagent_exec._run_subagent_text`."""
++
++    name = str(entry.get("name") or "").strip()
++    role = str(entry.get("role") or "default").strip().lower()
++
++    def exec_node(state: dict[str, Any]) -> dict[str, Any]:
++        config = get_config()
++        ctx: TriggerContext = config["configurable"]["ctx"]
++        cfg = ctx.cfg
++        rid = ctx.request_id
++        if role == "rag":
++            rag_payload = SubagentInvokeBody(
++                query=state.get("query"),
++                scope=state.get("scope") or "default",
++                top_k=int(state.get("top_k") or 5),
++                expand_relationships=bool(state.get("expand_relationships", False)),
++                relationship_types=state.get("relationship_types"),
++                max_hops=int(state.get("max_hops") or 1),
++            )
++            text = _run_subagent_text(cfg, name, rag_payload, rid)
++        elif role == "metrics":
++            text = _run_subagent_text(cfg, name, None, rid)
++        else:
++            task = (state.get("task") or "").strip() or None
++            text = _run_subagent_text(cfg, name, None, rid, default_task=task)
++        return {"output": text}
++
++    g = StateGraph(dict)
++    g.add_node("exec", exec_node)
++    g.add_edge(START, "exec")
++    g.add_edge("exec", END)
++    return g.compile()
+diff --git a/runtime/src/hosted_agents/supervisor.py b/runtime/src/hosted_agents/supervisor.py
+new file mode 100644
+index 0000000..0235d93
+--- /dev/null
++++ b/runtime/src/hosted_agents/supervisor.py
+@@ -0,0 +1,204 @@
++"""Supervisor agent (``create_agent``) + subagent/MCP LangChain tools."""
++
++from __future__ import annotations
++
++import json
++import re
++from typing import Any
++
++from langchain.agents import create_agent
++from langchain.tools import ToolRuntime
++from langchain_core.messages import AIMessage, HumanMessage
++from langchain_core.tools import tool
++
++from hosted_agents.chat_model import resolve_chat_model
++from hosted_agents.subagent_units import compile_subagent_subgraph
++from hosted_agents.trigger_context import TriggerContext
++from hosted_agents.trigger_errors import TriggerHttpError
++from hosted_agents.trigger_steps import run_tool_json
++from hosted_agents.skills_state import unlocked_tools
++
++
++def _sanitize_tool_name_fragment(raw: str) -> str:
++    s = re.sub(r"[^a-zA-Z0-9_]+", "_", raw.strip()).strip("_")
++    return s or "subagent"
++
++
++def subagent_exposed_as_tool(entry: dict[str, Any]) -> bool:
++    """``role: metrics`` is hidden unless ``exposeAsTool`` is explicitly true."""
++
++    role = str(entry.get("role") or "default").strip().lower()
++    raw = entry.get("exposeAsTool")
++    if raw is not None:
++        return bool(raw)
++    return role != "metrics"
++
++
++def subagent_tool_description(entry: dict[str, Any]) -> str:
++    for key in ("description", "toolDescription", "tool_description"):
++        d = entry.get(key)
++        if isinstance(d, str) and d.strip():
++            return d.strip()
++    name = str(entry.get("name") or "subagent")
++    role = str(entry.get("role") or "default")
++    return (
++        f"Specialist `{name}` ({role} role). "
++        "Invoke when the user needs this specialist's behavior."
++    )
++
++
++def subagent_tools_appendix(cfg_subagents: list[dict[str, Any]]) -> str:
++    """Enumerate configured tools for the supervisor system prompt (LangChain subagents guidance)."""
++
++    lines: list[str] = []
++    for entry in cfg_subagents:
++        name = str(entry.get("name") or "").strip()
++        if not name or not subagent_exposed_as_tool(entry):
++            continue
++        desc = subagent_tool_description(entry)
++        lines.append(f"- **{name}**: {desc}")
++    return "\n".join(lines)
++
++
++def build_supervisor_system_prompt(ctx: TriggerContext) -> str:
++    base = ctx.system_prompt.strip()
++    appendix = subagent_tools_appendix(ctx.cfg.subagents)
++    if appendix:
++        return (
++            f"{base}\n\n"
++            "## Available specialists (tools)\n"
++            "You may call the following tools when delegation helps. "
++            "Tool schemas include names and parameters.\n\n"
++            f"{appendix}\n"
++        )
++    return base
++
++
++def _build_subagent_tool(entry: dict[str, Any], compiled: Any) -> Any:
++    role = str(entry.get("role") or "default").strip().lower()
++    name = str(entry.get("name") or "").strip()
++    safe = _sanitize_tool_name_fragment(name)
++    tool_id = f"subagent_{safe}"
++    description = subagent_tool_description(entry)
++
++    if role == "rag":
++
++        @tool(tool_id, description=description)
++        def _rag_tool(
++            query: str,
++            runtime: ToolRuntime,
++            scope: str = "default",
++            top_k: int = 5,
++            expand_relationships: bool = False,
++            relationship_types: list[str] | None = None,
++            max_hops: int = 1,
++        ) -> str:
++            return compiled.invoke(
++                {
++                    "query": query,
++                    "scope": scope,
++                    "top_k": top_k,
++                    "expand_relationships": expand_relationships,
++                    "relationship_types": relationship_types,
++                    "max_hops": max_hops,
++                },
++                config=runtime.config,
++            )["output"]
++
++        return _rag_tool
++
++    if role == "metrics":
++
++        @tool(tool_id, description=description)
++        def _metrics_tool(runtime: ToolRuntime) -> str:
++            return compiled.invoke({}, config=runtime.config)["output"]
++
++        return _metrics_tool
++
++    @tool(tool_id, description=description)
++    def _default_tool(task: str, runtime: ToolRuntime) -> str:
++        return compiled.invoke({"task": task}, config=runtime.config)["output"]
++
++    return _default_tool
++
++
++def _build_mcp_langchain_tools(ctx: TriggerContext) -> list[Any]:
++    allowed = set(ctx.cfg.enabled_mcp_tools) | set(unlocked_tools())
++    tools: list[Any] = []
++    for tool_id in sorted(allowed):
++        safe = _sanitize_tool_name_fragment(tool_id)
++        mcp_tool = _make_mcp_tool(tool_id, safe, ctx)
++        tools.append(mcp_tool)
++    return tools
++
++
++def _make_mcp_tool(tool_id: str, safe_name: str, ctx: TriggerContext) -> Any:
++    if tool_id == "sample.echo":
++
++        @tool(safe_name)
++        def sample_echo(runtime: ToolRuntime, message: str) -> str:  # noqa: ARG001
++            """Echo back a string (bundled sample MCP tool)."""
++            return run_tool_json(ctx.cfg, "sample.echo", {"message": message})
++
++        return sample_echo
++
++    desc = (
++        f"In-process MCP tool `{tool_id}`. "
++        f"Pass arguments as a JSON object string (e.g. '{{}}' or '{{\"key\": \"v\"}}')."
++    )
++
++    @tool(safe_name, description=desc)
++    def generic_mcp_tool(
++        runtime: ToolRuntime,  # noqa: ARG001
++        arguments_json: str = "{}",
++    ) -> str:
++        try:
++            args = json.loads(arguments_json) if arguments_json.strip() else {}
++        except json.JSONDecodeError as exc:
++            msg = f"invalid JSON arguments: {exc}"
++            raise ValueError(msg) from exc
++        return run_tool_json(ctx.cfg, tool_id, args)
++
++    return generic_mcp_tool
++
++
++def build_supervisor_tools(ctx: TriggerContext) -> list[Any]:
++    """Merge order: **subagent tools** (config order), then **MCP** tools (sorted by id)."""
++
++    tools: list[Any] = []
++    for entry in ctx.cfg.subagents:
++        name = str(entry.get("name") or "").strip()
++        if not name or not subagent_exposed_as_tool(entry):
++            continue
++        compiled = compile_subagent_subgraph(entry)
++        tools.append(_build_subagent_tool(entry, compiled))
++    tools.extend(_build_mcp_langchain_tools(ctx))
++    return tools
++
++
++def extract_final_ai_text(result: dict[str, Any]) -> str:
++    messages = result.get("messages") or []
++    if not messages:
++        return ""
++    last = messages[-1]
++    if isinstance(last, AIMessage):
++        content = last.content
++        if isinstance(content, str):
++            return content
++        return str(content)
++    return str(getattr(last, "content", last))
++
++
++def run_supervisor_agent(ctx: TriggerContext, user_message: str) -> str:
++    try:
++        model = resolve_chat_model()
++    except ValueError as exc:
++        raise TriggerHttpError(503, str(exc)) from exc
++    tools = build_supervisor_tools(ctx)
++    system_prompt = build_supervisor_system_prompt(ctx)
++    agent = create_agent(model, tools, system_prompt=system_prompt)
++    result = agent.invoke(
++        {"messages": [HumanMessage(content=user_message)]},
++        config={"configurable": {"ctx": ctx}},
++    )
++    return extract_final_ai_text(result)
+diff --git a/runtime/src/hosted_agents/trigger_context.py b/runtime/src/hosted_agents/trigger_context.py
+new file mode 100644
+index 0000000..8d7a9db
+--- /dev/null
++++ b/runtime/src/hosted_agents/trigger_context.py
+@@ -0,0 +1,16 @@
++"""Per-request context for the trigger pipeline."""
++
++from __future__ import annotations
++
++from dataclasses import dataclass
++
++from hosted_agents.agent_models import TriggerBody
++from hosted_agents.runtime_config import RuntimeConfig
++
++
++@dataclass(frozen=True)
++class TriggerContext:
++    cfg: RuntimeConfig
++    body: TriggerBody | None
++    system_prompt: str
++    request_id: str
+diff --git a/runtime/src/hosted_agents/trigger_errors.py b/runtime/src/hosted_agents/trigger_errors.py
+new file mode 100644
+index 0000000..71c8cb8
+--- /dev/null
++++ b/runtime/src/hosted_agents/trigger_errors.py
+@@ -0,0 +1,10 @@
++"""HTTP-oriented errors raised inside the trigger pipeline."""
++
++
++class TriggerHttpError(Exception):
++    """Maps to a non-200 HTTP response from the FastAPI layer."""
++
++    def __init__(self, status_code: int, detail: str) -> None:
++        self.status_code = status_code
++        self.detail = detail
++        super().__init__(detail)
+diff --git a/runtime/src/hosted_agents/trigger_graph.py b/runtime/src/hosted_agents/trigger_graph.py
+index 339171a..3b6e19b 100644
+--- a/runtime/src/hosted_agents/trigger_graph.py
++++ b/runtime/src/hosted_agents/trigger_graph.py
+@@ -2,174 +2,50 @@
+ 
+ from __future__ import annotations
+ 
+-import json
+-import time
+-from dataclasses import dataclass
+ from typing import Any, TypedDict
+ 
+-import httpx
+ from langchain_core.runnables import RunnableConfig
+ from langgraph.graph import END, START, StateGraph
+-from prometheus_client import generate_latest
+-
+-from hosted_agents.agent_models import SubagentInvokeBody, TriggerBody
+-from hosted_agents.metrics import (
+-    observe_mcp_tool,
+-    observe_skill_load,
+-    observe_subagent,
+-)
+-from hosted_agents.reply import trigger_reply_text
+-from hosted_agents.runtime_config import RuntimeConfig, subagent_system_prompt
+-from hosted_agents.skills_state import unlock_tools, unlocked_tools
+-from hosted_agents.tools_impl.dispatch import invoke_tool
+-
+ 
+-class TriggerHttpError(Exception):
+-    """Maps to a non-200 HTTP response from the FastAPI layer."""
+-
+-    def __init__(self, status_code: int, detail: str) -> None:
+-        self.status_code = status_code
+-        self.detail = detail
+-        super().__init__(detail)
++from hosted_agents.agent_models import TriggerBody
++from hosted_agents.reply import trigger_reply_text
++from hosted_agents.supervisor import run_supervisor_agent
++from hosted_agents.trigger_context import TriggerContext
++from hosted_agents.trigger_errors import TriggerHttpError
++from hosted_agents.trigger_steps import run_skill_load_json, run_tool_json
+ 
++# Re-export for tests / scripts that patch subagent execution.
++from hosted_agents.subagent_exec import _run_subagent_text as _run_subagent_text
+ 
+-@dataclass(frozen=True)
+-class TriggerContext:
+-    cfg: RuntimeConfig
+-    body: TriggerBody | None
+-    system_prompt: str
+-    request_id: str
++__all__ = [
++    "TriggerHttpError",
++    "TriggerContext",
++    "compiled_trigger_graph",
++    "run_trigger_graph",
++    "_run_subagent_text",
++]
+ 
+ 
+ class _GraphState(TypedDict):
+     output: str
+ 
+ 
+-def _rag_payload(body: TriggerBody) -> SubagentInvokeBody:
+-    return SubagentInvokeBody(
+-        query=body.query,
+-        scope=body.scope,
+-        top_k=body.top_k,
+-        expand_relationships=body.expand_relationships,
+-        relationship_types=body.relationship_types,
+-        max_hops=body.max_hops,
+-    )
+-
+-
+-def _httpx_headers(request_id: str) -> dict[str, str]:
+-    return {"X-Request-Id": request_id}
+-
+-
+-def _run_subagent_text(
+-    cfg: RuntimeConfig,
+-    name: str,
+-    rag_payload: SubagentInvokeBody | None,
+-    request_id: str,
+-) -> str:
+-    start = time.perf_counter()
+-    entry = next((s for s in cfg.subagents if str(s.get("name")) == name), None)
+-    if entry is None:
+-        observe_subagent(name, "error", start)
+-        raise TriggerHttpError(404, "subagent not found")
+-
+-    role = str(entry.get("role") or "default").strip().lower()
+-
+-    if role == "metrics":
+-        observe_subagent(name, "success", start)
+-        return generate_latest().decode("utf-8")
+-
+-    if role == "rag":
+-        if not cfg.rag_base_url:
+-            observe_subagent(name, "error", start)
+-            raise TriggerHttpError(503, "HOSTED_AGENT_RAG_BASE_URL is not set")
+-        rb = rag_payload or SubagentInvokeBody()
+-        q = (rb.query or "").strip()
+-        if not q:
+-            observe_subagent(name, "error", start)
+-            raise TriggerHttpError(
+-                400,
+-                "JSON body with non-empty 'query' is required for rag role",
+-            )
+-        url = f"{cfg.rag_base_url.rstrip('/')}/v1/query"
+-        req_json = rb.model_dump(exclude_none=True)
+-        req_json["query"] = q
+-        try:
+-            with httpx.Client(
+-                timeout=30.0,
+-                headers=_httpx_headers(request_id),
+-            ) as client:
+-                resp = client.post(url, json=req_json)
+-                resp.raise_for_status()
+-        except httpx.HTTPError as exc:
+-            observe_subagent(name, "error", start)
+-            msg = f"rag subagent request failed: {exc!s}"
+-            raise TriggerHttpError(502, msg) from exc
+-        observe_subagent(name, "success", start)
+-        return resp.text
+-
+-    prompt = subagent_system_prompt(entry)
+-    if not prompt.strip():
+-        observe_subagent(name, "error", start)
+-        raise TriggerHttpError(400, "subagent has empty system prompt")
+-    try:
+-        out = trigger_reply_text(prompt)
+-    except ValueError as exc:
+-        observe_subagent(name, "error", start)
+-        raise TriggerHttpError(400, str(exc)) from exc
+-    observe_subagent(name, "success", start)
+-    return out
+-
+-
+-def _run_skill_load_json(cfg: RuntimeConfig, name: str) -> str:
+-    start = time.perf_counter()
+-    entry = next((s for s in cfg.skills if str(s.get("name")) == name), None)
+-    if entry is None:
+-        observe_skill_load(name, "error", start)
+-        raise TriggerHttpError(404, "skill not found")
+-    raw_extra = entry.get("extraTools") or entry.get("extra_tools") or []
+-    extra = [str(x) for x in raw_extra] if isinstance(raw_extra, list) else []
+-    unlock_tools(extra)
+-    prompt = str(entry.get("prompt") or "")
+-    observe_skill_load(name, "success", start)
+-    return json.dumps({"name": name, "prompt": prompt, "activated_tools": extra})
+-
+-
+-def _run_tool_json(cfg: RuntimeConfig, tool: str, arguments: dict[str, Any]) -> str:
+-    start = time.perf_counter()
+-    allowed = set(cfg.enabled_mcp_tools) | set(unlocked_tools())
+-    if tool not in allowed:
+-        observe_mcp_tool(tool, "error", start)
+-        raise TriggerHttpError(403, "tool is not enabled for this deployment")
+-    try:
+-        result = invoke_tool(tool, arguments)
+-    except KeyError as exc:
+-        observe_mcp_tool(tool, "error", start)
+-        raise TriggerHttpError(404, str(exc)) from exc
+-    observe_mcp_tool(tool, "success", start)
+-    return json.dumps({"tool": tool, "result": result})
+-
+-
+ def _execute_trigger(ctx: TriggerContext) -> str:
+-    cfg = ctx.cfg
+     body = ctx.body or TriggerBody()
+-    request_id = ctx.request_id
+ 
+     if body.load_skill:
+-        skill_json = _run_skill_load_json(cfg, body.load_skill)
+-        if not body.subagent and not body.tool:
+-            return skill_json
+-
+-    if body.subagent:
+-        # Non-``rag`` roles ignore ``rag_payload``; ``rag`` uses these fields from the trigger body.
+-        return _run_subagent_text(
+-            cfg,
+-            body.subagent,
+-            _rag_payload(body),
+-            request_id,
+-        )
++        skill_json = run_skill_load_json(ctx.cfg, body.load_skill)
++        if not body.tool:
++            # Without ``message``, keep the progressive-disclosure short-circuit (skills).
++            if not ctx.cfg.subagents or body.message is None:
++                return skill_json
+ 
+     if body.tool:
+-        return _run_tool_json(cfg, body.tool, body.tool_arguments)
++        return run_tool_json(ctx.cfg, body.tool, body.tool_arguments)
++
++    if ctx.cfg.subagents:
++        user_message = (body.message or "").strip()
++        return run_supervisor_agent(ctx, user_message)
+ 
+     return trigger_reply_text(ctx.system_prompt)
+ 
+diff --git a/runtime/src/hosted_agents/trigger_steps.py b/runtime/src/hosted_agents/trigger_steps.py
+new file mode 100644
+index 0000000..0102a31
+--- /dev/null
++++ b/runtime/src/hosted_agents/trigger_steps.py
+@@ -0,0 +1,42 @@
++"""Skill load and MCP tool steps (shared by trigger pipeline and supervisor tools)."""
++
++from __future__ import annotations
++
++import json
++import time
++from typing import Any
++
++from hosted_agents.metrics import observe_mcp_tool, observe_skill_load
++from hosted_agents.runtime_config import RuntimeConfig
++from hosted_agents.skills_state import unlock_tools, unlocked_tools
++from hosted_agents.tools_impl.dispatch import invoke_tool
++from hosted_agents.trigger_errors import TriggerHttpError
++
++
++def run_skill_load_json(cfg: RuntimeConfig, name: str) -> str:
++    start = time.perf_counter()
++    entry = next((s for s in cfg.skills if str(s.get("name")) == name), None)
++    if entry is None:
++        observe_skill_load(name, "error", start)
++        raise TriggerHttpError(404, "skill not found")
++    raw_extra = entry.get("extraTools") or entry.get("extra_tools") or []
++    extra = [str(x) for x in raw_extra] if isinstance(raw_extra, list) else []
++    unlock_tools(extra)
++    prompt = str(entry.get("prompt") or "")
++    observe_skill_load(name, "success", start)
++    return json.dumps({"name": name, "prompt": prompt, "activated_tools": extra})
++
++
++def run_tool_json(cfg: RuntimeConfig, tool: str, arguments: dict[str, Any]) -> str:
++    start = time.perf_counter()
++    allowed = set(cfg.enabled_mcp_tools) | set(unlocked_tools())
++    if tool not in allowed:
++        observe_mcp_tool(tool, "error", start)
++        raise TriggerHttpError(403, "tool is not enabled for this deployment")
++    try:
++        result = invoke_tool(tool, arguments)
++    except KeyError as exc:
++        observe_mcp_tool(tool, "error", start)
++        raise TriggerHttpError(404, str(exc)) from exc
++    observe_mcp_tool(tool, "success", start)
++    return json.dumps({"tool": tool, "result": result})
+diff --git a/runtime/tests/__init__.py b/runtime/tests/__init__.py
+new file mode 100644
+index 0000000..986781a
+--- /dev/null
++++ b/runtime/tests/__init__.py
+@@ -0,0 +1 @@
++"""Test package (enables ``from tests.conftest import …``)."""
+diff --git a/runtime/tests/conftest.py b/runtime/tests/conftest.py
+index cb93727..ef80c06 100644
+--- a/runtime/tests/conftest.py
++++ b/runtime/tests/conftest.py
+@@ -3,6 +3,53 @@
+ from __future__ import annotations
+ 
+ import os
++from collections.abc import Callable
++from typing import Any
++
++import pytest
++from langchain_core.messages import AIMessage
++
++from hosted_agents.chat_model import FakeToolChatModel
+ 
+ # Avoid LangSmith network noise during unit tests when LangChain/LangGraph is on the path.
+ os.environ.setdefault("LANGCHAIN_TRACING_V2", "false")
++
++
++def tool_then_text_responses(
++    tool_name: str,
++    tool_args: dict[str, Any],
++    *,
++    final_text: str = "done",
++) -> FakeToolChatModel:
++    """Two-turn fake model: one tool call, one plain assistant message."""
++
++    return FakeToolChatModel(
++        responses=[
++            AIMessage(
++                content="",
++                tool_calls=[
++                    {
++                        "name": tool_name,
++                        "args": tool_args,
++                        "id": "cfha-1",
++                        "type": "tool_call",
++                    },
++                ],
++            ),
++            AIMessage(content=final_text),
++        ],
++    )
++
++
++def patch_supervisor_fake_model(
++    monkeypatch: pytest.MonkeyPatch,
++    fake: FakeToolChatModel,
++) -> None:
++    monkeypatch.setattr("hosted_agents.supervisor.resolve_chat_model", lambda: fake)
++
++
++def patch_supervisor_sequence(
++    monkeypatch: pytest.MonkeyPatch,
++    factory: Callable[[], FakeToolChatModel],
++) -> None:
++    monkeypatch.setattr("hosted_agents.supervisor.resolve_chat_model", factory)
+diff --git a/runtime/tests/test_agent_extensions.py b/runtime/tests/test_agent_extensions.py
+index 7d9b84e..c3ec352 100644
+--- a/runtime/tests/test_agent_extensions.py
++++ b/runtime/tests/test_agent_extensions.py
+@@ -10,6 +10,7 @@ from fastapi.testclient import TestClient
+ 
+ from hosted_agents.app import create_app
+ from hosted_agents.skills_state import reset_skill_unlocked_tools
++from tests.conftest import patch_supervisor_fake_model, tool_then_text_responses
+ 
+ 
+ @pytest.fixture
+@@ -18,7 +19,15 @@ def client(monkeypatch: pytest.MonkeyPatch) -> TestClient:
+     monkeypatch.setenv("HOSTED_AGENT_SYSTEM_PROMPT", 'Respond, "Main"')
+     monkeypatch.setenv(
+         "HOSTED_AGENT_SUBAGENTS_JSON",
+-        json.dumps([{"name": "s1", "systemPrompt": 'Respond, "Sub1"'}]),
++        json.dumps(
++            [
++                {
++                    "name": "s1",
++                    "systemPrompt": 'Respond, "Sub1"',
++                    "description": "Test specialist s1",
++                },
++            ],
++        ),
+     )
+     monkeypatch.setenv(
+         "HOSTED_AGENT_SKILLS_JSON",
+@@ -41,15 +50,28 @@ def test_runtime_summary(client: TestClient) -> None:
+     assert body["orchestration"] == "langgraph"
+ 
+ 
+-def test_subagent_invoke(client: TestClient) -> None:
+-    r = client.post("/api/v1/trigger", json={"subagent": "s1"})
++def test_subagent_tool_via_supervisor(
++    monkeypatch: pytest.MonkeyPatch,
++    client: TestClient,
++) -> None:
++    patch_supervisor_fake_model(
++        monkeypatch,
++        tool_then_text_responses("subagent_s1", {"task": "go"}, final_text="ok"),
++    )
++    r = client.post("/api/v1/trigger", json={"message": "call s1"})
+     assert r.status_code == 200
+-    assert "Sub1" in r.text
++    assert r.text == "ok"
++    metrics = client.get("/metrics").text
++    assert (
++        'agent_runtime_subagent_invocations_total{result="success",subagent="s1"}'
++        in metrics
++    )
+ 
+ 
+-def test_subagent_missing(client: TestClient) -> None:
++def test_legacy_subagent_field_rejected(client: TestClient) -> None:
+     r = client.post("/api/v1/trigger", json={"subagent": "nope"})
+-    assert r.status_code == 404
++    assert r.status_code == 400
++    assert "subagent" in r.json()["detail"].lower()
+ 
+ 
+ def test_rag_query_requires_config(client: TestClient) -> None:
+diff --git a/runtime/tests/test_o11y_metrics.py b/runtime/tests/test_o11y_metrics.py
+index 44790dd..20cb01f 100644
+--- a/runtime/tests/test_o11y_metrics.py
++++ b/runtime/tests/test_o11y_metrics.py
+@@ -14,6 +14,7 @@ from fastapi.testclient import TestClient
+ 
+ from hosted_agents.app import create_app
+ from hosted_agents.skills_state import reset_skill_unlocked_tools
++from tests.conftest import patch_supervisor_fake_model, tool_then_text_responses
+ 
+ 
+ def _metrics_text(client: TestClient) -> str:
+@@ -43,7 +44,9 @@ def test_trigger_success_increments_counter() -> None:
+     )
+ 
+ 
+-def test_trigger_client_error_increments_client_error(monkeypatch: pytest.MonkeyPatch) -> None:
++def test_trigger_client_error_increments_client_error(
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
+     from hosted_agents.env import SYSTEM_PROMPT_ENV_KEY
+ 
+     monkeypatch.setenv(SYSTEM_PROMPT_ENV_KEY, "   ")
+@@ -70,7 +73,7 @@ def test_trigger_forwards_x_request_id_to_rag(monkeypatch: pytest.MonkeyPatch) -
+     monkeypatch.setenv("HOSTED_AGENT_RAG_BASE_URL", "http://rag:8090")
+     monkeypatch.setenv(
+         "HOSTED_AGENT_SUBAGENTS_JSON",
+-        json.dumps([{"name": "rag", "role": "rag"}]),
++        json.dumps([{"name": "rag", "role": "rag", "description": "RAG"}]),
+     )
+     mock_resp = MagicMock()
+     mock_resp.text = "{}"
+@@ -84,12 +87,18 @@ def test_trigger_forwards_x_request_id_to_rag(monkeypatch: pytest.MonkeyPatch) -
+         mock_cm.__exit__.return_value = None
+         return mock_cm
+ 
+-    monkeypatch.setattr("hosted_agents.trigger_graph.httpx.Client", capture_httpx_client)
++    monkeypatch.setattr(
++        "hosted_agents.subagent_exec.httpx.Client", capture_httpx_client
++    )
++    patch_supervisor_fake_model(
++        monkeypatch,
++        tool_then_text_responses("subagent_rag", {"query": "q"}, final_text="ok"),
++    )
+     client = TestClient(create_app(system_prompt='Respond, "M"'))
+     client.post(
+         "/api/v1/trigger",
+         headers={"X-Request-Id": "upstream-abc"},
+-        json={"subagent": "rag", "query": "q"},
++        json={"message": "rag please"},
+     )
+     assert client_kw["headers"]["X-Request-Id"] == "upstream-abc"
+ 
+@@ -98,7 +107,12 @@ def test_subagent_and_skill_and_mcp_metrics(monkeypatch: pytest.MonkeyPatch) ->
+     reset_skill_unlocked_tools()
+     monkeypatch.setenv(
+         "HOSTED_AGENT_SUBAGENTS_JSON",
+-        json.dumps([{"name": "s1", "systemPrompt": 'Respond, "S"'}]),
++        json.dumps(
++            [
++                {"name": "s1", "systemPrompt": 'Respond, "S"', "description": "s1"},
++                {"name": "missing", "systemPrompt": "", "description": "broken"},
++            ],
++        ),
+     )
+     monkeypatch.setenv(
+         "HOSTED_AGENT_SKILLS_JSON",
+@@ -106,18 +120,59 @@ def test_subagent_and_skill_and_mcp_metrics(monkeypatch: pytest.MonkeyPatch) ->
+     )
+     monkeypatch.setenv("HOSTED_AGENT_ENABLED_MCP_TOOLS_JSON", json.dumps([]))
+     client = TestClient(create_app(system_prompt='Respond, "M"'))
+-    client.post("/api/v1/trigger", json={"subagent": "s1"})
+-    client.post("/api/v1/trigger", json={"subagent": "missing"})
++
++    patch_supervisor_fake_model(
++        monkeypatch,
++        tool_then_text_responses("subagent_s1", {"task": "t"}, final_text="a"),
++    )
++    client.post("/api/v1/trigger", json={"message": "call s1"})
++
++    def _missing_factory() -> object:
++        from hosted_agents.chat_model import FakeToolChatModel
++        from langchain_core.messages import AIMessage
++
++        return FakeToolChatModel(
++            responses=[
++                AIMessage(
++                    content="",
++                    tool_calls=[
++                        {
++                            "name": "subagent_missing",
++                            "args": {"task": ""},
++                            "id": "m1",
++                            "type": "tool_call",
++                        },
++                    ],
++                ),
++                AIMessage(content="b"),
++            ],
++        )
++
++    monkeypatch.setattr(
++        "hosted_agents.supervisor.resolve_chat_model",
++        _missing_factory,
++    )
++    client.post("/api/v1/trigger", json={"message": "call missing"})
++
+     client.post("/api/v1/trigger", json={"load_skill": "sk"})
+     client.post("/api/v1/trigger", json={"load_skill": "nope"})
+     client.post("/api/v1/trigger", json={"tool": "sample.echo", "tool_arguments": {}})
+ 
+     text = _metrics_text(client)
+-    assert 'agent_runtime_subagent_invocations_total{result="success",subagent="s1"}' in text
+-    assert 'agent_runtime_subagent_invocations_total{result="error",subagent="missing"}' in text
++    assert (
++        'agent_runtime_subagent_invocations_total{result="success",subagent="s1"}'
++        in text
++    )
++    assert (
++        'agent_runtime_subagent_invocations_total{result="error",subagent="missing"}'
++        in text
++    )
+     assert 'agent_runtime_skill_loads_total{result="success",skill="sk"}' in text
+     assert 'agent_runtime_skill_loads_total{result="error",skill="nope"}' in text
+-    assert 'agent_runtime_mcp_tool_calls_total{result="success",tool="sample.echo"}' in text
++    assert (
++        'agent_runtime_mcp_tool_calls_total{result="success",tool="sample.echo"}'
++        in text
++    )
+ 
+ 
+ def test_json_log_format_emits_message_key() -> None:
+diff --git a/runtime/tests/test_subagent_roles.py b/runtime/tests/test_subagent_roles.py
+index d0e0add..2bc435b 100644
+--- a/runtime/tests/test_subagent_roles.py
++++ b/runtime/tests/test_subagent_roles.py
+@@ -9,25 +9,50 @@ import pytest
+ from fastapi.testclient import TestClient
+ 
+ from hosted_agents.app import create_app
++from tests.conftest import patch_supervisor_fake_model, tool_then_text_responses
+ 
+ 
+ def test_metrics_role_returns_prometheus_text(monkeypatch: pytest.MonkeyPatch) -> None:
+     monkeypatch.setenv(
+         "HOSTED_AGENT_SUBAGENTS_JSON",
+-        json.dumps([{"name": "metrics", "role": "metrics"}]),
++        json.dumps(
++            [
++                {
++                    "name": "metrics",
++                    "role": "metrics",
++                    "exposeAsTool": True,
++                    "description": "Return this process Prometheus metrics snapshot",
++                },
++            ],
++        ),
++    )
++    patch_supervisor_fake_model(
++        monkeypatch,
++        tool_then_text_responses("subagent_metrics", {}, final_text="skip"),
+     )
+     client = TestClient(create_app(system_prompt='Respond, "M"'))
+-    r = client.post("/api/v1/trigger", json={"subagent": "metrics"})
++    r = client.post("/api/v1/trigger", json={"message": "scrape metrics"})
+     assert r.status_code == 200
+-    assert "agent_runtime_http_trigger" in r.text
+-    assert "agent_runtime_subagent_invocations_total" in r.text
++    # HTTP body is the supervisor's final turn; Prometheus text is produced inside the tool.
++    prom = client.get("/metrics").text
++    assert "agent_runtime_http_trigger" in prom
++    assert "agent_runtime_subagent_invocations_total" in prom
+ 
+ 
+ def test_rag_role_proxies_to_rag(monkeypatch: pytest.MonkeyPatch) -> None:
+     monkeypatch.setenv("HOSTED_AGENT_RAG_BASE_URL", "http://rag:8090")
+     monkeypatch.setenv(
+         "HOSTED_AGENT_SUBAGENTS_JSON",
+-        json.dumps([{"name": "rag", "role": "rag", "systemPrompt": ""}]),
++        json.dumps(
++            [
++                {
++                    "name": "rag",
++                    "role": "rag",
++                    "systemPrompt": "",
++                    "description": "Query the configured RAG HTTP API",
++                },
++            ],
++        ),
+     )
+     mock_resp = MagicMock()
+     mock_resp.text = '{"hits":[]}'
+@@ -44,15 +69,23 @@ def test_rag_role_proxies_to_rag(monkeypatch: pytest.MonkeyPatch) -> None:
+         mock_cm.__exit__.return_value = None
+         return mock_cm
+ 
+-    monkeypatch.setattr("hosted_agents.trigger_graph.httpx.Client", capture_httpx_client)
++    monkeypatch.setattr(
++        "hosted_agents.subagent_exec.httpx.Client", capture_httpx_client
++    )
+ 
+-    client = TestClient(create_app(system_prompt='Respond, "M"'))
+-    r = client.post(
+-        "/api/v1/trigger",
+-        json={"subagent": "rag", "query": "find docs", "scope": "s1"},
++    patch_supervisor_fake_model(
++        monkeypatch,
++        tool_then_text_responses(
++            "subagent_rag",
++            {"query": "find docs", "scope": "s1"},
++            final_text="done",
++        ),
+     )
++
++    client = TestClient(create_app(system_prompt='Respond, "M"'))
++    r = client.post("/api/v1/trigger", json={"message": "search rag"})
+     assert r.status_code == 200
+-    assert r.text == '{"hits":[]}'
++    assert r.text == "done"
+     assert client_kw["headers"].get("X-Request-Id")
+     args, kwargs = post_mocks[0].call_args
+     assert args[0] == "http://rag:8090/v1/query"
+@@ -64,8 +97,16 @@ def test_rag_role_requires_query(monkeypatch: pytest.MonkeyPatch) -> None:
+     monkeypatch.setenv("HOSTED_AGENT_RAG_BASE_URL", "http://rag:8090")
+     monkeypatch.setenv(
+         "HOSTED_AGENT_SUBAGENTS_JSON",
+-        json.dumps([{"name": "rag", "role": "rag"}]),
++        json.dumps([{"name": "rag", "role": "rag", "description": "RAG"}]),
++    )
++    patch_supervisor_fake_model(
++        monkeypatch,
++        tool_then_text_responses(
++            "subagent_rag",
++            {"query": "", "scope": "default"},
++            final_text="x",
++        ),
+     )
+     client = TestClient(create_app(system_prompt='Respond, "M"'))
+-    r = client.post("/api/v1/trigger", json={"subagent": "rag"})
++    r = client.post("/api/v1/trigger", json={"message": "bad rag"})
+     assert r.status_code == 400
+diff --git a/runtime/uv.lock b/runtime/uv.lock
+index e40b2a6..8efbcda 100644
+--- a/runtime/uv.lock
++++ b/runtime/uv.lock
+@@ -159,6 +159,7 @@ source = { editable = "." }
+ dependencies = [
+     { name = "fastapi" },
+     { name = "httpx" },
++    { name = "langchain" },
+     { name = "langchain-core" },
+     { name = "langgraph" },
+     { name = "prometheus-client" },
+@@ -178,6 +179,7 @@ dev = [
+ requires-dist = [
+     { name = "fastapi", specifier = ">=0.115.0" },
+     { name = "httpx", specifier = ">=0.28.0" },
++    { name = "langchain", specifier = ">=1.2.15" },
+     { name = "langchain-core", specifier = ">=1.2.28" },
+     { name = "langgraph", specifier = ">=1.1.6" },
+     { name = "prometheus-client", specifier = ">=0.21.0" },
+@@ -425,6 +427,20 @@ wheels = [
+     { url = "https://files.pythonhosted.org/packages/9e/6a/a83720e953b1682d2d109d3c2dbb0bc9bf28cc1cbc205be4ef4be5da709d/jsonpointer-3.1.1-py3-none-any.whl", hash = "sha256:8ff8b95779d071ba472cf5bc913028df06031797532f08a7d5b602d8b2a488ca", size = 7659, upload-time = "2026-03-23T22:32:31.568Z" },
+ ]
+ 
++[[package]]
++name = "langchain"
++version = "1.2.15"
++source = { registry = "https://pypi.org/simple" }
++dependencies = [
++    { name = "langchain-core" },
++    { name = "langgraph" },
++    { name = "pydantic" },
++]
++sdist = { url = "https://files.pythonhosted.org/packages/98/3f/888a7099d2bd2917f8b0c3ffc7e347f1e664cf64267820b0b923c4f339fc/langchain-1.2.15.tar.gz", hash = "sha256:1717b6719daefae90b2728314a5e2a117ff916291e2862595b6c3d6fba33d652", size = 574732, upload-time = "2026-04-03T14:26:03.994Z" }
++wheels = [
++    { url = "https://files.pythonhosted.org/packages/3f/e8/a3b8cb0005553f6a876865073c81ef93bd7c5b18381bcb9ba4013af96ebc/langchain-1.2.15-py3-none-any.whl", hash = "sha256:e349db349cb3e9550c4044077cf90a1717691756cc236438404b23500e615874", size = 112714, upload-time = "2026-04-03T14:26:02.557Z" },
++]
++
+ [[package]]
+ name = "langchain-core"
+ version = "1.2.28"
+-- 
+2.51.0
+

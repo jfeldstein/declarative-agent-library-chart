@@ -34,6 +34,10 @@ spec:
                 configMapKeyRef:
                   name: {{ include "declarative-agent-library.fullname" . }}-config
                   key: system-prompt
+            {{- if .Values.chatModel }}
+            - name: HOSTED_AGENT_CHAT_MODEL
+              value: {{ .Values.chatModel | quote }}
+            {{- end }}
             - name: HOSTED_AGENT_RAG_BASE_URL
               value: {{ include "declarative-agent-library.ragInternalBaseUrl" . | quote }}
             - name: HOSTED_AGENT_SUBAGENTS_JSON

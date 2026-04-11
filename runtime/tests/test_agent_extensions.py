@@ -10,6 +10,7 @@ from fastapi.testclient import TestClient
 
 from hosted_agents.app import create_app
 from hosted_agents.skills_state import reset_skill_unlocked_tools
+from tests.conftest import patch_supervisor_fake_model, tool_then_text_responses
 
 
 @pytest.fixture
@@ -18,7 +19,15 @@ def client(monkeypatch: pytest.MonkeyPatch) -> TestClient:
     monkeypatch.setenv("HOSTED_AGENT_SYSTEM_PROMPT", 'Respond, "Main"')
     monkeypatch.setenv(
         "HOSTED_AGENT_SUBAGENTS_JSON",
-        json.dumps([{"name": "s1", "systemPrompt": 'Respond, "Sub1"'}]),
+        json.dumps(
+            [
+                {
+                    "name": "s1",
+                    "systemPrompt": 'Respond, "Sub1"',
+                    "description": "Test specialist s1",
+                },
+            ],
+        ),
     )
     monkeypatch.setenv(
         "HOSTED_AGENT_SKILLS_JSON",
@@ -41,15 +50,28 @@ def test_runtime_summary(client: TestClient) -> None:
     assert body["orchestration"] == "langgraph"
 
 
-def test_subagent_invoke(client: TestClient) -> None:
-    r = client.post("/api/v1/trigger", json={"subagent": "s1"})
+def test_subagent_tool_via_supervisor(
+    monkeypatch: pytest.MonkeyPatch,
+    client: TestClient,
+) -> None:
+    patch_supervisor_fake_model(
+        monkeypatch,
+        tool_then_text_responses("subagent_s1", {"task": "go"}, final_text="ok"),
+    )
+    r = client.post("/api/v1/trigger", json={"message": "call s1"})
     assert r.status_code == 200
-    assert "Sub1" in r.text
+    assert r.text == "ok"
+    metrics = client.get("/metrics").text
+    assert (
+        'agent_runtime_subagent_invocations_total{result="success",subagent="s1"}'
+        in metrics
+    )
 
 
-def test_subagent_missing(client: TestClient) -> None:
+def test_legacy_subagent_field_rejected(client: TestClient) -> None:
     r = client.post("/api/v1/trigger", json={"subagent": "nope"})
-    assert r.status_code == 404
+    assert r.status_code == 400
+    assert "subagent" in r.json()["detail"].lower()
 
 
 def test_rag_query_requires_config(client: TestClient) -> None:

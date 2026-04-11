@@ -14,7 +14,11 @@
     },
     "systemPrompt": {
       "type": "string",
-      "description": "Rendered into ConfigMap; wired to HOSTED_AGENT_SYSTEM_PROMPT"
+      "description": "Supervisor instructions; rendered into ConfigMap as HOSTED_AGENT_SYSTEM_PROMPT (root agent when subagents are configured)"
+    },
+    "chatModel": {
+      "type": "string",
+      "description": "Optional LangChain chat model id when subagents are non-empty (e.g. openai:gpt-4o-mini) → HOSTED_AGENT_CHAT_MODEL; requires provider package + credentials in the image"
     },
     "service": {
       "type": "object",
@@ -106,14 +110,22 @@
     },
     "subagents": {
       "type": "array",
-      "description": "Supervisor subagents as JSON (name, systemPrompt, optional role metrics|rag|default, optional capability flags)",
+      "description": "Specialists exposed as LangChain tools on the root agent (name, description recommended, optional role metrics|rag|default, optional exposeAsTool)",
       "items": {
         "type": "object",
         "properties": {
           "name": { "type": "string" },
+          "description": {
+            "type": "string",
+            "description": "Recommended: tool schema / supervisor discovery text (LangChain subagents enumeration)"
+          },
           "systemPrompt": { "type": "string" },
           "system_prompt": { "type": "string" },
           "role": { "type": "string" },
+          "exposeAsTool": {
+            "type": "boolean",
+            "description": "When false, omit this subagent from the default tool list (metrics defaults to false unless set true)"
+          },
           "scrapers": { "type": "array" },
           "tools": { "type": "array" }
         }

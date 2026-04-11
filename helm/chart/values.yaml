@@ -5,9 +5,14 @@ image:
   tag: local
   pullPolicy: IfNotPresent
 
-# Maps to HOSTED_AGENT_SYSTEM_PROMPT (ConfigMap + env)
+# Maps to HOSTED_AGENT_SYSTEM_PROMPT (ConfigMap + env).
+# This is the **supervisor** system prompt when ``subagents`` is non-empty (LangChain subagents pattern).
 systemPrompt: |
   Respond, "Hello :wave:"
+
+# Optional chat model for the supervisor when ``subagents`` is non-empty, e.g. ``openai:gpt-4o-mini``.
+# Maps to HOSTED_AGENT_CHAT_MODEL. Install the matching LangChain provider package in the image.
+chatModel: ""
 
 service:
   type: ClusterIP

@@ -60,7 +60,7 @@ Recommended pipeline labels:
 - **`level`** from the `level` field.
 - **`request_id`** from the `request_id` field when present.
 
-Clients may send **`X-Request-Id`**; the server echoes it on responses and includes it in structured logs for the request. Outbound HTTP from the agent to RAG (trigger **rag** subagent path and **`POST /api/v1/rag/query`**) sends the same **`X-Request-Id`** on the upstream request.
+Clients may send **`X-Request-Id`**; the server echoes it on responses and includes it in structured logs for the request. Outbound HTTP from the agent to RAG (**`rag`** specialist tool execution inside **`POST /api/v1/trigger`** and **`POST /api/v1/rag/query`**) sends the same **`X-Request-Id`** on the upstream request.
 
 ## Dashboards
 
@@ -81,12 +81,12 @@ Helm: set **`o11y.prometheusAnnotations.enabled: true`** under `declarative-agen
 
 ### Subagent roles (agent process)
 
-Configured subagents may set **`role`**. Both are reached only through **`POST /api/v1/trigger`** with a JSON body:
+Configured subagents are **tools** on the root agent ([LangChain subagents](https://docs.langchain.com/oss/python/langchain/multi-agent/subagents)). They run when the supervisor invokes them during **`POST /api/v1/trigger`** (after a **`message`** turn), or when exercising them via unit tests with a scripted model.
 
-- **`metrics`**: e.g. `{"subagent":"metrics"}` returns the agent process **Prometheus snapshot** (same registry as `GET /metrics` on the agent). Use a dedicated subagent name (e.g. `metrics`) for scrape debugging.
-- **`rag`**: e.g. `{"subagent":"rag","query":"…","scope":"default",…}` calls the managed RAG **`/v1/query`**; the HTTP body is plain-text JSON from RAG. Requires `HOSTED_AGENT_RAG_BASE_URL` and a separate scrape target for **`agent_runtime_rag_*`** on the RAG pod.
+- **`metrics`**: tool body returns the agent process **Prometheus snapshot** (same registry as `GET /metrics`). **`role: metrics`** is omitted from the default tool list unless **`exposeAsTool: true`** is set on that entry.
+- **`rag`**: tool arguments carry **`query`** and optional RAG fields; execution proxies to managed RAG **`/v1/query`**. Requires `HOSTED_AGENT_RAG_BASE_URL` and a separate scrape target for **`agent_runtime_rag_*`** on the RAG pod.
 
-Subagent, skill, and tool steps still increment **`agent_runtime_subagent_*`**, **`agent_runtime_skill_*`**, and **`agent_runtime_mcp_tool_*`** when executed via the trigger pipeline.
+**`agent_runtime_subagent_*`**, **`agent_runtime_skill_*`**, and **`agent_runtime_mcp_tool_*`** increment when those tools or the legacy direct **`tool`** / **`load_skill`** paths run through the trigger pipeline.
 
 Additional metrics (**scrapers**, etc.) can live on their own workloads; extend dashboards as needed.
 
