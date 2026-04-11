@@ -1,0 +1,8 @@
+# Chart-testing (ct) — https://github.com/helm/chart-testing
+# Run from this directory: ct lint --config ct.yaml --all
+chart-dirs:
+  - helm
+  - examples
+validate-maintainers: false
+helm-dependency-extra-args:
+  - --skip-refresh

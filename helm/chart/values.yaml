@@ -1,0 +1,56 @@
+replicaCount: 1
+
+image:
+  repository: config-first-hosted-agents
+  tag: local
+  pullPolicy: IfNotPresent
+
+# Maps to HOSTED_AGENT_SYSTEM_PROMPT (ConfigMap + env)
+systemPrompt: |
+  Respond, "Hello :wave:"
+
+service:
+  type: ClusterIP
+  port: 8088
+  # When type is NodePort, set 30000–32767 (optional local kind mapping)
+  nodePort: null
+
+resources: {}
+
+nameOverride: ""
+fullnameOverride: ""
+
+# Observability: Prometheus scrape hints (off by default) and optional ServiceMonitor
+o11y:
+  prometheusAnnotations:
+    enabled: false
+  structuredLogs:
+    # When true, agent container sets HOSTED_AGENT_LOG_FORMAT=json (stdout JSON logs)
+    json: false
+  serviceMonitor:
+    enabled: false
+    interval: 30s
+    scrapeTimeout: 10s
+    extraLabels: {}
+
+# Scheduled scrapers (CronJobs). When at least one job has enabled: true, the chart also
+# deploys the managed RAG HTTP service (see scrapers.ragService). Reference job POSTs to RAG_SERVICE_URL.
+scrapers:
+  resources: {}
+  ragService:
+    replicaCount: 1
+    service:
+      type: ClusterIP
+      port: 8090
+    resources: {}
+  jobs: []
+
+# Declarative subagents (JSON → HOSTED_AGENT_SUBAGENTS_JSON). See README (LangChain subagents pattern).
+subagents: []
+
+# Skill catalog (JSON → HOSTED_AGENT_SKILLS_JSON). See README (LangChain skills pattern).
+skills: []
+
+# MCP-style tool allowlist (JSON array of tool ids → HOSTED_AGENT_ENABLED_MCP_TOOLS_JSON)
+mcp:
+  enabledTools: []

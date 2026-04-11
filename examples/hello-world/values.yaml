@@ -1,0 +1,8 @@
+# Values for subchart `declarative-agent-library` (see helm/chart/Chart.yaml name)
+declarative-agent-library:
+  systemPrompt: |
+    Respond, "Hello :wave:"
+  image:
+    repository: config-first-hosted-agents
+    tag: local
+    pullPolicy: Never

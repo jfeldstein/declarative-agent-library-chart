@@ -1,0 +1,24 @@
+suite: hello-world default values
+release:
+  name: cfha-ci
+tests:
+  - it: produces no CronJob documents when scrapers.jobs is empty
+    template: charts/declarative-agent-library/templates/scraper-cronjobs.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: does not render RAG deployment
+    template: charts/declarative-agent-library/templates/rag-deployment.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: does not render RAG service
+    template: charts/declarative-agent-library/templates/rag-service.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: does not render RAG ServiceMonitor
+    template: charts/declarative-agent-library/templates/rag-servicemonitor.yaml
+    asserts:
+      - hasDocuments:
+          count: 0

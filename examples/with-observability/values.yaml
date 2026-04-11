@@ -1,0 +1,34 @@
+# Example: opt-in observability on the Declarative Agent Library subchart.
+# See docs/observability.md and grafana/README.md.
+#
+# RAG is deployed when at least one scraper job has enabled: true; RAG Prometheus
+# annotations follow o11y.prometheusAnnotations (same as the agent).
+declarative-agent-library:
+  systemPrompt: |
+    Respond, "Hello :wave:"
+  image:
+    repository: config-first-hosted-agents
+    tag: local
+    pullPolicy: Never
+  o11y:
+    prometheusAnnotations:
+      enabled: true
+    structuredLogs:
+      json: true
+    serviceMonitor:
+      enabled: true
+      interval: 30s
+      scrapeTimeout: 10s
+      extraLabels:
+        release: prometheus
+  scrapers:
+    ragService:
+      replicaCount: 1
+      service:
+        type: ClusterIP
+        port: 8090
+      resources: {}
+    jobs:
+      - name: reference
+        enabled: true
+        schedule: "0 * * * *"

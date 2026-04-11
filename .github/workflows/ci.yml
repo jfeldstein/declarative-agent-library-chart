@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python:
+    name: Python (ruff, pytest, smoke)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: runtime
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --all-groups
+
+      - name: Ruff lint
+        run: uv run ruff check src tests
+
+      - name: Pytest with coverage (fail under 85%)
+        run: uv run pytest tests/ -v --tb=short --cov-report=term-missing --cov-report=xml
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-xml
+          path: runtime/coverage.xml
+          if-no-files-found: error
+
+      - name: RAG smoke (in-process)
+        run: uv run python scripts/smoke_rag.py
+
+  helm:
+    name: Helm (unittest + ct lint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/setup-helm@v4
+        with:
+          version: v3.14.4
+
+      - name: Install helm-unittest
+        run: helm plugin install https://github.com/helm-unittest/helm-unittest.git
+
+      - name: Set up chart-testing
+        uses: helm/chart-testing-action@v2.6.1
+        with:
+          version: v3.11.0
+
+      - name: helm dependency build + unittest (examples)
+        run: |
+          set -euo pipefail
+          for chart_dir in examples/*/; do
+            chart=$(basename "$chart_dir")
+            (
+              cd "examples/$chart"
+              helm dependency build --skip-refresh
+              helm unittest .
+            )
+          done
+
+      - name: ct lint
+        run: ct lint --config ct.yaml --all

@@ -1,0 +1,11 @@
+.venv
+__pycache__
+.pytest_cache
+.git
+runtime/tests
+htmlcov
+.coverage
+*.md
+docs
+helm/tests
+examples

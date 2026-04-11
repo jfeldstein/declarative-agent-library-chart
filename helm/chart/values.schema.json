@@ -1,0 +1,166 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "declarative-agent-library chart values (draft + runtime v1)",
+  "type": "object",
+  "properties": {
+    "replicaCount": { "type": "integer", "minimum": 1 },
+    "image": {
+      "type": "object",
+      "properties": {
+        "repository": { "type": "string" },
+        "tag": { "type": "string" },
+        "pullPolicy": { "type": "string" }
+      }
+    },
+    "systemPrompt": {
+      "type": "string",
+      "description": "Rendered into ConfigMap; wired to HOSTED_AGENT_SYSTEM_PROMPT"
+    },
+    "service": {
+      "type": "object",
+      "properties": {
+        "type": { "type": "string" },
+        "port": { "type": "integer" },
+        "nodePort": { "type": ["integer", "null"] }
+      }
+    },
+    "tools": {
+      "type": "object",
+      "description": "DRAFT — proposal shape; runtime ignores in v1",
+      "properties": {
+        "slack": {
+          "type": "object",
+          "properties": {
+            "channels": { "type": "array", "items": { "type": "string" } },
+            "searches": { "type": "array", "items": { "type": "string" } },
+            "slackBotName": { "type": "string" },
+            "slackBotId": { "type": "string" }
+          }
+        },
+        "jira": {
+          "type": "object",
+          "properties": {
+            "projects": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "key": { "type": "string" },
+                  "scopes": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "create-issues",
+                        "modify-issues",
+                        "transition-issues"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "drive": { "type": "object" }
+      }
+    },
+    "scrapers": {
+      "type": "object",
+      "description": "CronJob-backed scrapers; reference job POSTs to RAG_SERVICE_URL. RAG Deployment+Service render when jobs contains at least one enabled: true.",
+      "properties": {
+        "resources": { "type": "object" },
+        "ragService": {
+          "type": "object",
+          "description": "Managed RAG HTTP service (/v1/embed, /v1/query, /v1/relate); deployed only when an enabled scraper job exists",
+          "properties": {
+            "replicaCount": { "type": "integer", "minimum": 1 },
+            "service": {
+              "type": "object",
+              "properties": {
+                "type": { "type": "string" },
+                "port": { "type": "integer", "minimum": 1, "maximum": 65535 }
+              }
+            },
+            "resources": { "type": "object" }
+          }
+        },
+        "jobs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "enabled", "schedule"],
+            "properties": {
+              "name": { "type": "string", "minLength": 1 },
+              "enabled": { "type": "boolean" },
+              "schedule": { "type": "string", "minLength": 1 },
+              "scope": { "type": "string" },
+              "extraEnv": {
+                "type": "array",
+                "items": { "type": "object" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "subagents": {
+      "type": "array",
+      "description": "Supervisor subagents as JSON (name, systemPrompt, optional role metrics|rag|default, optional capability flags)",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "systemPrompt": { "type": "string" },
+          "system_prompt": { "type": "string" },
+          "role": { "type": "string" },
+          "scrapers": { "type": "array" },
+          "tools": { "type": "array" }
+        }
+      }
+    },
+    "skills": {
+      "type": "array",
+      "description": "Skill catalog entries (name, prompt, optional extraTools)",
+      "items": { "type": "object" }
+    },
+    "mcp": {
+      "type": "object",
+      "description": "Allowlisted in-process tools invoked via POST /api/v1/trigger (JSON tool + tool_arguments)",
+      "properties": {
+        "enabledTools": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "o11y": {
+      "type": "object",
+      "description": "Prometheus discovery annotations, JSON logs, optional ServiceMonitor (Prometheus Operator CRD)",
+      "properties": {
+        "prometheusAnnotations": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" }
+          }
+        },
+        "structuredLogs": {
+          "type": "object",
+          "properties": {
+            "json": { "type": "boolean" }
+          }
+        },
+        "serviceMonitor": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "interval": { "type": "string" },
+            "scrapeTimeout": { "type": "string" },
+            "extraLabels": { "type": "object" }
+          }
+        }
+      }
+    },
+    "resources": { "type": "object" }
+  }
+}

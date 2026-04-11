@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "declarative-agent-library.fullname" . }}
+  labels:
+    {{- include "declarative-agent-library.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "declarative-agent-library.agentSelectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "declarative-agent-library.agentSelectorLabels" . | nindent 8 }}
+      {{- if .Values.o11y.prometheusAnnotations.enabled }}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: {{ .Values.service.port | quote }}
+        prometheus.io/path: "/metrics"
+      {{- end }}
+    spec:
+      containers:
+        - name: agent
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8088
+              protocol: TCP
+          env:
+            - name: HOSTED_AGENT_SYSTEM_PROMPT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "declarative-agent-library.fullname" . }}-config
+                  key: system-prompt
+            - name: HOSTED_AGENT_RAG_BASE_URL
+              value: {{ include "declarative-agent-library.ragInternalBaseUrl" . | quote }}
+            - name: HOSTED_AGENT_SUBAGENTS_JSON
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "declarative-agent-library.fullname" . }}-config
+                  key: subagents.json
+            - name: HOSTED_AGENT_SKILLS_JSON
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "declarative-agent-library.fullname" . }}-config
+                  key: skills.json
+            - name: HOSTED_AGENT_ENABLED_MCP_TOOLS_JSON
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "declarative-agent-library.fullname" . }}-config
+                  key: enabled-mcp-tools.json
+            {{- if .Values.o11y.structuredLogs.json }}
+            - name: HOSTED_AGENT_LOG_FORMAT
+              value: "json"
+            {{- end }}
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}

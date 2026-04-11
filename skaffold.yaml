@@ -1,0 +1,31 @@
+# Skaffold v2 — build image, deploy hello-world Helm chart, port-forward :8088 → service :8088
+# Run from this repository:
+#   (cd examples/hello-world && helm dependency update)
+#   skaffold dev
+apiVersion: skaffold/v2beta29
+kind: Config
+metadata:
+  name: config-first-hosted-agents-hello
+build:
+  local:
+    push: false
+  artifacts:
+    - image: config-first-hosted-agents
+      context: .
+      docker:
+        dockerfile: Dockerfile
+deploy:
+  helm:
+    releases:
+      - name: hello-world
+        chartPath: examples/hello-world
+        upgradeOnChange: true
+        setValueTemplates:
+          declarative-agent-library.image.repository: "{{.IMAGE_REPO_config_first_hosted_agents}}"
+          declarative-agent-library.image.tag: "{{.IMAGE_TAG_config_first_hosted_agents}}"
+          declarative-agent-library.image.pullPolicy: "IfNotPresent"
+portForward:
+  - resourceType: service
+    resourceName: hello-world-declarative-agent-library
+    port: 8088
+    localPort: 8088

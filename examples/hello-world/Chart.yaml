@@ -1,0 +1,9 @@
+apiVersion: v2
+name: hello-world
+description: Minimal example application chart (depends on Declarative Agent Library Chart)
+type: application
+version: 0.1.0
+dependencies:
+  - name: declarative-agent-library
+    version: 0.1.0
+    repository: file://../../helm/chart

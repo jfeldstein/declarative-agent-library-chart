@@ -1,0 +1,29 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "declarative-agent-library.fullname" . }}-test-trigger
+  labels:
+    {{- include "declarative-agent-library.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 2
+  template:
+    metadata:
+      labels:
+        {{- include "declarative-agent-library.selectorLabels" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: curl
+          image: curlimages/curl:8.5.0
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              URL="http://{{ include "declarative-agent-library.fullname" . }}:{{ .Values.service.port }}/api/v1/trigger"
+              body=$(curl -sf -X POST "$URL")
+              printf '%s\n' "$body"
+              printf '%s' "$body" | grep -q 'Hello'

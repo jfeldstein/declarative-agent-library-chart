@@ -1,0 +1,21 @@
+suite: with-scrapers default values
+release:
+  name: cfha-ci-scrapers
+tests:
+  - it: renders at least one CronJob when a scraper job is enabled
+    template: charts/declarative-agent-library/templates/scraper-cronjobs.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: CronJob
+  - it: renders RAG deployment when a scraper job is enabled
+    template: charts/declarative-agent-library/templates/rag-deployment.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Deployment
+      - equal:
+          path: metadata.labels["app.kubernetes.io/component"]
+          value: rag

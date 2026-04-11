@@ -1,0 +1,25 @@
+# DevSpace — build image and deploy hello-world chart (vendor deps first)
+#   (cd examples/hello-world && helm dependency build --skip-refresh)
+#   devspace dev
+version: v2beta1
+name: config-first-hosted-agents
+images:
+  app:
+    image: config-first-hosted-agents
+    dockerfile: Dockerfile
+    context: .
+    tags:
+      - local
+deployments:
+  hello-world:
+    helm:
+      chart:
+        path: examples/hello-world
+      valuesFiles:
+        - examples/hello-world/values.yaml
+dev:
+  hello-world:
+    labelSelector:
+      app.kubernetes.io/name: declarative-agent-library
+    ports:
+      - port: "8088:8088"

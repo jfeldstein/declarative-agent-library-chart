@@ -1,0 +1,9 @@
+apiVersion: v2
+name: with-observability
+description: Example application chart — Prometheus scrape hints, optional ServiceMonitor, JSON logs
+type: application
+version: 0.1.0
+dependencies:
+  - name: declarative-agent-library
+    version: 0.1.0
+    repository: file://../../helm/chart

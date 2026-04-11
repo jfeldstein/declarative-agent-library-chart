@@ -1,0 +1,56 @@
+suite: with-observability prometheus and ServiceMonitors
+release:
+  name: cfha-ci-o11y
+tests:
+  - it: agent Deployment pod template has prometheus scrape annotations
+    template: charts/declarative-agent-library/templates/deployment.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: spec.template.metadata.annotations["prometheus.io/scrape"]
+          value: "true"
+  - it: agent Service has prometheus scrape annotations
+    template: charts/declarative-agent-library/templates/service.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: metadata.annotations["prometheus.io/scrape"]
+          value: "true"
+  - it: RAG Deployment pod template has prometheus scrape annotations
+    template: charts/declarative-agent-library/templates/rag-deployment.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: spec.template.metadata.annotations["prometheus.io/scrape"]
+          value: "true"
+  - it: RAG Service has prometheus scrape annotations
+    template: charts/declarative-agent-library/templates/rag-service.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: metadata.annotations["prometheus.io/scrape"]
+          value: "true"
+  - it: renders agent ServiceMonitor
+    template: charts/declarative-agent-library/templates/servicemonitor.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ServiceMonitor
+      - matchRegex:
+          path: metadata.name
+          pattern: -agent$
+  - it: renders RAG ServiceMonitor
+    template: charts/declarative-agent-library/templates/rag-servicemonitor.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ServiceMonitor
+      - matchRegex:
+          path: metadata.name
+          pattern: -rag$

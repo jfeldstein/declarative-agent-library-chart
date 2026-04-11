@@ -1,0 +1,23 @@
+{{- if .Values.o11y.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "declarative-agent-library.fullname" . }}-agent
+  labels:
+    {{- include "declarative-agent-library.labels" . | nindent 4 }}
+    {{- with .Values.o11y.serviceMonitor.extraLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "declarative-agent-library.agentSelectorLabels" . | nindent 6 }}
+  namespaceSelector:
+    matchNames:
+      - {{ .Release.Namespace }}
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: {{ .Values.o11y.serviceMonitor.interval | quote }}
+      scrapeTimeout: {{ .Values.o11y.serviceMonitor.scrapeTimeout | quote }}
+{{- end }}

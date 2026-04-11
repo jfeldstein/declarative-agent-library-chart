@@ -1,0 +1,58 @@
+{{- if include "declarative-agent-library.ragDeployed" . }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "declarative-agent-library.fullname" . }}-rag
+  labels:
+    {{- include "declarative-agent-library.labels" . | nindent 4 }}
+    app.kubernetes.io/component: rag
+spec:
+  replicas: {{ .Values.scrapers.ragService.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "declarative-agent-library.ragSelectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "declarative-agent-library.ragSelectorLabels" . | nindent 8 }}
+      {{- if .Values.o11y.prometheusAnnotations.enabled }}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: {{ .Values.scrapers.ragService.service.port | quote }}
+        prometheus.io/path: "/metrics"
+      {{- end }}
+    spec:
+      containers:
+        - name: rag
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - hosted_agents.rag.app:create_app
+            - --factory
+            - --host
+            - "0.0.0.0"
+            - --port
+            - {{ .Values.scrapers.ragService.service.port | quote }}
+          command:
+            - uvicorn
+          ports:
+            - name: http
+              containerPort: {{ .Values.scrapers.ragService.service.port }}
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          {{- with .Values.scrapers.ragService.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+{{- end }}

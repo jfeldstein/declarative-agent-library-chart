@@ -1,0 +1,13 @@
+# Example: reference scraper CronJob + managed RAG (RAG deploys when a job is enabled).
+declarative-agent-library:
+  systemPrompt: |
+    Respond, "Hello :wave:"
+  image:
+    repository: config-first-hosted-agents
+    tag: local
+    pullPolicy: Never
+  scrapers:
+    jobs:
+      - name: reference
+        enabled: true
+        schedule: "0 * * * *"

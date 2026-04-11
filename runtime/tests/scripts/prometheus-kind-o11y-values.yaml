@@ -1,0 +1,35 @@
+# Minimal Prometheus for kind integration tests (helm install prometheus-community/prometheus).
+# @SCRAPE_TARGET_AGENT@ and @SCRAPE_TARGET_RAG@ are replaced by integration_kind_o11y_prometheus.sh.
+
+alertmanager:
+  enabled: false
+
+kube-state-metrics:
+  enabled: false
+
+prometheus-node-exporter:
+  enabled: false
+
+prometheus-pushgateway:
+  enabled: false
+
+server:
+  persistentVolume:
+    enabled: false
+  global:
+    scrape_interval: 3s
+    evaluation_interval: 3s
+
+extraScrapeConfigs: |
+  - job_name: cfha-agent-metrics
+    metrics_path: /metrics
+    scrape_interval: 3s
+    static_configs:
+      - targets:
+          - "@SCRAPE_TARGET_AGENT@"
+  - job_name: cfha-rag-metrics
+    metrics_path: /metrics
+    scrape_interval: 3s
+    static_configs:
+      - targets:
+          - "@SCRAPE_TARGET_RAG@"

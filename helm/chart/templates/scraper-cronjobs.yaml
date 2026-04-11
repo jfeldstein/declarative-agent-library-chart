@@ -1,0 +1,58 @@
+{{- range .Values.scrapers.jobs }}
+{{- if .enabled }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "declarative-agent-library.fullname" $ }}-scraper-{{ .name }}
+  labels:
+    {{- include "declarative-agent-library.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: scraper
+    scraper.agentic.cfha/name: {{ .name | quote }}
+spec:
+  schedule: {{ .schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            {{- include "declarative-agent-library.selectorLabels" $ | nindent 12 }}
+            app.kubernetes.io/component: scraper
+            scraper.agentic.cfha/name: {{ .name | quote }}
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: scraper
+              image: "{{ $.Values.image.repository }}:{{ $.Values.image.tag }}"
+              imagePullPolicy: {{ $.Values.image.pullPolicy }}
+              {{- if eq .name "reference" }}
+              command:
+                - python
+                - -m
+                - hosted_agents.scrapers.reference_job
+              {{- else }}
+              command:
+                - python
+                - -c
+                - "import os; print('stub scraper', os.environ.get('SCRAPER_NAME',''))"
+              {{- end }}
+              env:
+                - name: RAG_SERVICE_URL
+                  value: {{ include "declarative-agent-library.ragInternalBaseUrl" $ | quote }}
+                - name: SCRAPER_NAME
+                  value: {{ .name | quote }}
+                - name: SCRAPER_SCOPE
+                  value: {{ (.scope | default .name) | quote }}
+                {{- with .extraEnv }}
+                {{- toYaml . | nindent 16 }}
+                {{- end }}
+              {{- with $.Values.scrapers.resources }}
+              resources:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
+{{- end }}
+{{- end }}
