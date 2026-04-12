@@ -41,11 +41,11 @@ echo "==> RAG smoke (in-process)"
 
 # Helm charts: chart-testing (ct) + helm-unittest — see openspec change helm-ct-unittest
 # Install:
-#   - Helm 3: https://helm.sh/docs/intro/install/
+#   - Helm 3.18.10+ (helm-unittest plugin uses platformHooks; older Helm fails to load the plugin — see helm/helm#30920). CI pins v3.20.2.
 #   - ct (chart-testing): https://github.com/helm/chart-testing — e.g. brew install chart-testing
 #     or: docker run --rm -v "$(pwd):/work" -w /work quay.io/helmpack/chart-testing:v3.14.0 ct lint --config ct.yaml --all
-#   - helm-unittest: https://github.com/helm-unittest/helm-unittest — e.g.
-#       helm plugin install https://github.com/helm-unittest/helm-unittest.git
+#   - helm-unittest: https://github.com/helm-unittest/helm-unittest — pin matches CI, e.g.
+#       helm plugin install https://github.com/helm-unittest/helm-unittest.git --version v1.0.3
 #     or Docker: https://github.com/helm-unittest/helm-unittest#docker-usage
 if command -v helm &>/dev/null; then
   if ! command -v ct &>/dev/null; then
@@ -55,8 +55,8 @@ if command -v helm &>/dev/null; then
   fi
   if ! helm plugin list 2>/dev/null | awk 'NR>1 {print $1}' | grep -qx unittest; then
     echo "error: helm-unittest plugin not installed. Run:" >&2
-    echo "  helm plugin install https://github.com/helm-unittest/helm-unittest.git" >&2
-    echo "  Releases: https://github.com/helm-unittest/helm-unittest/releases" >&2
+    echo "  helm plugin install https://github.com/helm-unittest/helm-unittest.git --version v1.0.3" >&2
+    echo "  (Helm 3.18.10+ required for plugin platformHooks.) Releases: https://github.com/helm-unittest/helm-unittest/releases" >&2
     exit 1
   fi
 

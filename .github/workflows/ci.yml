@@ -45,6 +45,9 @@ jobs:
   helm:
     name: Helm (unittest + ct lint)
     runs-on: ubuntu-latest
+    env:
+      # Pinned so CI does not pick up breaking plugin or Helm requirement changes from main.
+      HELM_UNITTEST_VERSION: v1.0.3
     steps:
       - uses: actions/checkout@v4
 
@@ -54,7 +57,7 @@ jobs:
           version: v3.20.2
 
       - name: Install helm-unittest
-        run: helm plugin install https://github.com/helm-unittest/helm-unittest.git
+        run: helm plugin install https://github.com/helm-unittest/helm-unittest.git --version "${HELM_UNITTEST_VERSION}"
 
       - name: Set up chart-testing
         uses: helm/chart-testing-action@v2.6.1
