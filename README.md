@@ -34,7 +34,7 @@ Locked design choices: [docs/adrs/](docs/adrs/README.md) (`NNNN-short-title.md`;
 
 ## Local CI (Python + chart render)
 
-Traceability: [CFHA-REQ-HELM-UNITTEST-003] [CFHA-REQ-CHART-CT-002] [CFHA-REQ-O11Y-LOGS-004] — see [docs/spec-test-traceability.md](docs/spec-test-traceability.md) for the full matrix and CI tiers.
+Traceability: [CFHA-REQ-HELM-UNITTEST-003] [CFHA-REQ-CHART-CT-002] [CFHA-REQ-O11Y-LOGS-004] — see [ADR 0003](docs/adrs/0003-spec-test-traceability.md) for ID and linking rules; [docs/spec-test-traceability.md](docs/spec-test-traceability.md) for the matrix and CI tiers.
 
 From a clone of [github.com/jfeldstein/declarative-agent-library-chart](https://github.com/jfeldstein/declarative-agent-library-chart):
 

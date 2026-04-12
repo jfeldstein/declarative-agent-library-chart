@@ -3,7 +3,7 @@
 
 Traceability: [CFHA-VER-001]
 
-Rules (see openspec/specs/cfha-requirement-verification/spec.md and docs/spec-test-traceability.md):
+Rules (see openspec/specs/cfha-requirement-verification/spec.md, docs/adrs/0003-spec-test-traceability.md, and docs/spec-test-traceability.md):
 
 - Every ``### Requirement:`` heading under ``openspec/specs/*/spec.md`` must include a bracketed
   ``[CFHA-REQ-...]`` or ``[CFHA-VER-...]`` identifier on the same line.

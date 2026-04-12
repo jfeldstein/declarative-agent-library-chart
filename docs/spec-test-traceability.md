@@ -1,8 +1,10 @@
-# Spec–test traceability
+# Spec–test traceability matrix
 
 <!-- Traceability: [CFHA-VER-003] -->
 
-This matrix maps each **promoted** requirement ID under `openspec/specs/` to evidence the project accepts for **default PR CI** or a **documented tier**. It is enforced by `scripts/check_spec_traceability.py` (see `ci.sh`).
+This file holds the **authoritative requirement → evidence map** (table below) and the **CI tier** summary. Rules for requirement IDs, how tests cite specs, and how agents maintain links are documented in **[ADR 0003: Spec–test traceability](adrs/0003-spec-test-traceability.md)**.
+
+The table is parsed by `scripts/check_spec_traceability.py`; keep the **Matrix** section format stable (header row, separator row, data rows).
 
 ## CI tiers
 
@@ -39,6 +41,6 @@ This matrix maps each **promoted** requirement ID under `openspec/specs/` to evi
 | [CFHA-REQ-CHART-CT-002] | `openspec/specs/cfha-chart-testing-ct/spec.md` | `ci.sh`, `README.md` | default PR |
 | [CFHA-VER-001] | `openspec/specs/cfha-requirement-verification/spec.md` | `scripts/check_spec_traceability.py` | default PR |
 | [CFHA-VER-002] | `openspec/specs/cfha-requirement-verification/spec.md` | `runtime/tests/test_o11y_metrics.py`, `examples/hello-world/tests/hello_world_test.yaml` | default PR |
-| [CFHA-VER-003] | `openspec/specs/cfha-requirement-verification/spec.md` | `docs/spec-test-traceability.md` | default PR |
+| [CFHA-VER-003] | `openspec/specs/cfha-requirement-verification/spec.md` | `docs/spec-test-traceability.md`, `docs/adrs/0003-spec-test-traceability.md` | default PR |
 | [CFHA-VER-004] | `openspec/specs/cfha-requirement-verification/spec.md` | `ci.sh`, `docs/spec-test-traceability.md`, `.github/workflows/scheduled-o11y-integration.yml` | default PR + scheduled |
 | [CFHA-VER-005] | `openspec/specs/cfha-requirement-verification/spec.md` | `AGENTS.md`, `.cursor/rules/spec-traceability.mdc` | default PR |

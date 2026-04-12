@@ -8,6 +8,10 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ## 2026-04-11
 
+**ADR 0003: spec–test traceability** — Normative rules (IDs, matrix vs tests, cross-links, agent playbook) live in [docs/adrs/0003-spec-test-traceability.md](adrs/0003-spec-test-traceability.md); [docs/spec-test-traceability.md](spec-test-traceability.md) keeps the CI tier table and parsed matrix.
+
+## 2026-04-11
+
 **Spec–test traceability** (OpenSpec change `traceability`).
 
 - Promoted **`openspec/specs/cfha-requirement-verification/spec.md`**; added **`[CFHA-REQ-…]`** IDs across existing promoted specs; **`docs/spec-test-traceability.md`** matrix; **`scripts/check_spec_traceability.py`** run from **`ci.sh`** (strict by default, `CFHA_TRACEABILITY_STRICT=0` to relax YAML/py content checks).
