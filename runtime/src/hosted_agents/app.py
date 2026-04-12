@@ -12,6 +12,7 @@ from fastapi.responses import JSONResponse, PlainTextResponse, Response
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
 from hosted_agents.agent_models import RagQueryBody, TriggerBody
+from hosted_agents.agent_tracing import observability_summary
 from hosted_agents.env import system_prompt_from_env
 from hosted_agents.metrics import observe_http_trigger
 from hosted_agents.o11y_logging import configure_request_logging
@@ -115,6 +116,7 @@ def create_app(*, system_prompt: str | None = None) -> FastAPI:
                 "skill_unlocked_tools": sorted(unlocked_tools()),
                 "launch_path": "POST /api/v1/trigger",
                 "orchestration": "langgraph",
+                "observability": observability_summary(),
             },
         )
 

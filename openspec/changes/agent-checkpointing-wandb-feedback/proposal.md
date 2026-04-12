@@ -33,3 +33,4 @@ Hosted agents need durable, inspectable runs so we can resume work, audit decisi
 - **Runtime / agent host**: checkpoint store selection, LangGraph or compatible checkpointer wiring, correlation IDs on tool invocations, W&B trace id persistence on steps.
 - **Integrations**: Slack Events API (or Bolt) for reactions; `wandb` SDK for traces and feedback enrichment.
 - **Ops**: secrets for Slack and W&B; retention and PII policies for checkpoints and traces.
+- **Docs**: **`docs/observability.md`** documents checkpoints, W&B tags, correlation, and env stubs per **`wandb-agent-traces`** (operator documentation requirement).

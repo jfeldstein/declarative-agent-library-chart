@@ -58,3 +58,19 @@ The system SHALL NOT emit unbounded high-cardinality tags (for example raw messa
 
 - **WHEN** logging a run with long free-text content
 - **THEN** that content SHALL appear only in redacted trace payloads or summaries, not as a W&B tag key or value that explodes cardinality
+
+### Requirement: Operator documentation and runtime stubs
+
+The repository SHALL keep **`docs/observability.md`** aligned with this capability: **checkpointer** as the authoritative step record, **automatic W&B tracing** (when enabled), the **mandatory W&B tag keys**, **tag cardinality** rules (bounded tags vs trace payloads), the **server-side** Slack correlation chain (**Slack `channel` + `message_ts` → tool call → checkpoint → W&B**), and the **environment variables** that gate tracing and checkpoint store selection.
+
+The Python package SHALL expose a small **stub module** (`hosted_agents.agent_tracing`) that reads those environment variables and surfaces a **non-secret** summary shape (for example via **`GET /api/v1/runtime/summary`**) so operators can verify configuration before the full LangGraph checkpointer and W&B SDK integration is wired. The stub SHALL NOT send telemetry to W&B until the integration tasks attach real `wandb` calls.
+
+#### Scenario: Documentation lists tag keys and env vars
+
+- **WHEN** an operator reads `docs/observability.md` for W&B and checkpoints
+- **THEN** the document SHALL list the mandatory tag keys and SHALL document `HOSTED_AGENT_WANDB_ENABLED`, standard `WANDB_*` variables as referenced in that doc, and `HOSTED_AGENT_CHECKPOINT_STORE` (or equivalent) for the checkpointer backend knob
+
+#### Scenario: Runtime summary reflects stub config
+
+- **WHEN** `GET /api/v1/runtime/summary` is called
+- **THEN** the JSON response SHALL include fields derived from `hosted_agents.agent_tracing` that report whether W&B tracing is **intended** (`HOSTED_AGENT_WANDB_ENABLED`) and the **checkpoint store kind** string, without exposing secret values

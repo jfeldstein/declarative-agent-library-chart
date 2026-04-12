@@ -16,6 +16,7 @@
 - [ ] 2.2 Initialize W&B per top-level invocation with the **tag schema** from `wandb-agent-traces` (omit unknown values; do not emit high-cardinality text as tags)
 - [ ] 2.3 On each checkpoint (or equivalent step boundary), **persist** W&B identifiers needed to annotate that step later (e.g. `wandb_run_id`, span/trace id per SDK)—so resolution **Slack message → tool call → checkpoint → W&B** is possible
 - [ ] 2.4 Add contract or integration tests (W&B SDK mocked) for tag shape and persisted **checkpoint ↔ W&B** link fields
+- [x] 2.5 Keep **`docs/observability.md`** aligned with the **Operator documentation and runtime stubs** requirement in `wandb-agent-traces`; maintain **`hosted_agents.agent_tracing`** and **runtime summary** fields until full W&B/checkpointer wiring lands
 
 ## 3. Correlation IDs and Slack feedback
 

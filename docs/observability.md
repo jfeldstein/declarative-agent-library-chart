@@ -1,5 +1,41 @@
 # Observability (CFHA runtime)
 
+## Checkpoints, W&B traces, and Slack correlation (OpenSpec)
+
+This section aligns with **`openspec/changes/agent-checkpointing-wandb-feedback`** (`runtime-langgraph-checkpoints`, `wandb-agent-traces`, `tool-feedback-slack`).
+
+- **Checkpointer** — The **ordered step history** for a run lives in the **LangGraph-aligned checkpointer** (per-thread checkpoints). It is the **source of truth** for resume and for binding feedback to steps.
+- **Weights & Biases** — When enabled, the runtime **automatically** emits **traces** as LLM and tool work runs. W&B is for **observability and late feedback annotation**, not a second source of step order. **Do not** put unbounded text (full prompts, Slack bodies, per-message ids) on **W&B tags**; keep tags **low cardinality** and put rich content in **spans** / trace payloads (with redaction).
+- **Slack** — Slack messages **cannot** carry hidden correlation metadata. The host keeps a **durable server-side map**: **`(slack_channel_id, message_ts)` → `tool_call_id`, `checkpoint_id`, `run_id`, `thread_id`, W&B run/span identifiers** so reactions can resolve **message → tool call → checkpoint → W&B** for storage + trace updates.
+
+### Environment (runtime stubs)
+
+Until the checkpointer and `wandb` SDK are fully wired, **`hosted_agents.agent_tracing`** reads:
+
+| Variable | Purpose |
+| -------- | ------- |
+| `HOSTED_AGENT_CHECKPOINT_STORE` | Declared checkpointer backend for ops (`none` default until implemented). |
+| `HOSTED_AGENT_WANDB_ENABLED` | `1` / `true` / `yes` / `on` = **intent** to trace to W&B (no network I/O in stub). |
+| `WANDB_API_KEY` | Standard W&B credential (mount via Secret). |
+| `WANDB_PROJECT` or `HOSTED_AGENT_WANDB_PROJECT` | W&B project name. |
+| `WANDB_ENTITY` | Optional team/entity. |
+
+**`GET /api/v1/runtime/summary`** includes **`observability`**: `checkpoint_store`, and **`wandb.tracing_ready`** (true only when `HOSTED_AGENT_WANDB_ENABLED` is truthy, `WANDB_API_KEY` is non-empty, and a project name is set). **`wandb.mandatory_run_tag_keys`** lists the canonical tag names the implementation must populate when values are known.
+
+### Mandatory W&B run tags (implementation target)
+
+| Tag | Notes |
+| --- | ----- |
+| `agent_id` | Omit if unknown; never use free text blobs as tag *values*. |
+| `environment` | e.g. `prod` / `staging`. |
+| `skill_id` | From config, bounded. |
+| `skill_version` | From config, bounded. |
+| `model_id` | From config, bounded. |
+| `prompt_hash` | Hash or sentinel, not raw prompt text. |
+| `thread_id` | Stable conversation/run id. |
+
+**Shadow** comparisons (`rollout_arm`, `shadow_variant_id`) are specified under **`openspec/changes/shadow-rollout-evaluation`**, not this chart section.
+
 ## Metrics (Prometheus)
 
 The agent HTTP server exposes `**GET /metrics**` on the same port as the API (default **8088**), in Prometheus text format.

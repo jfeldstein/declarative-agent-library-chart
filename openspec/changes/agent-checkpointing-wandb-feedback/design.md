@@ -67,3 +67,7 @@ Human judgment often arrives **asynchronously** (e.g. a Slack reaction on a bot 
 - **Production checkpointer backend**: Postgres vs Redis vs vendor—pick per deployment size.  
 - **W&B span-level updates**: Confirm the supported API for **late** feedback on an existing span (vs keyed `wandb.log`) for the pinned SDK.  
 - **Global registry process**: Who approves new labels and how registry version bumps roll out to Slack emoji maps.
+
+## Operator documentation
+
+**`docs/observability.md`** documents checkpoints, W&B tags, cardinality, Slack correlation, and env stubs. **`hosted_agents.agent_tracing`** implements the runtime stub and **`GET /api/v1/runtime/summary`** exposes **`observability`** per **`wandb-agent-traces`** “Operator documentation and runtime stubs.”
