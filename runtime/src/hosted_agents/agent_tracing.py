@@ -1,14 +1,15 @@
-"""Stub observability for W&B traces and checkpoint linkage.
+"""Observability summary for W&B traces and checkpoint linkage.
 
-OpenSpec: ``wandb-agent-traces`` (operator documentation + runtime stubs). The
-LangGraph checkpointer and ``wandb`` SDK are not wired here yet; this module
-parses env and exposes a stable summary for ``GET /api/v1/runtime/summary``.
+OpenSpec: ``wandb-agent-traces``. W&B init lives in :mod:`hosted_agents.wandb_session`;
+checkpointer selection in :mod:`hosted_agents.checkpointing`.
 """
 
 from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+
+from hosted_agents.checkpointing import checkpoints_globally_enabled, effective_checkpoint_store
 
 # Canonical keys per openspec/changes/agent-checkpointing-wandb-feedback/specs/wandb-agent-traces/spec.md
 MANDATORY_WANDB_TAG_KEYS: tuple[str, ...] = (
@@ -61,9 +62,8 @@ def wandb_tracing_ready(cfg: WandbTraceStubConfig | None = None) -> bool:
 
 
 def checkpoint_store_kind() -> str:
-    """Backend selector knob until the checkpointer is wired (default ``none``)."""
-    raw = os.environ.get("HOSTED_AGENT_CHECKPOINT_STORE", "").strip().lower()
-    return raw if raw else "none"
+    """Effective ``HOSTED_AGENT_CHECKPOINT_STORE`` (default ``memory``)."""
+    return effective_checkpoint_store()
 
 
 def observability_summary() -> dict[str, object]:
@@ -71,6 +71,10 @@ def observability_summary() -> dict[str, object]:
     wb = wandb_trace_stub_config()
     return {
         "checkpoint_store": checkpoint_store_kind(),
+        "feature_flags": {
+            "checkpoints_enabled": checkpoints_globally_enabled(),
+            "slack_feedback_enabled": _env_truthy("HOSTED_AGENT_SLACK_FEEDBACK_ENABLED"),
+        },
         "wandb": {
             "tracing_enabled_intent": wb.tracing_enabled_intent,
             "tracing_ready": wandb_tracing_ready(wb),

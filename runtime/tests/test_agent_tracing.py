@@ -11,6 +11,7 @@ from hosted_agents.agent_tracing import (
     wandb_trace_stub_config,
     wandb_tracing_ready,
 )
+from hosted_agents.checkpointing import checkpoints_globally_enabled
 
 
 def test_defaults_disabled(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -23,7 +24,7 @@ def test_defaults_disabled(monkeypatch: pytest.MonkeyPatch) -> None:
     assert cfg.tracing_enabled_intent is False
     assert cfg.api_key_configured is False
     assert wandb_tracing_ready(cfg) is False
-    assert checkpoint_store_kind() == "none"
+    assert checkpoint_store_kind() == "memory"
 
 
 @pytest.mark.parametrize("flag", ("1", "true", "yes", "on"))
@@ -41,12 +42,20 @@ def test_checkpoint_store_override(monkeypatch: pytest.MonkeyPatch) -> None:
     assert checkpoint_store_kind() == "memory"
 
 
+def test_checkpoint_store_none_disables_feature_flag(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("HOSTED_AGENT_CHECKPOINT_STORE", "none")
+    assert checkpoint_store_kind() == "none"
+    assert checkpoints_globally_enabled() is False
+    summary = observability_summary()
+    assert summary["feature_flags"]["checkpoints_enabled"] is False
+
+
 def test_observability_summary_includes_mandatory_keys(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.delenv("HOSTED_AGENT_WANDB_ENABLED", raising=False)
     summary = observability_summary()
-    assert summary["checkpoint_store"] == "none"
+    assert summary["checkpoint_store"] == "memory"
     wandb = summary["wandb"]
     assert wandb["tracing_enabled_intent"] is False
     assert wandb["mandatory_run_tag_keys"] == list(MANDATORY_WANDB_TAG_KEYS)

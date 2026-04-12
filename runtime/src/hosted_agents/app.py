@@ -13,6 +13,7 @@ from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
 from hosted_agents.agent_models import RagQueryBody, TriggerBody
 from hosted_agents.agent_tracing import observability_summary
+from hosted_agents.checkpointing import checkpoints_globally_enabled
 from hosted_agents.env import system_prompt_from_env
 from hosted_agents.metrics import observe_http_trigger
 from hosted_agents.o11y_logging import configure_request_logging
@@ -22,6 +23,8 @@ from hosted_agents.skills_state import unlocked_tools
 from hosted_agents.trigger_graph import (
     TriggerContext,
     TriggerHttpError,
+    get_thread_checkpoint_history,
+    get_thread_state_snapshot,
     run_trigger_graph,
 )
 
@@ -57,6 +60,28 @@ def _request_id(request: Request) -> str:
     return str(rid) if rid else str(uuid.uuid4())
 
 
+def _resolve_thread_id(request: Request, payload: TriggerBody | None) -> str:
+    if payload and payload.thread_id and str(payload.thread_id).strip():
+        return str(payload.thread_id).strip()
+    for key in ("x-thread-id", "X-Thread-Id"):
+        if h := request.headers.get(key):
+            s = str(h).strip()
+            if s:
+                return s
+    return str(uuid.uuid4())
+
+
+def _snapshot_to_dict(sn: object) -> dict:
+    return {
+        "values": getattr(sn, "values", {}),
+        "next": list(getattr(sn, "next", ()) or ()),
+        "metadata": getattr(sn, "metadata", None),
+        "config": getattr(sn, "config", None),
+        "created_at": getattr(sn, "created_at", None),
+        "parent_config": getattr(sn, "parent_config", None),
+    }
+
+
 def create_app(*, system_prompt: str | None = None) -> FastAPI:
     """Build the ASGI app.
 
@@ -85,6 +110,9 @@ def create_app(*, system_prompt: str | None = None) -> FastAPI:
             body=payload,
             system_prompt=prompt,
             request_id=_request_id(request),
+            run_id=str(uuid.uuid4()),
+            thread_id=_resolve_thread_id(request, payload),
+            ephemeral=bool(payload.ephemeral) if payload else False,
         )
 
         try:
@@ -119,6 +147,32 @@ def create_app(*, system_prompt: str | None = None) -> FastAPI:
                 "observability": observability_summary(),
             },
         )
+
+    @app.get("/api/v1/trigger/threads/{thread_id}/state")
+    def get_trigger_thread_state(thread_id: str) -> JSONResponse:
+        if not checkpoints_globally_enabled():
+            raise HTTPException(
+                status_code=503,
+                detail=(
+                    "Checkpoints are disabled (HOSTED_AGENT_CHECKPOINT_STORE=none). "
+                    "Set HOSTED_AGENT_CHECKPOINT_STORE=memory to enable state APIs."
+                ),
+            )
+        snap = get_thread_state_snapshot(thread_id)
+        return JSONResponse(_snapshot_to_dict(snap))
+
+    @app.get("/api/v1/trigger/threads/{thread_id}/checkpoints")
+    def get_trigger_thread_checkpoints(thread_id: str) -> JSONResponse:
+        if not checkpoints_globally_enabled():
+            raise HTTPException(
+                status_code=503,
+                detail=(
+                    "Checkpoints are disabled (HOSTED_AGENT_CHECKPOINT_STORE=none). "
+                    "Set HOSTED_AGENT_CHECKPOINT_STORE=memory to enable state APIs."
+                ),
+            )
+        hist = get_thread_checkpoint_history(thread_id)
+        return JSONResponse([_snapshot_to_dict(s) for s in hist])
 
     @app.post("/api/v1/rag/query")
     def rag_query(request: Request, body: RagQueryBody) -> JSONResponse:

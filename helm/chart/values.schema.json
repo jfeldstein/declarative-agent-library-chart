@@ -173,6 +173,18 @@
         }
       }
     },
+    "extraEnv": {
+      "type": "array",
+      "description": "Optional name/value env pairs on the agent container (e.g. HOSTED_AGENT_CHECKPOINT_STORE, WANDB_*)",
+      "items": {
+        "type": "object",
+        "required": ["name", "value"],
+        "properties": {
+          "name": { "type": "string" },
+          "value": { "type": "string" }
+        }
+      }
+    },
     "resources": { "type": "object" }
   }
 }

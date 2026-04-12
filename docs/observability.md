@@ -2,25 +2,31 @@
 
 ## Checkpoints, W&B traces, and Slack correlation (OpenSpec)
 
-This section aligns with **`openspec/changes/agent-checkpointing-wandb-feedback`** (`runtime-langgraph-checkpoints`, `wandb-agent-traces`, `tool-feedback-slack`).
+This section aligns with **`openspec/changes/agent-checkpointing-wandb-feedback`** (`runtime-langgraph-checkpoints`, `wandb-agent-traces`, `tool-feedback-slack`). Deep dive: **[checkpointing-and-traces.md](checkpointing-and-traces.md)** and **[runbooks/checkpoints-wandb.md](runbooks/checkpoints-wandb.md)**.
 
 - **Checkpointer** — The **ordered step history** for a run lives in the **LangGraph-aligned checkpointer** (per-thread checkpoints). It is the **source of truth** for resume and for binding feedback to steps.
-- **Weights & Biases** — When enabled, the runtime **automatically** emits **traces** as LLM and tool work runs. W&B is for **observability and late feedback annotation**, not a second source of step order. **Do not** put unbounded text (full prompts, Slack bodies, per-message ids) on **W&B tags**; keep tags **low cardinality** and put rich content in **spans** / trace payloads (with redaction).
-- **Slack** — Slack messages **cannot** carry hidden correlation metadata. The host keeps a **durable server-side map**: **`(slack_channel_id, message_ts)` → `tool_call_id`, `checkpoint_id`, `run_id`, `thread_id`, W&B run/span identifiers** so reactions can resolve **message → tool call → checkpoint → W&B** for storage + trace updates.
+- **Weights & Biases** — When enabled, the runtime **initializes a W&B run** per trigger invocation and records **config/tags** from bounded env-derived fields; full span-level LLM tracing can extend the same module. **Do not** put unbounded text (full prompts, Slack bodies, per-message ids) on **W&B tags**; keep tags **low cardinality** and put rich content in **spans** / trace payloads (with redaction).
+- **Slack** — Slack messages **cannot** carry hidden correlation metadata. The host keeps a **durable server-side map** (implementation in progress): **`(slack_channel_id, message_ts)` → `tool_call_id`, `checkpoint_id`, `run_id`, `thread_id`, W&B run/span identifiers** so reactions can resolve **message → tool call → checkpoint → W&B** for storage + trace updates.
 
-### Environment (runtime stubs)
-
-Until the checkpointer and `wandb` SDK are fully wired, **`hosted_agents.agent_tracing`** reads:
+### Environment
 
 | Variable | Purpose |
 | -------- | ------- |
-| `HOSTED_AGENT_CHECKPOINT_STORE` | Declared checkpointer backend for ops (`none` default until implemented). |
-| `HOSTED_AGENT_WANDB_ENABLED` | `1` / `true` / `yes` / `on` = **intent** to trace to W&B (no network I/O in stub). |
+| `HOSTED_AGENT_CHECKPOINT_STORE` | `memory` when unset (**default-on** in-process store), `none` to disable persistence, or reserved `postgres` / `redis` (not implemented). |
+| `HOSTED_AGENT_WANDB_ENABLED` | `1` / `true` / `yes` / `on` = **intent** to trace to W&B. |
 | `WANDB_API_KEY` | Standard W&B credential (mount via Secret). |
 | `WANDB_PROJECT` or `HOSTED_AGENT_WANDB_PROJECT` | W&B project name. |
 | `WANDB_ENTITY` | Optional team/entity. |
+| `HOSTED_AGENT_SLACK_FEEDBACK_ENABLED` | Reserved flag for Slack reaction ingestion (off until wired). |
 
-**`GET /api/v1/runtime/summary`** includes **`observability`**: `checkpoint_store`, and **`wandb.tracing_ready`** (true only when `HOSTED_AGENT_WANDB_ENABLED` is truthy, `WANDB_API_KEY` is non-empty, and a project name is set). **`wandb.mandatory_run_tag_keys`** lists the canonical tag names the implementation must populate when values are known.
+**`GET /api/v1/runtime/summary`** → **`observability`**: `checkpoint_store`, **`feature_flags`** (`checkpoints_enabled`, `slack_feedback_enabled`), **`wandb.tracing_ready`**, and **`wandb.mandatory_run_tag_keys`**.
+
+**Thread APIs** (when `HOSTED_AGENT_CHECKPOINT_STORE` ≠ `none`):
+
+- **`GET /api/v1/trigger/threads/{thread_id}/state`**
+- **`GET /api/v1/trigger/threads/{thread_id}/checkpoints`**
+
+**`POST /api/v1/trigger`** accepts **`thread_id`** and **`ephemeral`** (skip checkpointer for that call).
 
 ### Mandatory W&B run tags (implementation target)
 

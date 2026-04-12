@@ -1,0 +1,15 @@
+{
+  "registry_id": "global-human-feedback",
+  "schema_version": "1",
+  "description": "Global explicit human-judgment labels (Slack emoji → label_id). Bump schema_version when labels change.",
+  "slack_emoji_to_label": {
+    "+1": "positive",
+    "thumbsup": "positive",
+    "-1": "negative",
+    "thumbsdown": "negative"
+  },
+  "labels": {
+    "positive": {"scalar": 1},
+    "negative": {"scalar": -1}
+  }
+}
