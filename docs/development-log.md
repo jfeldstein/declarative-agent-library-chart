@@ -10,11 +10,11 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 **CI Helm pin** — GitHub Actions Helm job uses **Helm v3.20.2** so `helm-unittest` (plugin `platformHooks`) loads; v3.14.x fails with `unknown field "platformHooks"`.
 
+**OpenSpec: `agent-checkpointing-wandb-feedback` scope trim** — Removed **ATIF export** and **shadow rollout** from this change (checkpointer + W&B automatic tracing + Slack feedback only); simplified **explicit human feedback** model; **server-side** Slack correlation; **`tasks.md`** now uses OpenSpec checkbox items (**21** tasks). **Shadow** requirements live in new change **`shadow-rollout-evaluation`** (**9** tasks).
+
 ## 2026-04-11
 
 **ADR collision check + agent docs** — CI job `docs` runs `scripts/check_adr_numbers.sh`; `./ci.sh` runs the same check. Added `docs/AGENTS.md` for assistant orientation and `.claude/rules/adr-number-collisions.md` for Claude Code.
-
-## 2026-04-11
 
 **Scraper Prometheus metrics (`agent_runtime_scraper_*`)** — completes OpenSpec **`agent-runtime-components`** task 3.4 (`runtime-scrapers`).
 

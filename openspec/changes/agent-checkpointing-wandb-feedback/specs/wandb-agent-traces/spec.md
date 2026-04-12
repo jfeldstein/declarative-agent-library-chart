@@ -2,17 +2,30 @@
 
 ### Requirement: Mandatory run tags
 
-Every agent run logged to Weights & Biases SHALL include the following tags when the values are known: `agent_id`, `environment`, `skill_id`, `skill_version`, `model_id`, `prompt_hash`, `rollout_arm`, and `thread_id`. Deployments MAY also emit equivalent aliases (`agent_name`, `agent_version`, `skill_set_version`, `rollout`) for compatibility with existing dashboards, provided the canonical keys above remain populated when known. Unknown values SHALL be omitted or explicitly set to a sentinel defined in configuration documentation.
+Every agent run logged to Weights & Biases SHALL include the following **tags** when the values are known: `agent_id`, `environment`, `skill_id`, `skill_version`, `model_id`, `prompt_hash`, and `thread_id`. Deployments MAY also emit equivalent aliases (`agent_name`, `agent_version`, `skill_set_version`) for compatibility with existing dashboards, provided the canonical keys above remain populated when known. Unknown values SHALL be omitted or explicitly set to a sentinel defined in configuration documentation.
 
-#### Scenario: Primary run logged
+#### Scenario: Run logged with known context
 
-- **WHEN** a primary (non-shadow) run completes or streams telemetry to W&B
-- **THEN** the W&B run SHALL include `rollout_arm=primary` and all known tags from the mandatory set
+- **WHEN** a run streams or completes telemetry to W&B and configured identifiers are available
+- **THEN** the W&B run SHALL include all known tags from the mandatory set
 
-#### Scenario: Shadow run logged
+### Requirement: Automatic tracing during execution
 
-- **WHEN** a shadow rollout run emits telemetry to W&B
-- **THEN** the W&B run SHALL include `rollout_arm=shadow` and the same mandatory tag keys as the primary where applicable
+The system SHALL emit W&B traces (or equivalent hierarchical telemetry) **automatically** as LLM and tool work proceeds during a run, without requiring a separate export or batch step before traces exist.
+
+#### Scenario: LLM call during run
+
+- **WHEN** the agent invokes an LLM as part of a traced run
+- **THEN** that invocation SHALL appear in W&B trace telemetry for that run according to the configured integration
+
+### Requirement: Checkpoint linkage to W&B identifiers
+
+For deployments with W&B tracing enabled, the system SHALL persist, alongside each checkpoint (or in a durable index keyed by `checkpoint_id`), the W&B identifiers required to **annotate** that step after the run (for example `wandb_run_id` and span or trace fragment ids as supported by the W&B SDK). This linkage SHALL support resolving **tool_call_id** and **checkpoint_id** to a concrete W&B target when applying late human feedback.
+
+#### Scenario: Checkpoint written after tool step
+
+- **WHEN** a checkpoint is persisted for a step that was traced to W&B
+- **THEN** the persisted metadata SHALL include enough W&B addressing information to update or annotate that step’s trace record when feedback arrives later
 
 ### Requirement: Tool calls as spans or structured steps
 
@@ -25,23 +38,23 @@ Each tool invocation during a run SHALL be represented in W&B as a child span, n
 
 ### Requirement: Human feedback on traces
 
-When feedback (registry labels or configured scalar mappings) is recorded for a `tool_call_id` and, when known, `checkpoint_id`, the system SHALL push that signal to W&B in association with the same run and tool span (or an explicitly documented fallback such as a keyed `wandb.log` metric) within a bounded latency after ingestion. The update SHALL include at least `feedback_label` (or equivalent), `feedback_source`, and `checkpoint_id` when available.
+When explicit human feedback is recorded for a `tool_call_id` and, when known, `checkpoint_id`, the system SHALL push that signal to W&B in association with the same run and tool span (or an explicitly documented fallback such as keyed `wandb.log`) within a bounded latency after ingestion. The update SHALL include at least `feedback_label` (or equivalent), `feedback_source`, and `checkpoint_id` when available, using the **checkpoint → W&B** linkage persisted for that step.
 
 #### Scenario: Negative feedback after Slack reaction
 
-- **WHEN** feedback -1 is correlated to a `tool_call_id` that already has a W&B span
+- **WHEN** negative feedback is correlated to a `tool_call_id` that has a persisted W&B linkage
 - **THEN** the system SHALL update W&B so the feedback is visible on the trace for that tool call or on the run with an unambiguous `tool_call_id` key
 
 #### Scenario: Late reaction after run completion
 
 - **WHEN** human feedback arrives after the main run span is closed
-- **THEN** the system SHALL still record the feedback against the same wandb run identifier for that `run_id` (for example as a late event or metadata update) according to wandb API capabilities
+- **THEN** the system SHALL still record the feedback in durable storage and apply the W&B update against the resolved run/span identifiers for that `run_id` according to W&B API capabilities
 
 ### Requirement: Tag cardinality and sensitive values are controlled
 
-The system SHALL NOT emit unbounded high-cardinality tags (for example raw message bodies) as wandb tags. Sensitive values SHALL be hashed or omitted per policy.
+The system SHALL NOT emit unbounded high-cardinality tags (for example raw message bodies) as W&B tags. Sensitive values SHALL be hashed or omitted per policy.
 
 #### Scenario: High-cardinality field not a tag
 
 - **WHEN** logging a run with long free-text content
-- **THEN** that content SHALL appear only in redacted trace payloads or summaries, not as a wandb tag key or value that explodes cardinality
+- **THEN** that content SHALL appear only in redacted trace payloads or summaries, not as a W&B tag key or value that explodes cardinality

@@ -39,7 +39,7 @@ The runtime SHALL expose operations to read the latest checkpoint state and to l
 
 ### Requirement: Checkpoints bind user-visible tool side effects
 
-For configured tools that commit a user-visible external side effect (for example posting a Slack message), the system SHALL create a **checkpoint** immediately before or after committing that side effect (per deployment policy). The checkpoint record SHALL include at least: `checkpoint_id`, `run_id`, `tool_call_id`, `tool_name`, `external_ref` (channel-specific identifier such as Slack `channel` and `ts`), and timestamp.
+For configured tools that commit a user-visible external side effect (for example posting a Slack message), the system SHALL create a **checkpoint** immediately before or after committing that side effect (per deployment policy). The checkpoint record SHALL include at least: `checkpoint_id`, `run_id`, `tool_call_id`, `tool_name`, `external_ref` (channel-specific identifier such as Slack `channel` and `ts`), and timestamp. When W&B tracing is enabled for the run, the checkpoint metadata SHALL also include the W&B linkage fields required by `wandb-agent-traces` so feedback can target the correct trace record.
 
 #### Scenario: Slack message posted
 

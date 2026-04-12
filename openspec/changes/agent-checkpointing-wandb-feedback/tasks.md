@@ -1,51 +1,39 @@
+## Implementation order
+
+**Rationale:** Ship **checkpoints** and **W&B tracing + id linkage** first (no Slack dependency). Add **Slack reactions** and **durable feedback + W&B annotation** once correlation keys exist on checkpoints. **Shadow rollouts** are **not** in this change—see `shadow-rollout-evaluation`.
+
 ## 1. Checkpointing foundation
 
 - [ ] 1.1 Select and configure production checkpointer backend (e.g. Postgres/Redis) and document `thread_id` / `checkpoint_id` usage
 - [ ] 1.2 Wire LangGraph functional API (or equivalent) so `@entrypoint` receives an injected checkpointer and tasks persist automatically per step
 - [ ] 1.3 Implement host policy: default-on checkpointing with explicit ephemeral opt-out flag
 - [ ] 1.4 Expose `get_state` / `get_state_history`-compatible read APIs for operators and internal services
-- [ ] 1.5 Persist checkpoints around user-visible external side effects (e.g. Slack post) with `checkpoint_id`, `tool_call_id`, `external_ref`, timestamp per spec
+- [ ] 1.5 Persist checkpoints around user-visible external side effects (e.g. Slack post) with `checkpoint_id`, `tool_call_id`, `external_ref` (e.g. Slack channel + `ts`), and timestamp per spec
 
-## 2. Correlation and Slack feedback
+## 2. W&B automatic tracing and checkpoint linkage
 
-- [ ] 2.1 Define stable `tool_call_id`, `run_id`, and `thread_id` propagation through tool execution context
-- [ ] 2.2 Add durable store mapping `(slack_channel_id, message_ts)` → tool/run/`checkpoint_id` correlation
-- [ ] 2.3 Implement Slack Events subscription for reactions; map configured emoji to **global registry** labels (positive / negative / neutral per policy)
-- [ ] 2.4 Implement idempotency and conflict policy for duplicate, changed, or removed reactions; reconcile with latest Slack state where feasible
-- [ ] 2.5 Orphan reactions: log/queue only—no training-eligible label without resolved correlation
+- [ ] 2.1 Enable **automatic** W&B tracing for LLM and tool execution during a run (no separate “export step”)
+- [ ] 2.2 Initialize W&B per top-level invocation with the **tag schema** from `wandb-agent-traces` (omit unknown values; do not emit high-cardinality text as tags)
+- [ ] 2.3 On each checkpoint (or equivalent step boundary), **persist** W&B identifiers needed to annotate that step later (e.g. `wandb_run_id`, span/trace id per SDK)—so resolution **Slack message → tool call → checkpoint → W&B** is possible
+- [ ] 2.4 Add contract or integration tests (W&B SDK mocked) for tag shape and persisted **checkpoint ↔ W&B** link fields
 
-## 3. Weights & Biases integration
+## 3. Correlation IDs and Slack feedback
 
-- [ ] 3.1 Initialize W&B per top-level run with mandatory tag schema (`agent_id`, `environment`, `skill_id`, `skill_version`, `model_id`, `prompt_hash`, `rollout_arm`, `thread_id`)
-- [ ] 3.2 Emit hierarchical telemetry: tool calls as child spans (or equivalent) including `tool_call_id` and timing
-- [ ] 3.3 On feedback ingestion, update W&B trace/span or keyed metrics so feedback is queryable by `tool_call_id` and `checkpoint_id` (`feedback_label`, `feedback_source`)
-- [ ] 3.4 Add integration tests or contract tests against W&B SDK (mocked) for tags and feedback payload shape
-- [ ] 3.5 Support **late** feedback after span close; enforce tag cardinality limits and hash/omit sensitive tag values
+- [ ] 3.1 Define stable `tool_call_id`, `run_id`, and `thread_id` propagation through tool execution context
+- [ ] 3.2 Add durable store mapping `(slack_channel_id, message_ts)` → `tool_call_id`, `checkpoint_id`, `run_id`, `thread_id`, and W&B ids from §2
+- [ ] 3.3 Implement Slack Events subscription for reactions; map configured emoji to **global registry** labels
+- [ ] 3.4 On resolved feedback: **durably persist** reaction outcome linked to `tool_call_id` and `checkpoint_id`; **annotate** the corresponding W&B span/run per §2 linkage
+- [ ] 3.5 Implement idempotency and conflict policy for duplicate, changed, or removed reactions; reconcile with latest Slack state where feasible
+- [ ] 3.6 Orphan reactions: log/queue only—no training-facing label without resolved correlation
 
-## 4. Canonical trajectory and ATIF
+## 4. Global label registry (human feedback only)
 
-- [ ] 4.1 Implement in-memory/streaming CanonicalTrajectory builder fed by checkpoints and tool results
-- [ ] 4.2 Pin ATIF schema version and implement exporter from CanonicalTrajectory to ATIF JSON
-- [ ] 4.3 Implement +1-only (or no -1) dataset filter; terminal-checkpoint segment extraction; default exclusion of negative terminal segments; optional contrastive override
-- [ ] 4.4 Implement configurable **redaction** before export; document rules for messages, tool args, and Slack identifiers
+- [ ] 4.1 Implement **single global** versioned label registry and change process; document how new labels ship
+- [ ] 4.2 Persist human feedback records with `registry_id`, `schema_version`, global `label_id`, and optional `agent_id` for attribution only
 
-## 5. Shadow rollouts
+## 5. Rollout and verification
 
-- [ ] 5.1 Add configuration for shadow variants (skill version, model, prompt hash) and `request_correlation_id` linking to primary
-- [ ] 5.2 Implement default non-mutating shadow path with tool stubbing/skip list and explicit allowlist/danger flag for full mirror
-- [ ] 5.3 Ensure shadow runs emit the same mandatory W&B tags (with `rollout_arm=shadow`), `shadow_variant_id`, and comparable metrics (latency, tokens, tool selection, outcome) joined by `request_correlation_id` / `thread_id`
-- [ ] 5.4 Shadow off by default; support traffic bounds (percentage, allowlist tenants, time windows)
-
-## 6. Rollout and verification
-
-- [ ] 6.1 Feature-flag each layer (checkpoints, W&B, Slack, ATIF export, shadow) for staged enablement
-- [ ] 6.2 End-to-end test: simulated tool posts Slack message → reaction → feedback in store → W&B metric/span update
-- [ ] 6.3 End-to-end test: checkpoint resume after injected failure matches LangGraph semantics for completed tasks
-- [ ] 6.4 Runbook: secrets, retention, rollback, and PII review for trajectories
-
-## 7. Feedback model and taxonomy
-
-- [ ] 7.1 Implement **single global** versioned label registry and change process (no per-agent label namespaces); document how new labels ship
-- [ ] 7.2 Persist `HumanFeedbackEvent` (or equivalent) with `registry_id`, `schema_version`, global `label_id`, and optional `agent_id` for attribution only
-- [ ] 7.3 Implement `RunOperationalEvent` (or span-level) stream for implicit lifecycle signals; keep separate from human feedback by default
-- [ ] 7.4 Document opt-in mappers from operational events to derived training fields; implement export provenance flags per ATIF requirement
+- [ ] 5.1 Feature-flag checkpoints, W&B tracing, and Slack ingestion independently for staged enablement
+- [ ] 5.2 End-to-end test: tool posts Slack message → mapping written → reaction → feedback in store → W&B annotation on correct span
+- [ ] 5.3 End-to-end test: checkpoint resume after injected failure matches LangGraph semantics for completed tasks
+- [ ] 5.4 Runbook: secrets, retention, rollback, and PII review for checkpoints and traces
