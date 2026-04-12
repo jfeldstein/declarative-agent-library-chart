@@ -7,12 +7,10 @@ import time
 from typing import Any
 
 from hosted_agents.metrics import observe_mcp_tool, observe_skill_load
-from hosted_agents.observability.run_context import (
-    get_run_id,
-    get_wandb_session,
-    new_tool_call_id,
-)
+from hosted_agents.o11y_logging import get_logger
+from hosted_agents.observability.run_context import get_run_id, get_wandb_session
 from hosted_agents.observability.trajectory import trajectory_recorder
+from hosted_agents.run_context import next_tool_call_id
 from hosted_agents.runtime_config import RuntimeConfig
 from hosted_agents.skills_state import unlock_tools, unlocked_tools
 from hosted_agents.tools_impl.dispatch import invoke_tool
@@ -34,8 +32,13 @@ def run_skill_load_json(cfg: RuntimeConfig, name: str) -> str:
 
 
 def run_tool_json(cfg: RuntimeConfig, tool: str, arguments: dict[str, Any]) -> str:
-    tool_call_id = new_tool_call_id()
+    tool_call_id = next_tool_call_id()
     start = time.perf_counter()
+    get_logger().debug(
+        "mcp_tool_invoke",
+        tool=tool,
+        tool_call_id=tool_call_id,
+    )
     allowed = set(cfg.enabled_mcp_tools) | set(unlocked_tools())
     if tool not in allowed:
         observe_mcp_tool(tool, "error", start)

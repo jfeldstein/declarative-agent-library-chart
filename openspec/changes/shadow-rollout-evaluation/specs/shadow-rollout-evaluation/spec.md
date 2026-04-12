@@ -2,7 +2,7 @@
 
 ### Requirement: Shadow configuration
 
-The system SHALL allow declaring shadow variants that differ by skill version, model id, and/or prompt hash while sharing the same high-level task input as the primary run, subject to safety policies. Shadow execution SHALL be labeled distinctly from primary in logs, ATIF exports, and W&B using `rollout_arm=shadow` and a `shadow_variant_id` (or equivalent) identifying the variant.
+The system SHALL allow declaring shadow variants that differ by skill version, model id, and/or prompt hash while sharing the same high-level task input as the primary run, subject to safety policies. Shadow execution SHALL be labeled distinctly from primary in logs and W&B using `rollout_arm=shadow` and a `shadow_variant_id` (or equivalent) identifying the variant.
 
 #### Scenario: Shadow variant declared
 
@@ -25,7 +25,7 @@ By default, shadow runs SHALL NOT perform external side effects (e.g. posting to
 
 ### Requirement: Comparable telemetry
 
-Shadow and primary runs for the same input SHALL emit telemetry with identical mandatory tag keys (where applicable) so that downstream W&B queries and ATIF exports can compare them by `rollout_arm` and variant fields. The system SHALL log comparable signals for primary and shadow paths including, where available, **latency**, **token usage**, **tool selection**, and **outcome classification**.
+Shadow and primary runs for the same input SHALL emit telemetry with identical mandatory tag keys (where applicable) so that downstream W&B queries can compare them by `rollout_arm` and variant fields. The system SHALL log comparable signals for primary and shadow paths including, where available, **latency**, **token usage**, **tool selection**, and **outcome classification**.
 
 #### Scenario: Compare primary and shadow in W&B
 

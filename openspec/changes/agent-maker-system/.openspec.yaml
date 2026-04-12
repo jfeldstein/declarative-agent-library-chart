@@ -1,0 +1,31 @@
+schema: spec-driven
+
+# Project context for agent-maker system
+context: |
+  Tech stack: Python, FastAPI, LangGraph, Helm, Kubernetes
+  Existing infrastructure: declarative-agent-library-chart, W&B integration
+  Communication: Telegram for bot interactions
+  CI/CD: GitHub Actions with automated testing
+  Key requirements: safety, validation, observability, additive changes only
+
+# Per-artifact rules
+rules:
+  proposal:
+    - Focus on natural language to PR automation
+    - Emphasize safety and validation mechanisms
+    - Highlight integration with existing systems
+    
+  design:
+    - Detail validation rules and safety mechanisms
+    - Describe data flows and API contracts
+    - Include implementation roadmap
+    
+  tasks:
+    - Break into 4 phases with clear deliverables
+    - Include testing and documentation tasks
+    - Provide time estimates and dependencies
+    
+  specs:
+    - Use requirement/scenario format
+    - Cover all key capabilities systematically
+    - Include validation and error handling scenarios

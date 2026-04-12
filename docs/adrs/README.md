@@ -13,6 +13,8 @@ Use zero-padded sequence plus a short **kebab-case** slug:
 
 The number increments for each new decision; do not reuse numbers. Superseded ADRs stay in place; add a **Supersedes** / **Superseded by** note in the affected files.
 
+Before adding a new ADR, pick the next unused `NNNN` (e.g. one greater than the highest existing number in this directory) so filenames stay unique. CI runs [`scripts/check_adr_numbers.sh`](../../scripts/check_adr_numbers.sh) to fail the build on duplicate numbers.
+
 ## Template
 
 New ADRs can follow the structure in `0001-use-python-for-runtime.md` (Context, Decision, Consequences).

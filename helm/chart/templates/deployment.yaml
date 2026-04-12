@@ -116,6 +116,10 @@ spec:
                   name: {{ include "declarative-agent-library.fullname" . }}-config
                   key: label-registry.json
             {{- end }}
+            {{- range .Values.extraEnv }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+            {{- end }}
           {{- with .Values.resources }}
           resources:
             {{- toYaml . | nindent 12 }}

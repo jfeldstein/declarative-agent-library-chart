@@ -12,6 +12,8 @@ from fastapi.responses import JSONResponse, PlainTextResponse, Response
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
 from hosted_agents.agent_models import RagQueryBody, TriggerBody
+from hosted_agents.agent_tracing import observability_summary
+from hosted_agents.checkpointing import checkpoints_globally_enabled
 from hosted_agents.env import system_prompt_from_env
 from hosted_agents.metrics import observe_http_trigger
 from hosted_agents.observability.atif import export_atif_batch
@@ -27,8 +29,10 @@ from hosted_agents.skills_state import unlocked_tools
 from hosted_agents.trigger_graph import (
     TriggerContext,
     TriggerHttpError,
+    get_thread_checkpoint_history,
     get_thread_state,
     get_thread_state_history,
+    get_thread_state_snapshot,
     run_trigger_graph,
 )
 
@@ -64,6 +68,44 @@ def _request_id(request: Request) -> str:
     return str(rid) if rid else str(uuid.uuid4())
 
 
+def _resolve_thread_id(request: Request, payload: TriggerBody | None) -> str:
+    if payload and payload.thread_id and str(payload.thread_id).strip():
+        return str(payload.thread_id).strip()
+    for key in (
+        "x-thread-id",
+        "X-Thread-Id",
+        "x-agent-thread-id",
+        "X-Agent-Thread-Id",
+    ):
+        if h := request.headers.get(key):
+            s = str(h).strip()
+            if s:
+                return s
+    return str(uuid.uuid4())
+
+
+def _snapshot_to_dict(sn: object) -> dict:
+    return {
+        "values": getattr(sn, "values", {}),
+        "next": list(getattr(sn, "next", ()) or ()),
+        "metadata": getattr(sn, "metadata", None),
+        "config": getattr(sn, "config", None),
+        "created_at": getattr(sn, "created_at", None),
+        "parent_config": getattr(sn, "parent_config", None),
+    }
+
+
+_CHECKPOINTS_DISABLED = (
+    "Checkpoints are disabled (HOSTED_AGENT_CHECKPOINT_STORE=none). "
+    "Set HOSTED_AGENT_CHECKPOINT_STORE=memory to enable state APIs."
+)
+
+
+def _require_checkpoints_enabled() -> None:
+    if not checkpoints_globally_enabled():
+        raise HTTPException(status_code=503, detail=_CHECKPOINTS_DISABLED)
+
+
 def create_app(*, system_prompt: str | None = None) -> FastAPI:
     """Build the ASGI app.
 
@@ -91,19 +133,15 @@ def create_app(*, system_prompt: str | None = None) -> FastAPI:
         run_id = str(uuid.uuid4())
         req_id = _request_id(request)
         ephemeral = bool(payload.ephemeral) if payload is not None else False
-        thread_id = (
-            (payload.thread_id.strip() if payload and payload.thread_id else "")
-            or (request.headers.get("x-agent-thread-id") or "").strip()
-            or run_id
-        )
+        thread_id = _resolve_thread_id(request, payload)
         tenant_hdr = (request.headers.get("x-tenant-id") or "").strip()
         ctx = TriggerContext(
             cfg=cfg,
             body=payload,
             system_prompt=prompt,
             request_id=req_id,
-            thread_id=thread_id,
             run_id=run_id,
+            thread_id=thread_id,
             ephemeral=ephemeral,
             tenant_id=tenant_hdr or None,
             observability=obs,
@@ -130,6 +168,17 @@ def create_app(*, system_prompt: str | None = None) -> FastAPI:
     def runtime_summary() -> JSONResponse:
         cfg = RuntimeConfig.from_env()
         obs = ObservabilitySettings.from_env()
+        obs_payload: dict[str, object] = dict(observability_summary())
+        obs_payload.update(
+            {
+                "checkpoints_enabled": obs.checkpoints_enabled,
+                "checkpoint_backend": obs.checkpoint_backend,
+                "wandb_enabled": obs.wandb_enabled,
+                "slack_feedback_enabled": obs.slack_feedback_enabled,
+                "atif_export_enabled": obs.atif_export_enabled,
+                "shadow_enabled": obs.shadow_enabled,
+            },
+        )
         return JSONResponse(
             {
                 "rag_configured": bool(cfg.rag_base_url),
@@ -139,14 +188,7 @@ def create_app(*, system_prompt: str | None = None) -> FastAPI:
                 "skill_unlocked_tools": sorted(unlocked_tools()),
                 "launch_path": "POST /api/v1/trigger",
                 "orchestration": "langgraph",
-                "observability": {
-                    "checkpoints_enabled": obs.checkpoints_enabled,
-                    "checkpoint_backend": obs.checkpoint_backend,
-                    "wandb_enabled": obs.wandb_enabled,
-                    "slack_feedback_enabled": obs.slack_feedback_enabled,
-                    "atif_export_enabled": obs.atif_export_enabled,
-                    "shadow_enabled": obs.shadow_enabled,
-                },
+                "observability": obs_payload,
             },
         )
 
@@ -251,6 +293,24 @@ def create_app(*, system_prompt: str | None = None) -> FastAPI:
             raise HTTPException(status_code=404, detail="run_id not found")
         docs = export_atif_batch([tr])
         return JSONResponse({"documents": docs})
+
+    @app.get("/api/v1/trigger/threads/{thread_id}/state")
+    def get_trigger_thread_state(thread_id: str) -> JSONResponse:
+        _require_checkpoints_enabled()
+        try:
+            snap = get_thread_state_snapshot(thread_id)
+        except RuntimeError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
+        return JSONResponse(_snapshot_to_dict(snap))
+
+    @app.get("/api/v1/trigger/threads/{thread_id}/checkpoints")
+    def get_trigger_thread_checkpoints(thread_id: str) -> JSONResponse:
+        _require_checkpoints_enabled()
+        try:
+            hist = get_thread_checkpoint_history(thread_id)
+        except RuntimeError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
+        return JSONResponse([_snapshot_to_dict(s) for s in hist])
 
     @app.post("/api/v1/rag/query")
     def rag_query(request: Request, body: RagQueryBody) -> JSONResponse:

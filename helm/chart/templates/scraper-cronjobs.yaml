@@ -19,6 +19,12 @@ spec:
       backoffLimit: 2
       template:
         metadata:
+          {{- if $.Values.o11y.prometheusAnnotations.enabled }}
+          annotations:
+            prometheus.io/scrape: "true"
+            prometheus.io/port: "9091"
+            prometheus.io/path: "/metrics"
+          {{- end }}
           labels:
             {{- include "declarative-agent-library.selectorLabels" $ | nindent 12 }}
             app.kubernetes.io/component: scraper
@@ -37,9 +43,13 @@ spec:
               {{- else }}
               command:
                 - python
-                - -c
-                - "import os; print('stub scraper', os.environ.get('SCRAPER_NAME',''))"
+                - -m
+                - hosted_agents.scrapers.stub_job
               {{- end }}
+              ports:
+                - name: metrics
+                  containerPort: 9091
+                  protocol: TCP
               env:
                 - name: RAG_SERVICE_URL
                   value: {{ include "declarative-agent-library.ragInternalBaseUrl" $ | quote }}
@@ -47,6 +57,10 @@ spec:
                   value: {{ .name | quote }}
                 - name: SCRAPER_SCOPE
                   value: {{ (.scope | default .name) | quote }}
+                - name: SCRAPER_METRICS_ADDR
+                  value: "0.0.0.0:9091"
+                - name: SCRAPER_METRICS_GRACE_SECONDS
+                  value: "35"
                 {{- with .extraEnv }}
                 {{- toYaml . | nindent 16 }}
                 {{- end }}
