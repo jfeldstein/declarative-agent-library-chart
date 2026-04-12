@@ -17,7 +17,7 @@ jobs:
       run:
         working-directory: runtime
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: astral-sh/setup-uv@v4
         with:
@@ -49,7 +49,7 @@ jobs:
       # Pinned so CI does not pick up breaking plugin or Helm requirement changes from main.
       HELM_UNITTEST_VERSION: v1.0.3
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: azure/setup-helm@v5
         with:
@@ -83,7 +83,7 @@ jobs:
     name: Docs (ADR numbering)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Check ADR numbers are unique
         run: ./scripts/check_adr_numbers.sh
