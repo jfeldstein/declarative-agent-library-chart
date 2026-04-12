@@ -50,7 +50,8 @@ jobs:
 
       - uses: azure/setup-helm@v4
         with:
-          version: v3.14.4
+          # helm-unittest's plugin.yaml uses platformHooks; Helm 3.18.10+ is required (see helm/helm#30920).
+          version: v3.20.2
 
       - name: Install helm-unittest
         run: helm plugin install https://github.com/helm-unittest/helm-unittest.git
@@ -74,3 +75,12 @@ jobs:
 
       - name: ct lint
         run: ct lint --config ct.yaml --all
+
+  docs:
+    name: Docs (ADR numbering)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check ADR numbers are unique
+        run: ./scripts/check_adr_numbers.sh

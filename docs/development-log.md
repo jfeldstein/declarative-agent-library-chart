@@ -6,6 +6,14 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ---
 
+## 2026-04-12
+
+**CI Helm pin** — GitHub Actions Helm job uses **Helm v3.20.2** so `helm-unittest` (plugin `platformHooks`) loads; v3.14.x fails with `unknown field "platformHooks"`.
+
+## 2026-04-11
+
+**ADR collision check + agent docs** — CI job `docs` runs `scripts/check_adr_numbers.sh`; `./ci.sh` runs the same check. Added `docs/AGENTS.md` for assistant orientation and `.claude/rules/adr-number-collisions.md` for Claude Code.
+
 ## 2026-04-11
 
 **Scraper Prometheus metrics (`agent_runtime_scraper_*`)** — completes OpenSpec **`agent-runtime-components`** task 3.4 (`runtime-scrapers`).

@@ -6,6 +6,9 @@ echo "=== CI: declarative-agent-library-chart ==="
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$ROOT"
 
+echo "==> ADR number collision check"
+"$ROOT/scripts/check_adr_numbers.sh"
+
 if [ ! -f "runtime/pyproject.toml" ]; then
   echo "error: run from this repository (missing runtime/pyproject.toml)" >&2
   exit 1
