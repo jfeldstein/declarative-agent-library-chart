@@ -18,9 +18,9 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 **Scraper Prometheus metrics (`agent_runtime_scraper_*`)** — completes OpenSpec **`agent-runtime-components`** task 3.4 (`runtime-scrapers`).
 
-- Runtime: `hosted_agents/scrapers/metrics.py` plus instrumented **`reference_job`**: counters/histogram per spec; optional **`GET /metrics`** when **`SCRAPER_METRICS_ADDR`** is set (Helm sets **`0.0.0.0:9091`** for the reference job, with **`SCRAPER_METRICS_GRACE_SECONDS`** so Job pods stay up briefly for scrapes).
-- Helm: reference scraper **`containerPort` 9091**, env vars, and **`prometheus.io/*`** pod annotations when **`o11y.prometheusAnnotations.enabled`**.
-- Docs: **`docs/observability.md`** table for scraper metrics; unit tests assert metric text in **`REGISTRY`**.
+- Runtime: dedicated **`SCRAPER_REGISTRY`** so scraper CronJob **`GET /metrics`** lists only **`agent_runtime_scraper_*`** (not agent/RAG series); **`reference_job`** embeds to RAG; **`stub_job`** for other Helm job names; **`parse_scraper_metrics_addr`** supports **`[ipv6]:port`**.
+- Helm: every enabled scraper gets **`containerPort` 9091**, **`SCRAPER_METRICS_ADDR` / `SCRAPER_METRICS_GRACE_SECONDS`**, and **`python -m hosted_agents.scrapers.stub_job`** when the job name is not **`reference`**; **`prometheus.io/*`** pod annotations for **all** scraper jobs when **`o11y.prometheusAnnotations.enabled`**.
+- Docs: **`docs/observability.md`** (incl. **`SCRAPER_INTEGRATION`**); tests use **`generate_latest(SCRAPER_REGISTRY)`**.
 
 ## 2026-04-11
 
