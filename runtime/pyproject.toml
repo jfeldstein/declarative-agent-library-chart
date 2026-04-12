@@ -64,7 +64,7 @@ precision = 2
 [dependency-groups]
 dev = [
     "coverage[toml]>=7.6.0",
-    "pytest>=8.0.0",
+    "pytest>=9.0.3",
     "pytest-cov>=6.0.0",
     "ruff>=0.8.0",
     "wandb>=0.25.1",
