@@ -8,6 +8,8 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ## 2026-04-12
 
+**Dependabot batch merge** — Merged open Dependabot PRs **#1–#3, #5–#10** into `main` (GitHub Actions: checkout v6, upload-artifact v7, setup-uv v7, chart-testing-action 2.8.0; runtime: pytest-cov, coverage, uvicorn, httpx bumps). **PR #7** (pytest 9.x) conflicted with other pip PRs after sequential merges; resolved on [`dependabot/pip/runtime/pytest-gte-9.0.3`](https://github.com/jfeldstein/declarative-agent-library-chart/pull/7) by merging `main` and aligning **`[dependency-groups].dev`** to **`coverage[toml]>=7.13.5`**, **`pytest>=9.0.3`**, **`pytest-cov>=7.1.0`**, then **`uv lock`**, push, and merge.
+
 **PR #10 (Dependabot httpx)** — Merged `main` into [`dependabot/pip/runtime/httpx-gte-0.28.1`](https://github.com/jfeldstein/declarative-agent-library-chart/pull/10) so the PR’s CI workflow matches current **Helm 3.20.2** + **helm-unittest v1.0.3** pins (the branch had been based on pre-fix `main` and failed Helm with `unknown field "platformHooks"`). Runtime change remains **`httpx>=0.28.1`**.
 
 **CI / local Helm** — GitHub Actions Helm job pins **Helm v3.20.2** and **helm-unittest v1.0.3** (`HELM_UNITTEST_VERSION`); `ci.sh` documents the same install line. **Helm 3.18.10+** is required for `helm-unittest` plugin `platformHooks` (v3.14.x fails with `unknown field "platformHooks"`).
