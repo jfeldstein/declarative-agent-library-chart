@@ -9,25 +9,50 @@ import pytest
 from fastapi.testclient import TestClient
 
 from hosted_agents.app import create_app
+from tests.conftest import patch_supervisor_fake_model, tool_then_text_responses
 
 
 def test_metrics_role_returns_prometheus_text(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv(
         "HOSTED_AGENT_SUBAGENTS_JSON",
-        json.dumps([{"name": "metrics", "role": "metrics"}]),
+        json.dumps(
+            [
+                {
+                    "name": "metrics",
+                    "role": "metrics",
+                    "exposeAsTool": True,
+                    "description": "Return this process Prometheus metrics snapshot",
+                },
+            ],
+        ),
+    )
+    patch_supervisor_fake_model(
+        monkeypatch,
+        tool_then_text_responses("subagent_metrics", {}, final_text="skip"),
     )
     client = TestClient(create_app(system_prompt='Respond, "M"'))
-    r = client.post("/api/v1/trigger", json={"subagent": "metrics"})
+    r = client.post("/api/v1/trigger", json={"message": "scrape metrics"})
     assert r.status_code == 200
-    assert "agent_runtime_http_trigger" in r.text
-    assert "agent_runtime_subagent_invocations_total" in r.text
+    # HTTP body is the supervisor's final turn; Prometheus text is produced inside the tool.
+    prom = client.get("/metrics").text
+    assert "agent_runtime_http_trigger" in prom
+    assert "agent_runtime_subagent_invocations_total" in prom
 
 
 def test_rag_role_proxies_to_rag(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("HOSTED_AGENT_RAG_BASE_URL", "http://rag:8090")
     monkeypatch.setenv(
         "HOSTED_AGENT_SUBAGENTS_JSON",
-        json.dumps([{"name": "rag", "role": "rag", "systemPrompt": ""}]),
+        json.dumps(
+            [
+                {
+                    "name": "rag",
+                    "role": "rag",
+                    "systemPrompt": "",
+                    "description": "Query the configured RAG HTTP API",
+                },
+            ],
+        ),
     )
     mock_resp = MagicMock()
     mock_resp.text = '{"hits":[]}'
@@ -44,15 +69,23 @@ def test_rag_role_proxies_to_rag(monkeypatch: pytest.MonkeyPatch) -> None:
         mock_cm.__exit__.return_value = None
         return mock_cm
 
-    monkeypatch.setattr("hosted_agents.trigger_graph.httpx.Client", capture_httpx_client)
+    monkeypatch.setattr(
+        "hosted_agents.subagent_exec.httpx.Client", capture_httpx_client
+    )
+
+    patch_supervisor_fake_model(
+        monkeypatch,
+        tool_then_text_responses(
+            "subagent_rag",
+            {"query": "find docs", "scope": "s1"},
+            final_text="done",
+        ),
+    )
 
     client = TestClient(create_app(system_prompt='Respond, "M"'))
-    r = client.post(
-        "/api/v1/trigger",
-        json={"subagent": "rag", "query": "find docs", "scope": "s1"},
-    )
+    r = client.post("/api/v1/trigger", json={"message": "search rag"})
     assert r.status_code == 200
-    assert r.text == '{"hits":[]}'
+    assert r.text == "done"
     assert client_kw["headers"].get("X-Request-Id")
     args, kwargs = post_mocks[0].call_args
     assert args[0] == "http://rag:8090/v1/query"
@@ -64,8 +97,16 @@ def test_rag_role_requires_query(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("HOSTED_AGENT_RAG_BASE_URL", "http://rag:8090")
     monkeypatch.setenv(
         "HOSTED_AGENT_SUBAGENTS_JSON",
-        json.dumps([{"name": "rag", "role": "rag"}]),
+        json.dumps([{"name": "rag", "role": "rag", "description": "RAG"}]),
+    )
+    patch_supervisor_fake_model(
+        monkeypatch,
+        tool_then_text_responses(
+            "subagent_rag",
+            {"query": "", "scope": "default"},
+            final_text="x",
+        ),
     )
     client = TestClient(create_app(system_prompt='Respond, "M"'))
-    r = client.post("/api/v1/trigger", json={"subagent": "rag"})
+    r = client.post("/api/v1/trigger", json={"message": "bad rag"})
     assert r.status_code == 400

@@ -14,6 +14,7 @@ from fastapi.testclient import TestClient
 
 from hosted_agents.app import create_app
 from hosted_agents.skills_state import reset_skill_unlocked_tools
+from tests.conftest import patch_supervisor_fake_model, tool_then_text_responses
 
 
 def _metrics_text(client: TestClient) -> str:
@@ -43,7 +44,9 @@ def test_trigger_success_increments_counter() -> None:
     )
 
 
-def test_trigger_client_error_increments_client_error(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_trigger_client_error_increments_client_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     from hosted_agents.env import SYSTEM_PROMPT_ENV_KEY
 
     monkeypatch.setenv(SYSTEM_PROMPT_ENV_KEY, "   ")
@@ -70,7 +73,7 @@ def test_trigger_forwards_x_request_id_to_rag(monkeypatch: pytest.MonkeyPatch) -
     monkeypatch.setenv("HOSTED_AGENT_RAG_BASE_URL", "http://rag:8090")
     monkeypatch.setenv(
         "HOSTED_AGENT_SUBAGENTS_JSON",
-        json.dumps([{"name": "rag", "role": "rag"}]),
+        json.dumps([{"name": "rag", "role": "rag", "description": "RAG"}]),
     )
     mock_resp = MagicMock()
     mock_resp.text = "{}"
@@ -84,12 +87,18 @@ def test_trigger_forwards_x_request_id_to_rag(monkeypatch: pytest.MonkeyPatch) -
         mock_cm.__exit__.return_value = None
         return mock_cm
 
-    monkeypatch.setattr("hosted_agents.trigger_graph.httpx.Client", capture_httpx_client)
+    monkeypatch.setattr(
+        "hosted_agents.subagent_exec.httpx.Client", capture_httpx_client
+    )
+    patch_supervisor_fake_model(
+        monkeypatch,
+        tool_then_text_responses("subagent_rag", {"query": "q"}, final_text="ok"),
+    )
     client = TestClient(create_app(system_prompt='Respond, "M"'))
     client.post(
         "/api/v1/trigger",
         headers={"X-Request-Id": "upstream-abc"},
-        json={"subagent": "rag", "query": "q"},
+        json={"message": "rag please"},
     )
     assert client_kw["headers"]["X-Request-Id"] == "upstream-abc"
 
@@ -98,7 +107,12 @@ def test_subagent_and_skill_and_mcp_metrics(monkeypatch: pytest.MonkeyPatch) -> 
     reset_skill_unlocked_tools()
     monkeypatch.setenv(
         "HOSTED_AGENT_SUBAGENTS_JSON",
-        json.dumps([{"name": "s1", "systemPrompt": 'Respond, "S"'}]),
+        json.dumps(
+            [
+                {"name": "s1", "systemPrompt": 'Respond, "S"', "description": "s1"},
+                {"name": "missing", "systemPrompt": "", "description": "broken"},
+            ],
+        ),
     )
     monkeypatch.setenv(
         "HOSTED_AGENT_SKILLS_JSON",
@@ -106,18 +120,59 @@ def test_subagent_and_skill_and_mcp_metrics(monkeypatch: pytest.MonkeyPatch) -> 
     )
     monkeypatch.setenv("HOSTED_AGENT_ENABLED_MCP_TOOLS_JSON", json.dumps([]))
     client = TestClient(create_app(system_prompt='Respond, "M"'))
-    client.post("/api/v1/trigger", json={"subagent": "s1"})
-    client.post("/api/v1/trigger", json={"subagent": "missing"})
+
+    patch_supervisor_fake_model(
+        monkeypatch,
+        tool_then_text_responses("subagent_s1", {"task": "t"}, final_text="a"),
+    )
+    client.post("/api/v1/trigger", json={"message": "call s1"})
+
+    def _missing_factory() -> object:
+        from hosted_agents.chat_model import FakeToolChatModel
+        from langchain_core.messages import AIMessage
+
+        return FakeToolChatModel(
+            responses=[
+                AIMessage(
+                    content="",
+                    tool_calls=[
+                        {
+                            "name": "subagent_missing",
+                            "args": {"task": ""},
+                            "id": "m1",
+                            "type": "tool_call",
+                        },
+                    ],
+                ),
+                AIMessage(content="b"),
+            ],
+        )
+
+    monkeypatch.setattr(
+        "hosted_agents.supervisor.resolve_chat_model",
+        _missing_factory,
+    )
+    client.post("/api/v1/trigger", json={"message": "call missing"})
+
     client.post("/api/v1/trigger", json={"load_skill": "sk"})
     client.post("/api/v1/trigger", json={"load_skill": "nope"})
     client.post("/api/v1/trigger", json={"tool": "sample.echo", "tool_arguments": {}})
 
     text = _metrics_text(client)
-    assert 'agent_runtime_subagent_invocations_total{result="success",subagent="s1"}' in text
-    assert 'agent_runtime_subagent_invocations_total{result="error",subagent="missing"}' in text
+    assert (
+        'agent_runtime_subagent_invocations_total{result="success",subagent="s1"}'
+        in text
+    )
+    assert (
+        'agent_runtime_subagent_invocations_total{result="error",subagent="missing"}'
+        in text
+    )
     assert 'agent_runtime_skill_loads_total{result="success",skill="sk"}' in text
     assert 'agent_runtime_skill_loads_total{result="error",skill="nope"}' in text
-    assert 'agent_runtime_mcp_tool_calls_total{result="success",tool="sample.echo"}' in text
+    assert (
+        'agent_runtime_mcp_tool_calls_total{result="success",tool="sample.echo"}'
+        in text
+    )
 
 
 def test_json_log_format_emits_message_key() -> None:
