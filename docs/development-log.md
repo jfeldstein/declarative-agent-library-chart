@@ -8,6 +8,10 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ## 2026-04-11
 
+**ADR collision check + agent docs** — CI job `docs` runs `scripts/check_adr_numbers.sh`; `./ci.sh` runs the same check. Added `docs/AGENTS.md` for assistant orientation and `.claude/rules/adr-number-collisions.md` for Claude Code.
+
+## 2026-04-11
+
 **Scraper Prometheus metrics (`agent_runtime_scraper_*`)** — completes OpenSpec **`agent-runtime-components`** task 3.4 (`runtime-scrapers`).
 
 - Runtime: `hosted_agents/scrapers/metrics.py` plus instrumented **`reference_job`**: counters/histogram per spec; optional **`GET /metrics`** when **`SCRAPER_METRICS_ADDR`** is set (Helm sets **`0.0.0.0:9091`** for the reference job, with **`SCRAPER_METRICS_GRACE_SECONDS`** so Job pods stay up briefly for scrapes).

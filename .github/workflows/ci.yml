@@ -74,3 +74,12 @@ jobs:
 
       - name: ct lint
         run: ct lint --config ct.yaml --all
+
+  docs:
+    name: Docs (ADR numbering)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check ADR numbers are unique
+        run: ./scripts/check_adr_numbers.sh
