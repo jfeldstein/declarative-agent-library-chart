@@ -51,7 +51,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: azure/setup-helm@v4
+      - uses: azure/setup-helm@v5
         with:
           # helm-unittest's plugin.yaml uses platformHooks; Helm 3.18.10+ is required (see helm/helm#30920).
           version: v3.20.2
