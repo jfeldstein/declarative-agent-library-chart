@@ -8,6 +8,12 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ## 2026-04-11
 
+**ATIF v1.4 export pin** ([ADR 0003](adrs/0003-pin-atif-v1-4-trajectory-export.md)).
+
+- Trajectory exports use Harbor **ATIF-v1.4** shape (`session_id`, `agent`, `steps`, `final_metrics`, `extra.hosted_agents` provenance); internal steps remain `hosted-agents-canonical-v1` until merged. See [Harbor ATIF](https://www.harborframework.com/docs/agents/trajectory-format).
+
+## 2026-04-11
+
 **Checkpointing, Slack feedback, W&B hooks, ATIF export, shadow flags** (OpenSpec `agent-checkpointing-wandb-feedback`).
 
 - Runtime: optional LangGraph `MemorySaver` multi-node trigger graph when `HOSTED_AGENT_CHECKPOINTS_ENABLED=1`; `thread_id` / `ephemeral` on trigger body or `X-Agent-Thread-Id`; operator routes for checkpoint reads, Slack reaction ingest, human feedback listing, and ATIF-shaped export; `slack.post_message` tool records correlation + side-effect metadata; `hosted_agents/observability/*` (coverage omitted in `pyproject.toml` until integration hardens).

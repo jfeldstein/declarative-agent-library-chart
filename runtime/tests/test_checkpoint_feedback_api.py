@@ -179,7 +179,12 @@ def test_atif_export_requires_flag_and_run_id(monkeypatch: pytest.MonkeyPatch) -
     trajectory_recorder.append(rid, "tool", {"tool": "sample.echo"})
     r = client.get(f"/api/v1/runtime/exports/atif?run_id={rid}")
     assert r.status_code == 200
-    assert r.json()["documents"][0]["run_id"] == rid
+    doc = r.json()["documents"][0]
+    assert doc["schema_version"] == "ATIF-v1.4"
+    assert doc["session_id"] == rid
+    assert doc["extra"]["hosted_agents"]["run_id"] == rid
+    assert doc["steps"][0]["source"] == "agent"
+    assert doc["steps"][0]["tool_calls"][0]["function_name"] == "sample.echo"
 
 
 def test_run_tool_json_logs_span_when_wandb_session_bound(

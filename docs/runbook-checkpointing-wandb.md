@@ -27,7 +27,7 @@ When `HOSTED_AGENT_CHECKPOINTS_ENABLED` is **false** (Helm default), the runtime
 - `GET /api/v1/runtime/threads/{thread_id}/side-effects` — logical checkpoints around visible side effects (Slack posts).
 - `POST /api/v1/integrations/slack/reactions` — normalized reaction payload (`channel_id`, `message_ts`, `reaction`, `event_id`, `user_id`).
 - `GET /api/v1/runtime/feedback/human` — recorded human feedback events (process-local store in default build).
-- `GET /api/v1/runtime/exports/atif?run_id=...` — ATIF-shaped JSON (placeholder schema version); requires `HOSTED_AGENT_ATIF_EXPORT_ENABLED`.
+- `GET /api/v1/runtime/exports/atif?run_id=...` — **ATIF v1.4** trajectory JSON (Harbor Agent Trajectory Format; see [ADR 0003](adrs/0003-pin-atif-v1-4-trajectory-export.md) and [Harbor ATIF docs](https://www.harborframework.com/docs/agents/trajectory-format)); requires `HOSTED_AGENT_ATIF_EXPORT_ENABLED`. Optional env: `HOSTED_AGENT_ATIF_AGENT_NAME`, `HOSTED_AGENT_ATIF_AGENT_VERSION`, `HOSTED_AGENT_ATIF_MODEL_NAME`.
 
 ## Secrets, retention, rollback, PII
 

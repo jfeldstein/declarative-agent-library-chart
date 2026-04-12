@@ -2,7 +2,13 @@
 
 from __future__ import annotations
 
-from hosted_agents.observability.atif import export_atif_batch, positive_mining_filter
+from hosted_agents.observability.atif import (
+    CANONICAL_TRAJECTORY_FORMAT_VERSION,
+    DEFAULT_ATIF_SCHEMA_VERSION,
+    canonical_to_atif_v1_4,
+    export_atif_batch,
+    positive_mining_filter,
+)
 from hosted_agents.observability.checkpointer import build_checkpointer
 from hosted_agents.observability.correlation import SlackMessageRef, correlation_store
 from hosted_agents.observability.feedback import (
@@ -20,6 +26,8 @@ from hosted_agents.observability.trajectory import TrajectoryRecorder, trajector
 from hosted_agents.observability.wandb_trace import WandbTraceSession
 
 __all__ = [
+    "CANONICAL_TRAJECTORY_FORMAT_VERSION",
+    "DEFAULT_ATIF_SCHEMA_VERSION",
     "HumanFeedbackEvent",
     "LabelRegistry",
     "ObservabilitySettings",
@@ -30,6 +38,7 @@ __all__ = [
     "WandbTraceSession",
     "bind_run_context",
     "build_checkpointer",
+    "canonical_to_atif_v1_4",
     "correlation_store",
     "export_atif_batch",
     "feedback_store",
