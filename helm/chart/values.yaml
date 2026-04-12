@@ -25,6 +25,10 @@ resources: {}
 nameOverride: ""
 fullnameOverride: ""
 
+# Optional extra environment variables on the agent container (checkpoint store, W&B, etc.).
+# Example: [{ name: HOSTED_AGENT_CHECKPOINT_STORE, value: "none" }]
+extraEnv: []
+
 # Observability: Prometheus scrape hints (off by default) and optional ServiceMonitor
 o11y:
   prometheusAnnotations:

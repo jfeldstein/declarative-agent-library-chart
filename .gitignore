@@ -5,3 +5,6 @@ __pycache__/
 htmlcov/
 *.egg-info/
 dist/
+
+# Cursor hook ephemeral state (local machine)
+.cursor/hooks/state/agent-reflect-and-learn.json

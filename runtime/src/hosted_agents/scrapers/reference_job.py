@@ -4,45 +4,17 @@ from __future__ import annotations
 
 import os
 import sys
-import threading
 import time
-from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import httpx
-from prometheus_client import CONTENT_TYPE_LATEST, REGISTRY, generate_latest
 
 from hosted_agents.scrapers.metrics import (
     classify_rag_submission_result,
+    maybe_start_scraper_metrics_http,
     observe_rag_embed_attempt,
     observe_scraper_run,
+    stop_scraper_metrics_http,
 )
-
-
-def _start_metrics_http(addr: str) -> HTTPServer:
-    host, sep, port_s = addr.rpartition(":")
-    if not sep:
-        raise ValueError(f"SCRAPER_METRICS_ADDR must be host:port, got {addr!r}")
-    port = int(port_s)
-    listen_host = host or "0.0.0.0"
-
-    class _MetricsHandler(BaseHTTPRequestHandler):
-        def do_GET(self) -> None:
-            if self.path not in ("/metrics", "/metrics/"):
-                self.send_error(404)
-                return
-            payload = generate_latest(REGISTRY)
-            self.send_response(200)
-            self.send_header("Content-Type", CONTENT_TYPE_LATEST)
-            self.end_headers()
-            self.wfile.write(payload)
-
-        def log_message(self, _format: str, *_args: object) -> None:
-            return
-
-    httpd = HTTPServer((listen_host, port), _MetricsHandler)
-    thread = threading.Thread(target=httpd.serve_forever, daemon=True)
-    thread.start()
-    return httpd
 
 
 def _embed_payload() -> dict:
@@ -83,13 +55,15 @@ def _post_embed(client: httpx.Client, base: str, payload: dict, integration: str
     observe_rag_embed_attempt(integration, "success")
 
 
+def _integration_label() -> str:
+    v = os.environ.get("SCRAPER_INTEGRATION", "reference").strip()
+    return v or "reference"
+
+
 def run() -> None:
     t0 = time.perf_counter()
-    integration = os.environ.get("SCRAPER_INTEGRATION", "reference").strip() or "reference"
-    metrics_addr = os.environ.get("SCRAPER_METRICS_ADDR", "").strip()
-    httpd: HTTPServer | None = None
-    if metrics_addr:
-        httpd = _start_metrics_http(metrics_addr)
+    integration = _integration_label()
+    httpd = maybe_start_scraper_metrics_http()
 
     run_ok = False
     try:
@@ -104,11 +78,7 @@ def run() -> None:
     finally:
         elapsed = time.perf_counter() - t0
         observe_scraper_run(integration, run_ok, elapsed)
-        if httpd is not None:
-            grace = float(os.environ.get("SCRAPER_METRICS_GRACE_SECONDS", "15"))
-            if grace > 0:
-                time.sleep(grace)
-            httpd.shutdown()
+        stop_scraper_metrics_http(httpd)
 
 
 if __name__ == "__main__":

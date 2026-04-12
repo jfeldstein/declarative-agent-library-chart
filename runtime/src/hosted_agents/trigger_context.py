@@ -14,3 +14,6 @@ class TriggerContext:
     body: TriggerBody | None
     system_prompt: str
     request_id: str
+    run_id: str
+    thread_id: str
+    ephemeral: bool = False

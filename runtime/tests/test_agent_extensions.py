@@ -48,6 +48,12 @@ def test_runtime_summary(client: TestClient) -> None:
     assert body["enabled_mcp_tools"] == []
     assert body["launch_path"] == "POST /api/v1/trigger"
     assert body["orchestration"] == "langgraph"
+    obs = body["observability"]
+    assert obs["checkpoint_store"] == "memory"
+    assert obs["feature_flags"]["checkpoints_enabled"] is True
+    assert obs["wandb"]["tracing_enabled_intent"] is False
+    assert obs["wandb"]["tracing_ready"] is False
+    assert obs["wandb"]["mandatory_run_tag_keys"]
 
 
 def test_subagent_tool_via_supervisor(

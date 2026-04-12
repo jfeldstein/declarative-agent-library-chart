@@ -15,6 +15,15 @@ from hosted_agents.chat_model import FakeToolChatModel
 os.environ.setdefault("LANGCHAIN_TRACING_V2", "false")
 
 
+@pytest.fixture(autouse=True)
+def _reset_langgraph_checkpoint_isolation() -> None:
+    """Fresh in-memory checkpointer + compiled graph cache per test."""
+    from hosted_agents.checkpointing import clear_memory_checkpointer
+
+    clear_memory_checkpointer()
+    yield
+
+
 def tool_then_text_responses(
     tool_name: str,
     tool_args: dict[str, Any],
