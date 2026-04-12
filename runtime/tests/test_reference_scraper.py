@@ -6,9 +6,10 @@ from unittest.mock import MagicMock
 
 import httpx
 import pytest
-from prometheus_client import REGISTRY, generate_latest
+from prometheus_client import generate_latest
 
 from hosted_agents.scrapers import reference_job
+from hosted_agents.scrapers.metrics import SCRAPER_REGISTRY
 
 
 def test_reference_job_requires_url(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -47,7 +48,7 @@ def test_reference_job_metrics_on_success(monkeypatch: pytest.MonkeyPatch) -> No
     mock_client.__exit__.return_value = None
     monkeypatch.setattr("hosted_agents.scrapers.reference_job.httpx.Client", lambda **kw: mock_client)
     reference_job.run()
-    text = generate_latest(REGISTRY).decode()
+    text = generate_latest(SCRAPER_REGISTRY).decode()
     assert 'agent_runtime_scraper_runs_total{integration="reference",result="success"}' in text
     assert 'agent_runtime_scraper_rag_submissions_total{integration="reference",result="success"}' in text
 
@@ -68,6 +69,6 @@ def test_reference_job_metrics_on_embed_server_error(monkeypatch: pytest.MonkeyP
     monkeypatch.setattr("hosted_agents.scrapers.reference_job.httpx.Client", lambda **kw: mock_client)
     with pytest.raises(httpx.HTTPStatusError):
         reference_job.run()
-    text = generate_latest(REGISTRY).decode()
+    text = generate_latest(SCRAPER_REGISTRY).decode()
     assert 'agent_runtime_scraper_runs_total{integration="reference",result="error"}' in text
     assert 'agent_runtime_scraper_rag_submissions_total{integration="reference",result="server_error"}' in text

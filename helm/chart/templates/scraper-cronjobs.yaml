@@ -19,7 +19,7 @@ spec:
       backoffLimit: 2
       template:
         metadata:
-          {{- if and $.Values.o11y.prometheusAnnotations.enabled (eq .name "reference") }}
+          {{- if $.Values.o11y.prometheusAnnotations.enabled }}
           annotations:
             prometheus.io/scrape: "true"
             prometheus.io/port: "9091"
@@ -40,16 +40,16 @@ spec:
                 - python
                 - -m
                 - hosted_agents.scrapers.reference_job
+              {{- else }}
+              command:
+                - python
+                - -m
+                - hosted_agents.scrapers.stub_job
+              {{- end }}
               ports:
                 - name: metrics
                   containerPort: 9091
                   protocol: TCP
-              {{- else }}
-              command:
-                - python
-                - -c
-                - "import os; print('stub scraper', os.environ.get('SCRAPER_NAME',''))"
-              {{- end }}
               env:
                 - name: RAG_SERVICE_URL
                   value: {{ include "declarative-agent-library.ragInternalBaseUrl" $ | quote }}
@@ -57,12 +57,10 @@ spec:
                   value: {{ .name | quote }}
                 - name: SCRAPER_SCOPE
                   value: {{ (.scope | default .name) | quote }}
-                {{- if eq .name "reference" }}
                 - name: SCRAPER_METRICS_ADDR
                   value: "0.0.0.0:9091"
                 - name: SCRAPER_METRICS_GRACE_SECONDS
                   value: "35"
-                {{- end }}
                 {{- with .extraEnv }}
                 {{- toYaml . | nindent 16 }}
                 {{- end }}
