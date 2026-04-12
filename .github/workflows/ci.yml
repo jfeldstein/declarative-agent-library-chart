@@ -50,7 +50,8 @@ jobs:
 
       - uses: azure/setup-helm@v4
         with:
-          version: v3.14.4
+          # helm-unittest's plugin.yaml uses platformHooks; Helm 3.18.10+ is required (see helm/helm#30920).
+          version: v3.20.2
 
       - name: Install helm-unittest
         run: helm plugin install https://github.com/helm-unittest/helm-unittest.git
