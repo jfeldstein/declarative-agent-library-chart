@@ -3,34 +3,36 @@
 from __future__ import annotations
 
 import os
-import sys
 import time
 
-from hosted_agents.scrapers.metrics import observe_scraper_run, start_scraper_metrics_http
+from hosted_agents.scrapers.metrics import (
+    maybe_start_scraper_metrics_http,
+    observe_scraper_run,
+    stop_scraper_metrics_http,
+)
+
+
+def _integration_label() -> str:
+    override = os.environ.get("SCRAPER_INTEGRATION", "").strip()
+    if override:
+        return override
+    name = os.environ.get("SCRAPER_NAME", "stub").strip()
+    return name or "stub"
 
 
 def run() -> None:
     t0 = time.perf_counter()
-    integration = (
-        os.environ.get("SCRAPER_INTEGRATION", "").strip()
-        or os.environ.get("SCRAPER_NAME", "stub").strip()
-        or "stub"
-    )
-    metrics_addr = os.environ.get("SCRAPER_METRICS_ADDR", "").strip()
-    httpd = start_scraper_metrics_http(metrics_addr) if metrics_addr else None
+    integration = _integration_label()
+    httpd = maybe_start_scraper_metrics_http()
 
     run_ok = False
     try:
-        print("stub scraper", os.environ.get("SCRAPER_NAME", ""), file=sys.stdout)  # noqa: T201
+        print("stub scraper", os.environ.get("SCRAPER_NAME", ""))  # noqa: T201
         run_ok = True
     finally:
         elapsed = time.perf_counter() - t0
         observe_scraper_run(integration, run_ok, elapsed)
-        if httpd is not None:
-            grace = float(os.environ.get("SCRAPER_METRICS_GRACE_SECONDS", "15"))
-            if grace > 0:
-                time.sleep(grace)
-            httpd.shutdown()
+        stop_scraper_metrics_http(httpd)
 
 
 if __name__ == "__main__":

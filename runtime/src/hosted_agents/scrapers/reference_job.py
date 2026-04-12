@@ -10,9 +10,10 @@ import httpx
 
 from hosted_agents.scrapers.metrics import (
     classify_rag_submission_result,
+    maybe_start_scraper_metrics_http,
     observe_rag_embed_attempt,
     observe_scraper_run,
-    start_scraper_metrics_http,
+    stop_scraper_metrics_http,
 )
 
 
@@ -54,11 +55,15 @@ def _post_embed(client: httpx.Client, base: str, payload: dict, integration: str
     observe_rag_embed_attempt(integration, "success")
 
 
+def _integration_label() -> str:
+    v = os.environ.get("SCRAPER_INTEGRATION", "reference").strip()
+    return v or "reference"
+
+
 def run() -> None:
     t0 = time.perf_counter()
-    integration = os.environ.get("SCRAPER_INTEGRATION", "reference").strip() or "reference"
-    metrics_addr = os.environ.get("SCRAPER_METRICS_ADDR", "").strip()
-    httpd = start_scraper_metrics_http(metrics_addr) if metrics_addr else None
+    integration = _integration_label()
+    httpd = maybe_start_scraper_metrics_http()
 
     run_ok = False
     try:
@@ -73,11 +78,7 @@ def run() -> None:
     finally:
         elapsed = time.perf_counter() - t0
         observe_scraper_run(integration, run_ok, elapsed)
-        if httpd is not None:
-            grace = float(os.environ.get("SCRAPER_METRICS_GRACE_SECONDS", "15"))
-            if grace > 0:
-                time.sleep(grace)
-            httpd.shutdown()
+        stop_scraper_metrics_http(httpd)
 
 
 if __name__ == "__main__":

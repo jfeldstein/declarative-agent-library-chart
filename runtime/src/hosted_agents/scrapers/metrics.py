@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import os
 import threading
+import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Literal
 
@@ -53,7 +55,7 @@ SCRAPER_RAG_SUBMISSIONS = Counter(
 
 
 def _classify_http_status(status_code: int) -> RagSubmitResult:
-    """Same mapping as runtime-rag-http / agent embed metrics (no import of global metric modules)."""
+    """Match RAG HTTP embed/query metrics: status → success | client_error | server_error."""
     if status_code >= 500:
         return "server_error"
     if status_code >= 400:
@@ -72,7 +74,7 @@ def observe_rag_embed_attempt(integration: str, result: RagSubmitResult) -> None
 
 
 def classify_rag_submission_result(exc: BaseException) -> RagSubmitResult:
-    """Map httpx errors from a RAG /v1/embed call to metric result labels."""
+    """Map httpx errors from POST /v1/embed to RagSubmitResult labels."""
     if isinstance(exc, httpx.HTTPStatusError):
         return _classify_http_status(exc.response.status_code)
     if isinstance(exc, httpx.RequestError):
@@ -121,3 +123,19 @@ def start_scraper_metrics_http(addr: str) -> HTTPServer:
     thread = threading.Thread(target=httpd.serve_forever, daemon=True)
     thread.start()
     return httpd
+
+
+def maybe_start_scraper_metrics_http() -> HTTPServer | None:
+    addr = os.environ.get("SCRAPER_METRICS_ADDR", "").strip()
+    if not addr:
+        return None
+    return start_scraper_metrics_http(addr)
+
+
+def stop_scraper_metrics_http(httpd: HTTPServer | None) -> None:
+    if httpd is None:
+        return
+    grace = float(os.environ.get("SCRAPER_METRICS_GRACE_SECONDS", "15"))
+    if grace > 0:
+        time.sleep(grace)
+    httpd.shutdown()
