@@ -1,6 +1,6 @@
 # declarative-agent-library-chart
 
-Standalone repository for **YAML-configured** hosted agents: a **Helm library chart** (`helm/chart/`) consumed by application charts, a **hello-world** example (`examples/hello-world/`), and a **Python** runtime (`hosted_agents`) that exposes **`POST /api/v1/trigger`** as the **only HTTP entry for launching agent work** (LangGraph-orchestrated). The main reply reads `HOSTED_AGENT_SYSTEM_PROMPT` from the environment (ConfigMap in-cluster). Optional JSON on the trigger selects **skill load**, **subagent**, or **tool** steps (see below).
+Standalone repository for **YAML-configured** hosted agents: a **Helm library chart** (`helm/chart/`) consumed by application charts, a **hello-world** example (`examples/hello-world/`), and a **Python** runtime (`hosted_agents`) that exposes **`POST /api/v1/trigger`** as the **only HTTP entry for launching agent work** (LangGraph-orchestrated). The root agent reads **`HOSTED_AGENT_SYSTEM_PROMPT`** from the environment (ConfigMap in-cluster) as **supervisor** instructions when **`subagents`** is configured; optional JSON can carry **`message`** (user input), **`load_skill`**, or a direct **`tool`** step (see below). This matches the LangChain **subagents** pattern ([docs](https://docs.langchain.com/oss/python/langchain/multi-agent/subagents)): specialists are **tools** on that root agent, not an HTTP-selected subagent.
 
 ## Layout
 
@@ -19,6 +19,7 @@ Standalone repository for **YAML-configured** hosted agents: a **Helm library ch
 | `Dockerfile` | Production-style image for the Python runtime |
 | `skaffold.yaml` / `devspace.yaml` | Local deploy + **port-forward `localhost:8088` → service :8088** |
 | `docs/observability.md` | Metrics (`/metrics`), structured logs, Helm scrape hints, Grafana import |
+| `docs/development-log.md` | Notable chart/runtime changes (breaking API, env, values); ADRs live under `docs/adrs/` |
 | `grafana/` | Starter Grafana dashboard JSON + import notes |
 
 ## Decisions
@@ -117,11 +118,16 @@ Values keys under the **`declarative-agent-library`** subchart configure these r
 | Values key | Role |
 |------------|------|
 | `scrapers.jobs` | **CronJobs** that push normalized content (and graph edges when known) into RAG; built-in **`reference`** job posts a fixture document + `contained_in` edge. If **at least one** job has **`enabled: true`**, the chart also deploys the **managed RAG HTTP** Deployment + Service (`/v1/embed`, `/v1/query`, `/v1/relate`) — see [docs/rag-http-api.md](docs/rag-http-api.md). Tune RAG replicas/port/resources under **`scrapers.ragService`**. |
-| `mcp.enabledTools` | Allowlisted **in-process tools** invoked via **`POST /api/v1/trigger`** with JSON `{"tool":"…","tool_arguments":{…}}` (e.g. `sample.echo`). Layout: [runtime/src/hosted_agents/tools_impl/README.md](runtime/src/hosted_agents/tools_impl/README.md). |
-| `subagents` | JSON list of subagent definitions used by **`POST /api/v1/trigger`** with `{"subagent":"<name>", …}` (**supervisor-style** boundary; aligns with [LangChain Subagents](https://docs.langchain.com/oss/python/langchain/multi-agent/subagents)). Optional **`role`**: omit or **`default`** (uses `systemPrompt` like the main trigger); **`metrics`** (returns agent Prometheus text); **`rag`** (include `query` and optional RAG fields in the trigger JSON to proxy to RAG `/v1/query`). |
+| `mcp.enabledTools` | Allowlisted **in-process tools** merged into the **supervisor** tool list (and still invokable directly via **`POST /api/v1/trigger`** with `{"tool":"…","tool_arguments":{…}}`). Layout: [runtime/src/hosted_agents/tools_impl/README.md](runtime/src/hosted_agents/tools_impl/README.md). **Merge order:** subagent tools (config order) then MCP tools (sorted by id). |
+| `subagents` | JSON list of specialists compiled into **LangGraph subgraphs** and registered as **LangChain tools** on the root agent ([LangChain subagents](https://docs.langchain.com/oss/python/langchain/multi-agent/subagents)). **Recommended:** **`description`** for each entry (tool schema text). **`exposeAsTool`**: omit or **`true`** to register the tool; **`role: metrics`** defaults to **`exposeAsTool: false`** so Prometheus snapshots stay off the default tool list unless you opt in. Optional **`role`**: **`default`** (uses `systemPrompt` + optional task text from the tool call); **`metrics`** (returns agent Prometheus text inside the tool); **`rag`** (tool arguments carry `query` / RAG fields; proxies to RAG `/v1/query` with **`X-Request-Id`**). |
 | `skills` | JSON catalog `{ "name", "prompt", "extraTools"? }` — load with **`POST /api/v1/trigger`** and `{"load_skill":"<name>"}` (progressive disclosure; aligns with [LangChain Skills](https://docs.langchain.com/oss/python/langchain/multi-agent/skills)). |
+| `chatModel` | Optional Helm value → **`HOSTED_AGENT_CHAT_MODEL`** when **`subagents`** is non-empty (e.g. `openai:gpt-4o-mini`). Requires the matching LangChain provider package and credentials in your image. **Hello-world** keeps **`subagents: []`** so the trigger stays deterministic without a remote LLM. |
 
 The agent Pod receives `HOSTED_AGENT_RAG_BASE_URL` pointing at the in-cluster RAG Service when **any scraper job is enabled** (empty otherwise). ConfigMap keys `subagents.json`, `skills.json`, and `enabled-mcp-tools.json` mirror the arrays above.
+
+**Breaking (HTTP):** JSON field **`subagent`** on **`POST /api/v1/trigger`** is **rejected with 400**. Send **`message`** to the supervisor instead; RAG parameters move to the **`rag`** specialist’s tool arguments when the model invokes that tool.
+
+**Environment (supervisor):** `HOSTED_AGENT_CHAT_MODEL` selects the chat model when `HOSTED_AGENT_SUBAGENTS_JSON` is non-empty. `HOSTED_AGENT_FAKE_CHAT_SEQUENCE` is reserved for tests (JSON array of scripted assistant turns).
 
 ### RAG + agent locally
 
@@ -155,24 +161,15 @@ declarative-agent-library:
   subagents:
     - name: metrics
       role: metrics
+      exposeAsTool: true
+      description: Return the agent process Prometheus snapshot
     - name: rag
       role: rag
       systemPrompt: ""
+      description: Query the managed RAG HTTP API
 ```
 
-Invoke examples (all via **trigger**):
-
-```bash
-# Agent process metrics (subagent snapshot; also increments subagent_* series)
-curl -s -X POST http://127.0.0.1:8088/api/v1/trigger \
-  -H 'content-type: application/json' \
-  -d '{"subagent":"metrics"}' | head
-
-# RAG query via subagent (requires in-cluster RAG — e.g. an enabled scraper job — and DNS or port-forward)
-curl -s -X POST http://127.0.0.1:8088/api/v1/trigger \
-  -H 'content-type: application/json' \
-  -d '{"subagent":"rag","query":"banana","scope":"default","expand_relationships":true}'
-```
+With a configured chat model, the supervisor chooses tools; **`message`** is the user turn. For **`metrics`**, set **`exposeAsTool: true`** (hidden by default for `role: metrics`). For **`rag`**, the model passes **`query`** / scope fields as tool arguments. **`POST /api/v1/rag/query`** remains a non-launch utility that proxies to RAG with **`X-Request-Id`**.
 
 ### Example: two classic prompt-only subagents
 
@@ -180,9 +177,11 @@ curl -s -X POST http://127.0.0.1:8088/api/v1/trigger \
 declarative-agent-library:
   subagents:
     - name: research
+      description: Research specialist
       systemPrompt: |
         Respond, "Research subagent"
     - name: jira
+      description: Jira specialist
       systemPrompt: |
         Respond, "Jira subagent"
 ```
@@ -191,7 +190,7 @@ declarative-agent-library:
 
 1. **Scraper → RAG:** CronJob `reference` calls `python -m hosted_agents.scrapers.reference_job` with `RAG_SERVICE_URL` set to the RAG Service (`http://<release>-rag:8090` when an enabled scraper job has deployed RAG).
 2. **Agent → RAG (utility HTTP):** `POST /api/v1/rag/query` proxies to RAG `/v1/query` (not the agent *launch* path; use **trigger** for orchestrated runs).
-3. **Tool:** With `mcp.enabledTools` including `sample.echo`, `POST /api/v1/trigger` with `{"tool":"sample.echo","tool_arguments":{"message":"hi"}}`.
+3. **Tool:** With `mcp.enabledTools` including `sample.echo`, either ask the supervisor in natural language or call `POST /api/v1/trigger` with `{"tool":"sample.echo","tool_arguments":{"message":"hi"}}` (direct path bypasses the LLM).
 
 ### Scrapers: verifying CronJobs
 

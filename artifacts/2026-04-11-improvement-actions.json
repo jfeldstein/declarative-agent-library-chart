@@ -1,0 +1,20 @@
+{
+  "memory_updates": [
+    "When Claude plan/history is empty for a day, treat git log, docs/development-log.md, and openspec/changes/*/tasks.md as the authoritative narrative for what moved.",
+    "After a breaking HTTP API change (e.g. trigger body shape), ensure README or examples mention the migration path until external callers are updated."
+  ],
+  "skill_candidates": [],
+  "script_candidates": [
+    "Optional: one-command regeneration of examples/*/charts/*.tgz when Chart.yaml or templates change, if manual updates keep recurring."
+  ],
+  "workflow_fixes": [
+    "Decide and document whether artifacts/ and .cursor/hooks/ are committed, partially committed, or gitignored; avoid leaving them indefinitely untracked.",
+    "Align example chart tgz policy (committed artifacts vs CI-generated) with release and contributor docs.",
+    "For multi-tool workflows, pass explicit --repo to agent-reflect collectors so worktree vs main clone confusion does not skew evidence."
+  ],
+  "tomorrow_actions": [
+    "Run `git status` in /Users/jordan/Code/declarative-agent-library-chart and either commit .agent-reflect-and-learn/config.json (and stable hooks) or add ignore rules for local-only paths.",
+    "Choose one active OpenSpec change (e.g. agent-checkpointing-wandb-feedback or baseten-inference-provider) and either advance tasks to implementation or mark as parked with a short note in tasks.md.",
+    "Run ./ci.sh before merging or tagging if any Helm or runtime paths changed overnight."
+  ]
+}

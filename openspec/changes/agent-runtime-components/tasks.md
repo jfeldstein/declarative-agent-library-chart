@@ -18,7 +18,7 @@
 - [x] 3.1 Add Kubernetes **`CronJob`** (or equivalent) templates parameterized by values for enabled scrapers, schedules, and credentials references.
 - [x] 3.2 Implement at least one reference scraper type end-to-end (fetch → normalize → **`/embed`**) and stub or feature-flag additional integration types (Slack, Google Docs, JIRA) per design.
 - [x] 3.3 Verify disabled scrapers do not create jobs and enabled scrapers run on schedule in a test cluster.
-- [ ] 3.4 Instrument scraper processes with **`agent_runtime_scraper_runs_total`**, **`agent_runtime_scraper_run_duration_seconds`**, and **`agent_runtime_scraper_rag_submissions_total`** per **`runtime-scrapers`**.
+- [x] 3.4 Instrument scraper processes with **`agent_runtime_scraper_runs_total`**, **`agent_runtime_scraper_run_duration_seconds`**, and **`agent_runtime_scraper_rag_submissions_total`** per **`runtime-scrapers`**.
 
 ## 4. MCP tools from modules
 

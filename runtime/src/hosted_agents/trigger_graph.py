@@ -2,200 +2,174 @@
 
 from __future__ import annotations
 
-import json
-import time
-from dataclasses import dataclass
 from typing import Any, TypedDict
 
-import httpx
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph import END, START, StateGraph
-from prometheus_client import generate_latest
 
-from hosted_agents.agent_models import SubagentInvokeBody, TriggerBody
-from hosted_agents.metrics import (
-    observe_mcp_tool,
-    observe_skill_load,
-    observe_subagent,
+from hosted_agents.agent_models import TriggerBody
+from hosted_agents.checkpointing import (
+    checkpoints_globally_enabled,
+    compiled_graph_cache,
+    resolve_checkpointer,
 )
 from hosted_agents.reply import trigger_reply_text
-from hosted_agents.runtime_config import RuntimeConfig, subagent_system_prompt
-from hosted_agents.skills_state import unlock_tools, unlocked_tools
-from hosted_agents.tools_impl.dispatch import invoke_tool
+from hosted_agents.run_context import (
+    TriggerRunIds,
+    reset_tool_sequence,
+    reset_trigger_ids,
+    set_trigger_ids,
+)
+from hosted_agents.runtime_config import RuntimeConfig
+from hosted_agents.subagent_exec import _run_subagent_text as _run_subagent_text
+from hosted_agents.supervisor import run_supervisor_agent
+from hosted_agents.trigger_context import TriggerContext
+from hosted_agents.trigger_errors import TriggerHttpError
+from hosted_agents.trigger_steps import run_skill_load_json, run_tool_json
+from hosted_agents.wandb_session import active_wandb_run_id, wandb_run_scope
+
+_EMPTY_CFG = RuntimeConfig(
+    rag_base_url="",
+    subagents=[],
+    skills=[],
+    enabled_mcp_tools=[],
+)
+
+__all__ = [
+    "TriggerHttpError",
+    "TriggerContext",
+    "compiled_trigger_graph_for_tests",
+    "get_compiled_trigger_graph",
+    "get_thread_checkpoint_history",
+    "get_thread_state_snapshot",
+    "run_trigger_graph",
+    "_run_subagent_text",
+]
 
 
-class TriggerHttpError(Exception):
-    """Maps to a non-200 HTTP response from the FastAPI layer."""
+class _GraphState(TypedDict, total=False):
+    """Graph state; ``pre`` + ``pipeline`` nodes yield two checkpoints per invoke."""
 
-    def __init__(self, status_code: int, detail: str) -> None:
-        self.status_code = status_code
-        self.detail = detail
-        super().__init__(detail)
-
-
-@dataclass(frozen=True)
-class TriggerContext:
-    cfg: RuntimeConfig
-    body: TriggerBody | None
-    system_prompt: str
-    request_id: str
-
-
-class _GraphState(TypedDict):
+    stage: str
     output: str
-
-
-def _rag_payload(body: TriggerBody) -> SubagentInvokeBody:
-    return SubagentInvokeBody(
-        query=body.query,
-        scope=body.scope,
-        top_k=body.top_k,
-        expand_relationships=body.expand_relationships,
-        relationship_types=body.relationship_types,
-        max_hops=body.max_hops,
-    )
-
-
-def _httpx_headers(request_id: str) -> dict[str, str]:
-    return {"X-Request-Id": request_id}
-
-
-def _run_subagent_text(
-    cfg: RuntimeConfig,
-    name: str,
-    rag_payload: SubagentInvokeBody | None,
-    request_id: str,
-) -> str:
-    start = time.perf_counter()
-    entry = next((s for s in cfg.subagents if str(s.get("name")) == name), None)
-    if entry is None:
-        observe_subagent(name, "error", start)
-        raise TriggerHttpError(404, "subagent not found")
-
-    role = str(entry.get("role") or "default").strip().lower()
-
-    if role == "metrics":
-        observe_subagent(name, "success", start)
-        return generate_latest().decode("utf-8")
-
-    if role == "rag":
-        if not cfg.rag_base_url:
-            observe_subagent(name, "error", start)
-            raise TriggerHttpError(503, "HOSTED_AGENT_RAG_BASE_URL is not set")
-        rb = rag_payload or SubagentInvokeBody()
-        q = (rb.query or "").strip()
-        if not q:
-            observe_subagent(name, "error", start)
-            raise TriggerHttpError(
-                400,
-                "JSON body with non-empty 'query' is required for rag role",
-            )
-        url = f"{cfg.rag_base_url.rstrip('/')}/v1/query"
-        req_json = rb.model_dump(exclude_none=True)
-        req_json["query"] = q
-        try:
-            with httpx.Client(
-                timeout=30.0,
-                headers=_httpx_headers(request_id),
-            ) as client:
-                resp = client.post(url, json=req_json)
-                resp.raise_for_status()
-        except httpx.HTTPError as exc:
-            observe_subagent(name, "error", start)
-            msg = f"rag subagent request failed: {exc!s}"
-            raise TriggerHttpError(502, msg) from exc
-        observe_subagent(name, "success", start)
-        return resp.text
-
-    prompt = subagent_system_prompt(entry)
-    if not prompt.strip():
-        observe_subagent(name, "error", start)
-        raise TriggerHttpError(400, "subagent has empty system prompt")
-    try:
-        out = trigger_reply_text(prompt)
-    except ValueError as exc:
-        observe_subagent(name, "error", start)
-        raise TriggerHttpError(400, str(exc)) from exc
-    observe_subagent(name, "success", start)
-    return out
-
-
-def _run_skill_load_json(cfg: RuntimeConfig, name: str) -> str:
-    start = time.perf_counter()
-    entry = next((s for s in cfg.skills if str(s.get("name")) == name), None)
-    if entry is None:
-        observe_skill_load(name, "error", start)
-        raise TriggerHttpError(404, "skill not found")
-    raw_extra = entry.get("extraTools") or entry.get("extra_tools") or []
-    extra = [str(x) for x in raw_extra] if isinstance(raw_extra, list) else []
-    unlock_tools(extra)
-    prompt = str(entry.get("prompt") or "")
-    observe_skill_load(name, "success", start)
-    return json.dumps({"name": name, "prompt": prompt, "activated_tools": extra})
-
-
-def _run_tool_json(cfg: RuntimeConfig, tool: str, arguments: dict[str, Any]) -> str:
-    start = time.perf_counter()
-    allowed = set(cfg.enabled_mcp_tools) | set(unlocked_tools())
-    if tool not in allowed:
-        observe_mcp_tool(tool, "error", start)
-        raise TriggerHttpError(403, "tool is not enabled for this deployment")
-    try:
-        result = invoke_tool(tool, arguments)
-    except KeyError as exc:
-        observe_mcp_tool(tool, "error", start)
-        raise TriggerHttpError(404, str(exc)) from exc
-    observe_mcp_tool(tool, "success", start)
-    return json.dumps({"tool": tool, "result": result})
+    trace_meta: dict[str, Any]
 
 
 def _execute_trigger(ctx: TriggerContext) -> str:
-    cfg = ctx.cfg
     body = ctx.body or TriggerBody()
-    request_id = ctx.request_id
 
     if body.load_skill:
-        skill_json = _run_skill_load_json(cfg, body.load_skill)
-        if not body.subagent and not body.tool:
-            return skill_json
-
-    if body.subagent:
-        # Non-``rag`` roles ignore ``rag_payload``; ``rag`` uses these fields from the trigger body.
-        return _run_subagent_text(
-            cfg,
-            body.subagent,
-            _rag_payload(body),
-            request_id,
-        )
+        skill_json = run_skill_load_json(ctx.cfg, body.load_skill)
+        if not body.tool:
+            if not ctx.cfg.subagents or body.message is None:
+                return skill_json
 
     if body.tool:
-        return _run_tool_json(cfg, body.tool, body.tool_arguments)
+        return run_tool_json(ctx.cfg, body.tool, body.tool_arguments)
+
+    if ctx.cfg.subagents:
+        user_message = (body.message or "").strip()
+        return run_supervisor_agent(ctx, user_message)
 
     return trigger_reply_text(ctx.system_prompt)
+
+
+def _pre(state: _GraphState, config: RunnableConfig) -> _GraphState:
+    return {**state, "stage": "started"}
 
 
 def _pipeline(state: _GraphState, config: RunnableConfig) -> _GraphState:
     ctx: TriggerContext = config["configurable"]["ctx"]
     out = _execute_trigger(ctx)
-    return {"output": out}
+    meta: dict[str, Any] = {}
+    if rid := active_wandb_run_id():
+        meta["wandb_run_id"] = rid
+    meta["run_id"] = ctx.run_id
+    meta["thread_id"] = ctx.thread_id
+    return {**state, "output": out, "stage": "done", "trace_meta": meta}
 
 
-_compiled_graph: Any | None = None
+def _build_state_graph() -> StateGraph:
+    g = StateGraph(_GraphState)
+    g.add_node("pre", _pre)
+    g.add_node("pipeline", _pipeline)
+    g.add_edge(START, "pre")
+    g.add_edge("pre", "pipeline")
+    g.add_edge("pipeline", END)
+    return g
 
 
-def compiled_trigger_graph() -> Any:
-    global _compiled_graph
-    if _compiled_graph is None:
-        g = StateGraph(_GraphState)
-        g.add_node("pipeline", _pipeline)
-        g.add_edge(START, "pipeline")
-        g.add_edge("pipeline", END)
-        _compiled_graph = g.compile()
-    return _compiled_graph
+def _uses_checkpointer(ctx: TriggerContext) -> bool:
+    if ctx.ephemeral:
+        return False
+    return checkpoints_globally_enabled()
+
+
+def _compiled_graph_for_mode(*, with_checkpointer: bool) -> Any:
+    key = "with_checkpointer" if with_checkpointer else "no_checkpointer"
+    cache = compiled_graph_cache()
+    if key in cache:
+        return cache[key]
+    builder = _build_state_graph()
+    if with_checkpointer:
+        cp, _ = resolve_checkpointer()
+        compiled = builder.compile(checkpointer=cp)
+    else:
+        compiled = builder.compile()
+    cache[key] = compiled
+    return compiled
+
+
+def get_compiled_trigger_graph(ctx: TriggerContext) -> Any:
+    """Return a compiled graph, with or without checkpointer (cached per mode)."""
+    return _compiled_graph_for_mode(with_checkpointer=_uses_checkpointer(ctx))
+
+
+def compiled_trigger_graph_for_tests(*, with_checkpointer: bool = True) -> Any:
+    """Force-build one variant (used by tests that patch the graph)."""
+    return _compiled_graph_for_mode(with_checkpointer=with_checkpointer)
 
 
 def run_trigger_graph(ctx: TriggerContext) -> str:
-    """Run the compiled LangGraph once and return plain-text HTTP body."""
-    graph = compiled_trigger_graph()
-    result = graph.invoke({"output": ""}, config={"configurable": {"ctx": ctx}})
-    return str(result["output"])
+    """Run the LangGraph pipeline once and return plain-text HTTP body."""
+    reset_tool_sequence()
+    tid_tok = set_trigger_ids(
+        TriggerRunIds(
+            run_id=ctx.run_id,
+            thread_id=ctx.thread_id,
+            request_id=ctx.request_id,
+        ),
+    )
+    try:
+        with wandb_run_scope(ctx):
+            graph = get_compiled_trigger_graph(ctx)
+            config: RunnableConfig = {"configurable": {"thread_id": ctx.thread_id, "ctx": ctx}}
+            result = graph.invoke({"stage": "pending"}, config=config)
+        return str(result.get("output", ""))
+    finally:
+        reset_trigger_ids(tid_tok)
+
+
+def _thread_inspection_context(thread_id: str) -> TriggerContext:
+    return TriggerContext(
+        cfg=_EMPTY_CFG,
+        body=None,
+        system_prompt="",
+        request_id="internal",
+        run_id="internal",
+        thread_id=thread_id,
+        ephemeral=False,
+    )
+
+
+def get_thread_state_snapshot(thread_id: str) -> Any:
+    """Latest :class:`langgraph.types.StateSnapshot` for ``thread_id`` (requires checkpointer graph)."""
+    graph = get_compiled_trigger_graph(_thread_inspection_context(thread_id))
+    cfg: RunnableConfig = {"configurable": {"thread_id": thread_id}}
+    return graph.get_state(cfg)
+
+
+def get_thread_checkpoint_history(thread_id: str) -> list[Any]:
+    graph = get_compiled_trigger_graph(_thread_inspection_context(thread_id))
+    cfg: RunnableConfig = {"configurable": {"thread_id": thread_id}}
+    return list(graph.get_state_history(cfg))
