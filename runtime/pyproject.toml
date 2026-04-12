@@ -5,7 +5,7 @@ description = "YAML-configured hosted agent runtime (FastAPI / LangGraph) for th
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.115.0",
-    "httpx>=0.28.0",
+    "httpx>=0.28.1",
     "langchain>=1.2.15",
     "langchain-core>=1.2.28",
     "langgraph>=1.1.6",
