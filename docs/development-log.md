@@ -8,6 +8,8 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ## 2026-04-12
 
+**PR #10 (Dependabot httpx)** — Merged `main` into [`dependabot/pip/runtime/httpx-gte-0.28.1`](https://github.com/jfeldstein/declarative-agent-library-chart/pull/10) so the PR’s CI workflow matches current **Helm 3.20.2** + **helm-unittest v1.0.3** pins (the branch had been based on pre-fix `main` and failed Helm with `unknown field "platformHooks"`). Runtime change remains **`httpx>=0.28.1`**.
+
 **CI / local Helm** — GitHub Actions Helm job pins **Helm v3.20.2** and **helm-unittest v1.0.3** (`HELM_UNITTEST_VERSION`); `ci.sh` documents the same install line. **Helm 3.18.10+** is required for `helm-unittest` plugin `platformHooks` (v3.14.x fails with `unknown field "platformHooks"`).
 
 **OpenSpec `agent-checkpointing-wandb-feedback` (partial apply)** — LangGraph **`MemorySaver`** checkpointer (default-on; `HOSTED_AGENT_CHECKPOINT_STORE=none` to disable); **`pre` + `pipeline`** nodes; **`GET /api/v1/trigger/threads/{id}/state|checkpoints`**; trigger **`thread_id`** / **`X-Thread-Id`** / **`ephemeral`**. **`run_context`** (`run_id`, `thread_id`, **`tool_call_id`** on MCP tools). **`wandb_session`** per-invocation init/finish when env ready; **`trace_meta`** on graph state. Bundled **`feedback_registry.v1.json`** + **`feedback_registry`**. Docs: **`docs/checkpointing-and-traces.md`**, **`docs/runbooks/checkpoints-wandb.md`**, observability updates. Helm **`extraEnv`**. Dockerfile **`uv sync --extra wandb`**. **`wandb`** optional extra + dev dep. Tasks **12/22** done; Slack mapping, durable feedback persistence, full LLM spans, interrupt/resume E2E remain.
