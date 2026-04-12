@@ -1,4 +1,6 @@
 # Traceability: [CFHA-VER-004] — scheduled tier for kind + Prometheus integration (see docs/spec-test-traceability.md).
+#
+# Prerequisites match runtime/tests/scripts/integration_kind_o11y_prometheus.sh: docker, kind, kubectl, helm, curl.
 name: Scheduled o11y integration
 
 on:
@@ -14,19 +16,42 @@ jobs:
   kind-prometheus:
     name: kind + Prometheus (RUN_KIND_O11Y_INTEGRATION)
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: runtime
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+
+      - name: Verify Docker (required for kind + image build)
+        run: docker info
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: v1.31.0
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.14.4
+
+      - name: Install kind
+        env:
+          KIND_VERSION: v0.27.0
+        run: |
+          set -euo pipefail
+          curl -sSLo ./kind "https://kind.sigs.k8s.io/dl/${KIND_VERSION}/kind-linux-amd64"
+          chmod +x ./kind
+          sudo mv ./kind /usr/local/bin/kind
+          kind version
 
       - uses: astral-sh/setup-uv@v4
         with:
           enable-cache: true
 
-      - name: Install dependencies
+      - name: Install Python dependencies
+        working-directory: runtime
         run: uv sync --all-groups
 
       - name: Run integration test
+        working-directory: runtime
         run: |
           RUN_KIND_O11Y_INTEGRATION=1 uv run pytest tests/integration/test_kind_o11y_prometheus.py -v --no-cov
