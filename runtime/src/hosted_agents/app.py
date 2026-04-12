@@ -82,6 +82,17 @@ def _snapshot_to_dict(sn: object) -> dict:
     }
 
 
+_CHECKPOINTS_DISABLED = (
+    "Checkpoints are disabled (HOSTED_AGENT_CHECKPOINT_STORE=none). "
+    "Set HOSTED_AGENT_CHECKPOINT_STORE=memory to enable state APIs."
+)
+
+
+def _require_checkpoints_enabled() -> None:
+    if not checkpoints_globally_enabled():
+        raise HTTPException(status_code=503, detail=_CHECKPOINTS_DISABLED)
+
+
 def create_app(*, system_prompt: str | None = None) -> FastAPI:
     """Build the ASGI app.
 
@@ -121,10 +132,10 @@ def create_app(*, system_prompt: str | None = None) -> FastAPI:
             observe_http_trigger("client_error", start)
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         except TriggerHttpError as exc:
-            observe_http_trigger(
-                "client_error" if exc.status_code < 500 else "server_error",
-                start,
-            )
+            if exc.status_code < 500:
+                observe_http_trigger("client_error", start)
+            else:
+                observe_http_trigger("server_error", start)
             raise HTTPException(exc.status_code, exc.detail) from exc
         except Exception:
             observe_http_trigger("server_error", start)
@@ -150,27 +161,13 @@ def create_app(*, system_prompt: str | None = None) -> FastAPI:
 
     @app.get("/api/v1/trigger/threads/{thread_id}/state")
     def get_trigger_thread_state(thread_id: str) -> JSONResponse:
-        if not checkpoints_globally_enabled():
-            raise HTTPException(
-                status_code=503,
-                detail=(
-                    "Checkpoints are disabled (HOSTED_AGENT_CHECKPOINT_STORE=none). "
-                    "Set HOSTED_AGENT_CHECKPOINT_STORE=memory to enable state APIs."
-                ),
-            )
+        _require_checkpoints_enabled()
         snap = get_thread_state_snapshot(thread_id)
         return JSONResponse(_snapshot_to_dict(snap))
 
     @app.get("/api/v1/trigger/threads/{thread_id}/checkpoints")
     def get_trigger_thread_checkpoints(thread_id: str) -> JSONResponse:
-        if not checkpoints_globally_enabled():
-            raise HTTPException(
-                status_code=503,
-                detail=(
-                    "Checkpoints are disabled (HOSTED_AGENT_CHECKPOINT_STORE=none). "
-                    "Set HOSTED_AGENT_CHECKPOINT_STORE=memory to enable state APIs."
-                ),
-            )
+        _require_checkpoints_enabled()
         hist = get_thread_checkpoint_history(thread_id)
         return JSONResponse([_snapshot_to_dict(s) for s in hist])
 

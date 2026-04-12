@@ -38,13 +38,11 @@ def resolve_checkpointer() -> tuple[Any | None, str]:
             _MEMORY_SAVER = MemorySaver()
         return _MEMORY_SAVER, "memory"
     if store in ("postgres", "redis"):
-        msg = (
+        raise RuntimeError(
             f"HOSTED_AGENT_CHECKPOINT_STORE={store!r} is not implemented yet; "
             "use 'memory' or 'none'."
         )
-        raise RuntimeError(msg)
-    msg = f"Unknown HOSTED_AGENT_CHECKPOINT_STORE={store!r}"
-    raise ValueError(msg)
+    raise ValueError(f"Unknown HOSTED_AGENT_CHECKPOINT_STORE={store!r}")
 
 
 def compiled_graph_cache() -> dict[str, Any]:

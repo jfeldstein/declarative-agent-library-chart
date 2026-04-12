@@ -105,26 +105,9 @@ def _uses_checkpointer(ctx: TriggerContext) -> bool:
     return checkpoints_globally_enabled()
 
 
-def get_compiled_trigger_graph(ctx: TriggerContext) -> Any:
-    """Return a compiled graph, with or without checkpointer (cached per mode)."""
-    key = "with_checkpointer" if _uses_checkpointer(ctx) else "no_checkpointer"
-    cache = compiled_graph_cache()
-    if key in cache:
-        return cache[key]
-    builder = _build_state_graph()
-    if key == "with_checkpointer":
-        cp, _ = resolve_checkpointer()
-        compiled = builder.compile(checkpointer=cp)
-    else:
-        compiled = builder.compile()
-    cache[key] = compiled
-    return compiled
-
-
-def compiled_trigger_graph_for_tests(*, with_checkpointer: bool = True) -> Any:
-    """Force-build one variant (used by tests that patch the graph)."""
-    cache = compiled_graph_cache()
+def _compiled_graph_for_mode(*, with_checkpointer: bool) -> Any:
     key = "with_checkpointer" if with_checkpointer else "no_checkpointer"
+    cache = compiled_graph_cache()
     if key in cache:
         return cache[key]
     builder = _build_state_graph()
@@ -135,6 +118,16 @@ def compiled_trigger_graph_for_tests(*, with_checkpointer: bool = True) -> Any:
         compiled = builder.compile()
     cache[key] = compiled
     return compiled
+
+
+def get_compiled_trigger_graph(ctx: TriggerContext) -> Any:
+    """Return a compiled graph, with or without checkpointer (cached per mode)."""
+    return _compiled_graph_for_mode(with_checkpointer=_uses_checkpointer(ctx))
+
+
+def compiled_trigger_graph_for_tests(*, with_checkpointer: bool = True) -> Any:
+    """Force-build one variant (used by tests that patch the graph)."""
+    return _compiled_graph_for_mode(with_checkpointer=with_checkpointer)
 
 
 def run_trigger_graph(ctx: TriggerContext) -> str:
@@ -157,9 +150,8 @@ def run_trigger_graph(ctx: TriggerContext) -> str:
         reset_trigger_ids(tid_tok)
 
 
-def get_thread_state_snapshot(thread_id: str) -> Any:
-    """Latest :class:`langgraph.types.StateSnapshot` for ``thread_id`` (requires checkpointer graph)."""
-    dummy = TriggerContext(
+def _thread_inspection_context(thread_id: str) -> TriggerContext:
+    return TriggerContext(
         cfg=_EMPTY_CFG,
         body=None,
         system_prompt="",
@@ -168,21 +160,16 @@ def get_thread_state_snapshot(thread_id: str) -> Any:
         thread_id=thread_id,
         ephemeral=False,
     )
-    graph = get_compiled_trigger_graph(dummy)
+
+
+def get_thread_state_snapshot(thread_id: str) -> Any:
+    """Latest :class:`langgraph.types.StateSnapshot` for ``thread_id`` (requires checkpointer graph)."""
+    graph = get_compiled_trigger_graph(_thread_inspection_context(thread_id))
     cfg: RunnableConfig = {"configurable": {"thread_id": thread_id}}
     return graph.get_state(cfg)
 
 
 def get_thread_checkpoint_history(thread_id: str) -> list[Any]:
-    dummy = TriggerContext(
-        cfg=_EMPTY_CFG,
-        body=None,
-        system_prompt="",
-        request_id="internal",
-        run_id="internal",
-        thread_id=thread_id,
-        ephemeral=False,
-    )
-    graph = get_compiled_trigger_graph(dummy)
+    graph = get_compiled_trigger_graph(_thread_inspection_context(thread_id))
     cfg: RunnableConfig = {"configurable": {"thread_id": thread_id}}
     return list(graph.get_state_history(cfg))

@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import os
-from contextlib import contextmanager
-from contextvars import ContextVar, Token
+from contextlib import contextmanager, suppress
+from contextvars import ContextVar
 from typing import Any, Generator
 
 from hosted_agents.agent_tracing import wandb_tracing_ready
@@ -17,29 +17,31 @@ def active_wandb_run_id() -> str | None:
     return _wandb_run_id.get()
 
 
+def _first_nonempty_env(*keys: str) -> str | None:
+    for k in keys:
+        v = os.environ.get(k, "").strip()
+        if v:
+            return v
+    return None
+
+
+# (env var names..., wandb config key)
+_ENV_TO_TAG: tuple[tuple[tuple[str, ...], str], ...] = (
+    (("HOSTED_AGENT_ID", "HOSTED_AGENT_AGENT_ID"), "agent_id"),
+    (("HOSTED_AGENT_ENV", "ENVIRONMENT", "ENV"), "environment"),
+    (("HOSTED_AGENT_SKILL_ID",), "skill_id"),
+    (("HOSTED_AGENT_SKILL_VERSION",), "skill_version"),
+    (("HOSTED_AGENT_CHAT_MODEL", "HOSTED_AGENT_MODEL_ID"), "model_id"),
+    (("HOSTED_AGENT_PROMPT_HASH",), "prompt_hash"),
+)
+
+
 def _tag_dict_for_run(ctx: TriggerContext) -> dict[str, str]:
-    """Bounded tag/config values only (no free-text blobs)."""
-
-    def pick(*keys: str) -> str | None:
-        for k in keys:
-            v = os.environ.get(k, "").strip()
-            if v:
-                return v
-        return None
-
     tags: dict[str, str] = {}
-    if v := pick("HOSTED_AGENT_ID", "HOSTED_AGENT_AGENT_ID"):
-        tags["agent_id"] = v
-    if v := pick("HOSTED_AGENT_ENV", "ENVIRONMENT", "ENV"):
-        tags["environment"] = v
-    if v := pick("HOSTED_AGENT_SKILL_ID"):
-        tags["skill_id"] = v
-    if v := pick("HOSTED_AGENT_SKILL_VERSION"):
-        tags["skill_version"] = v
-    if v := pick("HOSTED_AGENT_CHAT_MODEL", "HOSTED_AGENT_MODEL_ID"):
-        tags["model_id"] = v
-    if v := pick("HOSTED_AGENT_PROMPT_HASH"):
-        tags["prompt_hash"] = v
+    for env_keys, tag_key in _ENV_TO_TAG:
+        v = _first_nonempty_env(*env_keys)
+        if v:
+            tags[tag_key] = v
     tags["thread_id"] = ctx.thread_id
     tags["run_id"] = ctx.run_id
     return {k: v for k, v in tags.items() if v}
@@ -48,7 +50,6 @@ def _tag_dict_for_run(ctx: TriggerContext) -> dict[str, str]:
 @contextmanager
 def wandb_run_scope(ctx: TriggerContext) -> Generator[dict[str, Any] | None, None, None]:
     """Start/finish a W&B run when tracing is fully configured; else yield ``None``."""
-    token: Token | None = None
     if not wandb_tracing_ready():
         yield None
         return
@@ -58,19 +59,18 @@ def wandb_run_scope(ctx: TriggerContext) -> Generator[dict[str, Any] | None, Non
         yield None
         return
 
-    wb = wandb
     project = (
         os.environ.get("WANDB_PROJECT", "").strip()
         or os.environ.get("HOSTED_AGENT_WANDB_PROJECT", "").strip()
     )
     entity = os.environ.get("WANDB_ENTITY", "").strip() or None
     tags = _tag_dict_for_run(ctx)
-    run = wb.init(
+    run = wandb.init(
         project=project,
         entity=entity,
         id=ctx.run_id,
         name=ctx.run_id[:120],
-        config={k: v for k, v in tags.items() if v},
+        config=dict(tags),
         reinit=True,
     )
     meta = {
@@ -82,9 +82,6 @@ def wandb_run_scope(ctx: TriggerContext) -> Generator[dict[str, Any] | None, Non
     try:
         yield meta
     finally:
-        try:
-            wb.finish()
-        except Exception:
-            pass
-        if token is not None:
-            _wandb_run_id.reset(token)
+        with suppress(Exception):
+            wandb.finish()
+        _wandb_run_id.reset(token)

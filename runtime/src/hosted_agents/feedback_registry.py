@@ -8,9 +8,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
-_REGISTRY_PATH = (
-    Path(__file__).resolve().parent / "data" / "feedback_registry.v1.json"
-)
+_REGISTRY_PATH = Path(__file__).resolve().parent / "data" / "feedback_registry.v1.json"
 
 
 @dataclass(frozen=True)
