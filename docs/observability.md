@@ -1,3 +1,5 @@
+<!-- Traceability: [CFHA-REQ-O11Y-LOGS-004] -->
+
 # Observability (CFHA runtime)
 
 <!-- Traceability: [CFHA-REQ-O11Y-LOGS-004] -->

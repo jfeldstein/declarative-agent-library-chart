@@ -12,14 +12,25 @@ Concise orientation for automated assistants working in this repository.
 | `examples/*/` | Application charts that depend on the library chart |
 | `docs/adrs/` | Architecture Decision Records (`NNNN-slug.md`) |
 | `docs/development-log.md` | Human changelog-style notes for notable changes |
-| `.github/workflows/ci.yml` | GitHub Actions (Python, Helm, ADR checks) |
+| `.github/workflows/ci.yml` | GitHub Actions (Python, Helm, ADR, spec traceability) |
+| `docs/spec-test-traceability.md` | Requirement → evidence matrix (parsed in CI) |
+| `docs/adrs/0003-spec-test-traceability.md` | Traceability rules, waivers, pytest `::` convention |
+
+## OpenSpec traceability ([CFHA-VER-005])
+
+When you add or change a normative **SHALL** under `openspec/specs/*/spec.md`:
+
+1. Put **`[CFHA-REQ-…]`** or **`[CFHA-VER-…]`** on the **same line** as **`### Requirement:`** (see **[CFHA-VER-001]** / [ADR 0003](adrs/0003-spec-test-traceability.md)).
+2. Update **`docs/spec-test-traceability.md`** with a matrix row (spec path, evidence paths, CI tier, waiver columns). **Waivers** need an approving maintainer **GitHub username** and **reason**; do not add waivers without explicit human approval.
+3. Add the same ID to **pytest** docstrings (use **`file.py::test_name`** in the matrix when one test maps to one requirement) or **Helm unittest** `#` comments.
+4. Run **`python3 scripts/check_spec_traceability.py`** from the repo root (also runs in CI).
 
 ## Commands
 
 From the repo root:
 
-- Full local CI (when Helm, `ct`, and `helm-unittest` are installed): `./ci.sh`
-- Python only: `uv sync --all-groups --project runtime` then `cd runtime` and `uv run ruff check src tests`, `uv run pytest tests/ -v --tb=short`
+- **CI parity:** follow the “Local CI” section in [README.md](../README.md) (Python via **uv**, Helm via **helm** + **ct** + **helm-unittest**, ADRs via `scripts/check_adr_numbers.sh`). GitHub runs the same stages in [`.github/workflows/ci.yml`](../.github/workflows/ci.yml).
+- **Python only:** `uv sync --all-groups --project runtime` then `cd runtime` and `uv run ruff check src tests`, `uv run pytest tests/ -v --tb=short`
 
 ## ADR numbering
 

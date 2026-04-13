@@ -6,5 +6,8 @@ htmlcov/
 *.egg-info/
 dist/
 
+# Helm dependency packages (rebuild with `helm dependency build` under each example chart)
+examples/**/charts/*.tgz
+
 # Cursor hook ephemeral state (local machine)
 .cursor/hooks/state/agent-reflect-and-learn.json

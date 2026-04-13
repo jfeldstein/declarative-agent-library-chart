@@ -8,7 +8,15 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ## 2026-04-12
 
-**CI / local Helm** — GitHub Actions Helm job pins **Helm v3.20.2** and **helm-unittest v1.0.3** (`HELM_UNITTEST_VERSION`); `ci.sh` documents the same install line. **Helm 3.18.10+** is required for `helm-unittest` plugin `platformHooks` (v3.14.x fails with `unknown field "platformHooks"`).
+**Spec–test traceability** — Promoted **`openspec/specs/cfha-requirement-verification/spec.md`**; **`[CFHA-REQ-…]`** / **`[CFHA-VER-…]`** IDs on all **`### Requirement:`** lines in **`openspec/specs/`**; **`docs/spec-test-traceability.md`** matrix with **Waiver approver** / **Waiver reason** columns; **[ADR 0003](adrs/0003-spec-test-traceability.md)**; **`scripts/check_spec_traceability.py`** (waivers, pytest **`::`** docstring narrowing, strict text evidence); **`.github/workflows/ci.yml`** **`traceability`** job. **[CFHA-VER-001]** narrowed to same-line IDs. **`.cursor/rules/spec-traceability.mdc`** uses explicit globs. **`examples/**/charts/*.tgz`** removed from version control and **gitignored**.
+
+**CI** — Removed root **`ci.sh`**; **`.github/workflows/ci.yml`** is the single source of truth. Local parity documented in **README** (Python via **uv**, Helm + **ct** + **helm-unittest**, ADR script). Python job uses **`python-version-file: runtime/.python-version`** on **`setup-uv`**.
+
+**Dependabot batch merge** — Merged open Dependabot PRs **#1–#3, #5–#10** into `main` (GitHub Actions: checkout v6, upload-artifact v7, setup-uv v7, chart-testing-action 2.8.0; runtime: pytest-cov, coverage, uvicorn, httpx bumps). **PR #7** (pytest 9.x) conflicted with other pip PRs after sequential merges; resolved on [`dependabot/pip/runtime/pytest-gte-9.0.3`](https://github.com/jfeldstein/declarative-agent-library-chart/pull/7) by merging `main` and aligning **`[dependency-groups].dev`** to **`coverage[toml]>=7.13.5`**, **`pytest>=9.0.3`**, **`pytest-cov>=7.1.0`**, then **`uv lock`**, push, and merge.
+
+**PR #10 (Dependabot httpx)** — Merged `main` into [`dependabot/pip/runtime/httpx-gte-0.28.1`](https://github.com/jfeldstein/declarative-agent-library-chart/pull/10) so the PR’s CI workflow matches current **Helm 3.20.2** + **helm-unittest v1.0.3** pins (the branch had been based on pre-fix `main` and failed Helm with `unknown field "platformHooks"`). Runtime change remains **`httpx>=0.28.1`**.
+
+**CI / local Helm** — GitHub Actions Helm job pins **Helm v3.20.2** and **helm-unittest v1.0.3** (`HELM_UNITTEST_VERSION`); the root **README** documents the same pins for local runs. **Helm 3.18.10+** is required for `helm-unittest` plugin `platformHooks` (v3.14.x fails with `unknown field "platformHooks"`).
 
 **OpenSpec `agent-checkpointing-wandb-feedback` (partial apply)** — LangGraph **`MemorySaver`** checkpointer (default-on; `HOSTED_AGENT_CHECKPOINT_STORE=none` to disable); **`pre` + `pipeline`** nodes; **`GET /api/v1/trigger/threads/{id}/state|checkpoints`**; trigger **`thread_id`** / **`X-Thread-Id`** / **`ephemeral`**. **`run_context`** (`run_id`, `thread_id`, **`tool_call_id`** on MCP tools). **`wandb_session`** per-invocation init/finish when env ready; **`trace_meta`** on graph state. Bundled **`feedback_registry.v1.json`** + **`feedback_registry`**. Docs: **`docs/checkpointing-and-traces.md`**, **`docs/runbooks/checkpoints-wandb.md`**, observability updates. Helm **`extraEnv`**. Dockerfile **`uv sync --extra wandb`**. **`wandb`** optional extra + dev dep. Tasks **12/22** done; Slack mapping, durable feedback persistence, full LLM spans, interrupt/resume E2E remain.
 
@@ -18,7 +26,7 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ## 2026-04-11
 
-**ADR collision check + agent docs** — CI job `docs` runs `scripts/check_adr_numbers.sh`; `./ci.sh` runs the same check. Added `docs/AGENTS.md` for assistant orientation and `.claude/rules/adr-number-collisions.md` for Claude Code.
+**ADR collision check + agent docs** — CI job `docs` runs `scripts/check_adr_numbers.sh`. Added `docs/AGENTS.md` for assistant orientation and `.claude/rules/adr-number-collisions.md` for Claude Code.
 
 **ADR 0003: spec–test traceability** — Normative rules (IDs, matrix vs tests, cross-links, agent playbook) live in [docs/adrs/0003-spec-test-traceability.md](adrs/0003-spec-test-traceability.md); [docs/spec-test-traceability.md](spec-test-traceability.md) keeps the CI tier table and parsed matrix.
 
@@ -47,4 +55,4 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 **Initial import** ([`b7aeb06`](https://github.com/jfeldstein/declarative-agent-library-chart/commit/b7aeb06)).
 
-- Standalone repo: Helm library chart, examples, Python runtime (`hosted_agents`), RAG module, scrapers, CI (`./ci.sh`).
+- Standalone repo: Helm library chart, examples, Python runtime (`hosted_agents`), RAG module, scrapers, CI (`.github/workflows/ci.yml`).

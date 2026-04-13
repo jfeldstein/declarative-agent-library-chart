@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Verify Docker (required for kind + image build)
         run: docker info
@@ -43,9 +43,10 @@ jobs:
           sudo mv ./kind /usr/local/bin/kind
           kind version
 
-      - uses: astral-sh/setup-uv@v4
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
+          python-version-file: runtime/.python-version
 
       - name: Install Python dependencies
         working-directory: runtime

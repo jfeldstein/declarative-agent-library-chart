@@ -1,6 +1,6 @@
 # Grafana dashboards (CFHA)
 
-Traceability: [CFHA-REQ-O11Y-LOGS-003]
+<!-- Traceability: [CFHA-REQ-O11Y-LOGS-003] -->
 
 ## `cfha-agent-overview.json`
 

@@ -1,8 +1,14 @@
 ---
 description: Keep OpenSpec promoted specs aligned with tests and the traceability matrix.
-globs: openspec/specs/**/*.md, docs/spec-test-traceability.md, docs/adrs/0003-spec-test-traceability.md, runtime/tests/**/*.py, examples/**/tests/**/*.yaml
+globs:
+  - openspec/specs/**/spec.md
+  - docs/spec-test-traceability.md
+  - docs/adrs/0003-spec-test-traceability.md
+  - scripts/check_spec_traceability.py
+  - runtime/tests/**/*.py
+  - examples/**/tests/**/*.yaml
 ---
 
 # Spec traceability ([CFHA-VER-005])
 
-If you edit a **SHALL** in `openspec/specs/*/spec.md`: follow **`docs/adrs/0003-spec-test-traceability.md`** for ID shapes and spec ↔ test cross-links; update **`docs/spec-test-traceability.md`** (matrix row); add bracketed IDs to pytest docstrings or helm unittest comments for listed evidence files. Run **`./ci.sh`** (includes `scripts/check_spec_traceability.py`). Occasionally re-validate rows vs evidence paths.
+If you edit a **SHALL** in `openspec/specs/*/spec.md`: put **`[CFHA-REQ-…]`** or **`[CFHA-VER-…]`** on the **same line** as **`### Requirement:`**; follow **`docs/adrs/0003-spec-test-traceability.md`**; update **`docs/spec-test-traceability.md`**. For pytest, prefer matrix evidence **`path.py::test_function`** and put the ID in **that function’s** docstring; for Helm unittest use **`#` comments**. **Waivers** require maintainer **GitHub username** + **reason** in the matrix—**no drive-by waiver edits**. Run **`python3 scripts/check_spec_traceability.py`**.

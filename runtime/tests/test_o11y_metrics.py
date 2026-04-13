@@ -1,6 +1,6 @@
 """Observability: Prometheus metrics and request correlation.
 
-Traceability: [CFHA-VER-002] (with helm unittest suites under ``examples/*/tests/``).
+Traceability: [CFHA-VER-002] (see matrix for per-requirement pytest nodes).
 """
 
 from __future__ import annotations
