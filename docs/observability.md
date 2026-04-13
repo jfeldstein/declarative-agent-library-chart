@@ -1,3 +1,5 @@
+<!-- Traceability: [CFHA-REQ-O11Y-LOGS-004] -->
+
 # Observability (CFHA runtime)
 
 ## Checkpoints, W&B traces, and Slack correlation (OpenSpec)

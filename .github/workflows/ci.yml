@@ -1,4 +1,5 @@
 # Canonical CI for this repo (replaces the former root ci.sh). Python stages use uv only.
+# Traceability: [CFHA-REQ-HELM-UNITTEST-001] [CFHA-REQ-HELM-UNITTEST-002] [CFHA-REQ-HELM-UNITTEST-003] [CFHA-REQ-CHART-CT-001] [CFHA-REQ-CHART-CT-002] [CFHA-VER-004]
 #
 # Helm pins (keep in sync with README “Local parity”):
 #   - Helm 3.20.2+ (helm-unittest plugin uses platformHooks; Helm <3.18.10 fails to load the plugin)
@@ -94,3 +95,12 @@ jobs:
 
       - name: Check ADR numbers are unique
         run: ./scripts/check_adr_numbers.sh
+
+  traceability:
+    name: Spec traceability (OpenSpec matrix)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Check promoted specs ↔ matrix
+        run: python3 scripts/check_spec_traceability.py

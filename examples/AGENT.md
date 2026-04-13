@@ -17,7 +17,7 @@ Guidance for assistants and maintainers working under **`examples/`**.
 ## When you touch examples
 
 1. Run **`helm dependency build --skip-refresh`** (or `update` if the library digest changed) from the example directory and commit **`Chart.lock`** when it changes.
-2. Keep **`charts/*.tgz`** out of git (repo root `.gitignore` ignores **`**/charts/*.tgz`**).
+2. **`charts/*.tgz`** are **gitignored**; run **`helm dependency build`** before `helm unittest` / install (CI does this each run).
 3. If CI should validate the chart: extend [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) (and matching local Helm commands in the root [README](../README.md)).
 4. Update [README.md](README.md) and, when relevant, the layout table in the project [README](../README.md).
 

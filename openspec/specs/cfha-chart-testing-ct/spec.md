@@ -1,6 +1,6 @@
 ## ADDED Requirements
 
-### Requirement: Chart-testing discovers and lints CFHA Helm charts
+### Requirement: [CFHA-REQ-CHART-CT-001] Chart-testing discovers and lints CFHA Helm charts
 
 The system SHALL run [Helm chart-testing](https://github.com/helm/chart-testing) (`ct`) against the Declarative Agent Library chart and all example application charts under `this repository`, using a committed configuration file (e.g. `ct.yaml`) that declares `chart-dirs` and any exclusions consistent with the repository layout.
 
@@ -14,7 +14,7 @@ The system SHALL run [Helm chart-testing](https://github.com/helm/chart-testing)
 - **WHEN** a chart violates rules enforced by `ct lint` (for example invalid `Chart.yaml` or yamllint failures in chart files)
 - **THEN** `ct lint` fails with a non-zero exit code and output that identifies the chart and the failing rule
 
-### Requirement: CI documents how to obtain chart-testing
+### Requirement: [CFHA-REQ-CHART-CT-002] CI documents how to obtain chart-testing
 
 The system SHALL document in implementation (e.g. `.github/workflows/ci.yml` comments or project README) at least one supported way to install or run `ct` (official binary, package manager, or `quay.io/helmpack/chart-testing` image) so CI and developers can reproduce the same lint behavior.
 

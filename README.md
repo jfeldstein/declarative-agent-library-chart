@@ -1,5 +1,7 @@
 # declarative-agent-library-chart
 
+<!-- Traceability: [CFHA-REQ-HELM-UNITTEST-003] [CFHA-REQ-CHART-CT-002] [CFHA-REQ-O11Y-LOGS-004] -->
+
 Standalone repository for **YAML-configured** hosted agents: a **Helm library chart** (`helm/chart/`) consumed by application charts, a **hello-world** example (`examples/hello-world/`), and a **Python** runtime (`hosted_agents`) that exposes **`POST /api/v1/trigger`** as the **only HTTP entry for launching agent work** (LangGraph-orchestrated). The root agent reads **`HOSTED_AGENT_SYSTEM_PROMPT`** from the environment (ConfigMap in-cluster) as **supervisor** instructions when **`subagents`** is configured; optional JSON can carry **`message`** (user input), **`load_skill`**, or a direct **`tool`** step (see below). This matches the LangChain **subagents** pattern ([docs](https://docs.langchain.com/oss/python/langchain/multi-agent/subagents)): specialists are **tools** on that root agent, not an HTTP-selected subagent.
 
 ## Layout
@@ -58,6 +60,12 @@ ct lint --config ct.yaml --all
 
 ```bash
 ./scripts/check_adr_numbers.sh
+```
+
+**Spec traceability** (same as the `traceability` job):
+
+```bash
+python3 scripts/check_spec_traceability.py
 ```
 
 ## Observability

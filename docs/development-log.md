@@ -8,6 +8,8 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ## 2026-04-12
 
+**Spec–test traceability** — Promoted **`openspec/specs/cfha-requirement-verification/spec.md`**; **`[CFHA-REQ-…]`** / **`[CFHA-VER-…]`** IDs on all **`### Requirement:`** lines in **`openspec/specs/`**; **`docs/spec-test-traceability.md`** matrix with **Waiver approver** / **Waiver reason** columns; **[ADR 0003](adrs/0003-spec-test-traceability.md)**; **`scripts/check_spec_traceability.py`** (waivers, pytest **`::`** docstring narrowing, strict text evidence); **`.github/workflows/ci.yml`** **`traceability`** job. **[CFHA-VER-001]** narrowed to same-line IDs. **`.cursor/rules/spec-traceability.mdc`** uses explicit globs. **`examples/**/charts/*.tgz`** removed from version control and **gitignored**.
+
 **CI** — Removed root **`ci.sh`**; **`.github/workflows/ci.yml`** is the single source of truth. Local parity documented in **README** (Python via **uv**, Helm + **ct** + **helm-unittest**, ADR script). Python job uses **`python-version-file: runtime/.python-version`** on **`setup-uv`**.
 
 **Dependabot batch merge** — Merged open Dependabot PRs **#1–#3, #5–#10** into `main` (GitHub Actions: checkout v6, upload-artifact v7, setup-uv v7, chart-testing-action 2.8.0; runtime: pytest-cov, coverage, uvicorn, httpx bumps). **PR #7** (pytest 9.x) conflicted with other pip PRs after sequential merges; resolved on [`dependabot/pip/runtime/pytest-gte-9.0.3`](https://github.com/jfeldstein/declarative-agent-library-chart/pull/7) by merging `main` and aligning **`[dependency-groups].dev`** to **`coverage[toml]>=7.13.5`**, **`pytest>=9.0.3`**, **`pytest-cov>=7.1.0`**, then **`uv lock`**, push, and merge.

@@ -10,6 +10,7 @@ from hosted_agents.runtime_config import RuntimeConfig, subagent_system_prompt
 
 
 def test_from_env_empty(monkeypatch: pytest.MonkeyPatch) -> None:
+    """[CFHA-REQ-RAG-SCRAPERS-004]"""
     monkeypatch.delenv("HOSTED_AGENT_RAG_BASE_URL", raising=False)
     monkeypatch.delenv("HOSTED_AGENT_SUBAGENTS_JSON", raising=False)
     monkeypatch.delenv("HOSTED_AGENT_SKILLS_JSON", raising=False)
