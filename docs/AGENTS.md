@@ -18,8 +18,8 @@ Concise orientation for automated assistants working in this repository.
 
 From the repo root:
 
-- Full local CI (when Helm, `ct`, and `helm-unittest` are installed): `./ci.sh`
-- Python only: `uv sync --all-groups --project runtime` then `cd runtime` and `uv run ruff check src tests`, `uv run pytest tests/ -v --tb=short`
+- **CI parity:** follow the “Local CI” section in [README.md](../README.md) (Python via **uv**, Helm via **helm** + **ct** + **helm-unittest**, ADRs via `scripts/check_adr_numbers.sh`). GitHub runs the same stages in [`.github/workflows/ci.yml`](../.github/workflows/ci.yml).
+- **Python only:** `uv sync --all-groups --project runtime` then `cd runtime` and `uv run ruff check src tests`, `uv run pytest tests/ -v --tb=short`
 
 ## ADR numbering
 

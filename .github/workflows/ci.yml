@@ -1,3 +1,9 @@
+# Canonical CI for this repo (replaces the former root ci.sh). Python stages use uv only.
+#
+# Helm pins (keep in sync with README “Local parity”):
+#   - Helm 3.20.2+ (helm-unittest plugin uses platformHooks; Helm <3.18.10 fails to load the plugin)
+#   - helm-unittest v1.0.3
+#   - chart-testing (ct) — see helm/chart-testing-action version below
 name: CI
 
 on:
@@ -22,6 +28,7 @@ jobs:
       - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
+          python-version-file: runtime/.python-version
 
       - name: Install dependencies
         run: uv sync --all-groups

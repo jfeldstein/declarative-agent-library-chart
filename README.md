@@ -15,7 +15,7 @@ Standalone repository for **YAML-configured** hosted agents: a **Helm library ch
 | `helm/tests/chart/` | Notes for Helm `helm test` hooks |
 | `examples/hello-world/` | Minimal application chart depending on `file://../../helm/chart` |
 | `examples/with-observability/` | Example chart with `o11y` (Prometheus annotations, ServiceMonitor, JSON logs) |
-| `examples/with-scrapers/` | Example chart with RAG + reference scraper `CronJob` (asserted in `./ci.sh`) |
+| `examples/with-scrapers/` | Example chart with RAG + reference scraper `CronJob` (validated in CI; see below) |
 | `Dockerfile` | Production-style image for the Python runtime |
 | `skaffold.yaml` / `devspace.yaml` | Local deploy + **port-forward `localhost:8088` → service :8088** |
 | `docs/observability.md` | Metrics (`/metrics`), structured logs, Helm scrape hints, Grafana import |
@@ -32,16 +32,33 @@ Locked design choices: [docs/adrs/](docs/adrs/README.md) (`NNNN-short-title.md`;
 - For cluster paths: **kind** (or compatible Kubernetes), **Helm 3**, **kubectl**
 - Optional: [Skaffold](https://skaffold.dev/), [DevSpace](https://www.devspace.sh/)
 
-## Local CI (Python + chart render)
+## Local CI (parity with GitHub Actions)
 
-From a clone of [github.com/jfeldstein/declarative-agent-library-chart](https://github.com/jfeldstein/declarative-agent-library-chart):
+Canonical automation lives in [`.github/workflows/ci.yml`](.github/workflows/ci.yml). From a clone of [github.com/jfeldstein/declarative-agent-library-chart](https://github.com/jfeldstein/declarative-agent-library-chart):
+
+**Python (uv)** — from repo root:
 
 ```bash
-cd declarative-agent-library-chart
-./ci.sh
+uv sync --all-groups --project runtime
+cd runtime
+uv run ruff check src tests
+uv run pytest tests/ -v --tb=short --cov-report=term-missing
+uv run python scripts/smoke_rag.py
 ```
 
-GitHub Actions runs the same checks (Python: `ruff`, `pytest` with **85%+ coverage**, RAG smoke; Helm: `helm unittest` on examples + `ct lint`). See [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
+**Helm** — install [Helm](https://helm.sh/) **3.20.2+**, [chart-testing](https://github.com/helm/chart-testing) (`ct`), and the [helm-unittest](https://github.com/helm-unittest/helm-unittest) plugin (**v1.0.3** matches CI). Then from repo root:
+
+```bash
+set -euo pipefail
+for d in examples/*/; do (cd "$d" && helm dependency build --skip-refresh && helm unittest .); done
+ct lint --config ct.yaml --all
+```
+
+**ADR numbering** (same as the `docs` job):
+
+```bash
+./scripts/check_adr_numbers.sh
+```
 
 ## Observability
 
@@ -195,7 +212,7 @@ declarative-agent-library:
 ### Scrapers: verifying CronJobs
 
 - **Disabled by default:** `helm template` on `examples/hello-world` yields **no** `CronJob` when `scrapers.jobs` is empty.
-- **Enabled example:** `examples/with-scrapers/` enables the `reference` scraper (which deploys RAG); `./ci.sh` templates that chart and expects at least one `CronJob`.
+- **Enabled example:** `examples/with-scrapers/` enables the `reference` scraper (which deploys RAG); CI (`helm unittest` on that chart) asserts scraper + RAG manifest rendering, including at least one `CronJob`.
 
 ## Extension points
 

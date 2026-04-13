@@ -13,7 +13,7 @@
 ## 3. CI traceability gate
 
 - [ ] 3.1 Implement **`scripts/check_spec_traceability.py`** (or shell equivalent) per **design §3**: validate ID presence on promoted specs, matrix completeness, and that evidence paths/tests exist.
-- [ ] 3.2 Wire the script into **`ci.sh`** after the main test stages; print actionable errors on failure.
+- [ ] 3.2 Wire the script into **`.github/workflows/ci.yml`** (for example a `traceability` job or post-test step) after the main test stages; print actionable errors on failure.
 - [ ] 3.3 If the first slice is too strict, gate **strict mode** behind an env var only long enough to backfill, then make strict the default (document in script header).
 
 ## 4. Contributor and agent rules
@@ -28,5 +28,5 @@
 
 ## 6. Verification
 
-- [ ] 6.1 Run **`ci.sh`** end-to-end locally (with Helm toolchain where applicable) and fix any traceability or test drift until green.
+- [ ] 6.1 Run **local CI parity** (README: uv + Helm + ADR check) or rely on **`.github/workflows/ci.yml`** on PRs; fix any traceability or test drift until green.
 - [ ] 6.2 Run **`openspec validate traceability`** (or project equivalent) if available, and resolve validation issues.

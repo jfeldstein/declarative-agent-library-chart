@@ -10,7 +10,7 @@ For the shared library, runtime API, Skaffold/DevSpace, and kind walkthroughs, s
 |-----------|---------|
 | [**hello-world**](hello-world/) | Smallest useful install: image, `systemPrompt`, default service on **8088**. Use this as the template for new apps. |
 | [**with-observability**](with-observability/) | Same baseline plus **`o11y`**: `prometheus.io/*` annotations, optional **ServiceMonitor**, JSON logs via `HOSTED_AGENT_LOG_FORMAT`. See [docs/observability.md](../docs/observability.md). |
-| [**with-scrapers**](with-scrapers/) | **reference** scraper `CronJob` (hourly schedule); enabled job deploys **RAG**. Used by [`../ci.sh`](../ci.sh) to assert scraper + RAG manifest rendering. |
+| [**with-scrapers**](with-scrapers/) | **reference** scraper `CronJob` (hourly schedule); enabled job deploys **RAG**. CI (`helm unittest` via [`.github/workflows/ci.yml`](../.github/workflows/ci.yml)) asserts scraper + RAG manifest rendering. |
 
 ## Using an example
 
@@ -29,7 +29,7 @@ Build/load the container image and port-forward as described in the main README 
 2. Change `Chart.yaml` **`name`** and `description` to match the capability you are demonstrating.
 3. Adjust `values.yaml` only for that story; keep defaults easy to read.
 4. Run `helm dependency build` (or `update`) and commit **Chart.lock**.
-5. Register the chart in this README, in the parent [README](../README.md) layout table if appropriate, and extend [`../ci.sh`](../ci.sh) when CI should lint/template the new chart.
+5. Register the chart in this README, in the parent [README](../README.md) layout table if appropriate, and extend [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) (Helm job loops `examples/*/`) when CI should lint/template the new chart.
 
 See [AGENT.md](AGENT.md) for maintainer and automation conventions.
 
