@@ -1,6 +1,6 @@
 ## Why
 
-Teams need to compare **candidate** skills, models, or system prompts against the **primary** path without doubling production side effects. That capability was scoped in **`agent-checkpointing-wandb-feedback`** and **split out** so checkpointing, W&B tracing, and Slack feedback can ship first.
+Teams need to compare **candidate** skills, models, or system prompts against the **primary** path without doubling production side effects. That capability was scoped alongside the checkpointing work (see **`checkpointing-observability-delivery-plan`**) and **split out** so checkpointing, W&B tracing, and Slack feedback can ship first.
 
 ## What Changes
 
@@ -17,7 +17,7 @@ Teams need to compare **candidate** skills, models, or system prompts against th
 
 ### Dependencies
 
-- **`agent-checkpointing-wandb-feedback`** (or equivalent shipped behavior): automatic checkpoints, W&B tracing, and tag schema—extended here with shadow-specific tags and policies.
+- **Checkpointing + tracing baseline on `main`** per `openspec/changes/checkpointing-observability-delivery-plan/design.md` (steps **1–8** shipped in PR **#11** and follow-ups): automatic checkpoints, W&B tracing, and tag schema—extended here with shadow-specific tags and policies.
 
 ## Impact
 

@@ -1,3 +1,9 @@
+## Delivery sequence
+
+This change is **step 13 of 13** in `checkpointing-observability-delivery-plan` (see `openspec/changes/checkpointing-observability-delivery-plan/design.md`). **Depends on:** step **9** (`observability-shadow-runtime-hooks`), **`shadow-rollout-evaluation`**, and tracing/checkpointing shipped in earlier steps.
+
+---
+
 ## Why
 
 Shadow rollout today is mostly **configuration and telemetry scaffolding** (flags, sampling, operational signals). Operators still lack a **guaranteed non-mutating second execution** that exercises the same high-level request through planner/model/tool selection with **external mutations stubbed**, so comparisons of latency, tokens, tool plans, and outcomes remain incomplete or unsafe. This change specifies a **full twin execution path** that runs alongside (or immediately after) the primary path without committing side effects, except under explicit allowlists or dangerous overrides.
@@ -20,7 +26,7 @@ Shadow rollout today is mostly **configuration and telemetry scaffolding** (flag
 
 ### Modified Capabilities
 
-- _(none — `openspec/specs/` has no published capability files yet; this change aligns with the in-flight `shadow-rollout-evaluation` requirements from `agent-checkpointing-wandb-feedback` without a formal delta file in `openspec/specs/`.)_
+- _(none — `openspec/specs/` has no published capability files yet; this change aligns with `shadow-rollout-evaluation` and delivery step 9 (`observability-shadow-runtime-hooks`) without a formal delta file in `openspec/specs/`.)_
 
 ## Impact
 

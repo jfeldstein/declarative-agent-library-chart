@@ -1,3 +1,9 @@
+## Delivery sequence
+
+This change is **step 12 of 13** in `checkpointing-observability-delivery-plan` (see `openspec/changes/checkpointing-observability-delivery-plan/design.md`). **Depends on:** steps **2** (`observability-checkpointer-factory`) and **3** (`trigger-graph-memory-checkpoints`) (and their merged runtime behavior on `main`).
+
+---
+
 ## Why
 
 Today observability data that operators need for resume, audit, and training pipelines is largely **process-local** (in-memory correlation, feedback, trajectory builders) or **delegated to vendors** (Weights & Biases for traces). That is fine for dev and single-replica pilots, but production needs **durable, queryable** storage so checkpoints survive restarts, feedback and Slack correlation survive pod churn, and internal “trace-like” records (tool spans, run metadata) can be joined to checkpoints **without** assuming W&B is the system of record. **PostgreSQL** is the natural first durable backend for this chart: operators already run it for many workloads, it supports ACID, migrations, and backup/restore. Wiring Postgres for LangGraph checkpoints **and** first-party tables for feedback/correlation closes the gap between the OpenSpec intent and what the default image can actually persist.
@@ -18,7 +24,7 @@ Today observability data that operators need for resume, audit, and training pip
 
 ### Modified Capabilities
 
-- _(none in `openspec/specs/` today for this exact surface; runtime-langgraph-checkpoints lives under an archived change path—treat as new repo-level capability here.)_
+- _(none in `openspec/specs/` today for this exact surface; checkpointing slices are ordered under `checkpointing-observability-delivery-plan`—treat Postgres persistence as the durable follow-on here.)_
 
 ## Impact
 

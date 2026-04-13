@@ -6,7 +6,7 @@
 
 ## Checkpoints, W&B traces, and Slack correlation (OpenSpec)
 
-This section aligns with **`openspec/changes/agent-checkpointing-wandb-feedback`** (`runtime-langgraph-checkpoints`, `wandb-agent-traces`, `tool-feedback-slack`). Deep dive: **[checkpointing-and-traces.md](checkpointing-and-traces.md)** and **[runbooks/checkpoints-wandb.md](runbooks/checkpoints-wandb.md)**.
+This section aligns with the **checkpointing / observability delivery plan** (`openspec/changes/checkpointing-observability-delivery-plan/design.md`; archived capability specs under `openspec/changes/archive/2026-04-13-agent-checkpointing-wandb-feedback/specs/`). Deep dive: **[checkpointing-and-traces.md](checkpointing-and-traces.md)** and **[runbooks/checkpoints-wandb.md](runbooks/checkpoints-wandb.md)**.
 
 - **Checkpointer** — The **ordered step history** for a run lives in the **LangGraph-aligned checkpointer** (per-thread checkpoints). It is the **source of truth** for resume and for binding feedback to steps.
 - **Weights & Biases** — When enabled, the runtime **initializes a W&B run** per trigger invocation and records **config/tags** from bounded env-derived fields; full span-level LLM tracing can extend the same module. **Do not** put unbounded text (full prompts, Slack bodies, per-message ids) on **W&B tags**; keep tags **low cardinality** and put rich content in **spans** / trace payloads (with redaction).

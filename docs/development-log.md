@@ -6,6 +6,10 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ---
 
+## 2026-04-13
+
+**OpenSpec: checkpointing delivery split + observability coverage** — **`checkpointing-observability-delivery-plan`** defines ordered steps **1–13**; eleven slice directories under **`openspec/changes/`** plus existing **`postgres-agent-persistence`** (12) and **`shadow-non-mutating-twin-execution`** (13). Archived **`2026-04-13-agent-checkpointing-wandb-feedback`** and **`2026-04-13-observability-package-coverage`**. Removed **`*/observability/*`** from **`pytest-cov` omit** (ADR 0002); added **`runtime/tests/test_observability_foundation.py`**.
+
 ## 2026-04-12
 
 **PR #11 merge with `main`** — Reconciled divergent LangGraph wiring: **`HOSTED_AGENT_CHECKPOINT_STORE`** (default-on memory; `none` disables persistence) drives the compiled checkpointer when **`HOSTED_AGENT_CHECKPOINTS_ENABLED`** is unset; operator **`GET /api/v1/runtime/threads/...`** routes still require the explicit checkpoints flag. Helm **`deployment.yaml`** keeps the observability env block and adds **`extraEnv`**. Example chart **`charts/*.tgz`** dependencies are **gitignored**; run **`helm dependency build`** under each example. Tool calls use **`run_context.next_tool_call_id`** alongside observability trajectory / W&B spans.

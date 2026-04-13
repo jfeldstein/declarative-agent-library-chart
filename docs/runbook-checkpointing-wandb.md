@@ -1,6 +1,6 @@
 # Runbook: checkpoints, Slack feedback, W&B, ATIF export, shadow
 
-This runbook covers the **runtime** feature flags added for OpenSpec change `agent-checkpointing-wandb-feedback`: durable LangGraph checkpoints, Slack reaction correlation, optional Weights & Biases traces, ATIF-shaped exports, and shadow rollout hooks.
+This runbook covers the **runtime** feature flags for checkpointing and observability, delivered incrementally per **`openspec/changes/checkpointing-observability-delivery-plan/design.md`** (archived monolithic OpenSpec: `openspec/changes/archive/2026-04-13-agent-checkpointing-wandb-feedback`): durable LangGraph checkpoints, Slack reaction correlation, optional Weights & Biases traces, ATIF-shaped exports, and shadow rollout hooks.
 
 ## Thread and checkpoint identifiers
 
