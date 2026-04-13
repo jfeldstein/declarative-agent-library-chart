@@ -64,3 +64,25 @@ skills: []
 # MCP-style tool allowlist (JSON array of tool ids → HOSTED_AGENT_ENABLED_MCP_TOOLS_JSON)
 mcp:
   enabledTools: []
+
+# Checkpointing, W&B, Slack feedback, ATIF export, shadow rollouts (runtime env). See docs/runbook-checkpointing-wandb.md.
+observability:
+  checkpoints:
+    enabled: false
+    backend: memory
+    postgresUrl: ""
+  wandb:
+    enabled: false
+    project: ""
+    entity: ""
+  slackFeedback:
+    enabled: false
+    emojiLabelMap: {}
+  atifExport:
+    enabled: false
+  shadow:
+    enabled: false
+    sampleRate: 0
+    allowTenants: []
+    variantJson: ""
+  labelRegistry: {}

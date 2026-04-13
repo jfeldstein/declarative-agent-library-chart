@@ -8,15 +8,17 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ## 2026-04-12
 
-**Spec–test traceability** — Promoted **`openspec/specs/cfha-requirement-verification/spec.md`**; **`[CFHA-REQ-…]`** / **`[CFHA-VER-…]`** IDs on all **`### Requirement:`** lines in **`openspec/specs/`**; **`docs/spec-test-traceability.md`** matrix with **Waiver approver** / **Waiver reason** columns; **[ADR 0003](adrs/0003-spec-test-traceability.md)**; **`scripts/check_spec_traceability.py`** (waivers, pytest **`::`** docstring narrowing, strict text evidence); **`.github/workflows/ci.yml`** **`traceability`** job. **[CFHA-VER-001]** narrowed to same-line IDs. **`.cursor/rules/spec-traceability.mdc`** uses explicit globs. **`examples/**/charts/*.tgz`** removed from version control and **gitignored**.
+**PR #11 merge with `main`** — Reconciled divergent LangGraph wiring: **`HOSTED_AGENT_CHECKPOINT_STORE`** (default-on memory; `none` disables persistence) drives the compiled checkpointer when **`HOSTED_AGENT_CHECKPOINTS_ENABLED`** is unset; operator **`GET /api/v1/runtime/threads/...`** routes still require the explicit checkpoints flag. Helm **`deployment.yaml`** keeps the observability env block and adds **`extraEnv`**. Example chart **`charts/*.tgz`** dependencies are **gitignored**; run **`helm dependency build`** under each example. Tool calls use **`run_context.next_tool_call_id`** alongside observability trajectory / W&B spans.
 
-**CI** — Removed root **`ci.sh`**; **`.github/workflows/ci.yml`** is the single source of truth. Local parity documented in **README** (Python via **uv**, Helm + **ct** + **helm-unittest**, ADR script). Python job uses **`python-version-file: runtime/.python-version`** on **`setup-uv`**.
+**Spec–test traceability** — See **[ADR 0003](adrs/0003-spec-test-traceability.md)**, **`docs/spec-test-traceability.md`**, and **`scripts/check_spec_traceability.py`** on `main`. **ATIF export ADR** renumbered to **[0004](adrs/0004-pin-atif-v1-4-trajectory-export.md)** so **`0003`** stays traceability-only.
 
-**Dependabot batch merge** — Merged open Dependabot PRs **#1–#3, #5–#10** into `main` (GitHub Actions: checkout v6, upload-artifact v7, setup-uv v7, chart-testing-action 2.8.0; runtime: pytest-cov, coverage, uvicorn, httpx bumps). **PR #7** (pytest 9.x) conflicted with other pip PRs after sequential merges; resolved on [`dependabot/pip/runtime/pytest-gte-9.0.3`](https://github.com/jfeldstein/declarative-agent-library-chart/pull/7) by merging `main` and aligning **`[dependency-groups].dev`** to **`coverage[toml]>=7.13.5`**, **`pytest>=9.0.3`**, **`pytest-cov>=7.1.0`**, then **`uv lock`**, push, and merge.
+**CI** — **`.github/workflows/ci.yml`** is canonical (no root **`ci.sh`**). Local parity in **README** (Python via **uv**, Helm + **ct** + **helm-unittest**, ADR + traceability checks).
 
-**PR #10 (Dependabot httpx)** — Merged `main` into [`dependabot/pip/runtime/httpx-gte-0.28.1`](https://github.com/jfeldstein/declarative-agent-library-chart/pull/10) so the PR’s CI workflow matches current **Helm 3.20.2** + **helm-unittest v1.0.3** pins (the branch had been based on pre-fix `main` and failed Helm with `unknown field "platformHooks"`). Runtime change remains **`httpx>=0.28.1`**.
+**Dependabot batch merge** — Merged open Dependabot PRs **#1–#3, #5–#10** into `main` (Actions + runtime bumps). **PR #7** (pytest 9.x): resolved via merge into [`dependabot/pip/runtime/pytest-gte-9.0.3`](https://github.com/jfeldstein/declarative-agent-library-chart/pull/7).
 
-**CI / local Helm** — GitHub Actions Helm job pins **Helm v3.20.2** and **helm-unittest v1.0.3** (`HELM_UNITTEST_VERSION`); the root **README** documents the same pins for local runs. **Helm 3.18.10+** is required for `helm-unittest` plugin `platformHooks` (v3.14.x fails with `unknown field "platformHooks"`).
+**PR #10 (Dependabot httpx)** — Merged `main` into [`dependabot/pip/runtime/httpx-gte-0.28.1`](https://github.com/jfeldstein/declarative-agent-library-chart/pull/10) for current Helm / unittest pins.
+
+**CI / local Helm** — GitHub Actions pins **Helm v3.20.2** and **helm-unittest v1.0.3**; **README** documents the same. **Helm 3.18.10+** required for **`platformHooks`** in the unittest plugin.
 
 **OpenSpec `agent-checkpointing-wandb-feedback` (partial apply)** — LangGraph **`MemorySaver`** checkpointer (default-on; `HOSTED_AGENT_CHECKPOINT_STORE=none` to disable); **`pre` + `pipeline`** nodes; **`GET /api/v1/trigger/threads/{id}/state|checkpoints`**; trigger **`thread_id`** / **`X-Thread-Id`** / **`ephemeral`**. **`run_context`** (`run_id`, `thread_id`, **`tool_call_id`** on MCP tools). **`wandb_session`** per-invocation init/finish when env ready; **`trace_meta`** on graph state. Bundled **`feedback_registry.v1.json`** + **`feedback_registry`**. Docs: **`docs/checkpointing-and-traces.md`**, **`docs/runbooks/checkpoints-wandb.md`**, observability updates. Helm **`extraEnv`**. Dockerfile **`uv sync --extra wandb`**. **`wandb`** optional extra + dev dep. Tasks **12/22** done; Slack mapping, durable feedback persistence, full LLM spans, interrupt/resume E2E remain.
 
@@ -44,6 +46,20 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ## 2026-04-11
 
+**ATIF v1.4 export pin** ([ADR 0004](adrs/0004-pin-atif-v1-4-trajectory-export.md)).
+
+- Trajectory exports use Harbor **ATIF-v1.4** shape (`session_id`, `agent`, `steps`, `final_metrics`, `extra.hosted_agents` provenance); internal steps remain `hosted-agents-canonical-v1` until merged. See [Harbor ATIF](https://www.harborframework.com/docs/agents/trajectory-format).
+
+## 2026-04-11
+
+**Checkpointing, Slack feedback, W&B hooks, ATIF export, shadow flags** (OpenSpec `agent-checkpointing-wandb-feedback`).
+
+- Runtime: optional LangGraph `MemorySaver` multi-node trigger graph when `HOSTED_AGENT_CHECKPOINTS_ENABLED=1`; `thread_id` / `ephemeral` on trigger body or `X-Agent-Thread-Id`; operator routes for checkpoint reads, Slack reaction ingest, human feedback listing, and ATIF-shaped export; `slack.post_message` tool records correlation + side-effect metadata; `hosted_agents/observability/*` (coverage omitted in `pyproject.toml` until integration hardens).
+- Helm: `values.yaml` → `observability.*` maps feature flags and optional WANDB/Slack/Postgres wiring; ConfigMap keys for label registry + emoji map JSON.
+- Docs: [docs/runbook-checkpointing-wandb.md](runbook-checkpointing-wandb.md).
+
+## 2026-04-11
+
 **LangChain supervisor + subagent tools** ([`1ffcc4b`](https://github.com/jfeldstein/declarative-agent-library-chart/commit/1ffcc4b)).
 
 - Runtime: root agent uses LangChain `create_agent`; configured subagents are tools backed by LangGraph subgraphs (`supervisor.py`, `subagent_exec.py`, and related modules).
@@ -55,4 +71,4 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 **Initial import** ([`b7aeb06`](https://github.com/jfeldstein/declarative-agent-library-chart/commit/b7aeb06)).
 
-- Standalone repo: Helm library chart, examples, Python runtime (`hosted_agents`), RAG module, scrapers, CI (`.github/workflows/ci.yml`).
+- Standalone repo: Helm library chart, examples, Python runtime (`hosted_agents`), RAG module, scrapers, CI (`./ci.sh`).

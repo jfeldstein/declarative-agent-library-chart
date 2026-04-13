@@ -46,6 +46,7 @@ omit = [
     "*/test_*.py",
     "*/__pycache__/*",
     "*/.venv/*",
+    "*/observability/*",
 ]
 
 [tool.coverage.report]

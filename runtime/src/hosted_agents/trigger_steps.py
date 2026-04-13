@@ -8,6 +8,8 @@ from typing import Any
 
 from hosted_agents.metrics import observe_mcp_tool, observe_skill_load
 from hosted_agents.o11y_logging import get_logger
+from hosted_agents.observability.run_context import get_run_id, get_wandb_session
+from hosted_agents.observability.trajectory import trajectory_recorder
 from hosted_agents.run_context import next_tool_call_id
 from hosted_agents.runtime_config import RuntimeConfig
 from hosted_agents.skills_state import unlock_tools, unlocked_tools
@@ -30,8 +32,8 @@ def run_skill_load_json(cfg: RuntimeConfig, name: str) -> str:
 
 
 def run_tool_json(cfg: RuntimeConfig, tool: str, arguments: dict[str, Any]) -> str:
-    start = time.perf_counter()
     tool_call_id = next_tool_call_id()
+    start = time.perf_counter()
     get_logger().debug(
         "mcp_tool_invoke",
         tool=tool,
@@ -47,4 +49,19 @@ def run_tool_json(cfg: RuntimeConfig, tool: str, arguments: dict[str, Any]) -> s
         observe_mcp_tool(tool, "error", start)
         raise TriggerHttpError(404, str(exc)) from exc
     observe_mcp_tool(tool, "success", start)
+    duration = time.perf_counter() - start
+    run_id = get_run_id()
+    if run_id:
+        trajectory_recorder.append(
+            run_id,
+            "tool",
+            {"tool": tool, "tool_call_id": tool_call_id, "arguments": arguments, "result": result},
+        )
+    wandb_sess = get_wandb_session()
+    if wandb_sess is not None:
+        wandb_sess.log_tool_span(
+            tool_call_id=tool_call_id,
+            tool_name=tool,
+            duration_s=duration,
+        )
     return json.dumps({"tool": tool, "result": result})
