@@ -16,6 +16,6 @@ Non-Python assets (Helm charts, Skaffold/DevSpace YAML) live at the project root
 
 ## Consequences
 
-- CI runs `uv sync` / `pytest` with coverage via `uv --project runtime` from the project root (`ci.sh`).
+- CI runs `uv sync` / `pytest` with coverage via the **Python** job in `.github/workflows/ci.yml` (and the same commands locally; see README “Local CI”).
 - Future services (e.g. HTTP server for `/api/v1/trigger`) are implemented in Python unless a new ADR chooses otherwise.
 - Any other language prototypes must not live in `runtime/src/` without a superseding ADR.

@@ -31,11 +31,11 @@ The system SHALL use the official [helm-unittest](https://github.com/helm-unitte
 
 ### Requirement: Library chart is covered by unittest where applicable
 
-The system SHALL include helm-unittest coverage for `helm/chart` for behaviors that are testable without an example parent chart, or SHALL document that the library is validated only via `ct lint` and example chart tests, with no reduction in coverage versus the pre-change `ci.sh` grep checks.
+The system SHALL include helm-unittest coverage for `helm/chart` for behaviors that are testable without an example parent chart, or SHALL document that the library is validated only via `ct lint` and example chart tests, with no reduction in coverage versus the pre-change grep-based template checks in the former root CI script.
 
 #### Scenario: No loss of coverage versus previous CI
 
-- **WHEN** the change is complete and `ci.sh` no longer uses grep counts on `helm template` output
+- **WHEN** the change is complete and grep counts on `helm template` output are no longer used for those assertions
 - **THEN** every assertion previously enforced by those grep checks remains enforced by helm-unittest or by `ct lint`, without weakening thresholds
 
 ### Requirement: Official helm-unittest install path

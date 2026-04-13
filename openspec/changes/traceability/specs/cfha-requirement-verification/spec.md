@@ -34,7 +34,7 @@ The repository SHALL contain a committed **traceability matrix** document (path 
 
 ### Requirement: [CFHA-VER-004] CI documents test tiers and runs traceability checks
 
-**Default PR** automation (for example **`ci.sh`** invoked in CI) SHALL run a **traceability check** that fails with a non-zero exit code when promoted spec requirements lack IDs or when the matrix is **inconsistent** with the rules defined in implementation (for example missing rows for IDs, or evidences pointing to non-existent tests). The project SHALL document **test tiers**: **default PR**, **opt-in integration** (environment-gated), and **scheduled** or **manual** jobs, including what runs where, so contributors understand which **SHALL** clauses are enforced on every push versus on a schedule.
+**Default PR** automation (for example **`.github/workflows/ci.yml`** on pull requests) SHALL run a **traceability check** that fails with a non-zero exit code when promoted spec requirements lack IDs or when the matrix is **inconsistent** with the rules defined in implementation (for example missing rows for IDs, or evidences pointing to non-existent tests). The project SHALL document **test tiers**: **default PR**, **opt-in integration** (environment-gated), and **scheduled** or **manual** jobs, including what runs where, so contributors understand which **SHALL** clauses are enforced on every push versus on a schedule.
 
 #### Scenario: Traceability check runs on default PR path
 
