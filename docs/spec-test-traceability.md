@@ -14,6 +14,7 @@ The table is parsed by `scripts/check_spec_traceability.py`; keep the **Matrix**
 |------|---------|-----------------|
 | **Default PR** | Runs on every PR | `ruff`, `pytest` (85%+ coverage), `scripts/check_spec_traceability.py`, `scripts/smoke_rag.py`, `helm unittest` on `examples/*`, `ct lint` |
 | **Opt-in integration** | Env-gated locally | `RUN_KIND_O11Y_INTEGRATION=1` → `runtime/tests/integration/test_kind_o11y_prometheus.py` |
+| **Scheduled** | Cron on `main` | `.github/workflows/scheduled-o11y-integration.yml` runs the same integration test |
 | **Manual** | On demand | Full cluster e2e (not wired in-repo) |
 
 ## Matrix
@@ -41,5 +42,5 @@ The table is parsed by `scripts/check_spec_traceability.py`; keep the **Matrix**
 | [CFHA-VER-001] | `openspec/specs/cfha-requirement-verification/spec.md` | `scripts/check_spec_traceability.py` | default PR | - | - |
 | [CFHA-VER-002] | `openspec/specs/cfha-requirement-verification/spec.md` | `runtime/tests/test_o11y_metrics.py`, `examples/hello-world/tests/hello_world_test.yaml` | default PR | - | - |
 | [CFHA-VER-003] | `openspec/specs/cfha-requirement-verification/spec.md` | `docs/spec-test-traceability.md`, `docs/adrs/0003-spec-test-traceability.md` | default PR | - | - |
-| [CFHA-VER-004] | `openspec/specs/cfha-requirement-verification/spec.md` | `.github/workflows/ci.yml`, `docs/spec-test-traceability.md` | default PR | - | - |
+| [CFHA-VER-004] | `openspec/specs/cfha-requirement-verification/spec.md` | `.github/workflows/ci.yml`, `docs/spec-test-traceability.md`, `.github/workflows/scheduled-o11y-integration.yml` | default PR + scheduled | - | - |
 | [CFHA-VER-005] | `openspec/specs/cfha-requirement-verification/spec.md` | `docs/AGENTS.md`, `.cursor/rules/spec-traceability.mdc` | default PR | - | - |

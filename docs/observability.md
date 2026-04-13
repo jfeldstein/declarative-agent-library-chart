@@ -2,6 +2,8 @@
 
 # Observability (CFHA runtime)
 
+<!-- Traceability: [CFHA-REQ-O11Y-LOGS-004] -->
+
 ## Checkpoints, W&B traces, and Slack correlation (OpenSpec)
 
 This section aligns with **`openspec/changes/agent-checkpointing-wandb-feedback`** (`runtime-langgraph-checkpoints`, `wandb-agent-traces`, `tool-feedback-slack`). Deep dive: **[checkpointing-and-traces.md](checkpointing-and-traces.md)** and **[runbooks/checkpoints-wandb.md](runbooks/checkpoints-wandb.md)**.

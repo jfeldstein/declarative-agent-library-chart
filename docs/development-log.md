@@ -28,6 +28,14 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 **ADR collision check + agent docs** — CI job `docs` runs `scripts/check_adr_numbers.sh`. Added `docs/AGENTS.md` for assistant orientation and `.claude/rules/adr-number-collisions.md` for Claude Code.
 
+**ADR 0003: spec–test traceability** — Normative rules (IDs, matrix vs tests, cross-links, agent playbook) live in [docs/adrs/0003-spec-test-traceability.md](adrs/0003-spec-test-traceability.md); [docs/spec-test-traceability.md](spec-test-traceability.md) keeps the CI tier table and parsed matrix.
+
+**Spec–test traceability** (OpenSpec change `traceability`).
+
+- Promoted **`openspec/specs/cfha-requirement-verification/spec.md`**; added **`[CFHA-REQ-…]`** IDs across existing promoted specs; **`docs/spec-test-traceability.md`** matrix; **`scripts/check_spec_traceability.py`** run from **`ci.sh`** (strict by default, `CFHA_TRACEABILITY_STRICT=0` to relax YAML/py content checks).
+- **`runtime-tools-mcp`** change-local spec updated for LangGraph / in-process tool exposure; **`cfha-agent-o11y-scrape`** wording aligned.
+- **`.github/workflows/scheduled-o11y-integration.yml`** runs **`RUN_KIND_O11Y_INTEGRATION=1`** on a daily cron; **`AGENTS.md`** and **`.cursor/rules/spec-traceability.mdc`** document contributor obligations.
+
 **Scraper Prometheus metrics (`agent_runtime_scraper_*`)** — completes OpenSpec **`agent-runtime-components`** task 3.4 (`runtime-scrapers`).
 
 - Runtime: dedicated **`SCRAPER_REGISTRY`** so scraper CronJob **`GET /metrics`** lists only **`agent_runtime_scraper_*`** (not agent/RAG series); **`reference_job`** embeds to RAG; **`stub_job`** for other Helm job names; **`parse_scraper_metrics_addr`** supports **`[ipv6]:port`**.

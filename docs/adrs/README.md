@@ -18,3 +18,7 @@ Before adding a new ADR, pick the next unused `NNNN` (e.g. one greater than the 
 ## Template
 
 New ADRs can follow the structure in `0001-use-python-for-runtime.md` (Context, Decision, Consequences).
+
+## Index
+
+- **0003 — [Spec–test traceability](0003-spec-test-traceability.md)** — requirement IDs, matrix vs tests, spec ↔ test cross-links, agent maintenance (`docs/spec-test-traceability.md` holds the living matrix).

@@ -35,11 +35,11 @@ Implementations SHALL NOT attach labels derived from prompt text, user ids, or o
 
 ### Requirement: [CFHA-REQ-O11Y-SCRAPE-003] In-process runtime components reuse platform metric names
 
-When this deployment integrates **MCP tools**, **subagents**, and/or **skills** as specified in **`runtime-tools-mcp`**, **`runtime-subagents`**, and **`runtime-skills`** (see change **`agent-runtime-components`**), the agent process SHALL expose the **corresponding `agent_runtime_*` metrics** defined in those capability specs on the **same `/metrics` endpoint** using a **shared registry**, so centralized scrapers collect one target per agent pod for HTTP trigger and in-process components.
+When this deployment integrates **tools**, **subagents**, and/or **skills** as specified in **`runtime-tools-mcp`** (reference contract for tool discovery, invocation, and metrics), **`runtime-subagents`**, and **`runtime-skills`** (see change **`agent-runtime-components`**), the agent process SHALL expose the **corresponding `agent_runtime_*` metrics** defined in those capability specs on the **same `/metrics` endpoint** using a **shared registry**, so centralized scrapers collect one target per agent pod for HTTP trigger and in-process components. Conforming tool exposure **MAY** use **LangGraph-native or in-process** bindings without a standalone MCP server process, as described in **`runtime-tools-mcp`**.
 
-#### Scenario: MCP-enabled deployment exports tool metrics
+#### Scenario: Tool-enabled deployment exports tool metrics
 
-- **WHEN** values enable at least one MCP tool and the agent invokes that tool during operation
+- **WHEN** values enable at least one configured tool and the agent invokes that tool during operation
 - **THEN** `/metrics` SHALL include the **`agent_runtime_mcp_tool_*`** series prescribed in **`runtime-tools-mcp`** with **`tool`** labels restricted to **configured** tool identifiers for that deployment
 
 ### Requirement: [CFHA-REQ-O11Y-SCRAPE-004] Helm values control scrape discovery
