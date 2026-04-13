@@ -11,7 +11,7 @@
 - [x] 2.2 Rename subchart values key in `examples/hello-world/values.yaml` from `hosted-agent:` to `declarative-agent-library:`.
 - [x] 2.3 Update `skaffold.yaml` setValue paths from `hosted-agent.*` to `declarative-agent-library.*`.
 - [x] 2.4 Update `devspace.yaml` selectors or value keys that reference `hosted-agent` if they must match the new chart/template naming.
-- [x] 2.5 Run `helm template` / `helm lint` on `examples/hello-world` and execute `ci.sh` if available.
+- [x] 2.5 Run `helm template` / `helm lint` on `examples/hello-world` and execute CI parity (see `.github/workflows/ci.yml` / README) if available.
 
 ## 3. Documentation and verification
 

@@ -1,3 +1,10 @@
+# Canonical CI for this repo (replaces the former root ci.sh). Python stages use uv only.
+# Traceability: [CFHA-REQ-HELM-UNITTEST-001] [CFHA-REQ-HELM-UNITTEST-002] [CFHA-REQ-HELM-UNITTEST-003] [CFHA-REQ-CHART-CT-001] [CFHA-REQ-CHART-CT-002] [CFHA-VER-004]
+#
+# Helm pins (keep in sync with README “Local parity”):
+#   - Helm 3.20.2+ (helm-unittest plugin uses platformHooks; Helm <3.18.10 fails to load the plugin)
+#   - helm-unittest v1.0.3
+#   - chart-testing (ct) — see helm/chart-testing-action version below
 name: CI
 
 on:
@@ -17,11 +24,12 @@ jobs:
       run:
         working-directory: runtime
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: astral-sh/setup-uv@v4
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
+          python-version-file: runtime/.python-version
 
       - name: Install dependencies
         run: uv sync --all-groups
@@ -33,7 +41,7 @@ jobs:
         run: uv run pytest tests/ -v --tb=short --cov-report=term-missing --cov-report=xml
 
       - name: Upload coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-xml
           path: runtime/coverage.xml
@@ -49,7 +57,7 @@ jobs:
       # Pinned so CI does not pick up breaking plugin or Helm requirement changes from main.
       HELM_UNITTEST_VERSION: v1.0.3
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: azure/setup-helm@v5
         with:
@@ -60,7 +68,7 @@ jobs:
         run: helm plugin install https://github.com/helm-unittest/helm-unittest.git --version "${HELM_UNITTEST_VERSION}"
 
       - name: Set up chart-testing
-        uses: helm/chart-testing-action@v2.6.1
+        uses: helm/chart-testing-action@v2.8.0
         with:
           version: v3.11.0
 
@@ -83,7 +91,16 @@ jobs:
     name: Docs (ADR numbering)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Check ADR numbers are unique
         run: ./scripts/check_adr_numbers.sh
+
+  traceability:
+    name: Spec traceability (OpenSpec matrix)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Check promoted specs ↔ matrix
+        run: python3 scripts/check_spec_traceability.py

@@ -8,9 +8,17 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ## 2026-04-12
 
-**PR branch merge with `main` (conflict resolution)** — Reconciled divergent LangGraph wiring: **`HOSTED_AGENT_CHECKPOINT_STORE`** (default-on memory; `none` disables persistence) drives the compiled checkpointer when **`HOSTED_AGENT_CHECKPOINTS_ENABLED`** is unset; operator **`GET /api/v1/runtime/threads/...`** routes still require the explicit checkpoints flag. Helm **`deployment.yaml`** keeps the observability env block and adds **`extraEnv`**. Example dependency **`.tgz`** files repackaged from **`helm/chart`**. Tool calls use **`run_context.next_tool_call_id`** alongside observability trajectory / W&B spans.
+**PR #11 merge with `main`** — Reconciled divergent LangGraph wiring: **`HOSTED_AGENT_CHECKPOINT_STORE`** (default-on memory; `none` disables persistence) drives the compiled checkpointer when **`HOSTED_AGENT_CHECKPOINTS_ENABLED`** is unset; operator **`GET /api/v1/runtime/threads/...`** routes still require the explicit checkpoints flag. Helm **`deployment.yaml`** keeps the observability env block and adds **`extraEnv`**. Example chart **`charts/*.tgz`** dependencies are **gitignored**; run **`helm dependency build`** under each example. Tool calls use **`run_context.next_tool_call_id`** alongside observability trajectory / W&B spans.
 
-**CI / local Helm** — GitHub Actions Helm job pins **Helm v3.20.2** and **helm-unittest v1.0.3** (`HELM_UNITTEST_VERSION`); `ci.sh` documents the same install line. **Helm 3.18.10+** is required for `helm-unittest` plugin `platformHooks` (v3.14.x fails with `unknown field "platformHooks"`).
+**Spec–test traceability** — See **[ADR 0003](adrs/0003-spec-test-traceability.md)**, **`docs/spec-test-traceability.md`**, and **`scripts/check_spec_traceability.py`** on `main`. **ATIF export ADR** renumbered to **[0004](adrs/0004-pin-atif-v1-4-trajectory-export.md)** so **`0003`** stays traceability-only.
+
+**CI** — **`.github/workflows/ci.yml`** is canonical (no root **`ci.sh`**). Local parity in **README** (Python via **uv**, Helm + **ct** + **helm-unittest**, ADR + traceability checks).
+
+**Dependabot batch merge** — Merged open Dependabot PRs **#1–#3, #5–#10** into `main` (Actions + runtime bumps). **PR #7** (pytest 9.x): resolved via merge into [`dependabot/pip/runtime/pytest-gte-9.0.3`](https://github.com/jfeldstein/declarative-agent-library-chart/pull/7).
+
+**PR #10 (Dependabot httpx)** — Merged `main` into [`dependabot/pip/runtime/httpx-gte-0.28.1`](https://github.com/jfeldstein/declarative-agent-library-chart/pull/10) for current Helm / unittest pins.
+
+**CI / local Helm** — GitHub Actions pins **Helm v3.20.2** and **helm-unittest v1.0.3**; **README** documents the same. **Helm 3.18.10+** required for **`platformHooks`** in the unittest plugin.
 
 **OpenSpec `agent-checkpointing-wandb-feedback` (partial apply)** — LangGraph **`MemorySaver`** checkpointer (default-on; `HOSTED_AGENT_CHECKPOINT_STORE=none` to disable); **`pre` + `pipeline`** nodes; **`GET /api/v1/trigger/threads/{id}/state|checkpoints`**; trigger **`thread_id`** / **`X-Thread-Id`** / **`ephemeral`**. **`run_context`** (`run_id`, `thread_id`, **`tool_call_id`** on MCP tools). **`wandb_session`** per-invocation init/finish when env ready; **`trace_meta`** on graph state. Bundled **`feedback_registry.v1.json`** + **`feedback_registry`**. Docs: **`docs/checkpointing-and-traces.md`**, **`docs/runbooks/checkpoints-wandb.md`**, observability updates. Helm **`extraEnv`**. Dockerfile **`uv sync --extra wandb`**. **`wandb`** optional extra + dev dep. Tasks **12/22** done; Slack mapping, durable feedback persistence, full LLM spans, interrupt/resume E2E remain.
 
@@ -20,7 +28,7 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ## 2026-04-11
 
-**ADR collision check + agent docs** — CI job `docs` runs `scripts/check_adr_numbers.sh`; `./ci.sh` runs the same check. Added `docs/AGENTS.md` for assistant orientation and `.claude/rules/adr-number-collisions.md` for Claude Code.
+**ADR collision check + agent docs** — CI job `docs` runs `scripts/check_adr_numbers.sh`. Added `docs/AGENTS.md` for assistant orientation and `.claude/rules/adr-number-collisions.md` for Claude Code.
 
 **Scraper Prometheus metrics (`agent_runtime_scraper_*`)** — completes OpenSpec **`agent-runtime-components`** task 3.4 (`runtime-scrapers`).
 
@@ -30,7 +38,7 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ## 2026-04-11
 
-**ATIF v1.4 export pin** ([ADR 0003](adrs/0003-pin-atif-v1-4-trajectory-export.md)).
+**ATIF v1.4 export pin** ([ADR 0004](adrs/0004-pin-atif-v1-4-trajectory-export.md)).
 
 - Trajectory exports use Harbor **ATIF-v1.4** shape (`session_id`, `agent`, `steps`, `final_metrics`, `extra.hosted_agents` provenance); internal steps remain `hosted-agents-canonical-v1` until merged. See [Harbor ATIF](https://www.harborframework.com/docs/agents/trajectory-format).
 

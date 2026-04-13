@@ -1,4 +1,4 @@
-# ADR 0003: Pin trajectory exports to Harbor ATIF v1.4 (with internal canonical adapter)
+# ADR 0004: Pin trajectory exports to Harbor ATIF v1.4 (with internal canonical adapter)
 
 ## Status
 

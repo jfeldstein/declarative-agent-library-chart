@@ -1,5 +1,7 @@
 # Grafana dashboards (CFHA)
 
+<!-- Traceability: [CFHA-REQ-O11Y-LOGS-003] -->
+
 ## `cfha-agent-overview.json`
 
 Starter dashboard for the **config-first-hosted-agents** runtime (import one dashboard):

@@ -1,6 +1,6 @@
 ## ADDED Requirements
 
-### Requirement: No top-level `rag` values key
+### Requirement: [CFHA-REQ-RAG-SCRAPERS-001] No top-level `rag` values key
 
 The Declarative Agent Library Helm chart SHALL NOT define a top-level **`rag`** key in its published **`values.yaml`** or **`values.schema.json`**. RAG workload configuration that remains operator-tunable SHALL live only under documented keys nested beneath **`scrapers`**.
 
@@ -9,7 +9,7 @@ The Declarative Agent Library Helm chart SHALL NOT define a top-level **`rag`** 
 - **WHEN** an operator inspects `values.schema.json` for the chart
 - **THEN** the root `properties` SHALL NOT include a property named `rag`
 
-### Requirement: Managed RAG workload is deployed when any scraper job is enabled
+### Requirement: [CFHA-REQ-RAG-SCRAPERS-002] Managed RAG workload is deployed when any scraper job is enabled
 
 The chart SHALL render the managed RAG HTTP **Deployment** and **Service** (names and selectors as documented for the chart) **if and only if** the **`scrapers.jobs`** list contains **at least one** job object with **`enabled: true`**. If there are no jobs or every job has **`enabled: false`**, the chart SHALL NOT render those RAG workload resources.
 
@@ -23,7 +23,7 @@ The chart SHALL render the managed RAG HTTP **Deployment** and **Service** (name
 - **WHEN** `scrapers.jobs` is empty or every job has `enabled: false`
 - **THEN** the output SHALL NOT include the RAG Deployment or RAG Service resources
 
-### Requirement: RAG tunables are nested under `scrapers.ragService`
+### Requirement: [CFHA-REQ-RAG-SCRAPERS-003] RAG tunables are nested under `scrapers.ragService`
 
 The chart SHALL expose **`scrapers.ragService`** for operator tuning of the managed RAG workload: at minimum **replica count**, **Service type and port**, and **Pod resources**, with defaults equivalent to the chart’s prior RAG defaults documented in the migration note for this change.
 
@@ -32,7 +32,7 @@ The chart SHALL expose **`scrapers.ragService`** for operator tuning of the mana
 - **WHEN** an operator sets `scrapers.ragService.service.port` to a valid TCP port and at least one scraper job is enabled
 - **THEN** rendered RAG Service and container `containerPort` SHALL use that port
 
-### Requirement: Cluster-internal RAG base URL follows RAG deployment
+### Requirement: [CFHA-REQ-RAG-SCRAPERS-004] Cluster-internal RAG base URL follows RAG deployment
 
 The chart SHALL populate the cluster-internal RAG base URL (for example the helper used for **`HOSTED_AGENT_RAG_BASE_URL`** and scraper **`RAG_SERVICE_URL`**) with a non-empty URL **when and only when** the RAG workload is deployed per the scraper gate above; otherwise it SHALL be empty or unset as documented.
 
