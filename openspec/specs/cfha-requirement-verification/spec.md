@@ -1,3 +1,7 @@
+## Reader note (non-normative)
+
+Contributor docs and OpenSpec changes may use **test-to-spec traceability** as shorthand for the obligations in this file (IDs on promoted requirements, matrix rows, pytest/Helm citations). The English word **traceability** alone is overloaded; prefer **test-to-spec** when you mean this repository’s spec↔test gate.
+
 ## ADDED Requirements
 
 ### Requirement: [CFHA-VER-001] Normative requirements carry stable identifiers

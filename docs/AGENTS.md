@@ -13,10 +13,12 @@ Concise orientation for automated assistants working in this repository.
 | `docs/adrs/` | Architecture Decision Records (`NNNN-slug.md`) |
 | `docs/development-log.md` | Human changelog-style notes for notable changes |
 | `.github/workflows/ci.yml` | GitHub Actions (Python, Helm, ADR, spec traceability) |
-| `docs/spec-test-traceability.md` | Requirement → evidence matrix (parsed in CI) |
-| `docs/adrs/0003-spec-test-traceability.md` | Traceability rules, waivers, pytest `::` convention |
+| `docs/spec-test-traceability.md` | Test-to-spec matrix: requirement → evidence (parsed in CI) |
+| `docs/adrs/0003-spec-test-traceability.md` | Test-to-spec rules, waivers, pytest `::` convention |
 
-## OpenSpec traceability ([CFHA-VER-005])
+## OpenSpec test-to-spec traceability ([CFHA-VER-005])
+
+**Test-to-spec traceability** is the ID + matrix + pytest/Helm citation practice for **promoted** `openspec/specs/` (see **[CFHA-VER-001]**). Prefer that term over bare **traceability**.
 
 When you add or change a normative **SHALL** under `openspec/specs/*/spec.md`:
 

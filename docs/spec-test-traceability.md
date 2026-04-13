@@ -2,7 +2,7 @@
 
 <!-- Traceability: [CFHA-VER-003] [CFHA-VER-004] -->
 
-This file holds the **authoritative requirement → evidence map** and **CI tier** summary. Rules (IDs, waivers, pytest `::` convention) are in **[ADR 0003: Spec–test traceability](adrs/0003-spec-test-traceability.md)**.
+This file holds the **authoritative test-to-spec map** (requirement → automated test evidence) and **CI tier** summary. In prose, call this **test-to-spec traceability** or **spec–test traceability** so “traceability” is not confused with unrelated domains (lineage, supply chain, etc.). Rules (IDs, waivers, pytest `::` convention) are in **[ADR 0003: Spec–test traceability](adrs/0003-spec-test-traceability.md)**.
 
 **Waiver columns:** use **`-`** for active rows. For a **waived** row, set **Waiver approver** (GitHub username of the approving maintainer) and **Waiver reason** (≥10 characters). Evidence may be **`-`** only when waived.
 

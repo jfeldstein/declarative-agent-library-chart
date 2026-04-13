@@ -6,6 +6,12 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ---
 
+## 2026-04-13
+
+**Coverage** — Removed **`*/observability/*`** from **`runtime/pyproject.toml`** `[tool.coverage.run] omit` so **`hosted_agents/observability/`** is included in the **`pytest-cov`** denominator (aggregate still **≥85%**). Deleted OpenSpec change **`observability-package-coverage`**; **`agent-checkpointing-wandb-feedback`** and **`agent-runtime-components`** proposals now state the same rule explicitly.
+
+**OpenSpec** — Earlier today: deleted **`shadow-rollout-evaluation`** and **`shadow-non-mutating-twin-execution`**; **`agent-checkpointing-wandb-feedback`** no longer defers to those paths. Later: **`agent-maker-system`** rescoped (prefix policy, bot MVP, eval reuse); stubs **`subagent-reference-system`**, **`ci-delta-flagging`**; **`traceability`** proposal/design updated for **test-to-spec** vocabulary, proposed-vs-promoted matrix rules, and **`runtime-tools-mcp` contract vs wire**.
+
 ## 2026-04-12
 
 **PR #11 merge with `main`** — Reconciled divergent LangGraph wiring: **`HOSTED_AGENT_CHECKPOINT_STORE`** (default-on memory; `none` disables persistence) drives the compiled checkpointer when **`HOSTED_AGENT_CHECKPOINTS_ENABLED`** is unset; operator **`GET /api/v1/runtime/threads/...`** routes still require the explicit checkpoints flag. Helm **`deployment.yaml`** keeps the observability env block and adds **`extraEnv`**. Example chart **`charts/*.tgz`** dependencies are **gitignored**; run **`helm dependency build`** under each example. Tool calls use **`run_context.next_tool_call_id`** alongside observability trajectory / W&B spans.
@@ -24,7 +30,7 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 **Observability doc + W&B/checkpoint stubs** — **`docs/observability.md`**: OpenSpec-aligned section for checkpointer SOT, W&B automatic tracing, tag cardinality, server-side Slack correlation, env table. Runtime: **`hosted_agents.agent_tracing`**, **`GET /api/v1/runtime/summary`** → **`observability`**. OpenSpec **`wandb-agent-traces`**: new **Operator documentation and runtime stubs** requirement; task **2.5** marked done.
 
-**OpenSpec: `agent-checkpointing-wandb-feedback` scope trim** — Removed **ATIF export** and **shadow rollout** from this change (checkpointer + W&B automatic tracing + Slack feedback only); simplified **explicit human feedback** model; **server-side** Slack correlation; **`tasks.md`** now uses OpenSpec checkbox items (**21** tasks). **Shadow** requirements live in new change **`shadow-rollout-evaluation`** (**9** tasks).
+**OpenSpec: `agent-checkpointing-wandb-feedback` scope trim** — Removed **ATIF export** and **shadow rollout** from this change (checkpointer + W&B automatic tracing + Slack feedback only); simplified **explicit human feedback** model; **server-side** Slack correlation; **`tasks.md`** now uses OpenSpec checkbox items (**21** tasks). **Shadow** was later split to **`shadow-rollout-evaluation`** then **removed** with **`shadow-non-mutating-twin-execution`** (2026-04-13).
 
 ## 2026-04-11
 
@@ -54,7 +60,7 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 **Checkpointing, Slack feedback, W&B hooks, ATIF export, shadow flags** (OpenSpec `agent-checkpointing-wandb-feedback`).
 
-- Runtime: optional LangGraph `MemorySaver` multi-node trigger graph when `HOSTED_AGENT_CHECKPOINTS_ENABLED=1`; `thread_id` / `ephemeral` on trigger body or `X-Agent-Thread-Id`; operator routes for checkpoint reads, Slack reaction ingest, human feedback listing, and ATIF-shaped export; `slack.post_message` tool records correlation + side-effect metadata; `hosted_agents/observability/*` (coverage omitted in `pyproject.toml` until integration hardens).
+- Runtime: optional LangGraph `MemorySaver` multi-node trigger graph when `HOSTED_AGENT_CHECKPOINTS_ENABLED=1`; `thread_id` / `ephemeral` on trigger body or `X-Agent-Thread-Id`; operator routes for checkpoint reads, Slack reaction ingest, human feedback listing, and ATIF-shaped export; `slack.post_message` tool records correlation + side-effect metadata; `hosted_agents/observability/*` (**2026-04-13:** observability no longer omitted from `pytest-cov`; see dated section above).
 - Helm: `values.yaml` → `observability.*` maps feature flags and optional WANDB/Slack/Postgres wiring; ConfigMap keys for label registry + emoji map JSON.
 - Docs: [docs/runbook-checkpointing-wandb.md](runbook-checkpointing-wandb.md).
 

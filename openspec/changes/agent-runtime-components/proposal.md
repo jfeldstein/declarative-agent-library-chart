@@ -26,6 +26,7 @@ Hosted agents need a **consistent runtime surface** for data ingestion, retrieva
 
 ## Impact
 
+- **Python coverage (ADR 0002)**: first-party runtime packages under `src/hosted_agents/`, including **`hosted_agents/observability/`**, are measured by **`pytest-cov`** with **no** broad `omit` that hides whole subtrees; landing observability or checkpoint helpers requires accompanying tests like any other runtime code.
 - **Helm/values and application config** for config-first hosted agents (or successor charts) gain structured sections for RAG endpoint usage, scraper schedules, MCP tool sets, subagents, and skills.
 - **New or extended services**: at minimum a RAG HTTP API and scraper jobs; MCP tool processes or sidecars as designed in `design.md`.
 - **Dependencies**: vector DB / embedding stack behind RAG (implementation detail in design); integration SDKs or credentials for each scraper type.

@@ -17,6 +17,12 @@ The runtime already exposes env-driven checkpointing (`MemorySaver`) and in-proc
 - **Multi-region active-active** replication design (document single-primary assumptions).
 - **Redis** implementation (separate change).
 
+### Alignment with HITL and durable runs
+
+**Declarative HITL** (`interrupt` / `Command`) and **ordinary** durable agent runs are **not** different persistence “modes.” When Postgres is enabled, **both** persist LangGraph checkpoint state through the **same** checkpointer integration. HITL adds **resume** mechanics after a human supplies the payload expected at the interrupt boundary; it does **not** imply a parallel store.
+
+**Post-hoc human feedback** (e.g. Slack reactions on messages already sent) is a **separate** loop: correlation and label storage belong with **`agent-checkpointing-wandb-feedback`** / **`tool-feedback-slack`**, not with LangGraph interrupt semantics. Do not conflate “human touched the system” with “graph is blocked waiting for `Command(resume=…)`.”
+
 ## Decisions
 
 1. **Checkpointer library**  

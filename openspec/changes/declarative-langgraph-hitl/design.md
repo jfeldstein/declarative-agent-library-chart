@@ -17,6 +17,12 @@ The **config-first hosted agents** direction treats prompts, tools, and deployme
 - Replacing non-functional-API graphs where not needed; **interop** with Graph API remains possible per LangGraph docs but is not required for v1.
 - Cross-tenant **authorization** for who may resume a thread (beyond documenting hooks); treat as platform layering unless explicitly added later.
 
+### HITL (this change) vs post-hoc human feedback
+
+**HITL here** means **LangGraph `interrupt()` / `Command(resume=…)`**: the graph **stops** at a configured pause point and **does not** execute subsequent tasks until a resume payload arrives, with checkpoint state making that pause **durable** across processes when a production checkpointer (e.g. Postgres per **`postgres-agent-persistence`**) is configured.
+
+**Post-hoc human feedback** (e.g. emoji reactions on a Slack message **after** the assistant posted) is **not** this pattern: the run may already have completed; humans attach signals that **correlate** to past `tool_call_id` / checkpoint rows via **`tool-feedback-slack`** and related stores. Reserve the term **HITL** for **pre-continuation gates**; use **human feedback** / **reaction correlation** for **async** supervision signals.
+
 ## Decisions
 
 1. **Declarative schema for interrupt kinds**  

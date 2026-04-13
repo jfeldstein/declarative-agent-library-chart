@@ -18,9 +18,9 @@ Hosted agents need durable, inspectable runs so we can resume work, audit decisi
 - `tool-feedback-slack`: Ingest Slack reactions; map to registry labels; server-side correlation to `tool_call_id` / `checkpoint_id`; idempotency and orphan handling.
 - `wandb-agent-traces`: W&B run/span model for agents; mandatory tags where specified; automatic tracing during execution; **persisted links** from checkpoints/tool steps to W&B identifiers for feedback annotation.
 
-### Deferred to Another Change
+### Out of Scope (no active OpenSpec change)
 
-- **Shadow rollouts** (variant runs, `rollout_arm`, non-mutating shadow path, comparison telemetry): see **`shadow-rollout-evaluation`**.
+- **Shadow rollouts** / **twin execution** (variant runs, `rollout_arm`, non-mutating second path, comparison telemetry): not tracked in OpenSpec in this repo for now.
 
 ### Modified Capabilities
 
@@ -28,8 +28,9 @@ Hosted agents need durable, inspectable runs so we can resume work, audit decisi
 
 ## Impact
 
+- **`runtime/pyproject.toml` coverage**: `hosted_agents/observability/` **must** stay inside the **`pytest-cov`** denominator (no package-wide `omit` for that tree). New observability modules ship **with** tests so the repo-wide **`fail-under`** gate stays green—same rule as the rest of `hosted_agents`.
 - **Supersedes** removed change `agent-feedback-wandb-integration`: unique requirements were merged into this tree (2026-04-11); **ATIF export** and **positive-subsequence dataset mining** were **removed** from scope (2026-04-12)—training pipelines can consume W&B and/or checkpoint-backed APIs instead.
-- **Shadow rollout** requirements **moved** to **`openspec/changes/shadow-rollout-evaluation`** (2026-04-12).
+- **Shadow rollout** OpenSpec changes were **removed** (2026-04-13); runtime may still carry related stubs or tags where already implemented.
 - **Runtime / agent host**: checkpoint store selection, LangGraph or compatible checkpointer wiring, correlation IDs on tool invocations, W&B trace id persistence on steps.
 - **Integrations**: Slack Events API (or Bolt) for reactions; `wandb` SDK for traces and feedback enrichment.
 - **Ops**: secrets for Slack and W&B; retention and PII policies for checkpoints and traces.

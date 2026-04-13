@@ -1,6 +1,6 @@
 ## Context
 
-The repo is moving toward **config-first hosted agents** with observable runs. This change **subsumes** the earlier draft `agent-feedback-wandb-integration` (removed). We **dropped ATIF export** from scope: the **checkpointer** is the **source of truth** for ordered steps; **W&B** provides **automatic tracing** during execution—there is **no** separate ATIF export prerequisite. **Shadow rollouts** are **deferred** to the **`shadow-rollout-evaluation`** change.
+The repo is moving toward **config-first hosted agents** with observable runs. This change **subsumes** the earlier draft `agent-feedback-wandb-integration` (removed). We **dropped ATIF export** from scope: the **checkpointer** is the **source of truth** for ordered steps; **W&B** provides **automatic tracing** during execution—there is **no** separate ATIF export prerequisite. **Shadow rollouts** / **twin execution** are **not** covered by an active OpenSpec change in this repo (removed 2026-04-13).
 
 Human judgment often arrives **asynchronously** (e.g. a Slack reaction on a bot message). That signal must link to a **stable `tool_call_id`** and **checkpoint**, update **durable storage**, and **annotate** the correct **W&B span/trace** for the step that produced the message.
 
@@ -17,7 +17,7 @@ Human judgment often arrives **asynchronously** (e.g. a Slack reaction on a bot 
 **Non-Goals:**
 
 - **ATIF** export, canonical trajectory export buffers dedicated to ATIF, or **positive-feedback subsequence mining** for SFT/RLFT in this change.
-- **Shadow rollouts** (see **`shadow-rollout-evaluation`**).
+- **Shadow rollouts** / **twin execution** (no active OpenSpec capability doc here).
 - Replacing LangGraph with a different orchestration engine (we **integrate** with or **mirror** its checkpoint semantics).
 - A full Slack marketplace app; a **minimal** reaction → feedback path is enough for v1.
 - **Operational lifecycle signals** as a first-class feedback taxonomy, **opt-in mappers** from ops events to training labels, or **`RunOperationalEvent`** modeling—**v1** is **explicit human feedback only**.

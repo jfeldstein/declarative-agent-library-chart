@@ -44,7 +44,7 @@ This section aligns with **`openspec/changes/agent-checkpointing-wandb-feedback`
 | `prompt_hash` | Hash or sentinel, not raw prompt text. |
 | `thread_id` | Stable conversation/run id. |
 
-**Shadow** comparisons (`rollout_arm`, `shadow_variant_id`) are specified under **`openspec/changes/shadow-rollout-evaluation`**, not this chart section.
+**Shadow**-related W&B tags (`rollout_arm`, `shadow_variant_id`) may appear when runtime shadow configuration is enabled; there is **no** separate OpenSpec change documenting shadow behavior in this repo.
 
 ## Metrics (Prometheus)
 

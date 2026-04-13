@@ -1,38 +1,36 @@
 ## Why
 
-We need a systematic way to create, validate, and deploy new agents while maintaining safety, composability, and observability. The current manual process for agent creation is error-prone and doesn't scale. An agent-maker system that listens to natural language requests, creates validated PRs, and integrates with our existing evaluation infrastructure will accelerate development while maintaining quality standards.
+Manual agent creation (Helm values, runtime config, eval wiring) is slow and inconsistent. An **agent-maker** path that turns structured requests into **reviewed PRs** can speed iteration while reusing platform primitives defined elsewhere.
 
-## What Changes
+## What Changes (iterative, small slices)
 
-- Introduce **#agent-** prefix convention for bot-readable content across all channels
-- Create **agent-maker bot** that listens to #agent-maker channel and automatically creates PRs for "I want an agent that..." requests
-- Implement **subagent reference system** with validation, loop depth prevention, and request ID forwarding
-- Establish **code-committed evals** with W&B integration and shadow rollouts
-- Ensure **additive-only functionality** and composability requirements
-- RBAC considerations explicitly out of scope for v1
+1. **`#agent-` prefix (policy)** — Document that channels where bots parse traffic need a **machine-visible boundary**; recommend `#agent-` prefixes for bot-readable segments so humans and automation share one convention.
+2. **Agent-maker bot (narrow v1)** — A listener (e.g. Telegram **#agent-maker** channel) parses a constrained pattern (“I want an agent that…”) and opens **GitHub PRs** from validated templates. RBAC and rich NLU stay **out of scope** for v1.
+3. **Subagent composition** — **Not** specified here. Deferred to **`openspec/changes/subagent-reference-system`** (stub); **additive-only** rules for that surface live with that change when promoted.
+4. **Code-committed evals** — **Not** duplicated here. Eval suites, W&B sync, and versioning are owned by existing or future eval changes (e.g. checkpoint / trace work under **`agent-checkpointing-wandb-feedback`** and related specs). Agent-maker **consumes** those mechanisms so generated agents opt into the same **core** eval flow **without extra one-off wiring**.
+5. **CI regression / delta flagging** — **Not** specified here. Deferred to **`openspec/changes/ci-delta-flagging`** (stub).
+
+**Removed from scope:** shadow rollout / twin execution (OpenSpec changes deleted; no shadow integration in agent-maker).
 
 ## Capabilities
 
 ### New Capabilities
 
-- `agent-prefix-convention`: Standard #agent- prefix for bot-readable content across all communication channels
-- `agent-maker-bot`: Telegram bot that listens to #agent-maker channel, parses requests, and creates validated PRs
-- `subagent-reference-system`: Validation, loop depth prevention, and request ID forwarding for agent composition
-- `code-committed-evals`: Evaluation suites committed with code, synced to W&B, with versioned evaluations tied to releases
-- `shadow-rollout-integration`: Safe testing of new agents alongside production systems
-- `ci-delta-flagging`: CI integration that flags evaluation regressions
+- `agent-prefix-convention`: Operator-facing documentation for `#agent-` (or successor) bot-readable markers in channels that run automation.
+- `agent-maker-bot`: Constrained NL → validated PR workflow for new agent assets.
 
 ### Modified Capabilities
 
-- `declarative-agent-library-chart`: Enhanced to support agent-maker generated configurations and subagent references
-- `wandb-agent-traces`: Extended to include agent-maker metadata and evaluation results
-- `runtime-langgraph-checkpoints`: Enhanced to support subagent request correlation
+- `declarative-agent-library-chart`: Values/templates may gain optional sections produced by agent-maker (additive).
+
+### Deferred (separate changes)
+
+- `subagent-reference-system` — see stub change folder.
+- `ci-delta-flagging` — see stub change folder.
+- Code-committed eval contracts — see **`agent-checkpointing-wandb-feedback`** / W&B specs rather than redefining here.
 
 ## Impact
 
-- **Development Velocity**: Dramatically reduces time from idea to deployed agent
-- **Quality**: Automated validation prevents common errors in agent composition
-- **Observability**: Full traceability from user request to deployed agent
-- **Safety**: Loop prevention and validation rules maintain system stability
-- **Integration**: Seamless integration with existing W&B, CI/CD, and monitoring infrastructure
-- **Backward Compatibility**: Additive-only changes ensure no breaking changes to existing agents
+- **Velocity**: Less manual copy-paste for new agents.
+- **Safety**: Human PR review remains mandatory; no auto-deploy in v1.
+- **Dependencies**: GitHub API, messaging transport credentials, alignment with eval/trace specs **already** on the platform roadmap.
