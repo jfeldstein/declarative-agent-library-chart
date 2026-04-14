@@ -88,5 +88,5 @@ uv run uvicorn hosted_agents.rag.app:create_app --factory --host 127.0.0.1 --por
 Smoke (in-process, no server):
 
 ```bash
-uv run python scripts/smoke_rag.py
+uv run python tests/integration/smoke_rag.py
 ```

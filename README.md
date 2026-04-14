@@ -46,7 +46,7 @@ uv sync --all-groups --project runtime
 cd runtime
 uv run ruff check src tests
 uv run pytest tests/ -v --tb=short --cov-report=term-missing
-uv run python scripts/smoke_rag.py
+uv run python tests/integration/smoke_rag.py
 ```
 
 **Helm** — install [Helm](https://helm.sh/) **3.20.2+**, [chart-testing](https://github.com/helm/chart-testing) (`ct`), and the [helm-unittest](https://github.com/helm-unittest/helm-unittest) plugin (**v1.0.3** matches CI). Then from repo root:
@@ -171,7 +171,7 @@ curl -s -X POST http://127.0.0.1:8088/api/v1/rag/query -H 'content-type: applica
   -d '{"query":"banana","scope":"default","expand_relationships":true}'
 ```
 
-In-process smoke (no servers): from `runtime`, run `uv run python scripts/smoke_rag.py`.
+In-process smoke (no servers): from `runtime`, run `uv run python tests/integration/smoke_rag.py`.
 
 ### Example: metrics subagent + RAG subagent (values)
 

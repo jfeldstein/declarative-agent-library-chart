@@ -48,7 +48,7 @@ jobs:
           if-no-files-found: error
 
       - name: RAG smoke (in-process)
-        run: uv run python scripts/smoke_rag.py
+        run: uv run python tests/integration/smoke_rag.py
 
   helm:
     name: Helm (unittest + ct lint)

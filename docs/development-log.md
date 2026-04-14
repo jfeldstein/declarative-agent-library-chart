@@ -8,6 +8,8 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ## 2026-04-13
 
+**RAG smoke** — In-process RAG smoke script moved from **`runtime/scripts/smoke_rag.py`** to **`runtime/tests/integration/smoke_rag.py`**; CI (**`.github/workflows/ci.yml`**) and docs (README, **`docs/rag-http-api.md`**, **`docs/spec-test-traceability.md`**) now reference the new path.
+
 **Cursor / OpenSpec workflow** — `.cursor/commands/opsx-apply.md` and `opsx-archive.md`, plus **`openspec-apply-change`** / **`openspec-archive-change`** skills, now tell agents to implement **in a git worktree** (see **`AGENTS.md`** and **`parallel-agents-in-local-worktrees`**), finish apply with **push + PR** (base **`main`** by default), and after archive run **worktree cleanup** (`git worktree remove`, `git branch -d`, `git worktree prune`, `rm -rf wt/<path>` when needed). Landed with runtime work in **`d98f195`**.
 
 **OpenSpec proposals (naming + traceability migration)** — Checked in **`openspec/changes/consolidate-naming`** (library chart identity, `agent` values alias, `dalc-overview` / image repo naming) and **`openspec/changes/dalc-traceability-migration`** (promoted spec folders `dalc-*`, requirement IDs **`DALC-REQ`/`DALC-VER`**); implementation not started.
@@ -24,7 +26,7 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 **OpenSpec `traceability` (tasks closure)** — Implementation was already on **`main`** (IDs, matrix, **`scripts/check_spec_traceability.py`**, CI job, scheduled o11y workflow, **`AGENTS.md`** / **`.cursor/rules/spec-traceability.mdc`**). Marked **`openspec/changes/traceability/tasks.md`** **15/15** complete; aligned **`openspec/changes/agent-runtime-components/specs/runtime-tools-mcp/spec.md`** section title with the **`traceability`** copy (**`## MODIFIED Requirements`**).
 
-**Local CI parity (README)** — Ran end-to-end on a dev machine: **`./scripts/check_adr_numbers.sh`**, **`python3 scripts/check_spec_traceability.py`**, **`uv run ruff check`** + **`uv run pytest tests/`** under **`runtime/`**, **`helm dependency build --skip-refresh`** + **`helm unittest .`** for each **`examples/*/`**, **`ct lint --config ct.yaml --all`**, **`uv run python scripts/smoke_rag.py`** (from **`runtime/`**). All exited **0** (records **`openspec/changes/traceability/tasks.md`** §6.1 verification, not only Python + OpenSpec).
+**Local CI parity (README)** — Ran end-to-end on a dev machine: **`./scripts/check_adr_numbers.sh`**, **`python3 scripts/check_spec_traceability.py`**, **`uv run ruff check`** + **`uv run pytest tests/`** under **`runtime/`**, **`helm dependency build --skip-refresh`** + **`helm unittest .`** for each **`examples/*/`**, **`ct lint --config ct.yaml --all`**, **`uv run python tests/integration/smoke_rag.py`** (from **`runtime/`**). All exited **0** (records **`openspec/changes/traceability/tasks.md`** §6.1 verification, not only Python + OpenSpec).
 
 ## 2026-04-12
 
