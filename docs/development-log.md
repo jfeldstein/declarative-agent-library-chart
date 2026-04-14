@@ -8,6 +8,8 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ## 2026-04-13
 
+**Cursor / OpenSpec workflow** — `.cursor/commands/opsx-apply.md` and `opsx-archive.md`, plus **`openspec-apply-change`** / **`openspec-archive-change`** skills, now tell agents to implement **in a git worktree** (see **`AGENTS.md`** and **`parallel-agents-in-local-worktrees`**), finish apply with **push + PR** (base **`main`** by default), and after archive run **worktree cleanup** (`git worktree remove`, `git branch -d`, `git worktree prune`, `rm -rf wt/<path>` when needed). Landed with runtime work in **`d98f195`**.
+
 **OpenSpec proposals (naming + traceability migration)** — Checked in **`openspec/changes/consolidate-naming`** (library chart identity, `agent` values alias, `dalc-overview` / image repo naming) and **`openspec/changes/dalc-traceability-migration`** (promoted spec folders `dalc-*`, requirement IDs **`DALC-REQ`/`DALC-VER`**); implementation not started.
 
 **with-scrapers example + Grafana** — **`examples/with-scrapers/`** documents every **`scrapers`** Helm key (shared **`resources`**, **`ragService`**, **`jobs`** with **`scope`**, **`extraEnv`**, and a disabled job), both built-in modules (**`reference_job`** vs **`stub_job`**), and **`helm unittest`** asserts the dispatch. **`grafana/cfha-agent-overview.json`** adds **`agent_runtime_scraper_*`** panels; **`hosted_agents.scrapers`** / **`metrics.py`** note the same maintainer checklist (Helm branch, example, dashboard, registry).
