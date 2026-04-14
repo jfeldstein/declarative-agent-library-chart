@@ -8,6 +8,8 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ## 2026-04-13
 
+**OpenSpec `slack-scraper`** — Added change at **`openspec/changes/slack-scraper/`** (proposal, design, **`specs/slack-scraper/spec.md`** with **`[CFHA-REQ-SLACK-SCRAPER-*]`** requirements, **`tasks.md`**) for a scheduled Slack scraper: operator-defined search list per run, **`slack_sdk`/`slack-bolt`** (bolt-python stack) for Web API calls, **`POST /v1/embed`** for new/updated messages, Helm dispatch by **`SCRAPER_INTEGRATION`**, bounded metrics. Implementation pending **`/opsx:apply`** / **`openspec-apply-change`**.
+
 **RAG smoke** — In-process RAG smoke script moved from **`runtime/scripts/smoke_rag.py`** to **`runtime/tests/integration/smoke_rag.py`**; CI (**`.github/workflows/ci.yml`**) and docs (README, **`docs/rag-http-api.md`**, **`docs/spec-test-traceability.md`**) now reference the new path.
 
 **Cursor / OpenSpec workflow** — `.cursor/commands/opsx-apply.md` and `opsx-archive.md`, plus **`openspec-apply-change`** / **`openspec-archive-change`** skills, now tell agents to implement **in a git worktree** (see **`AGENTS.md`** and **`parallel-agents-in-local-worktrees`**), finish apply with **push + PR** (base **`main`** by default), and after archive run **worktree cleanup** (`git worktree remove`, `git branch -d`, `git worktree prune`, `rm -rf wt/<path>` when needed). Landed with runtime work in **`d98f195`**.
