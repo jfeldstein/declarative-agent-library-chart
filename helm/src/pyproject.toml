@@ -40,7 +40,9 @@ markers = [
     "pglite: requires Node.js + py-pglite; starts embedded Postgres",
 ]
 addopts = [
-    "--cov=hosted_agents",
+    # Path form aligns with ``[tool.coverage.run] source`` so pytest-cov collects lines
+    # (``--cov=hosted_agents`` + ``source = ["src/hosted_agents"]`` produced no data on some setups).
+    "--cov=src/hosted_agents",
     "--cov-report=term-missing",
     "--cov-fail-under=85",
 ]
