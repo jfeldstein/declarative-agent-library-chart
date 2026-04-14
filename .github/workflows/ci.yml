@@ -77,10 +77,11 @@ jobs:
           set -euo pipefail
           for chart_dir in examples/*/; do
             chart=$(basename "$chart_dir")
+            suite="${chart//-/_}_test.yaml"
             (
               cd "examples/$chart"
               helm dependency build --skip-refresh
-              helm unittest .
+              helm unittest -f "../../helm/tests/${suite}" .
             )
           done
 

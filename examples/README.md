@@ -31,8 +31,9 @@ Build/load the container image and port-forward as described in the main README 
 3. Adjust `values.yaml` only for that story; keep defaults easy to read.
 4. Run `helm dependency build` (or `update`) and commit **Chart.lock**.
 5. Register the chart in this README, in the parent [README](../README.md) layout table if appropriate, and extend [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) (Helm job loops `examples/*/`) when CI should lint/template the new chart.
+6. Add **`helm/tests/<suite>_test.yaml`** with `values:` pointing at this example’s **`values.yaml`**, and update **`docs/spec-test-traceability.md`** when new SHALL evidence is introduced.
 
-See [AGENT.md](AGENT.md) for maintainer and automation conventions.
+See [AGENTS.md](AGENTS.md) and [helm/tests/AGENTS.md](../helm/tests/AGENTS.md) for unittest layout and automation conventions.
 
 ## Integration (kind + Prometheus + o11y)
 

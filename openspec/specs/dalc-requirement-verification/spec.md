@@ -15,7 +15,7 @@ Every **normative** requirement block in each **`openspec/specs/<capability>/spe
 
 ### Requirement: [DALC-VER-002] Tests explicitly claim which requirements they evidence
 
-For **Python** tests under **`runtime/tests/`**: when the traceability matrix lists evidence as **`path.py::test_function`**, that **test function’s** docstring SHALL contain the **requirement ID** string. When the matrix lists only **`path.py`**, the ID SHALL appear in the **module, class, or any test function** docstring in that file. For **Helm unittest** suites under **`examples/*/tests/`**, the ID SHALL appear in a **`#` comment** on the suite or on the relevant **`it:`** block; a single top-of-file **`# Traceability:`** line is acceptable when one file evidences many requirements, but **prefer** a comment adjacent to the **`it:`** when one case maps to one requirement.
+For **Python** tests under **`runtime/tests/`**: when the traceability matrix lists evidence as **`path.py::test_function`**, that **test function’s** docstring SHALL contain the **requirement ID** string. When the matrix lists only **`path.py`**, the ID SHALL appear in the **module, class, or any test function** docstring in that file. For **Helm unittest** suite files under **`helm/tests/`** (for example **`helm/tests/*_test.yaml`**), the ID SHALL appear in a **`#` comment** on the suite or on the relevant **`it:`** block; a single top-of-file **`# Traceability:`** line is acceptable when one file evidences many requirements, but **prefer** a comment adjacent to the **`it:`** when one case maps to one requirement.
 
 #### Scenario: Pytest evidence references IDs
 

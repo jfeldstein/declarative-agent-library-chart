@@ -1,4 +1,6 @@
 # Traceability: [DALC-REQ-HELM-UNITTEST-001] [DALC-REQ-HELM-UNITTEST-002] [DALC-REQ-RAG-SCRAPERS-002] [DALC-REQ-RAG-SCRAPERS-004] [DALC-VER-002]
+values:
+  - ../../examples/hello-world/values.yaml
 suite: hello-world default values
 release:
   name: cfha-ci

@@ -1,4 +1,6 @@
 # Traceability: [DALC-REQ-HELM-UNITTEST-001] [DALC-REQ-RAG-SCRAPERS-002]
+values:
+  - ../../examples/with-scrapers/values.yaml
 suite: with-scrapers default values
 release:
   name: cfha-ci-scrapers

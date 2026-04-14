@@ -6,7 +6,7 @@ globs:
   - docs/adrs/0003-spec-test-traceability.md
   - scripts/check_spec_traceability.py
   - runtime/tests/**/*.py
-  - examples/**/tests/**/*.yaml
+  - helm/tests/**/*.yaml
 ---
 
 # Test-to-spec traceability ([DALC-VER-005])

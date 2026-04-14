@@ -7,6 +7,11 @@ Guidance for assistants and maintainers working under **`examples/`**.
 - Each subdirectory is a **standalone Helm application chart** (type `application`) that vendors **`declarative-agent-library`** from `../../helm/chart`.
 - Values for the library live under the key **`declarative-agent-library:`** in each example’s `values.yaml` (matches the dependency `name` in `Chart.yaml`).
 
+## Helm unittest suites
+
+- Suites are **not** colocated under `examples/*/tests/`. They live under **`helm/tests/`** (one `*_test.yaml` per covered example). Each suite’s **`values:`** block references this directory’s **`values.yaml`** using a path relative to the suite file (see [helm/tests/AGENTS.md](../helm/tests/AGENTS.md)).
+- When you add or change an example that CI validates, add or update the matching suite under **`helm/tests/`**, extend **`.github/workflows/ci.yml`** if the chart is new, and update **`docs/spec-test-traceability.md`** when requirements are evidenced there.
+
 ## Keep `hello-world` minimal
 
 - **hello-world** should stay the smallest copy-paste starting point: image + `systemPrompt` (+ whatever the docs promise as “minimal”).
@@ -25,3 +30,4 @@ Guidance for assistants and maintainers working under **`examples/`**.
 
 - Observability (metrics, logs, Grafana): [docs/observability.md](../docs/observability.md), [grafana/README.md](../grafana/README.md).
 - RAG HTTP contract: [docs/rag-http-api.md](../docs/rag-http-api.md).
+- Unittest layout: [helm/tests/AGENTS.md](../helm/tests/AGENTS.md).

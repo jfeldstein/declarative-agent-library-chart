@@ -45,4 +45,4 @@ The system SHALL reference the official helm-unittest installation method (`helm
 #### Scenario: Reproducible unittest invocation
 
 - **WHEN** a maintainer follows the documented install steps
-- **THEN** `helm unittest` runs successfully against the charts that contain `tests/` suites
+- **THEN** `helm unittest` runs successfully for each example application chart when invoked from that chart’s directory with the documented **`-f`** path to the corresponding suite file under **`helm/tests/`**, with the suite’s **`values:`** entries pointing at that example’s committed **`values.yaml`** (paths relative to the suite file, e.g. **`../../examples/<example>/values.yaml`**) so rendering matches the example defaults

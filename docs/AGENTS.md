@@ -10,6 +10,7 @@ Concise orientation for automated assistants working in this repository.
 | `runtime/tests/` | Pytest (coverage floor enforced in CI) |
 | `helm/chart/` | Declarative Agent Library Helm chart |
 | `examples/*/` | Application charts that depend on the library chart |
+| `helm/tests/` | Helm unittest suites (`*_test.yaml`) loaded with each example’s `values.yaml` |
 | `docs/adrs/` | Architecture Decision Records (`NNNN-slug.md`) |
 | `docs/development-log.md` | Human changelog-style notes for notable changes |
 | `.github/workflows/ci.yml` | GitHub Actions (Python, Helm, ADR, spec traceability) |

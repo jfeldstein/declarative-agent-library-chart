@@ -53,7 +53,11 @@ uv run python tests/integration/smoke_rag.py
 
 ```bash
 set -euo pipefail
-for d in examples/*/; do (cd "$d" && helm dependency build --skip-refresh && helm unittest .); done
+for chart_dir in examples/*/; do
+  chart=$(basename "$chart_dir")
+  suite="${chart//-/_}_test.yaml"
+  (cd "examples/$chart" && helm dependency build --skip-refresh && helm unittest -f "../../helm/tests/${suite}" .)
+done
 ct lint --config ct.yaml --all
 ```
 

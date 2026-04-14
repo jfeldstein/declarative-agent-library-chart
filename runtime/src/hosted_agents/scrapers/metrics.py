@@ -6,7 +6,7 @@ New integration checklist (keep in sync when adding a scraper implementation):
   the correct ``python -m ...`` module (today: ``reference`` → ``reference_job``, else
   ``stub_job``).
 - **Example:** update ``examples/with-scrapers/values.yaml`` and
-  ``examples/with-scrapers/tests/with_scrapers_test.yaml`` so operators see every value key
+  ``helm/tests/with_scrapers_test.yaml`` so operators see every value key
   and CI asserts rendering for each built-in kind.
 - **Dashboard:** add or adjust panels in ``grafana/dalc-agent-overview.json`` for new metric
   labels or series; document scrape in ``grafana/README.md`` / ``docs/observability.md``.

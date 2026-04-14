@@ -1,4 +1,6 @@
 # Traceability: [DALC-REQ-HELM-UNITTEST-001] [DALC-REQ-HELM-UNITTEST-002]
+values:
+  - ../../examples/checkpointing/values.yaml
 suite: checkpointing example enables LangGraph checkpoints (memory)
 release:
   name: cfha-ci-checkpointing
