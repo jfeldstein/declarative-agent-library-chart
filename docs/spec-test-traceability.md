@@ -24,6 +24,9 @@ The table is parsed by `scripts/check_spec_traceability.py`; keep the **Matrix**
 | [DALC-REQ-HELM-UNITTEST-001] | `openspec/specs/dalc-helm-unittest/spec.md` | `helm/tests/hello_world_test.yaml`, `helm/tests/with_scrapers_test.yaml`, `helm/tests/with_observability_test.yaml`, `helm/tests/checkpointing_test.yaml`, `examples/with-observability/values-o11y-no-rag.yaml`, `.github/workflows/ci.yml` | default PR | - | - |
 | [DALC-REQ-HELM-UNITTEST-002] | `openspec/specs/dalc-helm-unittest/spec.md` | `helm/tests/hello_world_test.yaml`, `helm/tests/checkpointing_test.yaml`, `ct.yaml`, `.github/workflows/ci.yml` | default PR | - | - |
 | [DALC-REQ-HELM-UNITTEST-003] | `openspec/specs/dalc-helm-unittest/spec.md` | `.github/workflows/ci.yml`, `README.md` | default PR | - | - |
+| [DALC-REQ-HELM-UNITTEST-004] | `openspec/specs/dalc-helm-unittest/spec.md` | `helm/tests/with_scrapers_test.yaml`, `examples/with-scrapers/README.md` | default PR | - | - |
+| [DALC-REQ-EXAMPLE-VALUES-FILES-001] | `openspec/specs/dalc-example-values-files/spec.md` | `examples/with-scrapers/README.md`, `helm/tests/with_scrapers_test.yaml` | default PR | - | - |
+| [DALC-REQ-EXAMPLE-VALUES-FILES-002] | `openspec/specs/dalc-example-values-files/spec.md` | `examples/with-scrapers/README.md` | default PR | - | - |
 | [DALC-REQ-RAG-SCRAPERS-001] | `openspec/specs/dalc-rag-from-scrapers/spec.md` | `helm/chart/values.schema.json` | default PR | - | - |
 | [DALC-REQ-RAG-SCRAPERS-002] | `openspec/specs/dalc-rag-from-scrapers/spec.md` | `helm/tests/with_scrapers_test.yaml`, `helm/tests/hello_world_test.yaml`, `helm/chart/templates/scraper-job-configmaps.yaml` | default PR | - | - |
 | [DALC-REQ-RAG-SCRAPERS-003] | `openspec/specs/dalc-rag-from-scrapers/spec.md` | `helm/chart/values.yaml`, `helm/chart/values.schema.json` | default PR | - | - |

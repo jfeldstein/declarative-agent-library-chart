@@ -8,6 +8,8 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ## 2026-04-14
 
+**OpenSpec `examples-distinct-values-readmes` (apply)** — Promoted **`dalc-example-values-files`** (**[DALC-REQ-EXAMPLE-VALUES-FILES-001]** / **002**) and **[DALC-REQ-HELM-UNITTEST-004]** under **`dalc-helm-unittest`**. **`examples/with-scrapers`**: split **`values.jira-only.yaml`** and **`values.slack-only.yaml`**, new **`README.md`** (values index + **`helm upgrade --install -f`**), **`helm/tests/with_scrapers_test.yaml`** loads each file; **`examples/README.md`** index updated; **`docs/spec-test-traceability.md`** matrix rows added.
+
 **Worktree → `main` (flatten Helm)** — **`38360d0`** was cherry-picked as **`6bcb0b6`** (`refactor(helm): flatten hosted_agents path; move Dockerfile to helm/`). An earlier attempt to cherry-pick **`31e32c9`** was aborted due to conflicts; **`31e32c9`** was later cherry-picked onto **`main`** after resolving paths (**`helm/src/hosted_agents/`**), Jira **`search/jql`**, and removal of **reference**/**stub** entrypoints.
 
 **Python project layout (`helm/src/`)** — The **`uv`** / pytest tree (`hosted_agents/`, `tests/`, `pyproject.toml`, lockfile) lives under **`helm/src/`** (moved from **`runtime/`** earlier). The nested **`helm/src/src/hosted_agents/`** path was **flattened** to **`helm/src/hosted_agents/`**; Hatch **`packages`**, **ruff**, and **coverage** use the top-level **`hosted_agents`** package. The agent image is built with **`helm/Dockerfile`** from the **repository root** (`docker build -f helm/Dockerfile … .`), replacing the former root **`Dockerfile`**.

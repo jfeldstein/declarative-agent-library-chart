@@ -1,7 +1,5 @@
-# Default **with-scrapers** story: Jira + Slack with multiple enabled jobs (see README.md).
-#
-# Source semantics, secret wiring, and maintainer checklist (tests, Grafana, templates)
-# are documented in **README.md** in this directory.
+# Jira-only scraper story: one enabled Jira job, Slack disabled. Deploys RAG + one CronJob.
+# See README.md for how this differs from the default and slack-only setups.
 declarative-agent-library:
   systemPrompt: |
     Respond, "Hello :wave:"
@@ -47,26 +45,5 @@ declarative-agent-library:
           source: jira
           query: 'project = DEMO ORDER BY updated ASC'
           scope: demo-jira-scope
-        - schedule: "15 0 * * *"
-          enabled: false
-          source: jira
-          query: 'project = OTHER ORDER BY updated ASC'
     slack:
-      enabled: true
-      stateDir: /tmp/slack-scraper-state
-      auth:
-        botTokenSecretName: slack-bot-token
-        botTokenSecretKey: token
-        userTokenSecretName: slack-user-token
-        userTokenSecretKey: token
-      jobs:
-        - schedule: "30 * * * *"
-          source: slack_search
-          query: deployment OR kubernetes
-          contextBeforeMinutes: 20
-          contextAfterMinutes: 10
-          scope: demo-slack-rts
-        - schedule: "45 */4 * * *"
-          source: slack_channel
-          conversationId: C0123456789
-          scope: demo-slack-channel
+      enabled: false

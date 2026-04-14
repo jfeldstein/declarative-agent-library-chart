@@ -1,0 +1,46 @@
+# Slack-only scraper story: Jira disabled; one enabled Real-time Search job. Deploys RAG + one CronJob.
+# See README.md for how this differs from the default and jira-only setups.
+declarative-agent-library:
+  systemPrompt: |
+    Respond, "Hello :wave:"
+  image:
+    repository: config-first-hosted-agents
+    tag: local
+    pullPolicy: Never
+  scrapers:
+    resources:
+      limits:
+        cpu: 500m
+        memory: 256Mi
+      requests:
+        cpu: 50m
+        memory: 128Mi
+    ragService:
+      replicaCount: 1
+      service:
+        type: ClusterIP
+        port: 8090
+      resources:
+        limits:
+          cpu: "1"
+          memory: 512Mi
+        requests:
+          cpu: 100m
+          memory: 256Mi
+    jira:
+      enabled: false
+    slack:
+      enabled: true
+      stateDir: /tmp/slack-scraper-state
+      auth:
+        botTokenSecretName: slack-bot-token
+        botTokenSecretKey: token
+        userTokenSecretName: slack-user-token
+        userTokenSecretKey: token
+      jobs:
+        - schedule: "30 * * * *"
+          source: slack_search
+          query: deployment OR kubernetes
+          contextBeforeMinutes: 20
+          contextAfterMinutes: 10
+          scope: demo-slack-rts
