@@ -8,6 +8,8 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ## 2026-04-14
 
+**Operational-event persistence removed** — Dropped the **`RunOperationalEvent`** / in-memory ops stream, shadow-schedule logging in **`run_trigger_graph`**, and the **“Operational signals storage”** SHALL from **`openspec/changes/postgres-agent-persistence`**. Postgres persistence OpenSpec and tasks now cover correlation, human feedback, side-effects, and span summaries only; **`agent-checkpointing-wandb-feedback`** tasks **7.3–7.4** removed accordingly.
+
 **OpenSpec `examples-distinct-values-readmes` (apply)** — Promoted **`dalc-example-values-files`** (**[DALC-REQ-EXAMPLE-VALUES-FILES-001]** / **002**) and **[DALC-REQ-HELM-UNITTEST-004]** under **`dalc-helm-unittest`**. **`examples/with-scrapers`**: split **`values.jira-only.yaml`** and **`values.slack-only.yaml`**, new **`README.md`** (values index + **`helm upgrade --install -f`**), **`helm/tests/with_scrapers_test.yaml`** loads each file; **`examples/README.md`** index updated; **`docs/spec-test-traceability.md`** matrix rows added.
 
 **Worktree → `main` (flatten Helm)** — **`38360d0`** was cherry-picked as **`6bcb0b6`** (`refactor(helm): flatten hosted_agents path; move Dockerfile to helm/`). An earlier attempt to cherry-pick **`31e32c9`** was aborted due to conflicts; **`31e32c9`** was later cherry-picked onto **`main`** after resolving paths (**`helm/src/hosted_agents/`**), Jira **`search/jql`**, and removal of **reference**/**stub** entrypoints.

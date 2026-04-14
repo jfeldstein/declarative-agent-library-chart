@@ -5,7 +5,7 @@ Today observability data that operators need for resume, audit, and training pip
 ## What Changes
 
 - Add an optional **Postgres-backed LangGraph checkpointer** path when `HOSTED_AGENT_CHECKPOINT_BACKEND=postgres` and `HOSTED_AGENT_POSTGRES_URL` (or connection-from-secret) is set—replacing the current **runtime error** stub with a working integration and pinned dependency.
-- Introduce **relational persistence** (schema + repository layer) for **Slack/tool correlation**, **human feedback events**, **operational run signals**, and **side-effect checkpoint metadata**, with **in-memory implementations** remaining the default when Postgres is not configured.
+- Introduce **relational persistence** (schema + repository layer) for **Slack/tool correlation**, **human feedback events**, and **side-effect checkpoint metadata**, with **in-memory implementations** remaining the default when Postgres is not configured.
 - Optionally persist **run/tool span summaries** (latency, tool_call_id, outcome) to Postgres for operator APIs and ATIF export staging, without replacing W&B for rich trace UI.
 - **Helm**: values and templates for Postgres URL/secret refs, migration job or init documentation, connection pooling notes.
 - **Docs/runbook**: secrets, migration, retention, failover, and how this relates to ADR-level durability expectations.
@@ -14,7 +14,7 @@ Today observability data that operators need for resume, audit, and training pip
 
 ### New Capabilities
 
-- `cfha-postgres-agent-persistence`: Durable PostgreSQL storage for LangGraph checkpoints and first-party observability records (correlation, feedback, operational events, side-effects; optional internal span/run summaries).
+- `cfha-postgres-agent-persistence`: Durable PostgreSQL storage for LangGraph checkpoints and first-party observability records (correlation, feedback, side-effects; optional internal span/run summaries).
 
 ### Modified Capabilities
 

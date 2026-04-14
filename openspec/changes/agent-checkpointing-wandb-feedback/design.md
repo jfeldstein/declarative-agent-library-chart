@@ -20,7 +20,7 @@ Human judgment often arrives **asynchronously** (e.g. a Slack reaction on a bot 
 - **Shadow rollouts** / **twin execution** (no active OpenSpec capability doc here).
 - Replacing LangGraph with a different orchestration engine (we **integrate** with or **mirror** its checkpoint semantics).
 - A full Slack marketplace app; a **minimal** reaction → feedback path is enough for v1.
-- **Operational lifecycle signals** as a first-class feedback taxonomy, **opt-in mappers** from ops events to training labels, or **`RunOperationalEvent`** modeling—**v1** is **explicit human feedback only**.
+- **Operational lifecycle signals** as a persisted first-class taxonomy or **opt-in mappers** from ops signals to training labels—**v1** is **explicit human feedback only**.
 
 ## Decisions
 
@@ -43,7 +43,7 @@ Human judgment often arrives **asynchronously** (e.g. a Slack reaction on a bot 
    - **Rationale**: Enables late reactions without requiring a separate export pipeline.
 
 6. **Human feedback only (v1)**  
-   - **Decision**: Persist **explicit human judgment** (reactions, future ratings) with the **global versioned registry**. Do **not** specify `RunOperationalEvent`, derived training labels, or ATIF provenance splits in this change.
+   - **Decision**: Persist **explicit human judgment** (reactions, future ratings) with the **global versioned registry**. Do **not** specify persisted operational lifecycle signal streams, derived training labels, or ATIF provenance splits in this change.
 
 7. **Feedback taxonomy: global-only**  
    - **Decision**: **Single global, versioned label registry** for human-judgment labels. **Per-agent taxonomies** are out of scope for v1.

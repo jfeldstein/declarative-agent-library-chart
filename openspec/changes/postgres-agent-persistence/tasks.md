@@ -7,13 +7,13 @@
 
 ## 2. Schema and migrations
 
-- [ ] 2.1 Author initial SQL migration(s) for application tables: correlation, human_feedback, operational_events, side_effect_checkpoints, tool_span_summaries (names per design)
+- [ ] 2.1 Author initial SQL migration(s) for application tables: correlation, human_feedback, side_effect_checkpoints, tool_span_summaries (names per design)
 - [ ] 2.2 Add indexes for primary lookup paths (`thread_id`, `run_id`, `(channel_id, message_ts)`, `tool_call_id`, time-range queries)
 - [ ] 2.3 Document migration apply path (Helm Job vs operator `psql`) and rollback strategy (snapshot + downgrade notes)
 
 ## 3. Repository layer (memory + Postgres)
 
-- [ ] 3.1 Introduce protocols/ABCs for correlation, feedback, operational events, side-effects, span summaries
+- [ ] 3.1 Introduce protocols/ABCs for correlation, feedback, side-effects, span summaries
 - [ ] 3.2 Refactor existing in-memory singletons to implement the protocols; preserve default behavior when env selects memory
 - [ ] 3.3 Implement Postgres repositories using connection pool; map rows to existing dataclasses/events
 - [ ] 3.4 Add env `HOSTED_AGENT_OBSERVABILITY_STORE=memory|postgres` (and URL/key vars) to `ObservabilitySettings` and Helm values

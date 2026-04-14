@@ -28,15 +28,6 @@ The system SHALL support persisting Slack (or equivalent) correlation mappings a
 - **WHEN** a `HumanFeedbackEvent` is recorded while Postgres persistence is enabled
 - **THEN** the event SHALL be retrievable after restart with stable identifiers (`registry_id`, `schema_version`, `label_id`, `tool_call_id`, and `checkpoint_id` when present)
 
-### Requirement: Operational signals storage
-
-The system SHALL support persisting `RunOperationalEvent` (or equivalent) records to PostgreSQL when configured, separate from human feedback, for debugging and optional downstream derivation.
-
-#### Scenario: Operational event persisted
-
-- **WHEN** an operational event is emitted while Postgres persistence is enabled
-- **THEN** the record SHALL be stored with sufficient metadata (`kind`, `run_id`, `thread_id`, timestamp) to audit lifecycle signals
-
 ### Requirement: Internal trace summaries (non-vendor)
 
 The system SHALL support writing tool-invocation summaries (including `tool_call_id`, timing, and outcome classification) to PostgreSQL when configured, without requiring Weights & Biases for basic operator inspection.

@@ -1,12 +1,10 @@
-"""Human feedback vs operational events, idempotency, and orphan handling."""
+"""Human feedback, idempotency, and orphan handling."""
 
 from __future__ import annotations
 
 import threading
 import time
 from dataclasses import dataclass, field
-from typing import Any
-
 
 @dataclass(frozen=True)
 class HumanFeedbackEvent:
@@ -20,15 +18,6 @@ class HumanFeedbackEvent:
     feedback_source: str
     agent_id: str | None = None
     dedupe_key: str | None = None
-    created_at: float = field(default_factory=time.time)
-
-
-@dataclass(frozen=True)
-class RunOperationalEvent:
-    kind: str
-    run_id: str
-    thread_id: str
-    payload: dict[str, Any]
     created_at: float = field(default_factory=time.time)
 
 
@@ -47,7 +36,6 @@ class FeedbackStore:
     def __init__(self) -> None:
         self._lock = threading.Lock()
         self._human: list[HumanFeedbackEvent] = []
-        self._ops: list[RunOperationalEvent] = []
         self._orphans: list[OrphanReactionEvent] = []
         self._idempotency: dict[str, HumanFeedbackEvent] = {}
 
@@ -64,10 +52,6 @@ class FeedbackStore:
             self._human.append(ev)
             return ev
 
-    def record_operational(self, ev: RunOperationalEvent) -> None:
-        with self._lock:
-            self._ops.append(ev)
-
     def record_orphan_reaction(self, ev: OrphanReactionEvent) -> None:
         with self._lock:
             self._orphans.append(ev)
@@ -76,10 +60,6 @@ class FeedbackStore:
         with self._lock:
             return list(self._human)
 
-    def operational_events(self) -> list[RunOperationalEvent]:
-        with self._lock:
-            return list(self._ops)
-
     def orphans(self) -> list[OrphanReactionEvent]:
         with self._lock:
             return list(self._orphans)
@@ -87,7 +67,6 @@ class FeedbackStore:
     def reset(self) -> None:
         with self._lock:
             self._human.clear()
-            self._ops.clear()
             self._orphans.clear()
             self._idempotency.clear()
 

@@ -47,5 +47,3 @@
 
 - [x] 7.1 Implement **single global** versioned label registry and change process (no per-agent label namespaces); document how new labels ship
 - [x] 7.2 Persist `HumanFeedbackEvent` (or equivalent) with `registry_id`, `schema_version`, global `label_id`, and optional `agent_id` for attribution only
-- [x] 7.3 Implement `RunOperationalEvent` (or span-level) stream for implicit lifecycle signals; keep separate from human feedback by default
-- [x] 7.4 Document opt-in mappers from operational events to derived training fields; implement export provenance flags per ATIF requirement
