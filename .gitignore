@@ -11,3 +11,4 @@ examples/**/charts/*.tgz
 
 # Cursor hook ephemeral state (local machine)
 .cursor/hooks/state/agent-reflect-and-learn.json
+.claude/worktrees/
