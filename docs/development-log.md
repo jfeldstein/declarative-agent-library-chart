@@ -8,6 +8,8 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ## 2026-04-13
 
+**OpenSpec proposals (naming + traceability migration)** — Checked in **`openspec/changes/consolidate-naming`** (library chart identity, `agent` values alias, `dalc-overview` / image repo naming) and **`openspec/changes/dalc-traceability-migration`** (promoted spec folders `dalc-*`, requirement IDs **`DALC-REQ`/`DALC-VER`**); implementation not started.
+
 **with-scrapers example + Grafana** — **`examples/with-scrapers/`** documents every **`scrapers`** Helm key (shared **`resources`**, **`ragService`**, **`jobs`** with **`scope`**, **`extraEnv`**, and a disabled job), both built-in modules (**`reference_job`** vs **`stub_job`**), and **`helm unittest`** asserts the dispatch. **`grafana/cfha-agent-overview.json`** adds **`agent_runtime_scraper_*`** panels; **`hosted_agents.scrapers`** / **`metrics.py`** note the same maintainer checklist (Helm branch, example, dashboard, registry).
 
 **PGlite (optional embedded Postgres)** — Optional **`[pglite]`** extra (**`py-pglite[psycopg]`**); **`HOSTED_AGENT_USE_PGLITE=1`** starts TCP-mode PGlite and fills missing **`HOSTED_AGENT_CHECKPOINT_POSTGRES_URL`** / **`HOSTED_AGENT_OBSERVABILITY_POSTGRES_URL`**. **`sync_shared_postgres_urls`** mirrors a single configured DSN to the other env var. Runtime: **`hosted_agents.observability.pglite_runtime`**; tests use mocks (no Node in CI). Runbook: **`docs/runbook-checkpointing-wandb.md`** (embedded PGlite section).
