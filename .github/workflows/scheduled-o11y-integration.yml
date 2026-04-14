@@ -46,7 +46,8 @@ jobs:
       - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
-          python-version-file: runtime/.python-version
+          # setup-uv v7: use python-version (no python-version-file input); keep in sync with runtime/.python-version
+          python-version: "3.12"
 
       - name: Install Python dependencies
         working-directory: runtime
