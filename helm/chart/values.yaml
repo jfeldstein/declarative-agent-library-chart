@@ -48,6 +48,17 @@ o11y:
 # deploys the managed RAG HTTP service (see scrapers.ragService). Reference job POSTs to RAG_SERVICE_URL.
 scrapers:
   resources: {}
+  # Jira Cloud scraper defaults (used when a job sets ``integration: jira``). See openspec/changes/jira-scraper/.
+  jira:
+    siteUrl: ""
+    projectKeys: []
+    watermarkDir: ""
+    auth:
+      emailSecretName: ""
+      emailSecretKey: email
+      tokenSecretName: ""
+      tokenSecretKey: token
+    defaults: {}
   ragService:
     replicaCount: 1
     service:

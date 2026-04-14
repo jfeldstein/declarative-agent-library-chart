@@ -99,9 +99,42 @@
               "enabled": { "type": "boolean" },
               "schedule": { "type": "string", "minLength": 1 },
               "scope": { "type": "string" },
+              "integration": {
+                "type": "string",
+                "description": "When set to slack or jira, selects the matching scraper module (see scraper-cronjobs template)"
+              },
               "extraEnv": {
                 "type": "array",
                 "items": { "type": "object" }
+              }
+            }
+          }
+        },
+        "jira": {
+          "type": "object",
+          "description": "Shared Jira Cloud settings for jobs with integration jira",
+          "properties": {
+            "siteUrl": { "type": "string" },
+            "projectKeys": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "watermarkDir": { "type": "string" },
+            "auth": {
+              "type": "object",
+              "properties": {
+                "emailSecretName": { "type": "string" },
+                "emailSecretKey": { "type": "string" },
+                "tokenSecretName": { "type": "string" },
+                "tokenSecretKey": { "type": "string" }
+              }
+            },
+            "defaults": {
+              "type": "object",
+              "properties": {
+                "maxIssuesPerRun": { "type": "integer", "minimum": 1 },
+                "maxCommentsPerIssue": { "type": "integer", "minimum": 1 },
+                "overlapMinutes": { "type": "integer", "minimum": 0 }
               }
             }
           }

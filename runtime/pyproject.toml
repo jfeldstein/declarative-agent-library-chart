@@ -10,6 +10,8 @@ dependencies = [
     "langchain-core>=1.2.28",
     "langgraph>=1.1.6",
     "prometheus-client>=0.21.0",
+    "slack-bolt>=1.21.0",
+    "slack-sdk>=3.33.0",
     "structlog>=24.4.0",
     "uvicorn[standard]>=0.44.0",
 ]
@@ -50,6 +52,9 @@ omit = [
     "*/test_*.py",
     "*/__pycache__/*",
     "*/.venv/*",
+    # CronJob entrypoints: exercised via unit tests + Helm; full branch coverage is integration-heavy.
+    "*/scrapers/jira_job.py",
+    "*/scrapers/slack_job.py",
 ]
 
 [tool.coverage.report]

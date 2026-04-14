@@ -1,0 +1,41 @@
+# Traceability: [DALC-REQ-HELM-UNITTEST-001] [DALC-REQ-RAG-SCRAPERS-002]
+# Helm unittest fixture: reference + jira integration (literal Jira creds via extraEnv).
+declarative-agent-library:
+  systemPrompt: "helmtest"
+  image:
+    repository: config-first-hosted-agents
+    tag: local
+    pullPolicy: Never
+  scrapers:
+    resources: {}
+    jira:
+      siteUrl: "https://example.atlassian.net"
+      projectKeys:
+        - DEMO
+      watermarkDir: "/tmp/jira-wm"
+      auth:
+        emailSecretName: ""
+        emailSecretKey: email
+        tokenSecretName: ""
+        tokenSecretKey: token
+    ragService:
+      replicaCount: 1
+      service:
+        type: ClusterIP
+        port: 8090
+      resources: {}
+    jobs:
+      - name: reference
+        enabled: true
+        schedule: "0 * * * *"
+        scope: dispatch-ref
+      - name: jira-ci
+        enabled: true
+        schedule: "20 * * * *"
+        integration: jira
+        scope: dispatch-jira
+        extraEnv:
+          - name: JIRA_EMAIL
+            value: "bot@example.com"
+          - name: JIRA_API_TOKEN
+            value: "token"

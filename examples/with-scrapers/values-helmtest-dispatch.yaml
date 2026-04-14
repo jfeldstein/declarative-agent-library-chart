@@ -1,0 +1,31 @@
+# Traceability: [DALC-REQ-HELM-UNITTEST-001] [DALC-REQ-RAG-SCRAPERS-002]
+# Helm unittest fixture only: reference + slack integration (minimal env for template checks).
+declarative-agent-library:
+  systemPrompt: "helmtest"
+  image:
+    repository: config-first-hosted-agents
+    tag: local
+    pullPolicy: Never
+  scrapers:
+    resources: {}
+    ragService:
+      replicaCount: 1
+      service:
+        type: ClusterIP
+        port: 8090
+      resources: {}
+    jobs:
+      - name: reference
+        enabled: true
+        schedule: "0 * * * *"
+        scope: dispatch-ref
+      - name: slack-ci
+        enabled: true
+        schedule: "10 * * * *"
+        integration: slack
+        scope: dispatch-slack
+        extraEnv:
+          - name: SLACK_BOT_TOKEN
+            value: "xoxb-test-token"
+          - name: SLACK_SCRAPER_SEARCHES_JSON
+            value: "[]"

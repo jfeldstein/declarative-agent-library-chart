@@ -1,11 +1,12 @@
 {{/*
-  Scraper dispatch: job ``name`` ``reference`` runs ``hosted_agents.scrapers.reference_job``;
-  any other name runs ``stub_job`` until a new module is added. When introducing a scraper,
-  add a branch here and update ``examples/with-scrapers/`` (+ unittest), ``grafana/``, and
-  ``hosted_agents.scrapers`` (see package docstring / ``metrics.py`` checklist).
+  Scraper dispatch: ``name: reference`` → ``reference_job``; ``integration: slack`` (or
+  legacy name ``slack``) → ``slack_job``; ``integration: jira`` → ``jira_job``; else ``stub_job``.
+  See ``hosted_agents.scrapers`` package docstring / ``metrics.py`` checklist.
 */}}
 {{- range .Values.scrapers.jobs }}
 {{- if .enabled }}
+{{- $int := (.integration | default "") | lower }}
+{{- $nameLower := .name | lower }}
 ---
 apiVersion: batch/v1
 kind: CronJob
@@ -46,6 +47,16 @@ spec:
                 - python
                 - -m
                 - hosted_agents.scrapers.reference_job
+              {{- else if or (eq $int "slack") (eq $nameLower "slack") }}
+              command:
+                - python
+                - -m
+                - hosted_agents.scrapers.slack_job
+              {{- else if or (eq $int "jira") (eq $nameLower "jira") }}
+              command:
+                - python
+                - -m
+                - hosted_agents.scrapers.jira_job
               {{- else }}
               command:
                 - python
@@ -63,10 +74,56 @@ spec:
                   value: {{ .name | quote }}
                 - name: SCRAPER_SCOPE
                   value: {{ (.scope | default .name) | quote }}
+                - name: SCRAPER_INTEGRATION
+                  value: {{ (.integration | default .name) | quote }}
                 - name: SCRAPER_METRICS_ADDR
                   value: "0.0.0.0:9091"
                 - name: SCRAPER_METRICS_GRACE_SECONDS
                   value: "35"
+                {{- if or (eq $int "jira") (eq $nameLower "jira") }}
+                {{- with $.Values.scrapers.jira }}
+                {{- if .siteUrl }}
+                - name: JIRA_SITE_URL
+                  value: {{ .siteUrl | quote }}
+                {{- end }}
+                {{- if .projectKeys }}
+                - name: JIRA_PROJECT_KEYS
+                  value: {{ join "," .projectKeys | quote }}
+                {{- end }}
+                {{- if .watermarkDir }}
+                - name: JIRA_WATERMARK_DIR
+                  value: {{ .watermarkDir | quote }}
+                {{- end }}
+                {{- if .auth.emailSecretName }}
+                - name: JIRA_EMAIL
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .auth.emailSecretName | quote }}
+                      key: {{ .auth.emailSecretKey | quote }}
+                {{- end }}
+                {{- if .auth.tokenSecretName }}
+                - name: JIRA_API_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .auth.tokenSecretName | quote }}
+                      key: {{ .auth.tokenSecretKey | quote }}
+                {{- end }}
+                {{- with .defaults }}
+                {{- if hasKey . "maxIssuesPerRun" }}
+                - name: JIRA_MAX_ISSUES_PER_RUN
+                  value: {{ .maxIssuesPerRun | toString | quote }}
+                {{- end }}
+                {{- if hasKey . "maxCommentsPerIssue" }}
+                - name: JIRA_MAX_COMMENTS_PER_ISSUE
+                  value: {{ .maxCommentsPerIssue | toString | quote }}
+                {{- end }}
+                {{- if hasKey . "overlapMinutes" }}
+                - name: JIRA_OVERLAP_MINUTES
+                  value: {{ .overlapMinutes | toString | quote }}
+                {{- end }}
+                {{- end }}
+                {{- end }}
+                {{- end }}
                 {{- with .extraEnv }}
                 {{- toYaml . | nindent 16 }}
                 {{- end }}

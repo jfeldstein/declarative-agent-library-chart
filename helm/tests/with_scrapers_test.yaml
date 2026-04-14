@@ -40,3 +40,26 @@ tests:
       - equal:
           path: metadata.labels["app.kubernetes.io/component"]
           value: rag
+  - it: slack integration job selects slack_job module
+    values:
+      - ../../examples/with-scrapers/values-helmtest-dispatch.yaml
+    template: charts/declarative-agent-library/templates/scraper-cronjobs.yaml
+    documentIndex: 1
+    asserts:
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].command[2]
+          value: hosted_agents.scrapers.slack_job
+  - it: jira integration job selects jira_job module
+    values:
+      - ../../examples/with-scrapers/values-helmtest-jira.yaml
+    template: charts/declarative-agent-library/templates/scraper-cronjobs.yaml
+    documentIndex: 1
+    asserts:
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].command[2]
+          value: hosted_agents.scrapers.jira_job
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.containers[0].env
+          content:
+            name: JIRA_SITE_URL
+            value: "https://example.atlassian.net"

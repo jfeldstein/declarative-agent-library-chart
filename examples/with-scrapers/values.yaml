@@ -1,9 +1,13 @@
-# Example: all ``scrapers`` Helm keys and both built-in job entrypoints.
+# Example: all ``scrapers`` Helm keys and built-in job entrypoints.
 #
 # - ``name: reference`` → ``python -m hosted_agents.scrapers.reference_job`` (POSTs fixture
 #   payload to RAG ``/v1/embed``; see ``REFERENCE_SCRAPER_TEXT`` / ``SCRAPER_SCOPE`` in code).
-# - Any other ``name`` → ``python -m hosted_agents.scrapers.stub_job`` (no external API;
-#   metrics-only / placeholder for new integrations).
+# - ``integration: slack`` (or job name ``slack``) → ``hosted_agents.scrapers.slack_job`` (needs
+#   ``SLACK_BOT_TOKEN``, ``SLACK_SCRAPER_SEARCHES_JSON`` / ``SLACK_SCRAPER_SEARCHES_FILE``).
+# - ``integration: jira`` → ``hosted_agents.scrapers.jira_job`` (needs ``JIRA_*`` env; shared
+#   ``scrapers.jira`` in values for ``siteUrl``, ``projectKeys``, optional secret refs).
+# - Any other job → ``python -m hosted_agents.scrapers.stub_job`` (no external API;
+#   metrics-only / placeholder).
 # - At least one job with ``enabled: true`` deploys the managed RAG Deployment+Service.
 # - Per-job env: chart sets ``RAG_SERVICE_URL``, ``SCRAPER_NAME``, ``SCRAPER_SCOPE`` (defaults
 #   to job name), ``SCRAPER_METRICS_ADDR``, ``SCRAPER_METRICS_GRACE_SECONDS``; use ``extraEnv``
