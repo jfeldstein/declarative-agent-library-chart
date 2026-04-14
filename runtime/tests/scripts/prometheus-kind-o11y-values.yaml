@@ -29,6 +29,7 @@ server:
     pullPolicy: Never
   global:
     scrape_interval: 3s
+    scrape_timeout: 2s
     evaluation_interval: 3s
 
 extraScrapeConfigs: |
