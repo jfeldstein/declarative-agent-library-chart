@@ -3,7 +3,7 @@ values:
   - ../../examples/with-scrapers/values.yaml
 suite: with-scrapers default values
 release:
-  name: cfha-ci-scrapers
+  name: dalc-ci-scrapers
 tests:
   - it: renders one ConfigMap per enabled jira and slack job
     template: charts/declarative-agent-library/templates/scraper-job-configmaps.yaml
@@ -46,6 +46,8 @@ tests:
       - equal:
           path: metadata.labels["app.kubernetes.io/component"]
           value: rag
+  # Per-test values: below repeat the same paths (jira-only / slack-only); helm-unittest
+  # has no shared values anchor for multiple it: blocks, so duplication is intentional.
   - it: jira-only values render one scraper ConfigMap # [DALC-REQ-HELM-UNITTEST-004]
     values:
       - ../../examples/with-scrapers/values.jira-only.yaml
