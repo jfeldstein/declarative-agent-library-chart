@@ -22,6 +22,6 @@ The hosted agent runtime currently exposes several HTTP paths (`subagents`, `ski
 
 ## Impact
 
-- **Code**: `helm/src/src/hosted_agents/app.py` (and related modules: metrics, tests, models), new LangGraph wiring and dependencies in the runtime `pyproject.toml` / lockfile.
+- **Code**: `helm/src/hosted_agents/app.py` (and related modules: metrics, tests, models), new LangGraph wiring and dependencies in the runtime `pyproject.toml` / lockfile.
 - **APIs**: **BREAKING** removal of three REST endpoints; possible extension of trigger request/response shape if the graph needs input payload (to be detailed in design).
 - **Docs & ops**: `README.md`, `docs/observability.md`, `helm/chart/values.schema.json`, Grafana/README copy, chart tests, `scripts/integration_kind_o11y_prometheus.sh`, runtime tests under `helm/src/tests/`.

@@ -22,7 +22,7 @@ Operators cannot see **LLM token economics** or **streaming health** next to exi
 
 ## Impact
 
-- **`helm/src/src/hosted_agents/`**: metrics module extensions, LLM/trigger instrumentation (callbacks or wrappers), optional config for pricing inputs.
+- **`helm/src/hosted_agents/`**: metrics module extensions, LLM/trigger instrumentation (callbacks or wrappers), optional config for pricing inputs.
 - **`grafana/`**: new dashboard JSON or revision of `dalc-agent-overview.json` (per design).
 - **`docs/observability.md`**: document new series names and cardinality rules.
 - **Helm**: optional values for cost-estimation env (no secrets in values); chart defaults unchanged when unset.

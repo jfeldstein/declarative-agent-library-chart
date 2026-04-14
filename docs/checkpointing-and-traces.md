@@ -35,4 +35,4 @@ Populate via environment (see [observability.md](observability.md)): `HOSTED_AGE
 
 ## Global feedback registry
 
-Bundled JSON: `helm/src/src/hosted_agents/data/feedback_registry.v1.json`. Bump **`schema_version`** and ship a new file when adding Slack emoji → label mappings.
+Bundled JSON: `helm/src/hosted_agents/data/feedback_registry.v1.json`. Bump **`schema_version`** and ship a new file when adding Slack emoji → label mappings.

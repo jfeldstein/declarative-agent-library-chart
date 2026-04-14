@@ -6,7 +6,7 @@ name: config-first-hosted-agents
 images:
   app:
     image: config-first-hosted-agents
-    dockerfile: Dockerfile
+    dockerfile: helm/Dockerfile
     context: .
     tags:
       - local

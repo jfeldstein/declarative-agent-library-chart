@@ -81,7 +81,7 @@ fi
 kubectl config use-context "kind-${KIND_CLUSTER_NAME}"
 
 echo "==> docker build"
-docker build -t config-first-hosted-agents:local .
+docker build -f helm/Dockerfile -t config-first-hosted-agents:local .
 
 echo "==> kind load image"
 kind load docker-image config-first-hosted-agents:local --name "${KIND_CLUSTER_NAME}"

@@ -24,5 +24,5 @@
 ## 5. Documentation and packaging
 
 - [x] 5.1 Update `README.md` (endpoints, curl examples, values table) for trigger-only launch and LangGraph
-- [x] 5.2 Update `docs/observability.md`, `grafana/README.md`, `helm/chart/values.schema.json`, `helm/src/src/hosted_agents/tools_impl/README.md`, and chart test docs that mention removed APIs
+- [x] 5.2 Update `docs/observability.md`, `grafana/README.md`, `helm/chart/values.schema.json`, `helm/src/hosted_agents/tools_impl/README.md`, and chart test docs that mention removed APIs
 - [x] 5.3 Resolve design open question: either keep `POST /api/v1/rag/query` as a documented non-launch utility or remove it and update specs/docs accordingly

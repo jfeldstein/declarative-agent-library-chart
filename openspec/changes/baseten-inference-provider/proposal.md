@@ -22,7 +22,7 @@ Operators want **managed LLM inference** for hosted agents without bespoke integ
 
 ## Impact
 
-- **Runtime** (`helm/src/src/hosted_agents/…`): new or extended config loading, HTTP client for inference, possible dependency additions in `pyproject.toml`.
+- **Runtime** (`helm/src/hosted_agents/…`): new or extended config loading, HTTP client for inference, possible dependency additions in `pyproject.toml`.
 - **Helm** (`helm/chart/`): `values.yaml`, `values.schema.json`, `templates/deployment.yaml` (and related) for env + optional secret volume/mount or `secretKeyRef`.
 - **Examples / docs**: align hello-world or README only where needed to document the new path.
 - **Risk**: mishandled secrets in logs or error messages — mitigations belong in design/tasks (never log API keys; validate URLs).

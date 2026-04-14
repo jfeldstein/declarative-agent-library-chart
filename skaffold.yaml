@@ -13,7 +13,7 @@ build:
     - image: config-first-hosted-agents
       context: .
       docker:
-        dockerfile: Dockerfile
+        dockerfile: helm/Dockerfile
 deploy:
   helm:
     releases:

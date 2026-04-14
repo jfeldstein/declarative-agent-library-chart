@@ -188,7 +188,7 @@ def test_json_log_format_emits_message_key() -> None:
     runtime = Path(__file__).resolve().parent.parent
     env = os.environ.copy()
     env["HOSTED_AGENT_LOG_FORMAT"] = "json"
-    env["PYTHONPATH"] = str(runtime / "src")
+    env["PYTHONPATH"] = str(runtime)
     code = """
 from hosted_agents.o11y_logging import configure_request_logging, get_logger
 configure_request_logging()

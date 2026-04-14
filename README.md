@@ -8,18 +8,18 @@ Standalone repository for **YAML-configured** hosted agents: a **Helm library ch
 
 | Path | Purpose |
 |------|---------|
-| `helm/src/src/hosted_agents/` | Python application (FastAPI, LangGraph trigger pipeline, RAG service module, scrapers, tools) |
+| `helm/src/hosted_agents/` | Python application (FastAPI, LangGraph trigger pipeline, RAG service module, scrapers, tools) |
 | `docs/rag-http-api.md` | RAG HTTP contract (`/v1/embed`, `/v1/query`, `/v1/relate`) |
 | `helm/src/tests/` | Pytest suite (85%+ coverage enforced in CI) |
 | `helm/src/pyproject.toml` | `uv` project + Hatch packaging + pytest/coverage config |
 | `helm/chart/` | **Declarative Agent Library Chart** (`declarative-agent-library`; Helm subchart / optional direct install) |
-| `helm/src/` | Python project root (`pyproject.toml`, `src/hosted_agents/`, `tests/`) |
+| `helm/src/` | Python project root (`pyproject.toml`, `hosted_agents/`, `tests/`) |
 | `helm/tests/chart/` | Notes for Helm `helm test` hooks |
 | `examples/hello-world/` | Minimal application chart depending on `file://../../helm/chart` |
 | `examples/with-observability/` | Example chart with `o11y` (Prometheus annotations, ServiceMonitor, JSON logs) |
 | `examples/with-scrapers/` | Example chart with RAG + reference scraper `CronJob` (validated in CI; see below) |
 | `examples/checkpointing/` | Example chart with LangGraph checkpoints enabled (`memory` backend) |
-| `Dockerfile` | Production-style image for the Python runtime |
+| `helm/Dockerfile` | Production-style image for the Python runtime (build context: repository root) |
 | `skaffold.yaml` / `devspace.yaml` | Local deploy + **port-forward `localhost:8088` → service :8088** |
 | `docs/observability.md` | Metrics (`/metrics`), structured logs, Helm scrape hints, Grafana import |
 | `docs/development-log.md` | Notable chart/runtime changes (breaking API, env, values); ADRs live under `docs/adrs/` |
@@ -44,7 +44,7 @@ Canonical automation lives in [`.github/workflows/ci.yml`](.github/workflows/ci.
 ```bash
 uv sync --all-groups --project helm/src
 cd helm/src
-uv run ruff check src tests
+uv run ruff check hosted_agents tests
 uv run pytest tests/ -v --tb=short --cov-report=term-missing
 uv run python tests/integration/smoke_rag.py
 ```
@@ -96,7 +96,7 @@ curl -s -X POST http://127.0.0.1:8088/api/v1/trigger
 
    ```bash
    cd declarative-agent-library-chart
-   docker build -t config-first-hosted-agents:local .
+   docker build -f helm/Dockerfile -t config-first-hosted-agents:local .
    kind load docker-image config-first-hosted-agents:local --name cfha
    ```
 
@@ -148,7 +148,7 @@ Values keys under the **`declarative-agent-library`** subchart configure these r
 | Values key | Role |
 |------------|------|
 | `scrapers.jobs` | **CronJobs** that push normalized content (and graph edges when known) into RAG; built-in **`reference`** job posts a fixture document + `contained_in` edge. If **at least one** job has **`enabled: true`**, the chart also deploys the **managed RAG HTTP** Deployment + Service (`/v1/embed`, `/v1/query`, `/v1/relate`) — see [docs/rag-http-api.md](docs/rag-http-api.md). Tune RAG replicas/port/resources under **`scrapers.ragService`**. |
-| `mcp.enabledTools` | Allowlisted **in-process tools** merged into the **supervisor** tool list (and still invokable directly via **`POST /api/v1/trigger`** with `{"tool":"…","tool_arguments":{…}}`). Layout: [helm/src/src/hosted_agents/tools_impl/README.md](helm/src/src/hosted_agents/tools_impl/README.md). **Merge order:** subagent tools (config order) then MCP tools (sorted by id). |
+| `mcp.enabledTools` | Allowlisted **in-process tools** merged into the **supervisor** tool list (and still invokable directly via **`POST /api/v1/trigger`** with `{"tool":"…","tool_arguments":{…}}`). Layout: [helm/src/hosted_agents/tools_impl/README.md](helm/src/hosted_agents/tools_impl/README.md). **Merge order:** subagent tools (config order) then MCP tools (sorted by id). |
 | `subagents` | JSON list of specialists compiled into **LangGraph subgraphs** and registered as **LangChain tools** on the root agent ([LangChain subagents](https://docs.langchain.com/oss/python/langchain/multi-agent/subagents)). **Recommended:** **`description`** for each entry (tool schema text). **`exposeAsTool`**: omit or **`true`** to register the tool; **`role: metrics`** defaults to **`exposeAsTool: false`** so Prometheus snapshots stay off the default tool list unless you opt in. Optional **`role`**: **`default`** (uses `systemPrompt` + optional task text from the tool call); **`metrics`** (returns agent Prometheus text inside the tool); **`rag`** (tool arguments carry `query` / RAG fields; proxies to RAG `/v1/query` with **`X-Request-Id`**). |
 | `skills` | JSON catalog `{ "name", "prompt", "extraTools"? }` — load with **`POST /api/v1/trigger`** and `{"load_skill":"<name>"}` (progressive disclosure; aligns with [LangChain Skills](https://docs.langchain.com/oss/python/langchain/multi-agent/skills)). |
 | `chatModel` | Optional Helm value → **`HOSTED_AGENT_CHAT_MODEL`** when **`subagents`** is non-empty (e.g. `openai:gpt-4o-mini`). Requires the matching LangChain provider package and credentials in your image. **Hello-world** keeps **`subagents: []`** so the trigger stays deterministic without a remote LLM. |

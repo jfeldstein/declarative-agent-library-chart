@@ -10,7 +10,7 @@ The Helm library chart overloads the name **observability**: `o11y` holds Kubern
   - **`wandb`**: project/entity/enable flags (currently under `observability.wandb`).
 - **BREAKING**: Move Slack feedback settings from `observability.slackFeedback` to **`scrapers.slack.feedback`** (feedback is tied to scraper-driven ingestion; co-locating it with `scrapers` matches product semantics).
 - **Remove** Helm values and chart wiring for **`atifExport`** and **`shadow`** (and delete related runtime code, tests, ConfigMap keys, and documentation).
-- **Clarify** the object today exposed as `observability.labelRegistry`: it feeds **`HOSTED_AGENT_LABEL_REGISTRY_JSON`** and implements the **human feedback label taxonomy** (`helm/src/src/hosted_agents/observability/label_registry.py`), not Prometheus labels. The design proposes a clearer values name and placement (under Slack feedback or an explicit feedback subsection—see `design.md`).
+- **Clarify** the object today exposed as `observability.labelRegistry`: it feeds **`HOSTED_AGENT_LABEL_REGISTRY_JSON`** and implements the **human feedback label taxonomy** (`helm/src/hosted_agents/observability/label_registry.py`), not Prometheus labels. The design proposes a clearer values name and placement (under Slack feedback or an explicit feedback subsection—see `design.md`).
 - Update **`helm/chart/values.schema.json`**, example charts, helm-unittest suites, CI, and docs that reference the old keys.
 
 ## Capabilities

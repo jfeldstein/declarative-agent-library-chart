@@ -60,7 +60,7 @@ If **hunks fail** (often `README.md` if it has diverged), either:
 
    ```bash
    cd helm/src
-   uv run ruff check src tests
+   uv run ruff check hosted_agents tests
    uv run pytest tests/ -v --tb=short
    ```
 
