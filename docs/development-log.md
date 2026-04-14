@@ -14,6 +14,8 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 **OpenSpec `traceability` (tasks closure)** — Implementation was already on **`main`** (IDs, matrix, **`scripts/check_spec_traceability.py`**, CI job, scheduled o11y workflow, **`AGENTS.md`** / **`.cursor/rules/spec-traceability.mdc`**). Marked **`openspec/changes/traceability/tasks.md`** **15/15** complete; aligned **`openspec/changes/agent-runtime-components/specs/runtime-tools-mcp/spec.md`** section title with the **`traceability`** copy (**`## MODIFIED Requirements`**).
 
+**Local CI parity (README)** — Ran end-to-end on a dev machine: **`./scripts/check_adr_numbers.sh`**, **`python3 scripts/check_spec_traceability.py`**, **`uv run ruff check`** + **`uv run pytest tests/`** under **`runtime/`**, **`helm dependency build --skip-refresh`** + **`helm unittest .`** for each **`examples/*/`**, **`ct lint --config ct.yaml --all`**, **`uv run python scripts/smoke_rag.py`** (from **`runtime/`**). All exited **0** (records **`openspec/changes/traceability/tasks.md`** §6.1 verification, not only Python + OpenSpec).
+
 ## 2026-04-12
 
 **PR #11 merge with `main`** — Reconciled divergent LangGraph wiring: **`HOSTED_AGENT_CHECKPOINT_STORE`** (default-on memory; `none` disables persistence) drives the compiled checkpointer when **`HOSTED_AGENT_CHECKPOINTS_ENABLED`** is unset; operator **`GET /api/v1/runtime/threads/...`** routes still require the explicit checkpoints flag. Helm **`deployment.yaml`** keeps the observability env block and adds **`extraEnv`**. Example chart **`charts/*.tgz`** dependencies are **gitignored**; run **`helm dependency build`** under each example. Tool calls use **`run_context.next_tool_call_id`** alongside observability trajectory / W&B spans.
