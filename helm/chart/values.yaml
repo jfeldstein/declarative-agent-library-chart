@@ -68,10 +68,14 @@ mcp:
 
 # Checkpointing, W&B, Slack feedback, ATIF export, shadow rollouts (runtime env). See docs/runbook-checkpointing-wandb.md.
 observability:
-  # Single DSN → HOSTED_AGENT_POSTGRES_URL (PGlite target, checkpoint fallback, observability fallback).
+  # Single DSN → HOSTED_AGENT_POSTGRES_URL (checkpoints + observability postgres store).
   postgresUrl: ""
-  # HOSTED_AGENT_OBSERVABILITY_STORE — in-process memory (default) or postgres for correlation/feedback/side-effects/span summaries.
+  postgresUrlSecret:
+    name: ""
+    key: "DATABASE_URL"
+  # HOSTED_AGENT_OBSERVABILITY_STORE — memory (default) or postgres for correlation/feedback/side-effects/spans.
   store: memory
+  # Nested url/urlSecret are optional aliases coalesced with postgresUrl / postgresUrlSecret in templates.
   postgres:
     url: ""
     urlSecret:
@@ -84,11 +88,6 @@ observability:
   checkpoints:
     enabled: false
     backend: memory
-    postgresUrl: ""
-    postgresUrlSecret:
-      name: ""
-      key: "DATABASE_URL"
-    postgresPoolMax: 5
   wandb:
     enabled: false
     project: ""

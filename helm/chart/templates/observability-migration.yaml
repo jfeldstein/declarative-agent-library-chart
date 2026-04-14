@@ -1,6 +1,7 @@
 {{- if .Values.observability.postgres.migrations.enabled }}
-{{- if not .Values.observability.postgres.urlSecret.name }}
-{{- fail "observability.postgres.migrations.enabled requires observability.postgres.urlSecret.name (and key) for DATABASE_URL" }}
+{{- $migSec := or .Values.observability.postgresUrlSecret.name .Values.observability.postgres.urlSecret.name "" }}
+{{- if not $migSec }}
+{{- fail "observability.postgres.migrations.enabled requires observability.postgresUrlSecret.name or observability.postgres.urlSecret.name (and key) for DATABASE_URL" }}
 {{- end }}
 apiVersion: v1
 kind: ConfigMap
@@ -35,8 +36,8 @@ spec:
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.observability.postgres.urlSecret.name }}
-                  key: {{ .Values.observability.postgres.urlSecret.key | default "DATABASE_URL" }}
+                  name: {{ $migSec }}
+                  key: {{ or .Values.observability.postgresUrlSecret.key .Values.observability.postgres.urlSecret.key "DATABASE_URL" }}
           command:
             - /bin/sh
             - -c

@@ -223,8 +223,6 @@ def test_build_observability_stores_postgres_requires_url(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setenv("HOSTED_AGENT_OBSERVABILITY_STORE", "postgres")
-    monkeypatch.delenv("HOSTED_AGENT_OBSERVABILITY_POSTGRES_URL", raising=False)
-    monkeypatch.delenv("HOSTED_AGENT_CHECKPOINT_POSTGRES_URL", raising=False)
     monkeypatch.delenv("HOSTED_AGENT_POSTGRES_URL", raising=False)
     monkeypatch.delenv("HOSTED_AGENT_USE_PGLITE", raising=False)
     from hosted_agents.observability.settings import ObservabilitySettings
@@ -235,5 +233,5 @@ def test_build_observability_stores_postgres_requires_url(
 
     reset_observability_stores_cache()
     obs = ObservabilitySettings.from_env()
-    with pytest.raises(RuntimeError, match="HOSTED_AGENT_OBSERVABILITY_POSTGRES_URL"):
+    with pytest.raises(RuntimeError, match="HOSTED_AGENT_POSTGRES_URL"):
         build_observability_stores(obs)

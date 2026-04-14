@@ -16,14 +16,13 @@ def test_build_checkpointer_postgres_requires_url(
 ) -> None:
     monkeypatch.setenv("HOSTED_AGENT_CHECKPOINTS_ENABLED", "1")
     monkeypatch.setenv("HOSTED_AGENT_CHECKPOINT_BACKEND", "postgres")
-    monkeypatch.delenv("HOSTED_AGENT_CHECKPOINT_POSTGRES_URL", raising=False)
     monkeypatch.delenv("HOSTED_AGENT_POSTGRES_URL", raising=False)
     monkeypatch.delenv("HOSTED_AGENT_USE_PGLITE", raising=False)
     reset_checkpoint_postgres_pool()
     obs = ObservabilitySettings.from_env()
     with pytest.raises(
         RuntimeError,
-        match="HOSTED_AGENT_CHECKPOINT_POSTGRES_URL or HOSTED_AGENT_POSTGRES_URL",
+        match="HOSTED_AGENT_POSTGRES_URL",
     ):
         build_checkpointer(obs)
 
@@ -33,7 +32,7 @@ def test_build_checkpointer_postgres_validates_scheme(
 ) -> None:
     monkeypatch.setenv("HOSTED_AGENT_CHECKPOINTS_ENABLED", "1")
     monkeypatch.setenv("HOSTED_AGENT_CHECKPOINT_BACKEND", "postgres")
-    monkeypatch.setenv("HOSTED_AGENT_CHECKPOINT_POSTGRES_URL", "mysql://wrong")
+    monkeypatch.setenv("HOSTED_AGENT_POSTGRES_URL", "mysql://wrong")
     reset_checkpoint_postgres_pool()
     obs = ObservabilitySettings.from_env()
     with pytest.raises(RuntimeError, match="postgres://"):
@@ -46,7 +45,7 @@ def test_build_checkpointer_postgres_constructs_saver(
     monkeypatch.setenv("HOSTED_AGENT_CHECKPOINTS_ENABLED", "1")
     monkeypatch.setenv("HOSTED_AGENT_CHECKPOINT_BACKEND", "postgres")
     monkeypatch.setenv(
-        "HOSTED_AGENT_CHECKPOINT_POSTGRES_URL",
+        "HOSTED_AGENT_POSTGRES_URL",
         "postgres://user:pass@127.0.0.1:5432/appdb",
     )
     reset_checkpoint_postgres_pool()

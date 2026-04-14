@@ -32,10 +32,8 @@ class ObservabilitySettings:
     checkpoints_enabled: bool
     checkpoint_backend: str
     checkpoint_postgres_url: str | None
-    checkpoint_postgres_pool_max: int
+    postgres_pool_max: int
     observability_store: str
-    observability_postgres_url: str | None
-    observability_postgres_pool_max: int
     wandb_enabled: bool
     slack_feedback_enabled: bool
     atif_export_enabled: bool
@@ -78,20 +76,11 @@ class ObservabilitySettings:
         except ValueError:
             rate = 0.0
         rate = max(0.0, min(1.0, rate))
-        cp_pool_raw = os.environ.get(
-            "HOSTED_AGENT_CHECKPOINT_POSTGRES_POOL_MAX", "5"
-        ).strip()
+        pool_raw = os.environ.get("HOSTED_AGENT_POSTGRES_POOL_MAX", "5").strip()
         try:
-            cp_pool = max(1, min(50, int(cp_pool_raw or "5")))
+            pg_pool = max(1, min(50, int(pool_raw or "5")))
         except ValueError:
-            cp_pool = 5
-        obs_pool_raw = os.environ.get(
-            "HOSTED_AGENT_OBSERVABILITY_POSTGRES_POOL_MAX", "5"
-        ).strip()
-        try:
-            obs_pool = max(1, min(50, int(obs_pool_raw or "5")))
-        except ValueError:
-            obs_pool = 5
+            pg_pool = 5
         obs_store = (
             os.environ.get("HOSTED_AGENT_OBSERVABILITY_STORE", "memory").strip().lower()
             or "memory"
@@ -99,25 +88,15 @@ class ObservabilitySettings:
         if obs_store not in {"memory", "postgres"}:
             msg = f"unknown HOSTED_AGENT_OBSERVABILITY_STORE={obs_store!r}"
             raise ValueError(msg)
-        obs_pg_url = (
-            os.environ.get("HOSTED_AGENT_OBSERVABILITY_POSTGRES_URL", "").strip()
-            or None
-        )
         return cls(
             checkpoints_enabled=_truthy("HOSTED_AGENT_CHECKPOINTS_ENABLED"),
             checkpoint_backend=os.environ.get(
                 "HOSTED_AGENT_CHECKPOINT_BACKEND", "memory"
             ).strip()
             or "memory",
-            checkpoint_postgres_url=(
-                os.environ.get("HOSTED_AGENT_CHECKPOINT_POSTGRES_URL", "").strip()
-                or postgres_url()
-                or None
-            ),
-            checkpoint_postgres_pool_max=cp_pool,
+            checkpoint_postgres_url=postgres_url() or None,
+            postgres_pool_max=pg_pool,
             observability_store=obs_store,
-            observability_postgres_url=obs_pg_url,
-            observability_postgres_pool_max=obs_pool,
             wandb_enabled=_truthy("HOSTED_AGENT_WANDB_ENABLED"),
             slack_feedback_enabled=_truthy("HOSTED_AGENT_SLACK_FEEDBACK_ENABLED"),
             atif_export_enabled=_truthy("HOSTED_AGENT_ATIF_EXPORT_ENABLED"),
@@ -131,10 +110,8 @@ class ObservabilitySettings:
         )
 
     def effective_observability_postgres_url(self) -> str | None:
-        """URL for application observability tables (may fall back to checkpoint URL)."""
+        """URL for observability DDL when ``observability_store`` is ``postgres``."""
 
-        if self.observability_postgres_url:
-            return self.observability_postgres_url
-        if self.observability_store == "postgres" and self.checkpoint_postgres_url:
-            return self.checkpoint_postgres_url
-        return None
+        if self.observability_store != "postgres":
+            return None
+        return self.checkpoint_postgres_url

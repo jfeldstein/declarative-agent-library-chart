@@ -27,7 +27,7 @@ def _validate_postgres_url(url: str) -> None:
     if not u.startswith(("postgresql://", "postgres://")):
         msg = (
             "Postgres URL must start with postgres:// or postgresql:// "
-            "(set HOSTED_AGENT_CHECKPOINT_POSTGRES_URL or HOSTED_AGENT_POSTGRES_URL)"
+            "(set HOSTED_AGENT_POSTGRES_URL)"
         )
         raise RuntimeError(msg)
 
@@ -51,7 +51,7 @@ def build_checkpointer(settings: ObservabilitySettings) -> Any | None:
     * **memory** — ``MemorySaver`` (dev / single replica); ``thread_id`` and ``checkpoint_id``
       follow LangGraph semantics (see runbook).
     * **postgres** — ``langgraph-checkpoint-postgres`` + ``psycopg`` pool (optional ``[postgres]`` extra).
-      Set ``HOSTED_AGENT_CHECKPOINT_POSTGRES_URL`` or unified ``HOSTED_AGENT_POSTGRES_URL``.
+      Set ``HOSTED_AGENT_POSTGRES_URL``.
     * **redis** — same pattern as Postgres; reserved until a saver is pinned.
     """
     if not settings.checkpoints_enabled:
@@ -66,7 +66,7 @@ def build_checkpointer(settings: ObservabilitySettings) -> Any | None:
         if not url:
             msg = (
                 "HOSTED_AGENT_CHECKPOINT_BACKEND=postgres requires "
-                "HOSTED_AGENT_CHECKPOINT_POSTGRES_URL or HOSTED_AGENT_POSTGRES_URL"
+                "HOSTED_AGENT_POSTGRES_URL"
             )
             raise RuntimeError(msg)
         _validate_postgres_url(url)
@@ -82,7 +82,7 @@ def build_checkpointer(settings: ObservabilitySettings) -> Any | None:
             raise RuntimeError(msg) from exc
 
         global _cp_pool, _cp_pool_url
-        max_size = max(1, min(50, settings.checkpoint_postgres_pool_max))
+        max_size = max(1, min(50, settings.postgres_pool_max))
         Pool = _checkpoint_connection_pool_cls()
         Saver = _checkpoint_postgres_saver_cls()
         if _cp_pool is None or _cp_pool_url != url:
@@ -108,7 +108,7 @@ def build_checkpointer(settings: ObservabilitySettings) -> Any | None:
                 _cp_pool_url = None
                 msg = (
                     "Could not open Postgres connection pool for LangGraph checkpoints. "
-                    "Verify HOSTED_AGENT_CHECKPOINT_POSTGRES_URL / HOSTED_AGENT_POSTGRES_URL (host, port, credentials, "
+                    "Verify HOSTED_AGENT_POSTGRES_URL (host, port, credentials, "
                     "TLS/sslmode) and that the database is reachable from this pod. "
                     f"Underlying error: {exc!s}"
                 )

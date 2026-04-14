@@ -7,10 +7,10 @@ release:
   namespace: default
 set:
   observability.store: postgres
-  observability.postgres.url: postgres://user:pass@db:5432/app
+  observability.postgresUrl: postgres://user:pass@db:5432/app
   observability.postgres.poolMax: 7
 tests:
-  - it: sets observability store and postgres URL env vars
+  - it: sets observability store, unified postgres URL, and pool max
     asserts:
       - contains:
           path: spec.template.spec.containers[0].env
@@ -20,10 +20,10 @@ tests:
       - contains:
           path: spec.template.spec.containers[0].env
           content:
-            name: HOSTED_AGENT_OBSERVABILITY_POSTGRES_URL
+            name: HOSTED_AGENT_POSTGRES_URL
             value: postgres://user:pass@db:5432/app
       - contains:
           path: spec.template.spec.containers[0].env
           content:
-            name: HOSTED_AGENT_OBSERVABILITY_POSTGRES_POOL_MAX
+            name: HOSTED_AGENT_POSTGRES_POOL_MAX
             value: "7"

@@ -39,7 +39,7 @@ _memory_spans = MemorySpanSummaryStore()
 
 
 def _pool_max(settings: ObservabilitySettings) -> int:
-    return max(1, min(50, settings.observability_postgres_pool_max))
+    return max(1, min(50, settings.postgres_pool_max))
 
 
 def _pool_for_url(
@@ -91,8 +91,7 @@ def build_observability_stores(settings: ObservabilitySettings) -> Observability
         if not url:
             msg = (
                 "HOSTED_AGENT_OBSERVABILITY_STORE=postgres requires "
-                "HOSTED_AGENT_OBSERVABILITY_POSTGRES_URL, HOSTED_AGENT_CHECKPOINT_POSTGRES_URL, "
-                "or HOSTED_AGENT_POSTGRES_URL"
+                "HOSTED_AGENT_POSTGRES_URL"
             )
             raise RuntimeError(msg)
         pool = _pool_for_url(
