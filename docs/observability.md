@@ -93,7 +93,7 @@ Under `declarative-agent-library.o11y`:
 - `**prometheusAnnotations.enabled`**: adds `prometheus.io/scrape`, `prometheus.io/port`, `prometheus.io/path` to the agent **Pod** and **Service** (for scrapers that honor these annotations).
 - `**serviceMonitor.enabled`**: renders a `**monitoring.coreos.com/v1` `ServiceMonitor`** selecting the agent `Service` on port `**http**`, path `**/metrics**`. Requires the **Prometheus Operator** CRDs in the cluster.
 
-When the chart deploys the **managed RAG** workload (at least one `**scrapers.jobs`** entry with `**enabled: true`**):
+When the chart deploys the **managed RAG** workload (at least one enabled job under `**scrapers.jira**` or `**scrapers.slack**`; see [DALC-REQ-RAG-SCRAPERS-002](../openspec/specs/dalc-rag-from-scrapers/spec.md)):
 
 - `**o11y.prometheusAnnotations.enabled**`: the **same** annotation triad as the agent is applied to the **RAG** Pod and **RAG** Service (port from `**scrapers.ragService.service.port`**, default **8090**). There is no separate RAG-only scrape flag.
 - `**o11y.serviceMonitor.enabled`**: also renders a second `**ServiceMonitor`** (`metadata.name` suffix `**-rag**`) selecting the RAG Service, path `**/metrics**`, same interval / timeout / `**extraLabels**` as the agent monitor so Prometheus Operator selectors (e.g. `release: prometheus`) pick up **both** targets.
@@ -144,8 +144,8 @@ Configured subagents are **tools** on the root agent ([LangChain subagents](http
 
 Every enabled scraper container listens on **`SCRAPER_METRICS_ADDR`** (Helm sets **`0.0.0.0:9091`**) and exposes **`GET /metrics`** using a **scraper-only** Prometheus registry, so this endpoint does **not** include agent or RAG `agent_runtime_*` series from other workloads. After the job’s main work finishes, the process waits **`SCRAPER_METRICS_GRACE_SECONDS`** (default **35** in the chart) so Prometheus can scrape the Job pod before exit.
 
-- **Reference** job (`hosted_agents.scrapers.reference_job`): posts to RAG **`/v1/embed`** and increments **`agent_runtime_scraper_rag_submissions_total`** per attempt.
-- **Stub** job (`hosted_agents.scrapers.stub_job`): placeholder integration; prints to stdout and records **`agent_runtime_scraper_runs_total`** / duration only (no RAG submissions).
+- **Jira** job (`hosted_agents.scrapers.jira_job`): reads **`/config/job.json`**, posts issue payloads to RAG **`/v1/embed`**, increments **`agent_runtime_scraper_rag_submissions_total`** per attempt.
+- **Slack** job (`hosted_agents.scrapers.slack_job`): **`slack_search`** (Real-time Search + thread/history context) or **`slack_channel`** (`conversations.history`); same RAG + scraper metrics series as Jira.
 
 | Metric | Labels | Description |
 |--------|--------|-------------|

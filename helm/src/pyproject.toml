@@ -52,7 +52,7 @@ omit = [
     "*/test_*.py",
     "*/__pycache__/*",
     "*/.venv/*",
-    # CronJob entrypoints: exercised via unit tests + Helm; full branch coverage is integration-heavy.
+    # CronJob entrypoints: large surface; covered by targeted tests + Helm.
     "*/scrapers/jira_job.py",
     "*/scrapers/slack_job.py",
 ]

@@ -1,8 +1,8 @@
 # Example: opt-in observability on the Declarative Agent Library subchart.
 # See docs/observability.md and grafana/README.md.
 #
-# RAG is deployed when at least one scraper job has enabled: true; RAG Prometheus
-# annotations follow o11y.prometheusAnnotations (same as the agent).
+# RAG is deployed when ``scrapers.jira`` or ``scrapers.slack`` has at least one enabled
+# job (parent ``enabled: true``); RAG Prometheus annotations follow o11y.prometheusAnnotations.
 declarative-agent-library:
   systemPrompt: |
     Respond, "Hello :wave:"
@@ -28,7 +28,19 @@ declarative-agent-library:
         type: ClusterIP
         port: 8090
       resources: {}
-    jobs:
-      - name: reference
-        enabled: true
-        schedule: "0 * * * *"
+    jira:
+      enabled: true
+      siteUrl: https://example.atlassian.net
+      watermarkDir: /tmp/jira-scraper-watermark
+      auth:
+        emailSecretName: jira-credentials
+        emailSecretKey: email
+        tokenSecretName: jira-credentials
+        tokenSecretKey: token
+      jobs:
+        - schedule: "0 * * * *"
+          source: jira
+          query: 'project = DEMO ORDER BY updated ASC'
+    slack:
+      enabled: false
+      jobs: []

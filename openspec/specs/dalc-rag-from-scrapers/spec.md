@@ -11,16 +11,16 @@ The Declarative Agent Library Helm chart SHALL NOT define a top-level **`rag`** 
 
 ### Requirement: [DALC-REQ-RAG-SCRAPERS-002] Managed RAG workload is deployed when any scraper job is enabled
 
-The chart SHALL render the managed RAG HTTP **Deployment** and **Service** (names and selectors as documented for the chart) **if and only if** the **`scrapers.jobs`** list contains **at least one** job object with **`enabled: true`**. If there are no jobs or every job has **`enabled: false`**, the chart SHALL NOT render those RAG workload resources.
+The chart SHALL render the managed RAG HTTP **Deployment** and **Service** (names and selectors as documented for the chart) **if and only if** **`scrapers.jira.enabled`** or **`scrapers.slack.enabled`** is **true** and the corresponding **`jobs`** list contains **at least one** job with **`enabled: true`** (when **`enabled`** is omitted on a job, it SHALL be treated as **true**). If both parents are **false** or every job has **`enabled: false`**, the chart SHALL NOT render those RAG workload resources.
 
 #### Scenario: Single enabled scraper deploys RAG
 
-- **WHEN** `scrapers.jobs` contains one job with `enabled: true` and `helm template` is run
+- **WHEN** `scrapers.jira.enabled` is `true` and `scrapers.jira.jobs` contains one job with `enabled: true` and `helm template` is run
 - **THEN** the output SHALL include the RAG Deployment and RAG Service resources
 
 #### Scenario: All scrapers disabled skips RAG
 
-- **WHEN** `scrapers.jobs` is empty or every job has `enabled: false`
+- **WHEN** both `scrapers.jira.enabled` and `scrapers.slack.enabled` are `false`, or every job under enabled parents has `enabled: false`
 - **THEN** the output SHALL NOT include the RAG Deployment or RAG Service resources
 
 ### Requirement: [DALC-REQ-RAG-SCRAPERS-003] RAG tunables are nested under `scrapers.ragService`
@@ -38,5 +38,5 @@ The chart SHALL populate the cluster-internal RAG base URL (for example the help
 
 #### Scenario: No enabled scrapers yields no internal RAG URL
 
-- **WHEN** no scraper job is enabled
+- **WHEN** no scraper job is enabled under `scrapers.jira` / `scrapers.slack` per [DALC-REQ-RAG-SCRAPERS-002]
 - **THEN** the agent Deployment SHALL not receive a non-empty RAG base URL from this helper (consistent with no RAG Service)

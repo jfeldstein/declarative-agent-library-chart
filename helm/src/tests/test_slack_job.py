@@ -8,50 +8,49 @@ from unittest.mock import MagicMock, patch
 from hosted_agents.scrapers import slack_job
 
 
-def test_load_searches_valid(tmp_path, monkeypatch) -> None:
-    p = tmp_path / "s.json"
-    p.write_text(
-        json.dumps(
-            [{"id": "a", "type": "search_messages", "query": "x", "limit": 2}],
-        ),
-        encoding="utf-8",
-    )
-    monkeypatch.setenv("SLACK_SCRAPER_SEARCHES_FILE", str(p))
-    monkeypatch.delenv("SLACK_SCRAPER_SEARCHES_JSON", raising=False)
-    s = slack_job._load_searches()
-    assert len(s) == 1
-    assert s[0]["id"] == "a"
+def test_ts_window() -> None:
+    lo, hi = slack_job._ts_window("1000.0", 1.0, 2.0)
+    assert slack_job._slack_ts_to_float(lo) < 1000.0
+    assert slack_job._slack_ts_to_float(hi) > 1000.0
 
 
-def test_build_items_deterministic_entity_id() -> None:
+def test_build_items_from_messages_dedupes() -> None:
     msgs = [
-        {
-            "text": "hi",
-            "channel": "C1",
-            "ts": "1.0",
-            "team": "T9",
-        },
+        {"text": "a", "channel": "C1", "ts": "1.0", "team": "T1"},
+        {"text": "b", "channel": "C1", "ts": "1.0", "team": "T1"},
     ]
-    items = slack_job._build_items(msgs)
-    assert items[0]["entity_id"] == "slack:T9:C1:1.0"
+    items = slack_job._build_items_from_messages(msgs)
+    assert len(items) == 1
+
+
+def test_rts_messages_parses_results() -> None:
+    page = {
+        "ok": True,
+        "results": {"messages": [{"channel_id": "C1", "message_ts": "1.1"}]},
+    }
+    assert len(slack_job._rts_messages(page)) == 1
 
 
 @patch("hosted_agents.scrapers.slack_job.httpx.Client")
 @patch("hosted_agents.scrapers.slack_job.WebClient")
-def test_run_conversations_history(mock_wc_class, mock_hx_cls, monkeypatch) -> None:
+def test_run_slack_channel_posts_embed(mock_wc_class, mock_hx_cls, tmp_path, monkeypatch) -> None:
+    cfg = {
+        "source": "slack_channel",
+        "conversationId": "CXYZ",
+    }
+    cfg_path = tmp_path / "job.json"
+    cfg_path.write_text(json.dumps(cfg), encoding="utf-8")
+    monkeypatch.setenv("SCRAPER_JOB_CONFIG", str(cfg_path))
     monkeypatch.setenv("SLACK_BOT_TOKEN", "xoxb-test")
-    monkeypatch.setenv(
-        "SLACK_SCRAPER_SEARCHES_JSON",
-        json.dumps(
-            [{"id": "c1", "type": "conversations_history", "channel": "C1", "limit": 3}],
-        ),
-    )
+    monkeypatch.setenv("SLACK_STATE_DIR", str(tmp_path / "st"))
     monkeypatch.setenv("RAG_SERVICE_URL", "http://rag.local")
     monkeypatch.setenv("SCRAPER_METRICS_ADDR", "")
-    mock_client = MagicMock()
-    mock_wc_class.return_value = mock_client
-    mock_client.conversations_history.return_value = {
-        "messages": [{"text": "m", "channel": "C1", "ts": "1.0", "team": "T1"}],
+
+    mock_bot = MagicMock()
+    mock_wc_class.return_value = mock_bot
+    mock_bot.conversations_history.return_value = {
+        "ok": True,
+        "messages": [{"text": "m", "channel": "CXYZ", "ts": "99.000001", "team": "T1"}],
         "response_metadata": {},
     }
     hx_inst = MagicMock()
@@ -59,44 +58,59 @@ def test_run_conversations_history(mock_wc_class, mock_hx_cls, monkeypatch) -> N
     resp = MagicMock()
     hx_inst.post.return_value = resp
     resp.raise_for_status = MagicMock()
+
     slack_job.run()
-    mock_client.conversations_history.assert_called_once()
+    mock_bot.conversations_history.assert_called()
+    hx_inst.post.assert_called_once()
 
 
 @patch("hosted_agents.scrapers.slack_job.httpx.Client")
 @patch("hosted_agents.scrapers.slack_job.WebClient")
-def test_run_posts_embed(mock_wc_class, mock_hx_cls, monkeypatch) -> None:
-    monkeypatch.setenv("SLACK_BOT_TOKEN", "xoxb-test")
-    monkeypatch.setenv(
-        "SLACK_SCRAPER_SEARCHES_JSON",
-        json.dumps(
-            [{"id": "s1", "type": "search_messages", "query": "foo", "limit": 5}],
-        ),
-    )
+def test_run_slack_search_posts_embed(mock_wc_class, mock_hx_cls, tmp_path, monkeypatch) -> None:
+    cfg = {
+        "source": "slack_search",
+        "query": "hello",
+        "contextBeforeMinutes": 1,
+        "contextAfterMinutes": 1,
+    }
+    cfg_path = tmp_path / "job.json"
+    cfg_path.write_text(json.dumps(cfg), encoding="utf-8")
+    monkeypatch.setenv("SCRAPER_JOB_CONFIG", str(cfg_path))
+    monkeypatch.setenv("SLACK_USER_TOKEN", "xoxp-test")
     monkeypatch.setenv("RAG_SERVICE_URL", "http://rag.local")
     monkeypatch.setenv("SCRAPER_METRICS_ADDR", "")
-    mock_client = MagicMock()
-    mock_wc_class.return_value = mock_client
-    mock_client.search_messages.return_value = {
-        "messages": {
-            "matches": [
+
+    mock_user = MagicMock()
+    mock_wc_class.return_value = mock_user
+    mock_user.api_call.return_value = {
+        "ok": True,
+        "results": {
+            "messages": [
                 {
-                    "text": "hello",
-                    "channel": "CZ",
-                    "ts": "2.0",
-                    "team": "TX",
+                    "channel_id": "C1",
+                    "message_ts": "1000.0",
+                    "thread_ts": "1000.0",
                 },
             ],
-            "pagination": {},
         },
     }
+    mock_user.conversations_replies.return_value = {
+        "ok": True,
+        "messages": [{"text": "t", "channel": "C1", "ts": "1000.0", "team": "T1"}],
+        "response_metadata": {},
+    }
+    mock_user.conversations_history.return_value = {
+        "ok": True,
+        "messages": [],
+        "response_metadata": {},
+    }
+
     hx_inst = MagicMock()
     mock_hx_cls.return_value.__enter__.return_value = hx_inst
     resp = MagicMock()
     hx_inst.post.return_value = resp
     resp.raise_for_status = MagicMock()
+
     slack_job.run()
-    mock_client.search_messages.assert_called_once()
+    mock_user.api_call.assert_called()
     hx_inst.post.assert_called_once()
-    args, kwargs = hx_inst.post.call_args
-    assert args[0] == "http://rag.local/v1/embed"

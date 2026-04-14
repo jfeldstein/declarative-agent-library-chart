@@ -71,7 +71,7 @@
     },
     "scrapers": {
       "type": "object",
-      "description": "CronJob-backed scrapers; reference job POSTs to RAG_SERVICE_URL. RAG Deployment+Service render when jobs contains at least one enabled: true. Traceability: [DALC-REQ-RAG-SCRAPERS-003]",
+      "description": "CronJob-backed scrapers under jira and slack; RAG deploys when any enabled job exists. Traceability: [DALC-REQ-RAG-SCRAPERS-003]",
       "properties": {
         "resources": { "type": "object" },
         "ragService": {
@@ -89,36 +89,12 @@
             "resources": { "type": "object" }
           }
         },
-        "jobs": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "required": ["name", "enabled", "schedule"],
-            "properties": {
-              "name": { "type": "string", "minLength": 1 },
-              "enabled": { "type": "boolean" },
-              "schedule": { "type": "string", "minLength": 1 },
-              "scope": { "type": "string" },
-              "integration": {
-                "type": "string",
-                "description": "When set to slack or jira, selects the matching scraper module (see scraper-cronjobs template)"
-              },
-              "extraEnv": {
-                "type": "array",
-                "items": { "type": "object" }
-              }
-            }
-          }
-        },
         "jira": {
           "type": "object",
-          "description": "Shared Jira Cloud settings for jobs with integration jira",
+          "description": "Jira Cloud scraper jobs; each job mounts job.json (source=jira, query=JQL). Secrets via auth Secret refs only.",
           "properties": {
+            "enabled": { "type": "boolean" },
             "siteUrl": { "type": "string" },
-            "projectKeys": {
-              "type": "array",
-              "items": { "type": "string" }
-            },
             "watermarkDir": { "type": "string" },
             "auth": {
               "type": "object",
@@ -134,7 +110,74 @@
               "properties": {
                 "maxIssuesPerRun": { "type": "integer", "minimum": 1 },
                 "maxCommentsPerIssue": { "type": "integer", "minimum": 1 },
-                "overlapMinutes": { "type": "integer", "minimum": 0 }
+                "overlapMinutes": { "type": "integer", "minimum": 0 },
+                "extraFields": {
+                  "type": "array",
+                  "items": { "type": "string" }
+                }
+              }
+            },
+            "jobs": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["schedule", "source", "query"],
+                "properties": {
+                  "enabled": { "type": "boolean" },
+                  "schedule": { "type": "string", "minLength": 1 },
+                  "scope": { "type": "string" },
+                  "source": {
+                    "type": "string",
+                    "enum": ["jira"],
+                    "description": "Must be jira; unknown sources cause the job to exit non-zero"
+                  },
+                  "query": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "JQL executed incrementally with an updated>= watermark when present"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "slack": {
+          "type": "object",
+          "description": "Slack scraper jobs (slack_search uses Real-time Search API + conversations.*; slack_channel uses conversations.history).",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "stateDir": {
+              "type": "string",
+              "description": "Directory for channel-scrape cursors (empty PVC path in production)"
+            },
+            "auth": {
+              "type": "object",
+              "properties": {
+                "botTokenSecretName": { "type": "string" },
+                "botTokenSecretKey": { "type": "string" },
+                "userTokenSecretName": { "type": "string" },
+                "userTokenSecretKey": { "type": "string" }
+              }
+            },
+            "defaults": { "type": "object" },
+            "jobs": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["schedule", "source"],
+                "properties": {
+                  "enabled": { "type": "boolean" },
+                  "schedule": { "type": "string", "minLength": 1 },
+                  "scope": { "type": "string" },
+                  "source": {
+                    "type": "string",
+                    "enum": ["slack_search", "slack_channel"]
+                  },
+                  "query": { "type": "string" },
+                  "contextBeforeMinutes": { "type": "number", "minimum": 0 },
+                  "contextAfterMinutes": { "type": "number", "minimum": 0 },
+                  "conversationId": { "type": "string" }
+                }
               }
             }
           }

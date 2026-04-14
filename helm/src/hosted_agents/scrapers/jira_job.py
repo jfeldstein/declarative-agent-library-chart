@@ -1,13 +1,16 @@
-"""Jira Cloud pull scraper: incremental JQL → comments → RAG ``/v1/embed``.
+"""Jira Cloud pull scraper: job JSON (JQL) → comments → RAG ``/v1/embed``.
 
-Uses ``httpx`` against Jira REST v3 (**``POST /rest/api/3/search/jql``** + ``nextPageToken``).
-Env includes ``JIRA_SITE_URL``, ``JIRA_EMAIL``,
-``JIRA_API_TOKEN``, ``JIRA_PROJECT_KEYS`` (comma-separated), ``JIRA_WATERMARK_DIR``,
-``SCRAPER_SCOPE``. See ``openspec/changes/jira-scraper/``.
+Config is mounted at ``SCRAPER_JOB_CONFIG`` (default ``/config/job.json``) with
+``source: jira`` and ``query`` (JQL). Secrets: ``JIRA_SITE_URL``, ``JIRA_EMAIL``,
+``JIRA_API_TOKEN``, ``JIRA_WATERMARK_DIR`` from env. Unknown ``source`` exits non-zero.
+
+Search uses **``POST /rest/api/3/search/jql``** with ``nextPageToken`` pagination.
+See ``openspec/changes/jira-scraper/``.
 """
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -33,6 +36,23 @@ def _integration_label() -> str:
     return v or "jira"
 
 
+def _load_job_config() -> dict[str, Any]:
+    raw_path = os.environ.get("SCRAPER_JOB_CONFIG", "/config/job.json").strip()
+    p = Path(raw_path)
+    if not p.is_file():
+        print(f"SCRAPER_JOB_CONFIG file not found: {p}", file=sys.stderr)  # noqa: T201
+        sys.exit(1)
+    try:
+        data = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        print(f"Invalid job config JSON: {exc}", file=sys.stderr)  # noqa: T201
+        sys.exit(1)
+    if not isinstance(data, dict):
+        print("Job config must be a JSON object", file=sys.stderr)  # noqa: T201
+        sys.exit(1)
+    return data
+
+
 def _site_base(url: str) -> str:
     u = url.strip().rstrip("/")
     if not u.startswith("https://"):
@@ -41,12 +61,12 @@ def _site_base(url: str) -> str:
     return u
 
 
-def _watermark_path(scope: str, project: str) -> Path:
+def _watermark_path(scope: str, query: str) -> Path:
     root = Path(os.environ.get("JIRA_WATERMARK_DIR", "/tmp/jira-scraper-watermark").strip())
     safe_scope = re.sub(r"[^a-zA-Z0-9._-]+", "_", scope)[:80]
-    safe_proj = re.sub(r"[^a-zA-Z0-9._-]+", "_", project)[:32]
+    qhash = hashlib.sha256(query.encode("utf-8")).hexdigest()[:24]
     root.mkdir(parents=True, exist_ok=True)
-    return root / f"watermark-{safe_scope}-{safe_proj}.json"
+    return root / f"watermark-{safe_scope}-{qhash}.json"
 
 
 def _read_watermark(path: Path, overlap_minutes: int) -> str | None:
@@ -218,40 +238,52 @@ def _embed_for_issue(
     }
 
 
+def _build_jql(base_query: str, watermark_iso: str | None) -> str:
+    q = base_query.strip()
+    if not q:
+        return q
+    if watermark_iso:
+        return f'({q}) AND updated >= "{watermark_iso}" ORDER BY updated ASC'
+    return q
+
+
 def run() -> None:
     t0 = time.perf_counter()
     integration = _integration_label()
     httpd = maybe_start_scraper_metrics_http()
     run_ok = False
     try:
+        cfg = _load_job_config()
+        if str(cfg.get("source", "")).strip().lower() != "jira":
+            print("Job config source must be jira", file=sys.stderr)  # noqa: T201
+            sys.exit(1)
+        base_query = str(cfg.get("query", "")).strip()
+        if not base_query:
+            print("Job config query (JQL) is required", file=sys.stderr)  # noqa: T201
+            sys.exit(1)
+
         site = _site_base(os.environ.get("JIRA_SITE_URL", ""))
         email = os.environ.get("JIRA_EMAIL", "").strip()
         token = os.environ.get("JIRA_API_TOKEN", "").strip()
         if not email or not token:
             print("JIRA_EMAIL and JIRA_API_TOKEN are required", file=sys.stderr)  # noqa: T201
             sys.exit(1)
-        projects_raw = os.environ.get("JIRA_PROJECT_KEYS", "").strip()
-        if not projects_raw:
-            print("JIRA_PROJECT_KEYS is required", file=sys.stderr)  # noqa: T201
-            sys.exit(1)
-        projects = [p.strip() for p in projects_raw.split(",") if p.strip()]
         rag_base = os.environ.get("RAG_SERVICE_URL", "").strip().rstrip("/")
         if not rag_base:
             print("RAG_SERVICE_URL is required", file=sys.stderr)  # noqa: T201
             sys.exit(1)
         scope = os.environ.get("SCRAPER_SCOPE", "jira").strip() or "jira"
-        max_issues = int(os.environ.get("JIRA_MAX_ISSUES_PER_RUN", "50"))
-        max_comments = int(os.environ.get("JIRA_MAX_COMMENTS_PER_ISSUE", "100"))
-        overlap = int(os.environ.get("JIRA_OVERLAP_MINUTES", "5"))
+        max_issues = int(cfg.get("maxIssuesPerRun", 50))
+        max_comments = int(cfg.get("maxCommentsPerIssue", 100))
+        overlap = int(cfg.get("overlapMinutes", 5))
         fields = _default_fields()
-        extra = os.environ.get("JIRA_EXTRA_FIELDS_JSON", "").strip()
-        if extra:
-            try:
-                parsed = json.loads(extra)
-                if isinstance(parsed, list):
-                    fields = list(dict.fromkeys(fields + [str(x) for x in parsed]))
-            except json.JSONDecodeError:
-                pass
+        extra = cfg.get("extraFields")
+        if isinstance(extra, list):
+            fields = list(dict.fromkeys(fields + [str(x) for x in extra]))
+
+        wm_path = _watermark_path(scope, base_query)
+        wm = _read_watermark(wm_path, overlap)
+        jql = _build_jql(base_query, wm)
 
         all_payloads: list[dict[str, Any]] = []
         with httpx.Client(
@@ -259,27 +291,20 @@ def run() -> None:
             auth=(email, token),
             headers={"Accept": "application/json"},
         ) as client:
-            for proj in projects:
-                wm_path = _watermark_path(scope, proj)
-                wm = _read_watermark(wm_path, overlap)
-                if wm:
-                    jql = f'project = "{proj}" AND updated >= "{wm}" ORDER BY updated ASC'
-                else:
-                    jql = f'project = "{proj}" ORDER BY updated DESC'
-                issues = search_issues(client, site, jql, fields, max_issues)
-                max_upd: str | None = None
-                for issue in issues:
-                    key = issue.get("key", "")
-                    raw_comments = _fetch_comments(client, site, key, max_comments + 1)
-                    truncated = len(raw_comments) > max_comments
-                    comments = raw_comments[:max_comments]
-                    text = _issue_text(issue, comments, max_comments, truncated)
-                    all_payloads.append(_embed_for_issue(scope, issue, text))
-                    upd = (issue.get("fields") or {}).get("updated")
-                    if isinstance(upd, str):
-                        max_upd = max(max_upd, upd) if max_upd else upd
-                if max_upd:
-                    _write_watermark(wm_path, max_upd)
+            issues = search_issues(client, site, jql, fields, max_issues)
+            max_upd: str | None = None
+            for issue in issues:
+                key = issue.get("key", "")
+                raw_comments = _fetch_comments(client, site, key, max_comments + 1)
+                truncated = len(raw_comments) > max_comments
+                comments = raw_comments[:max_comments]
+                text = _issue_text(issue, comments, max_comments, truncated)
+                all_payloads.append(_embed_for_issue(scope, issue, text))
+                upd = (issue.get("fields") or {}).get("updated")
+                if isinstance(upd, str):
+                    max_upd = max(max_upd, upd) if max_upd else upd
+            if max_upd:
+                _write_watermark(wm_path, max_upd)
 
         if not all_payloads:
             run_ok = True

@@ -48,12 +48,19 @@ app.kubernetes.io/component: rag
 {{- end }}
 
 {{/*
-True when scrapers.jobs has at least one entry with enabled: true (RAG workload is deployed).
+True when scrapers.jira or scrapers.slack has at least one enabled job (RAG workload is deployed).
 */}}
 {{- define "declarative-agent-library.ragDeployed" -}}
-{{- range .Values.scrapers.jobs -}}
-{{- if .enabled -}}1{{- end -}}
-{{- end -}}
+{{- if and $.Values.scrapers.jira.enabled $.Values.scrapers.jira.jobs }}
+{{- range $.Values.scrapers.jira.jobs }}
+{{- if or (not (hasKey . "enabled")) .enabled }}1{{- end }}
+{{- end }}
+{{- end }}
+{{- if and $.Values.scrapers.slack.enabled $.Values.scrapers.slack.jobs }}
+{{- range $.Values.scrapers.slack.jobs }}
+{{- if or (not (hasKey . "enabled")) .enabled }}1{{- end }}
+{{- end }}
+{{- end }}
 {{- end }}
 
 {{/*

@@ -2,9 +2,9 @@
 
 New integration checklist (keep in sync when adding a scraper implementation):
 
-- **Helm:** extend ``helm/chart/templates/scraper-cronjobs.yaml`` so ``name: reference`` maps to
-  ``reference_job``; ``integration: slack`` (or job name ``slack``) maps to ``slack_job``;
-  ``integration: jira`` maps to ``jira_job``; otherwise ``stub_job``.
+- **Helm:** add a job shape under ``scrapers.jira.jobs`` or ``scrapers.slack.jobs``;
+  render ``scraper-job-configmaps.yaml`` + ``scraper-cronjobs.yaml`` with
+  ``hosted_agents.scrapers.jira_job`` / ``slack_job``; unknown ``source`` must fail at runtime.
 - **Example:** update ``examples/with-scrapers/values.yaml`` and
   ``helm/tests/with_scrapers_test.yaml`` so operators see every value key
   and CI asserts rendering for each built-in kind.

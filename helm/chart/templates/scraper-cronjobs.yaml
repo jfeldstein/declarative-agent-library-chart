@@ -1,23 +1,20 @@
-{{/*
-  Scraper dispatch: ``name: reference`` → ``reference_job``; ``integration: slack`` (or
-  legacy name ``slack``) → ``slack_job``; ``integration: jira`` → ``jira_job``; else ``stub_job``.
-  See ``hosted_agents.scrapers`` package docstring / ``metrics.py`` checklist.
-*/}}
-{{- range .Values.scrapers.jobs }}
-{{- if .enabled }}
-{{- $int := (.integration | default "") | lower }}
-{{- $nameLower := .name | lower }}
+{{/* One CronJob per enabled scraper job; secrets via env (Secret refs), config via mounted ConfigMap. Traceability: [DALC-REQ-RAG-SCRAPERS-002] */}}
+{{- $root := . }}
+{{- if and $root.Values.scrapers.jira.enabled $root.Values.scrapers.jira.jobs }}
+{{- range $ji, $job := $root.Values.scrapers.jira.jobs }}
+{{- if or (not (hasKey $job "enabled")) $job.enabled }}
 ---
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: {{ include "declarative-agent-library.fullname" $ }}-scraper-{{ .name }}
+  name: {{ include "declarative-agent-library.fullname" $root }}-scraper-jira-{{ $ji }}
   labels:
-    {{- include "declarative-agent-library.labels" $ | nindent 4 }}
+    {{- include "declarative-agent-library.labels" $root | nindent 4 }}
     app.kubernetes.io/component: scraper
-    scraper.agentic.cfha/name: {{ .name | quote }}
+    scraper.agentic.cfha/source: jira
+    scraper.agentic.cfha/index: {{ $ji | quote }}
 spec:
-  schedule: {{ .schedule | quote }}
+  schedule: {{ $job.schedule | quote }}
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 1
   failedJobsHistoryLimit: 2
@@ -26,69 +23,58 @@ spec:
       backoffLimit: 2
       template:
         metadata:
-          {{- if $.Values.o11y.prometheusAnnotations.enabled }}
+          {{- if $root.Values.o11y.prometheusAnnotations.enabled }}
           annotations:
             prometheus.io/scrape: "true"
             prometheus.io/port: "9091"
             prometheus.io/path: "/metrics"
           {{- end }}
           labels:
-            {{- include "declarative-agent-library.selectorLabels" $ | nindent 12 }}
+            {{- include "declarative-agent-library.selectorLabels" $root | nindent 12 }}
             app.kubernetes.io/component: scraper
-            scraper.agentic.cfha/name: {{ .name | quote }}
+            scraper.agentic.cfha/source: jira
+            scraper.agentic.cfha/index: {{ $ji | quote }}
         spec:
           restartPolicy: OnFailure
+          volumes:
+            - name: scraper-job-config
+              configMap:
+                name: {{ include "declarative-agent-library.fullname" $root }}-scraper-job-jira-{{ $ji }}
           containers:
             - name: scraper
-              image: "{{ $.Values.image.repository }}:{{ $.Values.image.tag }}"
-              imagePullPolicy: {{ $.Values.image.pullPolicy }}
-              {{- if eq .name "reference" }}
-              command:
-                - python
-                - -m
-                - hosted_agents.scrapers.reference_job
-              {{- else if or (eq $int "slack") (eq $nameLower "slack") }}
-              command:
-                - python
-                - -m
-                - hosted_agents.scrapers.slack_job
-              {{- else if or (eq $int "jira") (eq $nameLower "jira") }}
+              image: "{{ $root.Values.image.repository }}:{{ $root.Values.image.tag }}"
+              imagePullPolicy: {{ $root.Values.image.pullPolicy }}
               command:
                 - python
                 - -m
                 - hosted_agents.scrapers.jira_job
-              {{- else }}
-              command:
-                - python
-                - -m
-                - hosted_agents.scrapers.stub_job
-              {{- end }}
               ports:
                 - name: metrics
                   containerPort: 9091
                   protocol: TCP
+              volumeMounts:
+                - name: scraper-job-config
+                  mountPath: /config
+                  readOnly: true
               env:
                 - name: RAG_SERVICE_URL
-                  value: {{ include "declarative-agent-library.ragInternalBaseUrl" $ | quote }}
+                  value: {{ include "declarative-agent-library.ragInternalBaseUrl" $root | quote }}
+                - name: SCRAPER_JOB_CONFIG
+                  value: /config/job.json
                 - name: SCRAPER_NAME
-                  value: {{ .name | quote }}
+                  value: {{ printf "jira-%d" $ji | quote }}
                 - name: SCRAPER_SCOPE
-                  value: {{ (.scope | default .name) | quote }}
+                  value: {{ default (printf "%s-jira-%d" $root.Release.Name $ji) $job.scope | quote }}
                 - name: SCRAPER_INTEGRATION
-                  value: {{ (.integration | default .name) | quote }}
+                  value: "jira"
                 - name: SCRAPER_METRICS_ADDR
                   value: "0.0.0.0:9091"
                 - name: SCRAPER_METRICS_GRACE_SECONDS
                   value: "35"
-                {{- if or (eq $int "jira") (eq $nameLower "jira") }}
-                {{- with $.Values.scrapers.jira }}
+                {{- with $root.Values.scrapers.jira }}
                 {{- if .siteUrl }}
                 - name: JIRA_SITE_URL
                   value: {{ .siteUrl | quote }}
-                {{- end }}
-                {{- if .projectKeys }}
-                - name: JIRA_PROJECT_KEYS
-                  value: {{ join "," .projectKeys | quote }}
                 {{- end }}
                 {{- if .watermarkDir }}
                 - name: JIRA_WATERMARK_DIR
@@ -108,28 +94,109 @@ spec:
                       name: {{ .auth.tokenSecretName | quote }}
                       key: {{ .auth.tokenSecretKey | quote }}
                 {{- end }}
-                {{- with .defaults }}
-                {{- if hasKey . "maxIssuesPerRun" }}
-                - name: JIRA_MAX_ISSUES_PER_RUN
-                  value: {{ .maxIssuesPerRun | toString | quote }}
                 {{- end }}
-                {{- if hasKey . "maxCommentsPerIssue" }}
-                - name: JIRA_MAX_COMMENTS_PER_ISSUE
-                  value: {{ .maxCommentsPerIssue | toString | quote }}
-                {{- end }}
-                {{- if hasKey . "overlapMinutes" }}
-                - name: JIRA_OVERLAP_MINUTES
-                  value: {{ .overlapMinutes | toString | quote }}
-                {{- end }}
-                {{- end }}
-                {{- end }}
-                {{- end }}
-                {{- with .extraEnv }}
-                {{- toYaml . | nindent 16 }}
-                {{- end }}
-              {{- with $.Values.scrapers.resources }}
+              {{- with $root.Values.scrapers.resources }}
               resources:
                 {{- toYaml . | nindent 16 }}
               {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- if and $root.Values.scrapers.slack.enabled $root.Values.scrapers.slack.jobs }}
+{{- range $si, $job := $root.Values.scrapers.slack.jobs }}
+{{- if or (not (hasKey $job "enabled")) $job.enabled }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "declarative-agent-library.fullname" $root }}-scraper-slack-{{ $si }}
+  labels:
+    {{- include "declarative-agent-library.labels" $root | nindent 4 }}
+    app.kubernetes.io/component: scraper
+    scraper.agentic.cfha/source: slack
+    scraper.agentic.cfha/index: {{ $si | quote }}
+spec:
+  schedule: {{ $job.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          {{- if $root.Values.o11y.prometheusAnnotations.enabled }}
+          annotations:
+            prometheus.io/scrape: "true"
+            prometheus.io/port: "9091"
+            prometheus.io/path: "/metrics"
+          {{- end }}
+          labels:
+            {{- include "declarative-agent-library.selectorLabels" $root | nindent 12 }}
+            app.kubernetes.io/component: scraper
+            scraper.agentic.cfha/source: slack
+            scraper.agentic.cfha/index: {{ $si | quote }}
+        spec:
+          restartPolicy: OnFailure
+          volumes:
+            - name: scraper-job-config
+              configMap:
+                name: {{ include "declarative-agent-library.fullname" $root }}-scraper-job-slack-{{ $si }}
+          containers:
+            - name: scraper
+              image: "{{ $root.Values.image.repository }}:{{ $root.Values.image.tag }}"
+              imagePullPolicy: {{ $root.Values.image.pullPolicy }}
+              command:
+                - python
+                - -m
+                - hosted_agents.scrapers.slack_job
+              ports:
+                - name: metrics
+                  containerPort: 9091
+                  protocol: TCP
+              volumeMounts:
+                - name: scraper-job-config
+                  mountPath: /config
+                  readOnly: true
+              env:
+                - name: RAG_SERVICE_URL
+                  value: {{ include "declarative-agent-library.ragInternalBaseUrl" $root | quote }}
+                - name: SCRAPER_JOB_CONFIG
+                  value: /config/job.json
+                - name: SCRAPER_NAME
+                  value: {{ printf "slack-%d" $si | quote }}
+                - name: SCRAPER_SCOPE
+                  value: {{ default (printf "%s-slack-%d" $root.Release.Name $si) $job.scope | quote }}
+                - name: SCRAPER_INTEGRATION
+                  value: "slack"
+                - name: SCRAPER_METRICS_ADDR
+                  value: "0.0.0.0:9091"
+                - name: SCRAPER_METRICS_GRACE_SECONDS
+                  value: "35"
+                {{- with $root.Values.scrapers.slack.stateDir }}
+                - name: SLACK_STATE_DIR
+                  value: {{ . | quote }}
+                {{- end }}
+                {{- with $root.Values.scrapers.slack.auth }}
+                {{- if .botTokenSecretName }}
+                - name: SLACK_BOT_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .botTokenSecretName | quote }}
+                      key: {{ .botTokenSecretKey | quote }}
+                {{- end }}
+                {{- if .userTokenSecretName }}
+                - name: SLACK_USER_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .userTokenSecretName | quote }}
+                      key: {{ .userTokenSecretKey | quote }}
+                {{- end }}
+                {{- end }}
+              {{- with $root.Values.scrapers.resources }}
+              resources:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
+{{- end }}
 {{- end }}
 {{- end }}

@@ -26,4 +26,9 @@ declarative-agent-library:
         type: ClusterIP
         port: 8090
       resources: {}
-    jobs: []
+    jira:
+      enabled: false
+      jobs: []
+    slack:
+      enabled: false
+      jobs: []

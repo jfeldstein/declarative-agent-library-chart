@@ -22,7 +22,7 @@ flowchart TB
     API[FastAPI: /api/v1/trigger, /metrics, ...]
     LG[LangGraph trigger pipeline]
     RAG_APP[RAG HTTP app: /v1/*, /metrics]
-    SCR[scraper modules: reference_job | stub_job]
+    SCR[scraper modules: jira_job | slack_job]
   end
   UV --> DEP
   DEP --> CM
@@ -66,7 +66,7 @@ The library chart is published from `helm/chart` (`Chart.yaml` describes it as r
 |------|-------------|--------|
 | Agent workload | `Deployment`, `Service` | Agent listens on container port **8088**; Service port is configurable (`values.service.port`). |
 | Configuration | `ConfigMap` | System prompt, `subagents.json`, `skills.json`, MCP allowlist JSON, observability JSON blobs (label registry, Slack emoji map, shadow tenant allowlist). |
-| Scrapers | `CronJob` (per enabled job) | One manifest per `scrapers.jobs[]` entry with `enabled: true`. |
+| Scrapers | `CronJob` + `ConfigMap` (per enabled job) | Under `scrapers.jira` / `scrapers.slack`: one pair per job with `enabled: true` (see [DALC-REQ-RAG-SCRAPERS-002](openspec/specs/dalc-rag-from-scrapers/spec.md)). |
 | Managed RAG | `Deployment`, `Service` | Rendered **if and only if** at least one scraper job is enabled ([DALC-REQ-RAG-SCRAPERS-002](openspec/specs/dalc-rag-from-scrapers/spec.md)). No top-level `rag` key; tuning lives under `scrapers.ragService` ([DALC-REQ-RAG-SCRAPERS-001](openspec/specs/dalc-rag-from-scrapers/spec.md)). |
 | Naming | Helpers in `_helpers.tpl` | `fullname`, selector labels, `ragInternalBaseUrl` (cluster DNS URL to the RAG Service when deployed). |
 
@@ -95,8 +95,8 @@ These are **runtime** concerns; the chart’s role is to pass consistent env and
 
 ### Scrapers
 
-- **Configuration:** `scrapers.jobs` is a list of jobs with `name`, `enabled`, `schedule`, optional `scope`, and `extraEnv`.
-- **Dispatch:** In `templates/scraper-cronjobs.yaml`, `name: reference` runs `python -m hosted_agents.scrapers.reference_job`; any other name runs `hosted_agents.scrapers.stub_job` until a new branch is added.
+- **Configuration:** `scrapers.jira` and `scrapers.slack` each expose `enabled`, shared auth/site settings, `defaults`, and a `jobs` list (`schedule`, `source`, and source-specific fields). Non-secret fields render into a per-job `ConfigMap` (`job.json`).
+- **Dispatch:** `templates/scraper-cronjobs.yaml` runs `jira_job` or `slack_job` only; unknown `source` values fail at runtime (process exit non-zero).
 - **Environment:** Each job receives `RAG_SERVICE_URL` (cluster-internal base URL to the managed RAG Service), `SCRAPER_NAME`, `SCRAPER_SCOPE`, and metrics bind settings (`SCRAPER_METRICS_ADDR`, grace period).
 - **Metrics:** Scraper pods expose Prometheus metrics on port **9091** (separate from the agent’s `/metrics` on the main HTTP port), with optional scrape annotations when `o11y.prometheusAnnotations.enabled` is true.
 

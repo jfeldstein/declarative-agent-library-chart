@@ -17,7 +17,7 @@ Standalone repository for **YAML-configured** hosted agents: a **Helm library ch
 | `helm/tests/chart/` | Notes for Helm `helm test` hooks |
 | `examples/hello-world/` | Minimal application chart depending on `file://../../helm/chart` |
 | `examples/with-observability/` | Example chart with `o11y` (Prometheus annotations, ServiceMonitor, JSON logs) |
-| `examples/with-scrapers/` | Example chart with RAG + reference scraper `CronJob` (validated in CI; see below) |
+| `examples/with-scrapers/` | Example chart with RAG + Jira/Slack scraper `CronJob`s (validated in CI; see below) |
 | `examples/checkpointing/` | Example chart with LangGraph checkpoints enabled (`memory` backend) |
 | `helm/Dockerfile` | Production-style image for the Python runtime (build context: repository root) |
 | `skaffold.yaml` / `devspace.yaml` | Local deploy + **port-forward `localhost:8088` → service :8088** |
@@ -147,7 +147,7 @@ Values keys under the **`declarative-agent-library`** subchart configure these r
 
 | Values key | Role |
 |------------|------|
-| `scrapers.jobs` | **CronJobs** that push normalized content (and graph edges when known) into RAG; built-in **`reference`** job posts a fixture document + `contained_in` edge. If **at least one** job has **`enabled: true`**, the chart also deploys the **managed RAG HTTP** Deployment + Service (`/v1/embed`, `/v1/query`, `/v1/relate`) — see [docs/rag-http-api.md](docs/rag-http-api.md). Tune RAG replicas/port/resources under **`scrapers.ragService`**. |
+| `scrapers.jira` / `scrapers.slack` | **CronJobs** (one per enabled job) push normalized content into RAG; each job mounts a **ConfigMap** (`job.json`) and receives tokens via **Secret** `valueFrom` env vars. If **at least one** job is enabled (parent `enabled: true` and job `enabled` not `false`), the chart deploys the **managed RAG HTTP** Deployment + Service — see [docs/rag-http-api.md](docs/rag-http-api.md). Tune RAG under **`scrapers.ragService`**. |
 | `mcp.enabledTools` | Allowlisted **in-process tools** merged into the **supervisor** tool list (and still invokable directly via **`POST /api/v1/trigger`** with `{"tool":"…","tool_arguments":{…}}`). Layout: [helm/src/hosted_agents/tools_impl/README.md](helm/src/hosted_agents/tools_impl/README.md). **Merge order:** subagent tools (config order) then MCP tools (sorted by id). |
 | `subagents` | JSON list of specialists compiled into **LangGraph subgraphs** and registered as **LangChain tools** on the root agent ([LangChain subagents](https://docs.langchain.com/oss/python/langchain/multi-agent/subagents)). **Recommended:** **`description`** for each entry (tool schema text). **`exposeAsTool`**: omit or **`true`** to register the tool; **`role: metrics`** defaults to **`exposeAsTool: false`** so Prometheus snapshots stay off the default tool list unless you opt in. Optional **`role`**: **`default`** (uses `systemPrompt` + optional task text from the tool call); **`metrics`** (returns agent Prometheus text inside the tool); **`rag`** (tool arguments carry `query` / RAG fields; proxies to RAG `/v1/query` with **`X-Request-Id`**). |
 | `skills` | JSON catalog `{ "name", "prompt", "extraTools"? }` — load with **`POST /api/v1/trigger`** and `{"load_skill":"<name>"}` (progressive disclosure; aligns with [LangChain Skills](https://docs.langchain.com/oss/python/langchain/multi-agent/skills)). |
@@ -184,10 +184,18 @@ Under the subchart key `declarative-agent-library`, set JSON-compatible YAML (st
 ```yaml
 declarative-agent-library:
   scrapers:
-    jobs:
-      - name: reference
-        enabled: true
-        schedule: "0 * * * *"
+    jira:
+      enabled: true
+      siteUrl: https://example.atlassian.net
+      auth:
+        emailSecretName: jira-credentials
+        emailSecretKey: email
+        tokenSecretName: jira-credentials
+        tokenSecretKey: token
+      jobs:
+        - schedule: "0 * * * *"
+          source: jira
+          query: 'project = DEMO ORDER BY updated ASC'
   subagents:
     - name: metrics
       role: metrics
@@ -218,14 +226,14 @@ declarative-agent-library:
 
 ### End-to-end trace (POC)
 
-1. **Scraper → RAG:** CronJob `reference` calls `python -m hosted_agents.scrapers.reference_job` with `RAG_SERVICE_URL` set to the RAG Service (`http://<release>-rag:8090` when an enabled scraper job has deployed RAG).
+1. **Scraper → RAG:** Each enabled job under `scrapers.jira` / `scrapers.slack` runs `python -m hosted_agents.scrapers.jira_job` or `slack_job` with `RAG_SERVICE_URL` set to the RAG Service (`http://<release>-rag:8090` when the RAG gate per [DALC-REQ-RAG-SCRAPERS-002](openspec/specs/dalc-rag-from-scrapers/spec.md) is satisfied).
 2. **Agent → RAG (utility HTTP):** `POST /api/v1/rag/query` proxies to RAG `/v1/query` (not the agent *launch* path; use **trigger** for orchestrated runs).
 3. **Tool:** With `mcp.enabledTools` including `sample.echo`, either ask the supervisor in natural language or call `POST /api/v1/trigger` with `{"tool":"sample.echo","tool_arguments":{"message":"hi"}}` (direct path bypasses the LLM).
 
 ### Scrapers: verifying CronJobs
 
-- **Disabled by default:** `helm template` on `examples/hello-world` yields **no** `CronJob` when `scrapers.jobs` is empty.
-- **Enabled example:** `examples/with-scrapers/` enables the `reference` scraper (which deploys RAG); CI (`helm unittest` on that chart) asserts scraper + RAG manifest rendering, including at least one `CronJob`.
+- **Disabled by default:** `helm template` on `examples/hello-world` yields **no** scraper `CronJob` when `scrapers.jira.enabled` and `scrapers.slack.enabled` are false (or have no enabled jobs).
+- **Enabled example:** `examples/with-scrapers/` enables Jira and Slack scraper jobs (which deploy RAG); CI (`helm unittest` on that chart) asserts scraper + RAG manifest rendering, including at least one `CronJob`.
 
 ## Extension points
 

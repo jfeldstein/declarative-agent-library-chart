@@ -1,21 +1,20 @@
-# Example: all ``scrapers`` Helm keys and built-in job entrypoints.
+# Example: ``scrapers.jira`` and ``scrapers.slack`` with ``enabled`` + ``jobs[]``.
 #
-# - ``name: reference`` → ``python -m hosted_agents.scrapers.reference_job`` (POSTs fixture
-#   payload to RAG ``/v1/embed``; see ``REFERENCE_SCRAPER_TEXT`` / ``SCRAPER_SCOPE`` in code).
-# - ``integration: slack`` (or job name ``slack``) → ``hosted_agents.scrapers.slack_job`` (needs
-#   ``SLACK_BOT_TOKEN``, ``SLACK_SCRAPER_SEARCHES_JSON`` / ``SLACK_SCRAPER_SEARCHES_FILE``).
-# - ``integration: jira`` → ``hosted_agents.scrapers.jira_job`` (needs ``JIRA_*`` env; shared
-#   ``scrapers.jira`` in values for ``siteUrl``, ``projectKeys``, optional secret refs).
-# - Any other job → ``python -m hosted_agents.scrapers.stub_job`` (no external API;
-#   metrics-only / placeholder).
-# - At least one job with ``enabled: true`` deploys the managed RAG Deployment+Service.
-# - Per-job env: chart sets ``RAG_SERVICE_URL``, ``SCRAPER_NAME``, ``SCRAPER_SCOPE`` (defaults
-#   to job name), ``SCRAPER_METRICS_ADDR``, ``SCRAPER_METRICS_GRACE_SECONDS``; use ``extraEnv``
-#   for integration-specific variables (wired in ``helm/chart/templates/scraper-cronjobs.yaml``).
+# Each enabled job gets a ConfigMap (``job.json``) + CronJob on ``schedule``. Non-secret
+# fields live in the ConfigMap; tokens use ``auth.*SecretName`` → env ``valueFrom``.
 #
-# When adding a new scraper implementation, also update: ``examples/with-scrapers/`` (this file
-# + tests), ``grafana/dalc-agent-overview.json`` (scraper metric panels), and the dispatch in
-# ``helm/chart/templates/scraper-cronjobs.yaml``. See ``hosted_agents.scrapers`` package docstring.
+# * **Jira** — ``source: jira``, ``query`` (JQL). Site URL + watermark dir + auth on
+#   ``scrapers.jira``; optional numeric defaults merge into ``job.json``.
+# * **Slack** — ``source: slack_search`` (Real-time Search + ``conversations.replies`` /
+#   ``conversations.history`` context windows; needs ``SLACK_USER_TOKEN``) or
+#   ``source: slack_channel`` (``conversationId`` + ``conversations.history`` incremental
+#   state under ``stateDir``; needs ``SLACK_BOT_TOKEN``).
+#
+# Unknown ``source`` values cause the scraper process to exit non-zero (CrashLoop).
+# At least one enabled job under an enabled parent deploys the managed RAG Deployment+Service.
+#
+# When adding a scraper source, update: this file, ``helm/tests/with_scrapers_test.yaml``,
+# ``grafana/dalc-agent-overview.json``, and ``helm/chart/templates/scraper-*.yaml``.
 declarative-agent-library:
   systemPrompt: |
     Respond, "Hello :wave:"
@@ -24,7 +23,6 @@ declarative-agent-library:
     tag: local
     pullPolicy: Never
   scrapers:
-    # Applied to every scraper CronJob container (optional).
     resources:
       limits:
         cpu: 500m
@@ -32,7 +30,6 @@ declarative-agent-library:
       requests:
         cpu: 50m
         memory: 128Mi
-    # Managed RAG HTTP API; rendered only when ``jobs`` contains ``enabled: true``.
     ragService:
       replicaCount: 1
       service:
@@ -45,27 +42,44 @@ declarative-agent-library:
         requests:
           cpu: 100m
           memory: 256Mi
-    jobs:
-      # Reference integration: embeds text + entity graph into RAG (``agent_runtime_scraper_rag_submissions_*``).
-      - name: reference
-        enabled: true
-        schedule: "0 * * * *"
-        # Maps to ``SCRAPER_SCOPE`` (RAG payload + metrics ``integration`` unless overridden).
-        scope: demo-reference-scope
-        extraEnv:
-          - name: SCRAPER_INTEGRATION
-            value: reference
-          - name: REFERENCE_SCRAPER_TEXT
-            value: "with-scrapers example: optional fixture text for /v1/embed."
-      # Non-reference name → stub_job (same ``agent_runtime_scraper_*`` metrics; no RAG POST).
-      - name: example-stub
-        enabled: true
-        schedule: "15 */2 * * *"
-        scope: demo-stub-scope
-        extraEnv:
-          - name: SCRAPER_INTEGRATION
-            value: example_stub
-      # Documented pattern only: no CronJob is rendered when ``enabled: false``.
-      - name: disabled-placeholder
-        enabled: false
-        schedule: "0 0 * * *"
+    jira:
+      enabled: true
+      siteUrl: https://example.atlassian.net
+      watermarkDir: /tmp/jira-scraper-watermark
+      auth:
+        emailSecretName: jira-credentials
+        emailSecretKey: email
+        tokenSecretName: jira-credentials
+        tokenSecretKey: token
+      defaults:
+        maxIssuesPerRun: 25
+        maxCommentsPerIssue: 80
+        overlapMinutes: 5
+      jobs:
+        - schedule: "0 * * * *"
+          source: jira
+          query: 'project = DEMO ORDER BY updated ASC'
+          scope: demo-jira-scope
+        - schedule: "15 0 * * *"
+          enabled: false
+          source: jira
+          query: 'project = OTHER ORDER BY updated ASC'
+    slack:
+      enabled: true
+      stateDir: /tmp/slack-scraper-state
+      auth:
+        botTokenSecretName: slack-bot-token
+        botTokenSecretKey: token
+        userTokenSecretName: slack-user-token
+        userTokenSecretKey: token
+      jobs:
+        - schedule: "30 * * * *"
+          source: slack_search
+          query: deployment OR kubernetes
+          contextBeforeMinutes: 20
+          contextAfterMinutes: 10
+          scope: demo-slack-rts
+        - schedule: "45 */4 * * *"
+          source: slack_channel
+          conversationId: C0123456789
+          scope: demo-slack-channel

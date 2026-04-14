@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
+
 import httpx
+import pytest
 
 from hosted_agents.scrapers import jira_job
 from hosted_agents.scrapers.jira_job import search_issues
@@ -70,9 +73,15 @@ def test_search_issues_next_page_token() -> None:
     assert [i["key"] for i in issues] == ["DEMO-1", "DEMO-2"]
 
 
+def test_build_jql_with_watermark() -> None:
+    q = jira_job._build_jql('project = DEMO ORDER BY updated ASC', "2024-01-01 00:00")
+    assert "project = DEMO" in q
+    assert "updated >=" in q
+
+
 def test_watermark_roundtrip(tmp_path, monkeypatch) -> None:
     monkeypatch.setenv("JIRA_WATERMARK_DIR", str(tmp_path))
-    p = jira_job._watermark_path("scope", "DEMO")
+    p = jira_job._watermark_path("scope", 'project = "DEMO"')
     jira_job._write_watermark(p, "2024-02-01T12:00:00.000+0000")
     wm = jira_job._read_watermark(p, overlap_minutes=5)
     assert wm is not None
@@ -89,6 +98,50 @@ def test_fetch_comments_empty() -> None:
     client = httpx.Client(transport=transport, auth=("a", "b"))
     out = jira_job._fetch_comments(client, "https://h.example", "DEMO-1", 10)
     assert out == []
+
+
+def test_run_jira_end_to_end_mocked(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    """Exercise ``jira_job.run()`` with mocked HTTP (search, comments, RAG embed)."""
+    job = {"source": "jira", "query": 'project = DEMO ORDER BY updated ASC', "maxIssuesPerRun": 2}
+    cfg = tmp_path / "job.json"
+    cfg.write_text(json.dumps(job), encoding="utf-8")
+    monkeypatch.setenv("SCRAPER_JOB_CONFIG", str(cfg))
+    monkeypatch.setenv("JIRA_SITE_URL", "https://jira.example.net")
+    monkeypatch.setenv("JIRA_EMAIL", "u@example.com")
+    monkeypatch.setenv("JIRA_API_TOKEN", "secret")
+    monkeypatch.setenv("JIRA_WATERMARK_DIR", str(tmp_path / "wm"))
+    monkeypatch.setenv("RAG_SERVICE_URL", "http://rag.local")
+    monkeypatch.setenv("SCRAPER_METRICS_ADDR", "")
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        u = str(request.url)
+        if "/rest/api/3/search/jql" in u:
+            return httpx.Response(
+                200,
+                json={
+                    "issues": [
+                        {
+                            "key": "DEMO-9",
+                            "fields": {"updated": "2024-03-01T00:00:00.000+0000"},
+                        },
+                    ],
+                    "total": 1,
+                },
+            )
+        if "/rest/api/3/issue/DEMO-9/comment" in u:
+            return httpx.Response(200, json={"comments": [], "total": 0})
+        if u.rstrip("/").endswith("/v1/embed"):
+            return httpx.Response(200, json={"ok": True})
+        return httpx.Response(404, json={"err": u})
+
+    transport = httpx.MockTransport(handler)
+    real_client_cls = jira_job.httpx.Client
+
+    def client_factory(**kwargs: object) -> httpx.Client:
+        return real_client_cls(transport=transport, **kwargs)
+
+    monkeypatch.setattr(jira_job.httpx, "Client", client_factory)
+    jira_job.run()
 
 
 def test_issue_text_builds() -> None:

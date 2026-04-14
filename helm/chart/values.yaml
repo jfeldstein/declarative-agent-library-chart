@@ -44,14 +44,14 @@ o11y:
     extraLabels: {}
 
 # Traceability: [DALC-REQ-RAG-SCRAPERS-003] (RAG tunables under ``scrapers.ragService``).
-# Scheduled scrapers (CronJobs). When at least one job has enabled: true, the chart also
-# deploys the managed RAG HTTP service (see scrapers.ragService). Reference job POSTs to RAG_SERVICE_URL.
+# Scheduled scrapers: ``scrapers.jira`` and ``scrapers.slack`` each have ``enabled``, ``jobs[]``.
+# When any job has ``enabled: true`` (and the parent ``enabled`` is true), the chart deploys RAG.
+# Job JSON (minus secrets) is mounted at ``/config/job.json``; tokens come from Secret refs in env.
 scrapers:
   resources: {}
-  # Jira Cloud scraper defaults (used when a job sets ``integration: jira``). See openspec/changes/jira-scraper/.
   jira:
+    enabled: false
     siteUrl: ""
-    projectKeys: []
     watermarkDir: ""
     auth:
       emailSecretName: ""
@@ -59,13 +59,23 @@ scrapers:
       tokenSecretName: ""
       tokenSecretKey: token
     defaults: {}
+    jobs: []
+  slack:
+    enabled: false
+    stateDir: /tmp/slack-scraper-state
+    auth:
+      botTokenSecretName: ""
+      botTokenSecretKey: token
+      userTokenSecretName: ""
+      userTokenSecretKey: token
+    defaults: {}
+    jobs: []
   ragService:
     replicaCount: 1
     service:
       type: ClusterIP
       port: 8090
     resources: {}
-  jobs: []
 
 # Declarative subagents (JSON → HOSTED_AGENT_SUBAGENTS_JSON). See README (LangChain subagents pattern).
 subagents: []

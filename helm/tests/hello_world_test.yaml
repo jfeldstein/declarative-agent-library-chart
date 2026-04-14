@@ -5,8 +5,13 @@ suite: hello-world default values
 release:
   name: cfha-ci
 tests:
-  - it: produces no CronJob documents when scrapers.jobs is empty
+  - it: produces no scraper CronJob documents when no jira or slack jobs are enabled
     template: charts/declarative-agent-library/templates/scraper-cronjobs.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: produces no scraper job ConfigMaps when no jira or slack jobs are enabled
+    template: charts/declarative-agent-library/templates/scraper-job-configmaps.yaml
     asserts:
       - hasDocuments:
           count: 0
