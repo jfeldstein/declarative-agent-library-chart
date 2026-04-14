@@ -165,3 +165,5 @@ Use this as **one valid topological sort**. Re-run `openspec list --json` after 
 ## Maintenance
 
 When a change reaches **complete** in `openspec list` and is archived, remove or strike it from the checklist and refresh the DAG if new changes appear. Optionally link this doc from `ARCHITECTURE.md` or `AGENTS.md` if maintainers want it discoverable.
+
+**Downstream implementation handoffs:** each linear step has a corresponding `docs/implementation-specs/<NN>-*-spec.md` file (plan-for-downstream-llm style: contracts, TDD targets, stages). Update or supersede those files when the checklist or OpenSpec deltas change materially.
