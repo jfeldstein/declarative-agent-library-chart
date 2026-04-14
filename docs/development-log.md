@@ -10,6 +10,8 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 **OpenSpec `slack-bot`** — Change at **`openspec/changes/slack-bot/`** (proposal, design, **`tasks.md`**) split into **`slack-trigger`** (`specs/slack-trigger/spec.md`, **`[CFHA-REQ-SLACK-TRIGGER-*]`**: `@mention` → hosted trigger pipeline, URL challenge / signing, no RAG on trigger path, secrets vs scraper) and **`slack-tools`** (`specs/slack-tools/spec.md`, **`[CFHA-REQ-SLACK-TOOLS-*]`**: LLM-time Web API tools for ack/reply, bounded history, **`slack_sdk`**, no default **`/v1/embed`**). Implementation pending apply workflow.
 
+**OpenSpec `jira-bot`** — Same pattern under **`openspec/changes/jira-bot/`**: **`jira-trigger`** (`specs/jira-trigger/spec.md`, **`[CFHA-REQ-JIRA-TRIGGER-*]`**, webhooks → **`run_trigger_graph`**, verification, no default **`/v1/embed`**, config disjoint from **`scrapers.jira`**) and **`jira-tools`** (`specs/jira-tools/spec.md`, **`[CFHA-REQ-JIRA-TOOLS-*]`**, **`httpx`** REST, scoped search/mutate, no default RAG ingest). Stub **`openspec/changes/jira-tools/.openspec.yaml`** parallels **`slack-tools`**. Implementation pending apply workflow.
+
 ## 2026-04-13
 
 **OpenSpec `slack-scraper`** — Added change at **`openspec/changes/slack-scraper/`** (proposal, design, **`specs/slack-scraper/spec.md`** with **`[CFHA-REQ-SLACK-SCRAPER-*]`** requirements, **`tasks.md`**) for a scheduled Slack scraper: operator-defined search list per run, **`slack_sdk`/`slack-bolt`** (bolt-python stack) for Web API calls, **`POST /v1/embed`** for new/updated messages, Helm dispatch by **`SCRAPER_INTEGRATION`**, bounded metrics. Implementation pending **`/opsx:apply`** / **`openspec-apply-change`**.
