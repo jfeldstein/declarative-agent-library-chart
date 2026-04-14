@@ -11,11 +11,7 @@ from hosted_agents.observability.atif import (
 )
 from hosted_agents.observability.checkpointer import build_checkpointer
 from hosted_agents.observability.correlation import SlackMessageRef, correlation_store
-from hosted_agents.observability.feedback import (
-    HumanFeedbackEvent,
-    RunOperationalEvent,
-    feedback_store,
-)
+from hosted_agents.observability.feedback import HumanFeedbackEvent, feedback_store
 from hosted_agents.observability.label_registry import LabelRegistry, get_label_registry
 from hosted_agents.observability.run_context import bind_run_context, new_tool_call_id
 from hosted_agents.observability.settings import ObservabilitySettings
@@ -34,7 +30,6 @@ __all__ = [
     "HumanFeedbackEvent",
     "LabelRegistry",
     "ObservabilitySettings",
-    "RunOperationalEvent",
     "ShadowSettings",
     "SlackMessageRef",
     "TrajectoryRecorder",

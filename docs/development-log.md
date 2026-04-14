@@ -8,6 +8,8 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ## 2026-04-14
 
+**Operational-event persistence removed** — Dropped the **`RunOperationalEvent`** / in-memory ops stream, shadow-schedule logging in **`run_trigger_graph`**, and the **“Operational signals storage”** SHALL from **`openspec/changes/postgres-agent-persistence`**. Postgres persistence OpenSpec and tasks now cover correlation, human feedback, side-effects, and span summaries only; **`agent-checkpointing-wandb-feedback`** tasks **7.3–7.4** removed accordingly.
+
 **Worktree → `main` (flatten Helm)** — **`38360d0`** was cherry-picked as **`6bcb0b6`** (`refactor(helm): flatten hosted_agents path; move Dockerfile to helm/`). An earlier attempt to cherry-pick **`31e32c9`** was aborted due to conflicts; **`31e32c9`** was later cherry-picked onto **`main`** after resolving paths (**`helm/src/hosted_agents/`**), Jira **`search/jql`**, and removal of **reference**/**stub** entrypoints.
 
 **Python project layout (`helm/src/`)** — The **`uv`** / pytest tree (`hosted_agents/`, `tests/`, `pyproject.toml`, lockfile) lives under **`helm/src/`** (moved from **`runtime/`** earlier). The nested **`helm/src/src/hosted_agents/`** path was **flattened** to **`helm/src/hosted_agents/`**; Hatch **`packages`**, **ruff**, and **coverage** use the top-level **`hosted_agents`** package. The agent image is built with **`helm/Dockerfile`** from the **repository root** (`docker build -f helm/Dockerfile … .`), replacing the former root **`Dockerfile`**.

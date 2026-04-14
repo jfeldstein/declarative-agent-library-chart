@@ -7,7 +7,7 @@ The runtime already exposes env-driven checkpointing (`MemorySaver`) and in-proc
 **Goals:**
 
 - **LangGraph checkpoints** persisted in Postgres using a **supported** LangGraph checkpointer implementation (pin exact package and version in `pyproject.toml`).
-- **Application tables** for correlation (`slack channel_id + ts → tool_call_id, run_id, thread_id, checkpoint_id`), `HumanFeedbackEvent`, `RunOperationalEvent`, and side-effect checkpoint rows—behind **interfaces** so Memory and Postgres can coexist.
+- **Application tables** for correlation (`slack channel_id + ts → tool_call_id, run_id, thread_id, checkpoint_id`), `HumanFeedbackEvent`, and side-effect checkpoint rows—behind **interfaces** so Memory and Postgres can coexist.
 - **Clear migration story**: versioned SQL or migration tool; documented apply order for Helm.
 - **Safe defaults**: if Postgres URL unset, behavior matches today (memory / no durable app store).
 

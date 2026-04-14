@@ -14,14 +14,12 @@ from hosted_agents.checkpointing import (
     resolve_checkpointer,
 )
 from hosted_agents.observability.checkpointer import build_checkpointer
-from hosted_agents.observability.feedback import RunOperationalEvent, feedback_store
 from hosted_agents.observability.run_context import (
     bind_run_context,
     get_run_id,
     set_wandb_session,
 )
 from hosted_agents.observability.settings import ObservabilitySettings
-from hosted_agents.observability.shadow import ShadowSettings, should_run_shadow
 from hosted_agents.observability.trajectory import trajectory_recorder
 from hosted_agents.observability.wandb_trace import WandbTraceSession
 from hosted_agents.reply import trigger_reply_text
@@ -282,22 +280,6 @@ def run_trigger_graph(ctx: TriggerContext) -> str:
     )
     wandb_session = WandbTraceSession(settings=obs, run_name=ctx.run_id, tags=tags)
     set_wandb_session(wandb_session if obs.wandb_enabled else None)
-
-    shadow_cfg = ShadowSettings.from_env()
-    if shadow_cfg and should_run_shadow(
-        tenant_id=ctx.tenant_id,
-        obs_enabled=obs.shadow_enabled,
-        sample_rate=obs.shadow_sample_rate,
-        allow_tenants=obs.shadow_allow_tenants,
-    ):
-        feedback_store.record_operational(
-            RunOperationalEvent(
-                kind="shadow_scheduled",
-                run_id=ctx.run_id,
-                thread_id=ctx.thread_id,
-                payload={"shadow_variant_id": shadow_cfg.variant_id},
-            )
-        )
 
     graph = compiled_trigger_graph(ctx)
     thread_cfg: dict[str, Any] = {
