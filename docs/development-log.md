@@ -12,6 +12,8 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 **OpenSpec** — Earlier today: deleted **`shadow-rollout-evaluation`** and **`shadow-non-mutating-twin-execution`**; **`agent-checkpointing-wandb-feedback`** no longer defers to those paths. Later: **`agent-maker-system`** rescoped (prefix policy, bot MVP, eval reuse); stubs **`subagent-reference-system`**, **`ci-delta-flagging`**; **`traceability`** proposal/design updated for **test-to-spec** vocabulary, proposed-vs-promoted matrix rules, and **`runtime-tools-mcp` contract vs wire**.
 
+**OpenSpec `traceability` (tasks closure)** — Implementation was already on **`main`** (IDs, matrix, **`scripts/check_spec_traceability.py`**, CI job, scheduled o11y workflow, **`AGENTS.md`** / **`.cursor/rules/spec-traceability.mdc`**). Marked **`openspec/changes/traceability/tasks.md`** **15/15** complete; aligned **`openspec/changes/agent-runtime-components/specs/runtime-tools-mcp/spec.md`** section title with the **`traceability`** copy (**`## MODIFIED Requirements`**).
+
 ## 2026-04-12
 
 **PR #11 merge with `main`** — Reconciled divergent LangGraph wiring: **`HOSTED_AGENT_CHECKPOINT_STORE`** (default-on memory; `none` disables persistence) drives the compiled checkpointer when **`HOSTED_AGENT_CHECKPOINTS_ENABLED`** is unset; operator **`GET /api/v1/runtime/threads/...`** routes still require the explicit checkpoints flag. Helm **`deployment.yaml`** keeps the observability env block and adds **`extraEnv`**. Example chart **`charts/*.tgz`** dependencies are **gitignored**; run **`helm dependency build`** under each example. Tool calls use **`run_context.next_tool_call_id`** alongside observability trajectory / W&B spans.
