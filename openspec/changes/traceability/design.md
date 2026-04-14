@@ -9,7 +9,7 @@ The repository already enforces **85% Python line coverage** and runs **helm uni
 **Goals:**
 
 - Define a **small, consistent ID scheme** and where IDs live (requirement headers or first line of the requirement body).
-- Choose a **single source of traceability**: a **matrix** (e.g. Markdown or CSV under `docs/` or `runtime/`) **and/or** **pytest docstrings** / file-level comments that list `CFHA-…` IDs—pick one primary artifact so CI can grep it.
+- Choose a **single source of traceability**: a **matrix** (e.g. Markdown or CSV under `docs/` or `helm/src/`) **and/or** **pytest docstrings** / file-level comments that list `CFHA-…` IDs—pick one primary artifact so CI can grep it.
 - Add a **CI check** that is **practical on every PR**: e.g. fail if promoted `openspec/specs/**/spec.md` requirements lack IDs, or if matrix lists an ID with zero test references (evolve in implementation).
 - Document **test tiers** so contributors know what “green CI” means vs **nightly / scheduled** heavy tests.
 - Relax **tool exposure** language so **LangGraph-native** binding is clearly conforming.

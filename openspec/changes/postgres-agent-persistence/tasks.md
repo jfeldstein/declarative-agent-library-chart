@@ -1,6 +1,6 @@
 ## 1. Dependencies and checkpointer wiring
 
-- [ ] 1.1 Pin LangGraph Postgres checkpointer + DB driver in `runtime/pyproject.toml` (align with installed `langgraph` version); document in runbook
+- [ ] 1.1 Pin LangGraph Postgres checkpointer + DB driver in `helm/src/pyproject.toml` (align with installed `langgraph` version); document in runbook
 - [ ] 1.2 Implement `build_checkpointer` Postgres branch: validate URL, construct saver, handle connection errors with actionable messages
 - [ ] 1.3 Add unit tests with mocked saver constructor or testcontainer (optional marker) proving Postgres branch returns a checkpointer
 - [ ] 1.4 Update `docs/runbook-checkpointing-wandb.md` with Postgres provisioning, pooling, and LangGraph compatibility notes

@@ -2,7 +2,7 @@
 
 This directory contains a **path-rewritten** git patch ported from the **agentic-pocs** worktree commit `9b233c3` (`feat(cfha): LangChain supervisor + subagent tools on trigger`).
 
-Original paths used `projects/config-first-hosted-agents/`; the patch on disk is rewritten so paths are **relative to this repository root** (`runtime/`, `helm/chart/`, `README.md`, etc.).
+Original paths used `projects/config-first-hosted-agents/`; the patch on disk is rewritten so paths are **relative to this repository root** (`helm/src/`, `helm/chart/`, `README.md`, etc.).
 
 ## Files
 
@@ -12,7 +12,7 @@ Original paths used `projects/config-first-hosted-agents/`; the patch on disk is
 
 ## Preconditions
 
-- Repository root: directory that contains `runtime/pyproject.toml` and `helm/chart/`.
+- Repository root: directory that contains `helm/src/pyproject.toml` and `helm/chart/`.
 - No uncommitted changes you care about losing, or commit/stash first.
 
 ## Dry run
@@ -45,21 +45,21 @@ If **hunks fail** (often `README.md` if it has diverged), either:
 
    Open `README.md` and incorporate the README-related hunks from the patch file (search for `diff --git a/README.md`).
 
-3. Apply in parts: `git apply` with path filters for subtrees (e.g. only `runtime/`), then port remaining files from the patch.
+3. Apply in parts: `git apply` with path filters for subtrees (e.g. only `helm/src/`), then port remaining files from the patch.
 
 ## After applying
 
-1. **Sync Python env and lockfile** (patch may touch `runtime/uv.lock`):
+1. **Sync Python env and lockfile** (patch may touch `helm/src/uv.lock`):
 
    ```bash
-   cd runtime
+   cd helm/src
    uv sync --all-groups
    ```
 
 2. **Lint and tests** (matches `ci.sh` Python stages):
 
    ```bash
-   cd runtime
+   cd helm/src
    uv run ruff check src tests
    uv run pytest tests/ -v --tb=short
    ```

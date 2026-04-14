@@ -6,7 +6,7 @@ The prototype lives under `this repository`. The target audience is teams that w
 
 **Goals:**
 
-- Establish directory layout: `helm/chart/` (**`type: library`** — Chart.yaml, `templates/*.yaml`), `helm/src/` (services or workers reading ConfigMap/env, or docs pointing at `runtime/`), `helm/tests/<pkg>/` aligned with `src` plus chart tests.
+- Establish directory layout: `helm/chart/` (**`type: library`** — Chart.yaml, `templates/*.yaml`), `helm/src/` (services or workers reading ConfigMap/env, or docs pointing at `helm/src/`), `helm/tests/<pkg>/` aligned with `src` plus chart tests.
 - Provide a **parent/child Helm pattern**: `examples/*` **application** charts declare the **library** chart as a **dependency** (or subchart) and override values.
 - Expose `**POST /api/v1/trigger` (or documented equivalent)** on a NodePort/forwarded port (e.g. `8088`) that runs the agent path once per request and returns a response body suitable for `curl` verification.
 - Support **Skaffold and/or DevSpace** alongside raw `helm upgrade` for the hello-world example so iterative dev is practical.
@@ -27,7 +27,7 @@ The prototype lives under `this repository`. The target audience is teams that w
   - **Rationale**: Slack and other webhooks can normalize to “invoke agent with context” later; one endpoint keeps the hello-world acceptance test simple.  
   - **Alternatives**: Per-integration Deployment — heavier for v1.
 3. **Config via ConfigMap (and optional Secret refs)**
-  - **Rationale**: Standard K8s pattern; workload source is documented under `helm/src` with implementation in `runtime/`.  
+  - **Rationale**: Standard K8s pattern; workload source is documented under `helm/src` with implementation in `helm/src/`.  
   - **Alternatives**: Sidecar fetching from a control plane — out of scope for prototype.
 4. **kind for local proof**
   - **Rationale**: Reproducible CI/local parity; user success criteria name kind explicitly.  

@@ -15,32 +15,32 @@ Subject: [PATCH] feat(cfha): LangChain supervisor + subagent tools on trigger
  .../helm/chart/templates/deployment.yaml      |   4 +
  .../helm/chart/values.schema.json             |  16 +-
  .../helm/chart/values.yaml                    |   7 +-
- .../runtime/pyproject.toml                    |   1 +
- .../runtime/src/hosted_agents/agent_models.py |  22 +-
- .../runtime/src/hosted_agents/app.py          |  56 ++++-
- .../runtime/src/hosted_agents/chat_model.py   |  93 ++++++++
+ .../helm/src/pyproject.toml                    |   1 +
+ .../helm/src/src/hosted_agents/agent_models.py |  22 +-
+ .../helm/src/src/hosted_agents/app.py          |  56 ++++-
+ .../helm/src/src/hosted_agents/chat_model.py   |  93 ++++++++
  .../src/hosted_agents/subagent_exec.py        |  81 +++++++
  .../src/hosted_agents/subagent_units.py       |  47 ++++
- .../runtime/src/hosted_agents/supervisor.py   | 204 ++++++++++++++++++
+ .../helm/src/src/hosted_agents/supervisor.py   | 204 ++++++++++++++++++
  .../src/hosted_agents/trigger_context.py      |  16 ++
  .../src/hosted_agents/trigger_errors.py       |  10 +
  .../src/hosted_agents/trigger_graph.py        | 174 +++------------
  .../src/hosted_agents/trigger_steps.py        |  42 ++++
- .../runtime/tests/__init__.py                 |   1 +
- .../runtime/tests/conftest.py                 |  47 ++++
- .../runtime/tests/test_agent_extensions.py    |  34 ++-
- .../runtime/tests/test_o11y_metrics.py        |  75 ++++++-
- .../runtime/tests/test_subagent_roles.py      |  67 ++++--
- .../runtime/uv.lock                           |  16 ++
+ .../helm/src/tests/__init__.py                 |   1 +
+ .../helm/src/tests/conftest.py                 |  47 ++++
+ .../helm/src/tests/test_agent_extensions.py    |  34 ++-
+ .../helm/src/tests/test_o11y_metrics.py        |  75 ++++++-
+ .../helm/src/tests/test_subagent_roles.py      |  67 ++++--
+ .../helm/src/uv.lock                           |  16 ++
  23 files changed, 848 insertions(+), 237 deletions(-)
- create mode 100644 runtime/src/hosted_agents/chat_model.py
- create mode 100644 runtime/src/hosted_agents/subagent_exec.py
- create mode 100644 runtime/src/hosted_agents/subagent_units.py
- create mode 100644 runtime/src/hosted_agents/supervisor.py
- create mode 100644 runtime/src/hosted_agents/trigger_context.py
- create mode 100644 runtime/src/hosted_agents/trigger_errors.py
- create mode 100644 runtime/src/hosted_agents/trigger_steps.py
- create mode 100644 runtime/tests/__init__.py
+ create mode 100644 helm/src/src/hosted_agents/chat_model.py
+ create mode 100644 helm/src/src/hosted_agents/subagent_exec.py
+ create mode 100644 helm/src/src/hosted_agents/subagent_units.py
+ create mode 100644 helm/src/src/hosted_agents/supervisor.py
+ create mode 100644 helm/src/src/hosted_agents/trigger_context.py
+ create mode 100644 helm/src/src/hosted_agents/trigger_errors.py
+ create mode 100644 helm/src/src/hosted_agents/trigger_steps.py
+ create mode 100644 helm/src/tests/__init__.py
 
 diff --git a/openspec/changes/cfha-langgraph-native-subagents/tasks.md b/openspec/changes/cfha-langgraph-native-subagents/tasks.md
 index 9aa1d9e..d30ff0b 100644
@@ -107,9 +107,9 @@ index 5e34888..f4efa10 100644
  | Values key | Role |
  |------------|------|
  | `scrapers.jobs` | **CronJobs** that push normalized content (and graph edges when known) into RAG; built-in **`reference`** job posts a fixture document + `contained_in` edge. If **at least one** job has **`enabled: true`**, the chart also deploys the **managed RAG HTTP** Deployment + Service (`/v1/embed`, `/v1/query`, `/v1/relate`) — see [docs/rag-http-api.md](docs/rag-http-api.md). Tune RAG replicas/port/resources under **`scrapers.ragService`**. |
--| `mcp.enabledTools` | Allowlisted **in-process tools** invoked via **`POST /api/v1/trigger`** with JSON `{"tool":"…","tool_arguments":{…}}` (e.g. `sample.echo`). Layout: [runtime/src/hosted_agents/tools_impl/README.md](runtime/src/hosted_agents/tools_impl/README.md). |
+-| `mcp.enabledTools` | Allowlisted **in-process tools** invoked via **`POST /api/v1/trigger`** with JSON `{"tool":"…","tool_arguments":{…}}` (e.g. `sample.echo`). Layout: [helm/src/src/hosted_agents/tools_impl/README.md](helm/src/src/hosted_agents/tools_impl/README.md). |
 -| `subagents` | JSON list of subagent definitions used by **`POST /api/v1/trigger`** with `{"subagent":"<name>", …}` (**supervisor-style** boundary; aligns with [LangChain Subagents](https://docs.langchain.com/oss/python/langchain/multi-agent/subagents)). Optional **`role`**: omit or **`default`** (uses `systemPrompt` like the main trigger); **`metrics`** (returns agent Prometheus text); **`rag`** (include `query` and optional RAG fields in the trigger JSON to proxy to RAG `/v1/query`). |
-+| `mcp.enabledTools` | Allowlisted **in-process tools** merged into the **supervisor** tool list (and still invokable directly via **`POST /api/v1/trigger`** with `{"tool":"…","tool_arguments":{…}}`). Layout: [runtime/src/hosted_agents/tools_impl/README.md](runtime/src/hosted_agents/tools_impl/README.md). **Merge order:** subagent tools (config order) then MCP tools (sorted by id). |
++| `mcp.enabledTools` | Allowlisted **in-process tools** merged into the **supervisor** tool list (and still invokable directly via **`POST /api/v1/trigger`** with `{"tool":"…","tool_arguments":{…}}`). Layout: [helm/src/src/hosted_agents/tools_impl/README.md](helm/src/src/hosted_agents/tools_impl/README.md). **Merge order:** subagent tools (config order) then MCP tools (sorted by id). |
 +| `subagents` | JSON list of specialists compiled into **LangGraph subgraphs** and registered as **LangChain tools** on the root agent ([LangChain subagents](https://docs.langchain.com/oss/python/langchain/multi-agent/subagents)). **Recommended:** **`description`** for each entry (tool schema text). **`exposeAsTool`**: omit or **`true`** to register the tool; **`role: metrics`** defaults to **`exposeAsTool: false`** so Prometheus snapshots stay off the default tool list unless you opt in. Optional **`role`**: **`default`** (uses `systemPrompt` + optional task text from the tool call); **`metrics`** (returns agent Prometheus text inside the tool); **`rag`** (tool arguments carry `query` / RAG fields; proxies to RAG `/v1/query` with **`X-Request-Id`**). |
  | `skills` | JSON catalog `{ "name", "prompt", "extraTools"? }` — load with **`POST /api/v1/trigger`** and `{"load_skill":"<name>"}` (progressive disclosure; aligns with [LangChain Skills](https://docs.langchain.com/oss/python/langchain/multi-agent/skills)). |
 +| `chatModel` | Optional Helm value → **`HOSTED_AGENT_CHAT_MODEL`** when **`subagents`** is non-empty (e.g. `openai:gpt-4o-mini`). Requires the matching LangChain provider package and credentials in your image. **Hello-world** keeps **`subagents: []`** so the trigger stays deterministic without a remote LLM. |
@@ -280,10 +280,10 @@ index 6e9b8d9..3f5ff47 100644
  service:
    type: ClusterIP
    port: 8088
-diff --git a/runtime/pyproject.toml b/runtime/pyproject.toml
+diff --git a/helm/src/pyproject.toml b/helm/src/pyproject.toml
 index bcdce76..3446828 100644
---- a/runtime/pyproject.toml
-+++ b/runtime/pyproject.toml
+--- a/helm/src/pyproject.toml
++++ b/helm/src/pyproject.toml
 @@ -6,6 +6,7 @@ requires-python = ">=3.11"
  dependencies = [
      "fastapi>=0.115.0",
@@ -292,10 +292,10 @@ index bcdce76..3446828 100644
      "langchain-core>=1.2.28",
      "langgraph>=1.1.6",
      "prometheus-client>=0.21.0",
-diff --git a/runtime/src/hosted_agents/agent_models.py b/runtime/src/hosted_agents/agent_models.py
+diff --git a/helm/src/src/hosted_agents/agent_models.py b/helm/src/src/hosted_agents/agent_models.py
 index 12f9f03..c0a3d00 100644
---- a/runtime/src/hosted_agents/agent_models.py
-+++ b/runtime/src/hosted_agents/agent_models.py
+--- a/helm/src/src/hosted_agents/agent_models.py
++++ b/helm/src/src/hosted_agents/agent_models.py
 @@ -4,22 +4,26 @@ from __future__ import annotations
  
  from typing import Any
@@ -332,10 +332,10 @@ index 12f9f03..c0a3d00 100644
  
  
  class RagQueryBody(BaseModel):
-diff --git a/runtime/src/hosted_agents/app.py b/runtime/src/hosted_agents/app.py
+diff --git a/helm/src/src/hosted_agents/app.py b/helm/src/src/hosted_agents/app.py
 index 27d6c36..8f06bb0 100644
---- a/runtime/src/hosted_agents/app.py
-+++ b/runtime/src/hosted_agents/app.py
+--- a/helm/src/src/hosted_agents/app.py
++++ b/helm/src/src/hosted_agents/app.py
 @@ -2,11 +2,12 @@
  
  from __future__ import annotations
@@ -435,11 +435,11 @@ index 27d6c36..8f06bb0 100644
          return JSONResponse(resp.json())
  
      return app
-diff --git a/runtime/src/hosted_agents/chat_model.py b/runtime/src/hosted_agents/chat_model.py
+diff --git a/helm/src/src/hosted_agents/chat_model.py b/helm/src/src/hosted_agents/chat_model.py
 new file mode 100644
 index 0000000..bbdc270
 --- /dev/null
-+++ b/runtime/src/hosted_agents/chat_model.py
++++ b/helm/src/src/hosted_agents/chat_model.py
 @@ -0,0 +1,93 @@
 +"""Chat model resolution for the supervisor (``create_agent``)."""
 +
@@ -534,11 +534,11 @@ index 0000000..bbdc270
 +            msg = "Each element must be a string or AIMessage-shaped object"
 +            raise ValueError(msg)
 +    return FakeToolChatModel(responses=responses)
-diff --git a/runtime/src/hosted_agents/subagent_exec.py b/runtime/src/hosted_agents/subagent_exec.py
+diff --git a/helm/src/src/hosted_agents/subagent_exec.py b/helm/src/src/hosted_agents/subagent_exec.py
 new file mode 100644
 index 0000000..771212c
 --- /dev/null
-+++ b/runtime/src/hosted_agents/subagent_exec.py
++++ b/helm/src/src/hosted_agents/subagent_exec.py
 @@ -0,0 +1,81 @@
 +"""Execute configured subagent roles (metrics, rag, default)."""
 +
@@ -621,11 +621,11 @@ index 0000000..771212c
 +        raise TriggerHttpError(400, str(exc)) from exc
 +    observe_subagent(name, "success", start)
 +    return out
-diff --git a/runtime/src/hosted_agents/subagent_units.py b/runtime/src/hosted_agents/subagent_units.py
+diff --git a/helm/src/src/hosted_agents/subagent_units.py b/helm/src/src/hosted_agents/subagent_units.py
 new file mode 100644
 index 0000000..6fe4293
 --- /dev/null
-+++ b/runtime/src/hosted_agents/subagent_units.py
++++ b/helm/src/src/hosted_agents/subagent_units.py
 @@ -0,0 +1,47 @@
 +"""LangGraph subgraphs per configured subagent (invoked from supervisor tools)."""
 +
@@ -674,11 +674,11 @@ index 0000000..6fe4293
 +    g.add_edge(START, "exec")
 +    g.add_edge("exec", END)
 +    return g.compile()
-diff --git a/runtime/src/hosted_agents/supervisor.py b/runtime/src/hosted_agents/supervisor.py
+diff --git a/helm/src/src/hosted_agents/supervisor.py b/helm/src/src/hosted_agents/supervisor.py
 new file mode 100644
 index 0000000..0235d93
 --- /dev/null
-+++ b/runtime/src/hosted_agents/supervisor.py
++++ b/helm/src/src/hosted_agents/supervisor.py
 @@ -0,0 +1,204 @@
 +"""Supervisor agent (``create_agent``) + subagent/MCP LangChain tools."""
 +
@@ -884,11 +884,11 @@ index 0000000..0235d93
 +        config={"configurable": {"ctx": ctx}},
 +    )
 +    return extract_final_ai_text(result)
-diff --git a/runtime/src/hosted_agents/trigger_context.py b/runtime/src/hosted_agents/trigger_context.py
+diff --git a/helm/src/src/hosted_agents/trigger_context.py b/helm/src/src/hosted_agents/trigger_context.py
 new file mode 100644
 index 0000000..8d7a9db
 --- /dev/null
-+++ b/runtime/src/hosted_agents/trigger_context.py
++++ b/helm/src/src/hosted_agents/trigger_context.py
 @@ -0,0 +1,16 @@
 +"""Per-request context for the trigger pipeline."""
 +
@@ -906,11 +906,11 @@ index 0000000..8d7a9db
 +    body: TriggerBody | None
 +    system_prompt: str
 +    request_id: str
-diff --git a/runtime/src/hosted_agents/trigger_errors.py b/runtime/src/hosted_agents/trigger_errors.py
+diff --git a/helm/src/src/hosted_agents/trigger_errors.py b/helm/src/src/hosted_agents/trigger_errors.py
 new file mode 100644
 index 0000000..71c8cb8
 --- /dev/null
-+++ b/runtime/src/hosted_agents/trigger_errors.py
++++ b/helm/src/src/hosted_agents/trigger_errors.py
 @@ -0,0 +1,10 @@
 +"""HTTP-oriented errors raised inside the trigger pipeline."""
 +
@@ -922,10 +922,10 @@ index 0000000..71c8cb8
 +        self.status_code = status_code
 +        self.detail = detail
 +        super().__init__(detail)
-diff --git a/runtime/src/hosted_agents/trigger_graph.py b/runtime/src/hosted_agents/trigger_graph.py
+diff --git a/helm/src/src/hosted_agents/trigger_graph.py b/helm/src/src/hosted_agents/trigger_graph.py
 index 339171a..3b6e19b 100644
---- a/runtime/src/hosted_agents/trigger_graph.py
-+++ b/runtime/src/hosted_agents/trigger_graph.py
+--- a/helm/src/src/hosted_agents/trigger_graph.py
++++ b/helm/src/src/hosted_agents/trigger_graph.py
 @@ -2,174 +2,50 @@
  
  from __future__ import annotations
@@ -1126,11 +1126,11 @@ index 339171a..3b6e19b 100644
  
      return trigger_reply_text(ctx.system_prompt)
  
-diff --git a/runtime/src/hosted_agents/trigger_steps.py b/runtime/src/hosted_agents/trigger_steps.py
+diff --git a/helm/src/src/hosted_agents/trigger_steps.py b/helm/src/src/hosted_agents/trigger_steps.py
 new file mode 100644
 index 0000000..0102a31
 --- /dev/null
-+++ b/runtime/src/hosted_agents/trigger_steps.py
++++ b/helm/src/src/hosted_agents/trigger_steps.py
 @@ -0,0 +1,42 @@
 +"""Skill load and MCP tool steps (shared by trigger pipeline and supervisor tools)."""
 +
@@ -1174,17 +1174,17 @@ index 0000000..0102a31
 +        raise TriggerHttpError(404, str(exc)) from exc
 +    observe_mcp_tool(tool, "success", start)
 +    return json.dumps({"tool": tool, "result": result})
-diff --git a/runtime/tests/__init__.py b/runtime/tests/__init__.py
+diff --git a/helm/src/tests/__init__.py b/helm/src/tests/__init__.py
 new file mode 100644
 index 0000000..986781a
 --- /dev/null
-+++ b/runtime/tests/__init__.py
++++ b/helm/src/tests/__init__.py
 @@ -0,0 +1 @@
 +"""Test package (enables ``from tests.conftest import …``)."""
-diff --git a/runtime/tests/conftest.py b/runtime/tests/conftest.py
+diff --git a/helm/src/tests/conftest.py b/helm/src/tests/conftest.py
 index cb93727..ef80c06 100644
---- a/runtime/tests/conftest.py
-+++ b/runtime/tests/conftest.py
+--- a/helm/src/tests/conftest.py
++++ b/helm/src/tests/conftest.py
 @@ -3,6 +3,53 @@
  from __future__ import annotations
  
@@ -1239,10 +1239,10 @@ index cb93727..ef80c06 100644
 +    factory: Callable[[], FakeToolChatModel],
 +) -> None:
 +    monkeypatch.setattr("hosted_agents.supervisor.resolve_chat_model", factory)
-diff --git a/runtime/tests/test_agent_extensions.py b/runtime/tests/test_agent_extensions.py
+diff --git a/helm/src/tests/test_agent_extensions.py b/helm/src/tests/test_agent_extensions.py
 index 7d9b84e..c3ec352 100644
---- a/runtime/tests/test_agent_extensions.py
-+++ b/runtime/tests/test_agent_extensions.py
+--- a/helm/src/tests/test_agent_extensions.py
++++ b/helm/src/tests/test_agent_extensions.py
 @@ -10,6 +10,7 @@ from fastapi.testclient import TestClient
  
  from hosted_agents.app import create_app
@@ -1302,10 +1302,10 @@ index 7d9b84e..c3ec352 100644
  
  
  def test_rag_query_requires_config(client: TestClient) -> None:
-diff --git a/runtime/tests/test_o11y_metrics.py b/runtime/tests/test_o11y_metrics.py
+diff --git a/helm/src/tests/test_o11y_metrics.py b/helm/src/tests/test_o11y_metrics.py
 index 44790dd..20cb01f 100644
---- a/runtime/tests/test_o11y_metrics.py
-+++ b/runtime/tests/test_o11y_metrics.py
+--- a/helm/src/tests/test_o11y_metrics.py
++++ b/helm/src/tests/test_o11y_metrics.py
 @@ -14,6 +14,7 @@ from fastapi.testclient import TestClient
  
  from hosted_agents.app import create_app
@@ -1434,10 +1434,10 @@ index 44790dd..20cb01f 100644
  
  
  def test_json_log_format_emits_message_key() -> None:
-diff --git a/runtime/tests/test_subagent_roles.py b/runtime/tests/test_subagent_roles.py
+diff --git a/helm/src/tests/test_subagent_roles.py b/helm/src/tests/test_subagent_roles.py
 index d0e0add..2bc435b 100644
---- a/runtime/tests/test_subagent_roles.py
-+++ b/runtime/tests/test_subagent_roles.py
+--- a/helm/src/tests/test_subagent_roles.py
++++ b/helm/src/tests/test_subagent_roles.py
 @@ -9,25 +9,50 @@ import pytest
  from fastapi.testclient import TestClient
  
@@ -1543,10 +1543,10 @@ index d0e0add..2bc435b 100644
 -    r = client.post("/api/v1/trigger", json={"subagent": "rag"})
 +    r = client.post("/api/v1/trigger", json={"message": "bad rag"})
      assert r.status_code == 400
-diff --git a/runtime/uv.lock b/runtime/uv.lock
+diff --git a/helm/src/uv.lock b/helm/src/uv.lock
 index e40b2a6..8efbcda 100644
---- a/runtime/uv.lock
-+++ b/runtime/uv.lock
+--- a/helm/src/uv.lock
++++ b/helm/src/uv.lock
 @@ -159,6 +159,7 @@ source = { editable = "." }
  dependencies = [
      { name = "fastapi" },

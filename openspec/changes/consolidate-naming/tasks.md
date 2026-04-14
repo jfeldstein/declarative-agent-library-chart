@@ -19,9 +19,9 @@
 
 ## 4. Runtime and scripts
 
-- [ ] 4.1 Set `SERVICE_NAME` (and similar) in `runtime/src/hosted_agents/o11y_logging.py` to `declarative-agent-library-chart`
+- [ ] 4.1 Set `SERVICE_NAME` (and similar) in `helm/src/src/hosted_agents/o11y_logging.py` to `declarative-agent-library-chart`
 - [ ] 4.2 Update OpenAPI titles or other user-visible **cfha** strings (e.g. RAG app) to **dalc** or full product name where intended
-- [ ] 4.3 Update `runtime/tests/scripts/prometheus-kind-o11y-values.yaml`, `integration_kind_o11y_prometheus.sh`, and related tests to use **dalc-** job/cluster names and new image tag; fix `rg` hits for `config-first-hosted-agents` in scripts
+- [ ] 4.3 Update `helm/src/tests/scripts/prometheus-kind-o11y-values.yaml`, `integration_kind_o11y_prometheus.sh`, and related tests to use **dalc-** job/cluster names and new image tag; fix `rg` hits for `config-first-hosted-agents` in scripts
 
 ## 5. Spec traceability and verification
 

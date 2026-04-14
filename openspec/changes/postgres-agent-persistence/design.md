@@ -47,7 +47,7 @@ The runtime already exposes env-driven checkpointing (`MemorySaver`) and in-proc
    - **Rationale**: Supports operator queries and ATIF staging without huge row growth; raw payloads stay redacted or in object storage if added later.
 
 6. **Migrations**  
-   - **Decision**: Ship **SQL files** in-repo (`runtime/migrations/` or `helm/files/`) plus a small `migrate` CLI or document `psql -f` for v1; revisit Alembic if churn grows.  
+   - **Decision**: Ship **SQL files** in-repo (`helm/src/migrations/` or `helm/files/`) plus a small `migrate` CLI or document `psql -f` for v1; revisit Alembic if churn grows.  
    - **Alternatives**: Alembic from day one (heavier).
 
 ## Risks / Trade-offs

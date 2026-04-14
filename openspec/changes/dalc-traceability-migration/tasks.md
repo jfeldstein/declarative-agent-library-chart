@@ -18,7 +18,7 @@
 
 ## 4. Tests and examples
 
-- [x] 4.1 Update **pytest** docstrings and **`runtime/tests/**`** files that embed **`CFHA-REQ`** / **`CFHA-VER`**
+- [x] 4.1 Update **pytest** docstrings and **`helm/src/tests/**`** files that embed **`CFHA-REQ`** / **`CFHA-VER`**
 - [x] 4.2 Update **`examples/*/tests/*.yaml`** Helm unittest **`#`** comments and traceability headers
 - [x] 4.3 Update **`grafana/*.json`** or docs only if they embed a requirement ID string (unusual but grep-driven)
 

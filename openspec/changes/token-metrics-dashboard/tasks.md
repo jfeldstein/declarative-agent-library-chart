@@ -1,6 +1,6 @@
 ## 1. Metrics scaffolding
 
-- [ ] 1.1 Register new Prometheus metrics in `runtime/src/hosted_agents/metrics.py` per **`cfha-runtime-token-metrics`** names, buckets, and HELP strings
+- [ ] 1.1 Register new Prometheus metrics in `helm/src/src/hosted_agents/metrics.py` per **`cfha-runtime-token-metrics`** names, buckets, and HELP strings
 - [ ] 1.2 Add bounded label helpers (reuse existing tagify / config patterns) and document allowed label keys in `docs/observability.md`
 
 ## 2. Runtime instrumentation

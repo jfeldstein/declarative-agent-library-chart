@@ -1,6 +1,6 @@
 ## 1. Dependencies and graph skeleton
 
-- [x] 1.1 Add LangGraph (and any required LangChain compatibility packages) to `runtime/pyproject.toml` and refresh the lockfile with `uv lock`
+- [x] 1.1 Add LangGraph (and any required LangChain compatibility packages) to `helm/src/pyproject.toml` and refresh the lockfile with `uv lock`
 - [x] 1.2 Create a module (e.g. `hosted_agents/graph.py` or `hosted_agents/graph/`) that compiles a `StateGraph` from `RuntimeConfig` and exposes a single entry function used by the HTTP layer
 
 ## 2. Replace HTTP handlers with graph-backed trigger
@@ -18,11 +18,11 @@
 
 - [x] 4.1 Map or extend Prometheus metrics so trigger and graph phases remain observable; remove or replace metric hooks tied only to deleted HTTP routes (`observe_subagent` / `observe_skill_load` / `observe_mcp_tool` usage as applicable)
 - [x] 4.2 Update `GET /api/v1/runtime/summary` to reflect the new model (no implication that subagent/skill/tool HTTP endpoints exist)
-- [x] 4.3 Update or replace tests in `runtime/tests/` (`test_subagent_roles.py`, `test_agent_extensions.py`, `test_o11y_metrics.py`, others referencing removed routes) to assert graph/trigger behavior and request-id forwarding
+- [x] 4.3 Update or replace tests in `helm/src/tests/` (`test_subagent_roles.py`, `test_agent_extensions.py`, `test_o11y_metrics.py`, others referencing removed routes) to assert graph/trigger behavior and request-id forwarding
 - [x] 4.4 Run `pytest` for the runtime package and fix failures
 
 ## 5. Documentation and packaging
 
 - [x] 5.1 Update `README.md` (endpoints, curl examples, values table) for trigger-only launch and LangGraph
-- [x] 5.2 Update `docs/observability.md`, `grafana/README.md`, `helm/chart/values.schema.json`, `runtime/src/hosted_agents/tools_impl/README.md`, and chart test docs that mention removed APIs
+- [x] 5.2 Update `docs/observability.md`, `grafana/README.md`, `helm/chart/values.schema.json`, `helm/src/src/hosted_agents/tools_impl/README.md`, and chart test docs that mention removed APIs
 - [x] 5.3 Resolve design open question: either keep `POST /api/v1/rag/query` as a documented non-launch utility or remove it and update specs/docs accordingly

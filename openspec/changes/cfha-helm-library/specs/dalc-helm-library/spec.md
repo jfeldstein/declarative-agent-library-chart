@@ -6,7 +6,7 @@ The prototype SHALL place shared Helm-related artifacts under `helm/` such that:
 
 - `helm/chart/Chart.yaml` declares the reusable chart with **`type: library`** and a non-zero chart version suitable for dependency resolution.
 - `helm/chart/templates/*.yaml` contain Kubernetes resources parameterized by values (including Service, workload, ConfigMap wiring) that render when the chart is included as a dependency of an **application** chart.
-- `helm/src/` documents or contains pointers to workload source consumed by those templates (consistent with the repo’s existing “implementation lives under `runtime/`” pattern if applicable).
+- `helm/src/` documents or contains pointers to workload source consumed by those templates (consistent with the repo’s existing “implementation lives under `helm/src/`” pattern if applicable).
 - `helm/tests/<pkg>/` includes chart-test documentation or hooks consistent with the project README.
 
 #### Scenario: Contributor locates Helm packaging

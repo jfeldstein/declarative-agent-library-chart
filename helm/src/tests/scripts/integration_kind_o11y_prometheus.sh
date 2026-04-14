@@ -4,7 +4,7 @@
 # Prerequisites: docker, kind, kubectl, helm, curl, python3 (stdlib json).
 #
 # Usage (from repo root projects/config-first-hosted-agents):
-#   ./runtime/tests/scripts/integration_kind_o11y_prometheus.sh
+#   ./helm/src/tests/scripts/integration_kind_o11y_prometheus.sh
 #
 # Env:
 #   KIND_CLUSTER_NAME   (default: cfha-o11y-it)

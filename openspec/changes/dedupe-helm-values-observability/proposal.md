@@ -10,7 +10,7 @@ The Helm library chart overloads the name **observability**: `o11y` holds Kubern
   - **`wandb`**: project/entity/enable flags (currently under `observability.wandb`).
 - **BREAKING**: Move Slack feedback settings from `observability.slackFeedback` to **`scrapers.slack.feedback`** (feedback is tied to scraper-driven ingestion; co-locating it with `scrapers` matches product semantics).
 - **Remove** Helm values and chart wiring for **`atifExport`** and **`shadow`** (and delete related runtime code, tests, ConfigMap keys, and documentation).
-- **Clarify** the object today exposed as `observability.labelRegistry`: it feeds **`HOSTED_AGENT_LABEL_REGISTRY_JSON`** and implements the **human feedback label taxonomy** (`runtime/.../label_registry.py`), not Prometheus labels. The design proposes a clearer values name and placement (under Slack feedback or an explicit feedback subsection—see `design.md`).
+- **Clarify** the object today exposed as `observability.labelRegistry`: it feeds **`HOSTED_AGENT_LABEL_REGISTRY_JSON`** and implements the **human feedback label taxonomy** (`helm/src/src/hosted_agents/observability/label_registry.py`), not Prometheus labels. The design proposes a clearer values name and placement (under Slack feedback or an explicit feedback subsection—see `design.md`).
 - Update **`helm/chart/values.schema.json`**, example charts, helm-unittest suites, CI, and docs that reference the old keys.
 
 ## Capabilities
@@ -26,6 +26,6 @@ The Helm library chart overloads the name **observability**: `o11y` holds Kubern
 ## Impact
 
 - **Helm**: `templates/*.yaml`, `values.yaml`, `values.schema.json`, `examples/*`, `helm/tests/chart` and example `tests/`.
-- **Runtime**: `hosted_agents/observability/` (ATIF export, shadow, settings, app/trigger wiring), tests under `runtime/tests/`.
+- **Runtime**: `hosted_agents/observability/` (ATIF export, shadow, settings, app/trigger wiring), tests under `helm/src/tests/`.
 - **Docs**: `docs/runbook-checkpointing-wandb.md`, `docs/observability.md`, chart README, ADRs if they pin old value names.
 - **Specs / traceability**: Delta specs under this change; after archive, promoted `openspec/specs/` and `docs/spec-test-traceability.md` per ADR 0003.

@@ -7,7 +7,7 @@ Requires: docker, kind, kubectl, helm, curl; network to pull Helm chart + images
 
 Enable with::
 
-    cd runtime
+    cd helm/src
     RUN_KIND_O11Y_INTEGRATION=1 uv run pytest tests/integration/test_kind_o11y_prometheus.py -v --no-cov
 
 Use ``--no-cov`` when running only this test so the 85% coverage gate still makes sense for the rest of the suite.
@@ -26,8 +26,8 @@ pytestmark = pytest.mark.integration
 
 
 def _cfha_root() -> Path:
-    # .../runtime/tests/integration/<this file> -> project root
-    return Path(__file__).resolve().parents[3]
+    # .../helm/src/tests/integration/<this file> -> project root
+    return Path(__file__).resolve().parents[4]
 
 
 @pytest.mark.skipif(

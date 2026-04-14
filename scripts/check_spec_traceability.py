@@ -170,13 +170,14 @@ def is_examples_helm_test_yaml(path: Path) -> bool:
     )
 
 
-def is_runtime_pytest(path: Path) -> bool:
+def is_helm_src_pytest(path: Path) -> bool:
     rel = path.relative_to(ROOT)
     parts = rel.parts
     return (
-        len(parts) >= 2
-        and parts[0] == "runtime"
-        and parts[1] == "tests"
+        len(parts) >= 3
+        and parts[0] == "helm"
+        and parts[1] == "src"
+        and parts[2] == "tests"
         and path.suffix == ".py"
     )
 
@@ -303,7 +304,7 @@ def main() -> None:
             if waived:
                 continue
             if strict and strict_text_evidence(p):
-                if is_runtime_pytest(p):
+                if is_helm_src_pytest(p):
                     if not id_in_pytest_evidence(p, py_func, rid):
                         hint = (
                             f"function {py_func!r} docstring"

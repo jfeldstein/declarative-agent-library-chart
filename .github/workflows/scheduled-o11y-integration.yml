@@ -1,6 +1,6 @@
 # Traceability: [DALC-VER-004] — scheduled tier for kind + Prometheus integration (see docs/spec-test-traceability.md).
 #
-# Prerequisites match runtime/tests/scripts/integration_kind_o11y_prometheus.sh: docker, kind, kubectl, helm, curl.
+# Prerequisites match helm/src/tests/scripts/integration_kind_o11y_prometheus.sh: docker, kind, kubectl, helm, curl.
 name: Scheduled o11y integration
 
 on:
@@ -46,13 +46,13 @@ jobs:
       - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
-          python-version-file: runtime/.python-version
+          python-version-file: helm/src/.python-version
 
       - name: Install Python dependencies
-        working-directory: runtime
+        working-directory: helm/src
         run: uv sync --all-groups
 
       - name: Run integration test
-        working-directory: runtime
+        working-directory: helm/src
         run: |
           RUN_KIND_O11Y_INTEGRATION=1 uv run pytest tests/integration/test_kind_o11y_prometheus.py -v --no-cov

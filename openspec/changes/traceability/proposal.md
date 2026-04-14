@@ -23,7 +23,7 @@ Promoted normative specs use **SHALL** language, but **tests** are not mechanica
 ## Impact
 
 - **`openspec/specs/`** and/or change-local specs: new verification capability; delta for **`runtime-tools-mcp`**.
-- **`runtime/tests/`**, **`examples/*/tests/`**, Helm tests: docstrings or comments with requirement IDs; possible **`docs/`** or **`runtime/`** traceability matrix file.
+- **`helm/src/tests/`**, **`examples/*/tests/`**, Helm tests: docstrings or comments with requirement IDs; possible **`docs/`** or **`helm/src/`** traceability matrix file.
 - **`.github/workflows/ci.yml`** (and local **`python3 scripts/check_spec_traceability.py`**): traceability gate on default PRs; optional documented **scheduled** job pattern for kind/integration—implementation in apply phase.
 - **`AGENTS.md`** and optionally **`.cursor/rules`**: contributor enforcement text.
 - **No breaking change** to runtime APIs; spec clarification may widen what counts as conforming (strictly **more** permissive for implementers).

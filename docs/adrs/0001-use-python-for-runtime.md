@@ -10,12 +10,12 @@ The `config-first-hosted-agents` prototype needs a small, testable runtime (HTTP
 
 ## Decision
 
-All first-party implementation code for this project **SHALL** be **Python** (currently `>=3.11`), packaged under `runtime/src/hosted_agents/`, with tests under `runtime/tests/` and dependency management via **`uv`** + `runtime/pyproject.toml`.
+All first-party implementation code for this project **SHALL** be **Python** (currently `>=3.11`), packaged under `helm/src/src/hosted_agents/`, with tests under `helm/src/tests/` and dependency management via **`uv`** + `helm/src/pyproject.toml`.
 
-Non-Python assets (Helm charts, Skaffold/DevSpace YAML) live at the project root; the Python runtime is isolated under `runtime/`.
+Non-Python assets (Helm charts, Skaffold/DevSpace YAML) live at the project root; the Python runtime is isolated under `helm/src/`.
 
 ## Consequences
 
 - CI runs `uv sync` / `pytest` with coverage via the **Python** job in `.github/workflows/ci.yml` (and the same commands locally; see README “Local CI”).
 - Future services (e.g. HTTP server for `/api/v1/trigger`) are implemented in Python unless a new ADR chooses otherwise.
-- Any other language prototypes must not live in `runtime/src/` without a superseding ADR.
+- Any other language prototypes must not live in `helm/src/src/` without a superseding ADR.

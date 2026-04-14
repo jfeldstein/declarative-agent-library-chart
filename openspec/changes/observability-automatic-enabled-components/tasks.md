@@ -13,7 +13,7 @@
 
 ## 3. Grafana artifact and README
 
-- [ ] 3.1 Rewrite `grafana/README.md` Prometheus section so instructions are **generic** (every enabled metrics `Service` / matching scrape jobs)—remove “scrape **both** targets” framing; align with `examples/with-observability` and `runtime/tests/scripts/prometheus-kind-o11y-values.yaml` without RAG-only assumptions.
+- [ ] 3.1 Rewrite `grafana/README.md` Prometheus section so instructions are **generic** (every enabled metrics `Service` / matching scrape jobs)—remove “scrape **both** targets” framing; align with `examples/with-observability` and `helm/src/tests/scripts/prometheus-kind-o11y-values.yaml` without RAG-only assumptions.
 - [ ] 3.2 Update `grafana/dalc-agent-overview.json` so **optional component** metrics (e.g. RAG) are **optional in the UX** per **LOGS-003** (variables, repeated rows, or clearly titled sections with dependency called out)—document the mechanism in the README.
 - [ ] 3.3 If dashboard JSON structure changes, smoke-check import instructions still work.
 

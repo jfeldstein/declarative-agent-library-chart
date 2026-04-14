@@ -6,8 +6,8 @@ Concise orientation for automated assistants working in this repository.
 
 | Path | Role |
 |------|------|
-| `runtime/src/hosted_agents/` | FastAPI app, LangGraph trigger pipeline, RAG, scrapers |
-| `runtime/tests/` | Pytest (coverage floor enforced in CI) |
+| `helm/src/src/hosted_agents/` | FastAPI app, LangGraph trigger pipeline, RAG, scrapers |
+| `helm/src/tests/` | Pytest (coverage floor enforced in CI) |
 | `helm/chart/` | Declarative Agent Library Helm chart |
 | `examples/*/` | Application charts that depend on the library chart |
 | `helm/tests/` | Helm unittest suites (`*_test.yaml`) loaded with each example’s `values.yaml` |
@@ -33,7 +33,7 @@ When you add or change a normative **SHALL** under `openspec/specs/*/spec.md`:
 From the repo root:
 
 - **CI parity:** follow the “Local CI” section in [README.md](../README.md) (Python via **uv**, Helm via **helm** + **ct** + **helm-unittest**, ADRs via `scripts/check_adr_numbers.sh`). GitHub runs the same stages in [`.github/workflows/ci.yml`](../.github/workflows/ci.yml).
-- **Python only:** `uv sync --all-groups --project runtime` then `cd runtime` and `uv run ruff check src tests`, `uv run pytest tests/ -v --tb=short`
+- **Python only:** `uv sync --all-groups --project helm/src` then `cd helm/src` and `uv run ruff check src tests`, `uv run pytest tests/ -v --tb=short`
 
 ## ADR numbering
 

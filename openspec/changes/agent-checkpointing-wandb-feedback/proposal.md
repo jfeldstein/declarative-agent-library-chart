@@ -28,7 +28,7 @@ Hosted agents need durable, inspectable runs so we can resume work, audit decisi
 
 ## Impact
 
-- **`runtime/pyproject.toml` coverage**: `hosted_agents/observability/` **must** stay inside the **`pytest-cov`** denominator (no package-wide `omit` for that tree). New observability modules ship **with** tests so the repo-wide **`fail-under`** gate stays green—same rule as the rest of `hosted_agents`.
+- **`helm/src/pyproject.toml` coverage**: `hosted_agents/observability/` **must** stay inside the **`pytest-cov`** denominator (no package-wide `omit` for that tree). New observability modules ship **with** tests so the repo-wide **`fail-under`** gate stays green—same rule as the rest of `hosted_agents`.
 - **Supersedes** removed change `agent-feedback-wandb-integration`: unique requirements were merged into this tree (2026-04-11); **ATIF export** and **positive-subsequence dataset mining** were **removed** from scope (2026-04-12)—training pipelines can consume W&B and/or checkpoint-backed APIs instead.
 - **Shadow rollout** OpenSpec changes were **removed** (2026-04-13); runtime may still carry related stubs or tags where already implemented.
 - **Runtime / agent host**: checkpoint store selection, LangGraph or compatible checkpointer wiring, correlation IDs on tool invocations, W&B trace id persistence on steps.

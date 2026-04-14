@@ -16,7 +16,7 @@
 
 - [x] 3.1 Update `examples/with-observability`, `examples/with-scrapers`, and any other example `values.yaml` to use `scrapers.jobs` (≥1 enabled where RAG is needed) and `scrapers.ragService`; drop top-level `rag`
 - [x] 3.2 Adjust `ci.sh` / `helm template` checks if manifest counts or grep patterns depended on `rag.enabled`
-- [x] 3.3 Update `runtime/tests/scripts/prometheus-kind-o11y-values.yaml` and `integration_kind_o11y_prometheus.sh` if values shape changed
+- [x] 3.3 Update `helm/src/tests/scripts/prometheus-kind-o11y-values.yaml` and `integration_kind_o11y_prometheus.sh` if values shape changed
 
 ## 4. Docs and observability artifacts
 

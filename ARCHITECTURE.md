@@ -1,6 +1,6 @@
 # Declarative Agent Library Chart — Architecture
 
-This document describes how **user application charts** (in other repositories or in `examples/*` in this repo) compose the **Declarative Agent Library** Helm chart and Python **runtime** (`runtime/src/hosted_agents`) into a deployable system. It aligns with the promoted OpenSpec capabilities under `openspec/specs/`.
+This document describes how **user application charts** (in other repositories or in `examples/*` in this repo) compose the **Declarative Agent Library** Helm chart and Python **runtime** (`helm/src/src/hosted_agents`) into a deployable system. It aligns with the promoted OpenSpec capabilities under `openspec/specs/`.
 
 ## System context
 
@@ -50,7 +50,7 @@ A **user chart** is a normal Helm **application** chart that lists `declarative-
 Responsibilities of the user chart:
 
 - **Release identity:** `Release.Name`, namespace, and any org-specific labels or annotations not modeled in the library.
-- **Image supply:** Point `image.repository` / `image.tag` at a built image that contains `hosted_agents` (this repository’s `runtime` package).
+- **Image supply:** Point `image.repository` / `image.tag` at a built image that contains `hosted_agents` (built from `helm/src/` via the root `Dockerfile`).
 - **Policy:** NetworkPolicies, PodSecurity, external Secrets operators, ingress controllers, etc., if required beyond what the library renders.
 - **Composition:** Enable scrapers, observability flags, and resource limits appropriate to the workload.
 

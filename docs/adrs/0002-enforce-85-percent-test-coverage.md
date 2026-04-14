@@ -12,7 +12,7 @@ The runtime will grow (HTTP adapters, tool integrations, config parsing). We wan
 
 Python tests **SHALL** run with **pytest-cov** measuring the `hosted_agents` package. Total line coverage **SHALL** be **at least 85%**, enforced with `--cov-fail-under=85` in project CI (`.github/workflows/ci.yml` Python job and matching local `uv run pytest` invocations; see README).
 
-Coverage configuration lives in `runtime/pyproject.toml` under `[tool.coverage.*]`. Omitted paths (e.g. virtualenvs) are explicit there.
+Coverage configuration lives in `helm/src/pyproject.toml` under `[tool.coverage.*]`. Omitted paths (e.g. virtualenvs) are explicit there.
 
 ## Consequences
 

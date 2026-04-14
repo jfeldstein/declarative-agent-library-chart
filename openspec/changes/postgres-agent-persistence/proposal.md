@@ -22,7 +22,7 @@ Today observability data that operators need for resume, audit, and training pip
 
 ## Impact
 
-- **`runtime/pyproject.toml`**: new dependency (LangGraph Postgres checkpointer + `psycopg` or `asyncpg` per design).
+- **`helm/src/pyproject.toml`**: new dependency (LangGraph Postgres checkpointer + `psycopg` or `asyncpg` per design).
 - **`hosted_agents/observability/`**: repository interfaces, Postgres adapters, migration SQL or Alembic (if adopted).
 - **`helm/chart`**: optional Postgres subchart wiring or external URL; Secret mounts.
 - **CI**: integration tests with **testcontainers** or `docker run postgres` (optional marker) vs mocked DB unit tests for default PR path.

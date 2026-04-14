@@ -80,7 +80,7 @@ Payload limits are enforced in `hosted_agents/rag/models.py` (text length, max l
 ## Run locally
 
 ```bash
-cd runtime
+cd helm/src
 uv sync
 uv run uvicorn hosted_agents.rag.app:create_app --factory --host 127.0.0.1 --port 8090
 ```

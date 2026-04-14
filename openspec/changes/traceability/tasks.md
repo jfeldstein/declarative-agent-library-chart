@@ -7,7 +7,7 @@
 ## 2. Traceability matrix and test annotations
 
 - [x] 2.1 Create **`docs/spec-test-traceability.md`** (or path chosen in design) with columns **ID | Spec | Evidence | CI tier**, and populate **one row per** promoted requirement ID.
-- [x] 2.2 Add requirement ID references to **pytest** tests under **`runtime/tests/`** (docstrings) for rows that claim Python evidence.
+- [x] 2.2 Add requirement ID references to **pytest** tests under **`helm/src/tests/`** (docstrings) for rows that claim Python evidence.
 - [x] 2.3 Add requirement ID references to **helm unittest** YAML under **`examples/*/tests/`** where those tests evidence chart **SHALL** clauses.
 
 ## 3. CI traceability gate

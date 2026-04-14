@@ -4,8 +4,8 @@ FROM python:3.12-slim-bookworm
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 WORKDIR /app
 ENV UV_COMPILE_BYTECODE=1
-COPY runtime/pyproject.toml runtime/uv.lock ./
-COPY runtime/src ./src
+COPY helm/src/pyproject.toml helm/src/uv.lock ./
+COPY helm/src/src ./src
 # Optional extra `wandb` enables W&B when HOSTED_AGENT_WANDB_ENABLED is set.
 RUN uv sync --frozen --no-dev --extra wandb
 ENV PATH="/app/.venv/bin:$PATH"

@@ -5,7 +5,7 @@ globs:
   - docs/spec-test-traceability.md
   - docs/adrs/0003-spec-test-traceability.md
   - scripts/check_spec_traceability.py
-  - runtime/tests/**/*.py
+  - helm/src/tests/**/*.py
   - helm/tests/**/*.yaml
 ---
 

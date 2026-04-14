@@ -15,7 +15,7 @@
 
 - [ ] 3.1 Remove or stub **ATIF export** and **shadow** code paths (`atif`, `shadow`, `export_atif_batch`, trigger graph branches, W&B trace shadow tags if solely for shadow).
 - [ ] 3.2 Simplify **`ObservabilitySettings`** (or rename per design) and **`app.py`** payloads that expose `shadow_*` / ATIF flags.
-- [ ] 3.3 Delete or rewrite tests that only covered removed features; run **`uv run pytest`** for `runtime/tests`.
+- [ ] 3.3 Delete or rewrite tests that only covered removed features; run **`uv run pytest`** for `helm/src/tests`.
 
 ## 4. Documentation and spec traceability
 
