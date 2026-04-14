@@ -12,8 +12,9 @@ def build_checkpointer(settings: ObservabilitySettings) -> Any | None:
 
     * **memory** — ``MemorySaver`` (dev / single replica); ``thread_id`` and ``checkpoint_id``
       follow LangGraph semantics (see runbook).
-    * **postgres** — wire ``HOSTED_AGENT_CHECKPOINT_POSTGRES_URL`` to your deployment’s
-      LangGraph Postgres checkpointer package when added to the image.
+    * **postgres** — set ``HOSTED_AGENT_POSTGRES_URL`` (or legacy
+      ``HOSTED_AGENT_CHECKPOINT_POSTGRES_URL``) and add your LangGraph Postgres
+      checkpointer package to the image.
     * **redis** — same pattern as Postgres; reserved until a saver is pinned.
     """
     if not settings.checkpoints_enabled:
@@ -27,7 +28,7 @@ def build_checkpointer(settings: ObservabilitySettings) -> Any | None:
         if not settings.checkpoint_postgres_url:
             msg = (
                 "HOSTED_AGENT_CHECKPOINT_BACKEND=postgres requires "
-                "HOSTED_AGENT_CHECKPOINT_POSTGRES_URL"
+                "HOSTED_AGENT_POSTGRES_URL (or legacy HOSTED_AGENT_CHECKPOINT_POSTGRES_URL)"
             )
             raise RuntimeError(msg)
         msg = (

@@ -11,6 +11,7 @@ For the shared library, runtime API, Skaffold/DevSpace, and kind walkthroughs, s
 | [**hello-world**](hello-world/) | Smallest useful install: image, `systemPrompt`, default service on **8088**. Use this as the template for new apps. |
 | [**with-observability**](with-observability/) | Same baseline plus **`o11y`**: `prometheus.io/*` annotations, optional **ServiceMonitor**, JSON logs via `HOSTED_AGENT_LOG_FORMAT`. See [docs/observability.md](../docs/observability.md). |
 | [**with-scrapers**](with-scrapers/) | **reference** scraper `CronJob` (hourly schedule); enabled job deploys **RAG**. CI (`helm unittest` via [`.github/workflows/ci.yml`](../.github/workflows/ci.yml)) asserts scraper + RAG manifest rendering. |
+| [**checkpointing**](checkpointing/) | **`observability.checkpoints.enabled: true`** with **memory** backend (library default remains checkpoints off). |
 
 ## Using an example
 

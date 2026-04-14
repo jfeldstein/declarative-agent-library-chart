@@ -1,0 +1,9 @@
+apiVersion: v2
+name: checkpointing
+description: Example application chart — LangGraph checkpoints enabled (memory backend; Helm defaults stay off)
+type: application
+version: 0.1.0
+dependencies:
+  - name: declarative-agent-library
+    version: 0.1.0
+    repository: file://../../helm/chart

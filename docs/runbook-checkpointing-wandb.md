@@ -13,7 +13,7 @@ This runbook covers the **runtime** feature flags added for OpenSpec change `age
 | `HOSTED_AGENT_CHECKPOINT_BACKEND` | Behavior |
 |-----------------------------------|----------|
 | `memory` (default) | In-process `MemorySaver`; suitable for dev / single replica. |
-| `postgres` | **Not bundled** in the default image. Set `HOSTED_AGENT_CHECKPOINT_POSTGRES_URL` and add a LangGraph Postgres checkpointer dependency, then extend `build_checkpointer` in `hosted_agents/observability/checkpointer.py`. |
+| `postgres` | **Not bundled** in the default image. Set `HOSTED_AGENT_POSTGRES_URL` (or legacy `HOSTED_AGENT_CHECKPOINT_POSTGRES_URL`) and add a LangGraph Postgres checkpointer dependency, then extend `build_checkpointer` in `hosted_agents/observability/checkpointer.py`. |
 | `redis` | Reserved until a Redis saver is pinned for this chart. |
 
 When `HOSTED_AGENT_CHECKPOINTS_ENABLED` is **false** (Helm default), the runtime uses the original single-node graph without persistence.
@@ -22,10 +22,10 @@ When `HOSTED_AGENT_CHECKPOINTS_ENABLED` is **false** (Helm default), the runtime
 
 ### Embedded PostgreSQL (PGlite) for local dev
 
-Set **`HOSTED_AGENT_USE_PGLITE=1`** to start an embedded [PGlite](https://pglite.dev/) instance (via optional Python package **`py-pglite`**) and populate missing Postgres URLs. Install: **`uv sync --extra pglite`**. First run may install Node dependencies (PGlite is WASM/Node-backed).
+Set **`HOSTED_AGENT_USE_PGLITE=1`** to start an embedded [PGlite](https://pglite.dev/) instance (via optional Python package **`py-pglite`**) and set **`HOSTED_AGENT_POSTGRES_URL`** when it is unset. Install: **`uv sync --extra pglite`**. First run may install Node dependencies (PGlite is WASM/Node-backed).
 
 - Uses **TCP** mode on **`127.0.0.1`** with a free port (or **`HOSTED_AGENT_PGLITE_TCP_PORT`** / **`HOSTED_AGENT_PGLITE_TCP_HOST`** to pin).
-- If only **`HOSTED_AGENT_CHECKPOINT_POSTGRES_URL`** *or* **`HOSTED_AGENT_OBSERVABILITY_POSTGRES_URL`** is set, the runtime copies it to the other variable so one DSN covers both.
+- The runtime reads **`HOSTED_AGENT_POSTGRES_URL`** first; legacy **`HOSTED_AGENT_CHECKPOINT_POSTGRES_URL`** / **`HOSTED_AGENT_OBSERVABILITY_POSTGRES_URL`** are still honored if the unified var is unset.
 - **Single process only** (e.g. one Uvicorn worker). Do not rely on one embedded DB across multiple Gunicorn workers.
 - CI and minimal images: omit the **`pglite`** extra; use a real Postgres service or stay on **`memory`**.
 
@@ -47,4 +47,4 @@ Set **`HOSTED_AGENT_USE_PGLITE=1`** to start an embedded [PGlite](https://pglite
 
 ## Helm values (short)
 
-See `helm/chart/values.yaml` → `observability.*` for toggles that map to the env vars above. Optional `observability.labelRegistry` overrides the default global label registry JSON.
+See `helm/chart/values.yaml` → `observability.*` for toggles that map to the env vars above. **`observability.postgresUrl`** sets **`HOSTED_AGENT_POSTGRES_URL`** (optional **`observability.checkpoints.postgresUrl`** is deprecated but still honored when the unified field is empty). Optional `observability.labelRegistry` overrides the default global label registry JSON.

@@ -1,0 +1,13 @@
+# Library defaults: observability.checkpoints.enabled is false; this example turns on
+# checkpointing with the bundled in-memory saver (no Postgres image required).
+declarative-agent-library:
+  systemPrompt: |
+    Respond, "Hello :wave:"
+  image:
+    repository: config-first-hosted-agents
+    tag: local
+    pullPolicy: Never
+  observability:
+    checkpoints:
+      enabled: true
+      backend: memory

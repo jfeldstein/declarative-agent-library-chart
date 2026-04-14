@@ -1,0 +1,20 @@
+# Traceability: [CFHA-REQ-HELM-UNITTEST-001] [CFHA-REQ-HELM-UNITTEST-002]
+suite: checkpointing example enables LangGraph checkpoints (memory)
+release:
+  name: cfha-ci-checkpointing
+tests:
+  - it: agent Deployment sets checkpoint env from observability.checkpoints
+    template: charts/declarative-agent-library/templates/deployment.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HOSTED_AGENT_CHECKPOINTS_ENABLED
+            value: "true"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HOSTED_AGENT_CHECKPOINT_BACKEND
+            value: memory

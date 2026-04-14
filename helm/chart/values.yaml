@@ -27,6 +27,7 @@ fullnameOverride: ""
 
 # Optional extra environment variables on the agent container (checkpoint store, W&B, etc.).
 # Example: [{ name: HOSTED_AGENT_CHECKPOINT_STORE, value: "none" }]
+# Postgres DSN for the chart: prefer observability.postgresUrl → HOSTED_AGENT_POSTGRES_URL.
 extraEnv: []
 
 # Observability: Prometheus scrape hints (off by default) and optional ServiceMonitor
@@ -67,9 +68,12 @@ mcp:
 
 # Checkpointing, W&B, Slack feedback, ATIF export, shadow rollouts (runtime env). See docs/runbook-checkpointing-wandb.md.
 observability:
+  # Single DSN → HOSTED_AGENT_POSTGRES_URL (checkpoint + observability Postgres when both use one DB).
+  postgresUrl: ""
   checkpoints:
     enabled: false
     backend: memory
+    # Deprecated: use observability.postgresUrl (still honored if observability.postgresUrl is empty).
     postgresUrl: ""
   wandb:
     enabled: false

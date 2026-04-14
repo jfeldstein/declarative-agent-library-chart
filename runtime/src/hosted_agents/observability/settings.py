@@ -45,12 +45,9 @@ class ObservabilitySettings:
 
     @classmethod
     def from_env(cls) -> ObservabilitySettings:
-        from hosted_agents.observability.pglite_runtime import (
-            ensure_pglite_embedded,
-            sync_shared_postgres_urls,
-        )
+        from hosted_agents.observability.pglite_runtime import ensure_pglite_embedded
+        from hosted_agents.observability.postgres_env import effective_postgres_url
 
-        sync_shared_postgres_urls()
         ensure_pglite_embedded()
         emoji_raw = _json_obj("HOSTED_AGENT_SLACK_EMOJI_LABEL_MAP_JSON")
         emoji_map: dict[str, str] = {}
@@ -84,8 +81,7 @@ class ObservabilitySettings:
             ).strip()
             or "memory",
             checkpoint_postgres_url=(
-                os.environ.get("HOSTED_AGENT_CHECKPOINT_POSTGRES_URL", "").strip()
-                or None
+                effective_postgres_url() or None
             ),
             wandb_enabled=_truthy("HOSTED_AGENT_WANDB_ENABLED"),
             slack_feedback_enabled=_truthy("HOSTED_AGENT_SLACK_FEEDBACK_ENABLED"),

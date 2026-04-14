@@ -31,20 +31,6 @@ def _free_tcp_port(host: str = "127.0.0.1") -> int:
         return int(s.getsockname()[1])
 
 
-def sync_shared_postgres_urls() -> None:
-    """If only one of checkpoint / observability URL is set, copy to the other.
-
-    Safe to call on every settings load so a single DSN can cover both subsystems.
-    """
-
-    cp = os.environ.get("HOSTED_AGENT_CHECKPOINT_POSTGRES_URL", "").strip()
-    ob = os.environ.get("HOSTED_AGENT_OBSERVABILITY_POSTGRES_URL", "").strip()
-    if cp and not ob:
-        os.environ["HOSTED_AGENT_OBSERVABILITY_POSTGRES_URL"] = cp
-    elif ob and not cp:
-        os.environ["HOSTED_AGENT_CHECKPOINT_POSTGRES_URL"] = ob
-
-
 def stop_pglite_embedded() -> None:
     """Stop embedded PGlite (tests / reload). Safe to call multiple times."""
 
@@ -63,23 +49,22 @@ def stop_pglite_embedded() -> None:
 
 
 def ensure_pglite_embedded() -> None:
-    """Align checkpoint vs observability Postgres URLs, then optionally start PGlite.
+    """Optionally start embedded PGlite and set ``HOSTED_AGENT_POSTGRES_URL``.
 
-    Always runs :func:`sync_shared_postgres_urls` so a single configured DSN is copied
-    to the other variable. When ``HOSTED_AGENT_USE_PGLITE`` is set, starts embedded
-    PGlite (TCP) and fills any still-missing URLs. If the flag is unset, returns after
-    syncing. If both URLs are already set after sync, PGlite is not started. Requires
-    optional ``py-pglite[psycopg]`` and a working Node.js install for the first run
+    When ``HOSTED_AGENT_USE_PGLITE`` is set and no effective Postgres URL is
+    configured (see :func:`hosted_agents.observability.postgres_env.effective_postgres_url`),
+    starts PGlite in TCP mode and writes the DSN to ``HOSTED_AGENT_POSTGRES_URL`` only.
+    If the flag is unset or a URL is already set, no-op. Requires optional
+    ``py-pglite[psycopg]`` and a working Node.js install for the first run
     (``py-pglite`` may run ``npm install``).
     """
 
     global _manager
-    sync_shared_postgres_urls()
+    from hosted_agents.observability.postgres_env import effective_postgres_url
+
     if not _truthy("HOSTED_AGENT_USE_PGLITE"):
         return
-    cp = os.environ.get("HOSTED_AGENT_CHECKPOINT_POSTGRES_URL", "").strip()
-    ob = os.environ.get("HOSTED_AGENT_OBSERVABILITY_POSTGRES_URL", "").strip()
-    if cp and ob:
+    if effective_postgres_url():
         return
 
     with _lock:
@@ -111,9 +96,6 @@ def ensure_pglite_embedded() -> None:
         mgr = PGliteManager(config)
         mgr.start()
         uri: str = mgr.get_psycopg_uri()
-        if not os.environ.get("HOSTED_AGENT_CHECKPOINT_POSTGRES_URL", "").strip():
-            os.environ["HOSTED_AGENT_CHECKPOINT_POSTGRES_URL"] = uri
-        if not os.environ.get("HOSTED_AGENT_OBSERVABILITY_POSTGRES_URL", "").strip():
-            os.environ["HOSTED_AGENT_OBSERVABILITY_POSTGRES_URL"] = uri
+        os.environ["HOSTED_AGENT_POSTGRES_URL"] = uri
         _manager = mgr
         atexit.register(stop_pglite_embedded)

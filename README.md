@@ -18,6 +18,7 @@ Standalone repository for **YAML-configured** hosted agents: a **Helm library ch
 | `examples/hello-world/` | Minimal application chart depending on `file://../../helm/chart` |
 | `examples/with-observability/` | Example chart with `o11y` (Prometheus annotations, ServiceMonitor, JSON logs) |
 | `examples/with-scrapers/` | Example chart with RAG + reference scraper `CronJob` (validated in CI; see below) |
+| `examples/checkpointing/` | Example chart with LangGraph checkpoints enabled (`memory` backend) |
 | `Dockerfile` | Production-style image for the Python runtime |
 | `skaffold.yaml` / `devspace.yaml` | Local deploy + **port-forward `localhost:8088` → service :8088** |
 | `docs/observability.md` | Metrics (`/metrics`), structured logs, Helm scrape hints, Grafana import |

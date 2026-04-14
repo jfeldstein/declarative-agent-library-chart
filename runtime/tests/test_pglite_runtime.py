@@ -18,19 +18,23 @@ def test_pglite_noop_when_disabled(monkeypatch: pytest.MonkeyPatch) -> None:
     assert pr._manager is None
 
 
-def test_pglite_syncs_single_url_to_both(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_pglite_does_not_mutate_env_when_legacy_checkpoint_url_only(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.delenv("HOSTED_AGENT_USE_PGLITE", raising=False)
     u = "postgresql://a:b@db:5432/x"
     monkeypatch.setenv("HOSTED_AGENT_CHECKPOINT_POSTGRES_URL", u)
+    monkeypatch.delenv("HOSTED_AGENT_POSTGRES_URL", raising=False)
     monkeypatch.delenv("HOSTED_AGENT_OBSERVABILITY_POSTGRES_URL", raising=False)
     pr.ensure_pglite_embedded()
-    assert os.environ.get("HOSTED_AGENT_OBSERVABILITY_POSTGRES_URL") == u
+    assert os.environ.get("HOSTED_AGENT_OBSERVABILITY_POSTGRES_URL") is None
 
 
 def test_pglite_starts_embedded_and_sets_urls(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setenv("HOSTED_AGENT_USE_PGLITE", "1")
+    monkeypatch.delenv("HOSTED_AGENT_POSTGRES_URL", raising=False)
     monkeypatch.delenv("HOSTED_AGENT_CHECKPOINT_POSTGRES_URL", raising=False)
     monkeypatch.delenv("HOSTED_AGENT_OBSERVABILITY_POSTGRES_URL", raising=False)
 
@@ -46,14 +50,14 @@ def test_pglite_starts_embedded_and_sets_urls(
     with patch.dict(sys.modules, {"py_pglite": fake_mod}):
         pr.ensure_pglite_embedded()
 
-    assert os.environ["HOSTED_AGENT_CHECKPOINT_POSTGRES_URL"] == fake_uri
-    assert os.environ["HOSTED_AGENT_OBSERVABILITY_POSTGRES_URL"] == fake_uri
+    assert os.environ["HOSTED_AGENT_POSTGRES_URL"] == fake_uri
     mgr.start.assert_called_once()
     assert pr._manager is mgr
 
 
 def test_pglite_missing_dependency_raises(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("HOSTED_AGENT_USE_PGLITE", "1")
+    monkeypatch.delenv("HOSTED_AGENT_POSTGRES_URL", raising=False)
     monkeypatch.delenv("HOSTED_AGENT_CHECKPOINT_POSTGRES_URL", raising=False)
     monkeypatch.delenv("HOSTED_AGENT_OBSERVABILITY_POSTGRES_URL", raising=False)
 
