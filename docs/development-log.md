@@ -8,6 +8,8 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ## 2026-04-13
 
+**PGlite (optional embedded Postgres)** — Optional **`[pglite]`** extra (**`py-pglite[psycopg]`**); **`HOSTED_AGENT_USE_PGLITE=1`** starts TCP-mode PGlite and fills missing **`HOSTED_AGENT_CHECKPOINT_POSTGRES_URL`** / **`HOSTED_AGENT_OBSERVABILITY_POSTGRES_URL`**. **`sync_shared_postgres_urls`** mirrors a single configured DSN to the other env var. Runtime: **`hosted_agents.observability.pglite_runtime`**; tests use mocks (no Node in CI). Runbook: **`docs/runbook-checkpointing-wandb.md`** (embedded PGlite section).
+
 **Coverage** — Removed **`*/observability/*`** from **`runtime/pyproject.toml`** `[tool.coverage.run] omit` so **`hosted_agents/observability/`** is included in the **`pytest-cov`** denominator (aggregate still **≥85%**). Deleted OpenSpec change **`observability-package-coverage`**; **`agent-checkpointing-wandb-feedback`** and **`agent-runtime-components`** proposals now state the same rule explicitly.
 
 **OpenSpec** — Earlier today: deleted **`shadow-rollout-evaluation`** and **`shadow-non-mutating-twin-execution`**; **`agent-checkpointing-wandb-feedback`** no longer defers to those paths. Later: **`agent-maker-system`** rescoped (prefix policy, bot MVP, eval reuse); stubs **`subagent-reference-system`**, **`ci-delta-flagging`**; **`traceability`** proposal/design updated for **test-to-spec** vocabulary, proposed-vs-promoted matrix rules, and **`runtime-tools-mcp` contract vs wire**.

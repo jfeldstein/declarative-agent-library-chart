@@ -19,9 +19,11 @@ os.environ.setdefault("LANGCHAIN_TRACING_V2", "false")
 def _reset_langgraph_checkpoint_isolation() -> None:
     """Fresh in-memory checkpointer + compiled graph cache per test."""
     from hosted_agents.checkpointing import clear_memory_checkpointer
+    from hosted_agents.observability.pglite_runtime import stop_pglite_embedded
 
     clear_memory_checkpointer()
     yield
+    stop_pglite_embedded()
 
 
 def tool_then_text_responses(

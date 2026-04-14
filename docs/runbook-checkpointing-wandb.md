@@ -20,6 +20,15 @@ When `HOSTED_AGENT_CHECKPOINTS_ENABLED` is **false** (Helm default), the runtime
 
 **Ephemeral runs:** JSON field `ephemeral: true` opts out of checkpoint persistence even when checkpointing is enabled globally.
 
+### Embedded PostgreSQL (PGlite) for local dev
+
+Set **`HOSTED_AGENT_USE_PGLITE=1`** to start an embedded [PGlite](https://pglite.dev/) instance (via optional Python package **`py-pglite`**) and populate missing Postgres URLs. Install: **`uv sync --extra pglite`**. First run may install Node dependencies (PGlite is WASM/Node-backed).
+
+- Uses **TCP** mode on **`127.0.0.1`** with a free port (or **`HOSTED_AGENT_PGLITE_TCP_PORT`** / **`HOSTED_AGENT_PGLITE_TCP_HOST`** to pin).
+- If only **`HOSTED_AGENT_CHECKPOINT_POSTGRES_URL`** *or* **`HOSTED_AGENT_OBSERVABILITY_POSTGRES_URL`** is set, the runtime copies it to the other variable so one DSN covers both.
+- **Single process only** (e.g. one Uvicorn worker). Do not rely on one embedded DB across multiple Gunicorn workers.
+- CI and minimal images: omit the **`pglite`** extra; use a real Postgres service or stay on **`memory`**.
+
 ## Operator HTTP APIs
 
 - `GET /api/v1/runtime/threads/{thread_id}/state` — latest checkpoint snapshot (LangGraph `get_state` semantics).
