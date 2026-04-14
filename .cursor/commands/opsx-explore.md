@@ -78,6 +78,26 @@ Depending on what the user brings, you might:
 
 ---
 
+## In-flight work (open PRs)
+
+Include a **scan of open pull requests** so exploration accounts for work that is **implemented on a branch or in review but not yet on the default branch**. That reduces wrong assumptions about what `main` reflects and flags overlap with duplicate or conflicting effort.
+
+**When:** Near the start (alongside OpenSpec checks below), and again if the conversation moves to an area that might have an active PR.
+
+**How** (GitHub CLI when available):
+```bash
+PAGER="" gh pr list --state open --json number,title,author,headRefName,baseRefName,url,labels,updatedAt --limit 50
+```
+
+**What to surface:**
+- A compact view per PR: number, title, head branch, base, author, link; optional one-line overlap with the topic.
+- **Explicitly distinguish** “landed on default branch” vs “exists only in an open PR” when reasoning about the codebase.
+- If an open PR likely touches the same feature or paths, call that out before deep-diving local files.
+
+**If `gh` is missing or not authenticated:** Say so briefly once, continue exploration; the user can open the repo’s PR list in the browser if needed.
+
+---
+
 ## OpenSpec Awareness
 
 You have full context of the OpenSpec system. Use it naturally, don't force it.
@@ -93,6 +113,8 @@ This tells you:
 - If there are active changes
 - Their names, schemas, and status
 - What the user might be working on
+
+Cross-check mentally with **open PRs**: local OpenSpec changes and remote PRs are different signals; both can represent work not yet on `main`.
 
 If the user mentioned a specific change name, read its artifacts for context.
 
