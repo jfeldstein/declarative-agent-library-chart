@@ -59,6 +59,20 @@ spec:
             - name: HOSTED_AGENT_LOG_FORMAT
               value: "json"
             {{- end }}
+            - name: HOSTED_AGENT_OBSERVABILITY_STORE
+              value: {{ .Values.observability.store | default "memory" | quote }}
+            - name: HOSTED_AGENT_OBSERVABILITY_POSTGRES_POOL_MAX
+              value: {{ .Values.observability.postgres.poolMax | default 5 | quote }}
+            {{- if .Values.observability.postgres.urlSecret.name }}
+            - name: HOSTED_AGENT_OBSERVABILITY_POSTGRES_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.observability.postgres.urlSecret.name }}
+                  key: {{ .Values.observability.postgres.urlSecret.key | default "DATABASE_URL" }}
+            {{- else if .Values.observability.postgres.url }}
+            - name: HOSTED_AGENT_OBSERVABILITY_POSTGRES_URL
+              value: {{ .Values.observability.postgres.url | quote }}
+            {{- end }}
             {{- if .Values.observability.postgresUrl }}
             - name: HOSTED_AGENT_POSTGRES_URL
               value: {{ .Values.observability.postgresUrl | quote }}
@@ -68,6 +82,20 @@ spec:
               value: "true"
             - name: HOSTED_AGENT_CHECKPOINT_BACKEND
               value: {{ .Values.observability.checkpoints.backend | quote }}
+            {{- if .Values.observability.checkpoints.postgresUrlSecret.name }}
+            - name: HOSTED_AGENT_CHECKPOINT_POSTGRES_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.observability.checkpoints.postgresUrlSecret.name }}
+                  key: {{ .Values.observability.checkpoints.postgresUrlSecret.key | default "DATABASE_URL" }}
+            {{- else if .Values.observability.checkpoints.postgresUrl }}
+            - name: HOSTED_AGENT_CHECKPOINT_POSTGRES_URL
+              value: {{ .Values.observability.checkpoints.postgresUrl | quote }}
+            {{- end }}
+            {{- if eq .Values.observability.checkpoints.backend "postgres" }}
+            - name: HOSTED_AGENT_CHECKPOINT_POSTGRES_POOL_MAX
+              value: {{ .Values.observability.checkpoints.postgresPoolMax | default 5 | quote }}
+            {{- end }}
             {{- end }}
             {{- if .Values.observability.wandb.enabled }}
             - name: HOSTED_AGENT_WANDB_ENABLED

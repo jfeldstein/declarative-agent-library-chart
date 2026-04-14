@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 from typing import Any, TypedDict
 
 from langchain_core.runnables import RunnableConfig
@@ -14,7 +15,12 @@ from hosted_agents.checkpointing import (
     resolve_checkpointer,
 )
 from hosted_agents.observability.checkpointer import build_checkpointer
-from hosted_agents.observability.feedback import RunOperationalEvent, feedback_store
+from hosted_agents.observability.feedback import RunOperationalEvent
+from hosted_agents.observability.stores import (
+    bind_observability_stores,
+    build_observability_stores,
+    get_feedback_store,
+)
 from hosted_agents.observability.run_context import (
     bind_run_context,
     get_run_id,
@@ -161,12 +167,20 @@ _compiled_graph: Any | None = None
 _compiled_graph_key: tuple[Any, ...] | None = None
 
 
+def _checkpoint_url_fingerprint(obs: ObservabilitySettings) -> str:
+    url = (obs.checkpoint_postgres_url or "").strip()
+    if not url:
+        return "-"
+    return hashlib.sha256(url.encode()).hexdigest()[:12]
+
+
 def _graph_key(ctx: TriggerContext) -> tuple[Any, ...]:
     obs = _obs(ctx)
     use_cp = checkpoints_globally_enabled() and not ctx.ephemeral
     store_kind = effective_checkpoint_store()
     backend = obs.checkpoint_backend if obs.checkpoints_enabled else store_kind
-    return (use_cp, obs.checkpoints_enabled, backend, ctx.ephemeral)
+    url_fp = _checkpoint_url_fingerprint(obs) if backend == "postgres" else "-"
+    return (use_cp, obs.checkpoints_enabled, backend, url_fp, ctx.ephemeral)
 
 
 def _resolve_checkpointer(
@@ -284,31 +298,32 @@ def run_trigger_graph(ctx: TriggerContext) -> str:
     set_wandb_session(wandb_session if obs.wandb_enabled else None)
 
     shadow_cfg = ShadowSettings.from_env()
-    if shadow_cfg and should_run_shadow(
-        tenant_id=ctx.tenant_id,
-        obs_enabled=obs.shadow_enabled,
-        sample_rate=obs.shadow_sample_rate,
-        allow_tenants=obs.shadow_allow_tenants,
-    ):
-        feedback_store.record_operational(
-            RunOperationalEvent(
-                kind="shadow_scheduled",
-                run_id=ctx.run_id,
-                thread_id=ctx.thread_id,
-                payload={"shadow_variant_id": shadow_cfg.variant_id},
+    with bind_observability_stores(build_observability_stores(obs)):
+        if shadow_cfg and should_run_shadow(
+            tenant_id=ctx.tenant_id,
+            obs_enabled=obs.shadow_enabled,
+            sample_rate=obs.shadow_sample_rate,
+            allow_tenants=obs.shadow_allow_tenants,
+        ):
+            get_feedback_store().record_operational(
+                RunOperationalEvent(
+                    kind="shadow_scheduled",
+                    run_id=ctx.run_id,
+                    thread_id=ctx.thread_id,
+                    payload={"shadow_variant_id": shadow_cfg.variant_id},
+                )
             )
-        )
 
-    graph = compiled_trigger_graph(ctx)
-    thread_cfg: dict[str, Any] = {
-        "configurable": {"ctx": ctx, "thread_id": ctx.thread_id}
-    }
-    try:
-        result = graph.invoke({"output": ""}, config=thread_cfg)
-    finally:
-        set_wandb_session(None)
-        wandb_session.finish()
-        reset_trigger_ids(tid_tok)
+        graph = compiled_trigger_graph(ctx)
+        thread_cfg: dict[str, Any] = {
+            "configurable": {"ctx": ctx, "thread_id": ctx.thread_id}
+        }
+        try:
+            result = graph.invoke({"output": ""}, config=thread_cfg)
+        finally:
+            set_wandb_session(None)
+            wandb_session.finish()
+            reset_trigger_ids(tid_tok)
 
     assert isinstance(result, dict)
     return str(result["output"])

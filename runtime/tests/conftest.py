@@ -19,9 +19,13 @@ os.environ.setdefault("LANGCHAIN_TRACING_V2", "false")
 def _reset_langgraph_checkpoint_isolation() -> None:
     """Fresh in-memory checkpointer + compiled graph cache per test."""
     from hosted_agents.checkpointing import clear_memory_checkpointer
+    from hosted_agents.observability.checkpointer import reset_checkpoint_postgres_pool
     from hosted_agents.observability.pglite_runtime import stop_pglite_embedded
+    from hosted_agents.observability.stores import reset_observability_stores_cache
 
     clear_memory_checkpointer()
+    reset_checkpoint_postgres_pool()
+    reset_observability_stores_cache()
     yield
     stop_pglite_embedded()
 

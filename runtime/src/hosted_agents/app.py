@@ -17,9 +17,13 @@ from hosted_agents.checkpointing import checkpoints_globally_enabled
 from hosted_agents.env import system_prompt_from_env
 from hosted_agents.metrics import observe_http_trigger
 from hosted_agents.observability.atif import export_atif_batch
-from hosted_agents.observability.feedback import feedback_store
 from hosted_agents.observability.settings import ObservabilitySettings
-from hosted_agents.observability.side_effects import side_effect_checkpoints
+from hosted_agents.observability.stores import (
+    bind_observability_stores,
+    build_observability_stores,
+    get_feedback_store,
+    get_side_effect_store,
+)
 from hosted_agents.observability.slack_ingest import handle_slack_reaction_event
 from hosted_agents.observability.trajectory import trajectory_recorder
 from hosted_agents.o11y_logging import configure_request_logging
@@ -173,6 +177,7 @@ def create_app(*, system_prompt: str | None = None) -> FastAPI:
             {
                 "checkpoints_enabled": obs.checkpoints_enabled,
                 "checkpoint_backend": obs.checkpoint_backend,
+                "observability_store": obs.observability_store,
                 "wandb_enabled": obs.wandb_enabled,
                 "slack_feedback_enabled": obs.slack_feedback_enabled,
                 "atif_export_enabled": obs.atif_export_enabled,
@@ -229,7 +234,7 @@ def create_app(*, system_prompt: str | None = None) -> FastAPI:
 
     @app.get("/api/v1/runtime/threads/{thread_id}/side-effects")
     def thread_side_effects(thread_id: str) -> JSONResponse:
-        recs = side_effect_checkpoints.by_thread(thread_id)
+        recs = get_side_effect_store().by_thread(thread_id)
         return JSONResponse(
             {
                 "thread_id": thread_id,
@@ -256,12 +261,13 @@ def create_app(*, system_prompt: str | None = None) -> FastAPI:
             raise HTTPException(status_code=400, detail="Invalid JSON body") from exc
         if not isinstance(raw, dict):
             raise HTTPException(status_code=400, detail="JSON body must be an object")
-        result = handle_slack_reaction_event(raw, settings=obs)
+        with bind_observability_stores(build_observability_stores(obs)):
+            result = handle_slack_reaction_event(raw, settings=obs)
         return JSONResponse(result)
 
     @app.get("/api/v1/runtime/feedback/human")
     def list_human_feedback() -> JSONResponse:
-        evs = feedback_store.human_events()
+        evs = get_feedback_store().human_events()
         return JSONResponse(
             {
                 "events": [

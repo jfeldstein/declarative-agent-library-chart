@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from hosted_agents.observability.correlation import SlackMessageRef, correlation_store
-from hosted_agents.observability.feedback import (
-    HumanFeedbackEvent,
-    OrphanReactionEvent,
-    feedback_store,
+from hosted_agents.observability.correlation import SlackMessageRef
+from hosted_agents.observability.feedback import HumanFeedbackEvent, OrphanReactionEvent
+from hosted_agents.observability.stores import (
+    get_correlation_store,
+    get_feedback_store,
 )
 from hosted_agents.observability.label_registry import get_label_registry
 from hosted_agents.observability.settings import ObservabilitySettings
@@ -37,9 +37,9 @@ def handle_slack_reaction_event(
     user_id = str(payload.get("user_id") or "unknown")
 
     ref = SlackMessageRef(channel_id=channel_id, message_ts=message_ts)
-    corr = correlation_store.get_by_slack(ref)
+    corr = get_correlation_store().get_by_slack(ref)
     if corr is None:
-        feedback_store.record_orphan_reaction(
+        get_feedback_store().record_orphan_reaction(
             OrphanReactionEvent(
                 channel_id=channel_id,
                 message_ts=message_ts,
@@ -53,7 +53,7 @@ def handle_slack_reaction_event(
     reg = get_label_registry()
     entry = reg.resolve(label_id)
     if entry is None:
-        feedback_store.record_orphan_reaction(
+        get_feedback_store().record_orphan_reaction(
             OrphanReactionEvent(
                 channel_id=channel_id,
                 message_ts=message_ts,
@@ -75,7 +75,7 @@ def handle_slack_reaction_event(
         feedback_source="slack_reaction",
         dedupe_key=dedupe_key,
     )
-    feedback_store.record_human(ev)
+    get_feedback_store().record_human(ev)
 
     trajectory_recorder.append(
         corr.run_id,

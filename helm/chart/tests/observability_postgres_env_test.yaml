@@ -1,0 +1,29 @@
+# Traceability: [CFHA-REQ-HELM-UNITTEST-001]
+suite: observability postgres-related env on agent Deployment
+templates:
+  - deployment.yaml
+release:
+  name: cfha-test
+  namespace: default
+set:
+  observability.store: postgres
+  observability.postgres.url: postgres://user:pass@db:5432/app
+  observability.postgres.poolMax: 7
+tests:
+  - it: sets observability store and postgres URL env vars
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HOSTED_AGENT_OBSERVABILITY_STORE
+            value: postgres
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HOSTED_AGENT_OBSERVABILITY_POSTGRES_URL
+            value: postgres://user:pass@db:5432/app
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HOSTED_AGENT_OBSERVABILITY_POSTGRES_POOL_MAX
+            value: "7"

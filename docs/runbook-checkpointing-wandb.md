@@ -13,7 +13,7 @@ This runbook covers the **runtime** feature flags added for OpenSpec change `age
 | `HOSTED_AGENT_CHECKPOINT_BACKEND` | Behavior |
 |-----------------------------------|----------|
 | `memory` (default) | In-process `MemorySaver`; suitable for dev / single replica. |
-| `postgres` | **Not bundled** in the default image. Set `HOSTED_AGENT_POSTGRES_URL` and add a LangGraph Postgres checkpointer dependency, then extend `build_checkpointer` in `hosted_agents/observability/checkpointer.py`. |
+| `postgres` | **Bundled** in the published image (`langgraph-checkpoint-postgres` + `psycopg` v3). Set `HOSTED_AGENT_CHECKPOINT_POSTGRES_URL` or unified `HOSTED_AGENT_POSTGRES_URL` (`postgres://` or `postgresql://`). On first use the runtime runs LangGraph’s checkpoint `setup()` (creates checkpoint tables). Size the pool with `HOSTED_AGENT_CHECKPOINT_POSTGRES_POOL_MAX` (default `5` per process). Prefer a session pooler (PgBouncer) in front of Postgres for multi-worker deployments. |
 | `redis` | Reserved until a Redis saver is pinned for this chart. |
 
 When `HOSTED_AGENT_CHECKPOINTS_ENABLED` is **false** (Helm default), the runtime uses the original single-node graph without persistence.
@@ -35,7 +35,7 @@ Set **`HOSTED_AGENT_USE_PGLITE=1`** to start an embedded [PGlite](https://pglite
 - `GET /api/v1/runtime/threads/{thread_id}/checkpoints` — history (`get_state_history`).
 - `GET /api/v1/runtime/threads/{thread_id}/side-effects` — logical checkpoints around visible side effects (Slack posts).
 - `POST /api/v1/integrations/slack/reactions` — normalized reaction payload (`channel_id`, `message_ts`, `reaction`, `event_id`, `user_id`).
-- `GET /api/v1/runtime/feedback/human` — recorded human feedback events (process-local store in default build).
+- `GET /api/v1/runtime/feedback/human` — recorded human feedback events (`HOSTED_AGENT_OBSERVABILITY_STORE=memory` default; `postgres` reads from the same DB tables when configured).
 - `GET /api/v1/runtime/exports/atif?run_id=...` — **ATIF v1.4** trajectory JSON (Harbor Agent Trajectory Format; see [ADR 0004](adrs/0004-pin-atif-v1-4-trajectory-export.md) and [Harbor ATIF docs](https://www.harborframework.com/docs/agents/trajectory-format)); requires `HOSTED_AGENT_ATIF_EXPORT_ENABLED`. Optional env: `HOSTED_AGENT_ATIF_AGENT_NAME`, `HOSTED_AGENT_ATIF_AGENT_VERSION`, `HOSTED_AGENT_ATIF_MODEL_NAME`.
 
 ## Secrets, retention, rollback, PII
@@ -45,6 +45,25 @@ Set **`HOSTED_AGENT_USE_PGLITE=1`** to start an embedded [PGlite](https://pglite
 - **Rollback:** disable feature flags (`HOSTED_AGENT_CHECKPOINTS_ENABLED`, `HOSTED_AGENT_WANDB_ENABLED`, `HOSTED_AGENT_SLACK_FEEDBACK_ENABLED`, etc.) via Helm values; the runtime remains compatible with older clients.
 - **PII:** enable redaction in export paths (`export_atif_batch` redacts common secret key names); extend blocklists before sending data to W&B or external training stores.
 
+## Application observability store (correlation, feedback, side-effects, span summaries)
+
+| `HOSTED_AGENT_OBSERVABILITY_STORE` | Behavior |
+|------------------------------------|----------|
+| `memory` (default) | In-process stores (same as pre-Postgres behavior). |
+| `postgres` | Persist Slack correlation, human feedback, operational events, orphan reactions, side-effect checkpoints, and per-tool span summaries under the `hosted_agents` schema. Requires `HOSTED_AGENT_OBSERVABILITY_POSTGRES_URL`, **or** reuse `HOSTED_AGENT_CHECKPOINT_POSTGRES_URL` when both checkpoints and observability target the same database. |
+
+The runtime applies bundled DDL from `hosted_agents/migrations/001_hosted_agents_observability.sql` on first pool use (idempotent `CREATE … IF NOT EXISTS`). For GitOps-only clusters, operators may instead apply the same file with `psql` or enable the optional Helm hook Job (`observability.postgres.migrations.enabled`), which requires `observability.postgres.urlSecret` so the Job can read `DATABASE_URL`.
+
+**Rollback:** take a logical or physical snapshot before upgrades; to roll back behavior flip `HOSTED_AGENT_OBSERVABILITY_STORE` to `memory` and `HOSTED_AGENT_CHECKPOINT_BACKEND` to `memory`, then redeploy (data remains in Postgres until explicitly removed).
+
 ## Helm values (short)
 
-See `helm/chart/values.yaml` → `observability.*` for toggles that map to the env vars above. **`observability.postgresUrl`** sets **`HOSTED_AGENT_POSTGRES_URL`**. Optional `observability.labelRegistry` overrides the default global label registry JSON.
+See `helm/chart/values.yaml` → `observability.*` for toggles that map to the env vars above. **`observability.postgresUrl`** sets unified **`HOSTED_AGENT_POSTGRES_URL`** (checkpoint fallback + PGlite target). Checkpoint URLs may also be set inline (`observability.checkpoints.postgresUrl`) or via `observability.checkpoints.postgresUrlSecret`. Observability URLs use `observability.postgres.url` / `observability.postgres.urlSecret`. Optional `observability.labelRegistry` overrides the default global label registry JSON.
+
+## Manual smoke (Postgres in kind)
+
+1. Build/push an image from this repo (`Dockerfile` syncs `--extra wandb --extra postgres`).
+2. Install Postgres in the cluster (operator or single-instance chart) and create a Secret with a `postgres://…` URL.
+3. Set `observability.store: postgres`, `observability.checkpoints.enabled: true`, `observability.checkpoints.backend: postgres`, and wire both URL secrets (or shared secret / `postgresUrl`) in your parent chart values.
+4. Apply migrations (runtime auto-apply on first connect, or Helm migration hook, or `psql -f` on the SQL file under `helm/chart/files/observability/`).
+5. Trigger a run, delete the agent pod, and confirm `GET …/feedback/human` and checkpoint routes still return prior data.

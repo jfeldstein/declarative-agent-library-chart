@@ -7,7 +7,7 @@ ENV UV_COMPILE_BYTECODE=1
 COPY runtime/pyproject.toml runtime/uv.lock ./
 COPY runtime/src ./src
 # Optional extra `wandb` enables W&B when HOSTED_AGENT_WANDB_ENABLED is set.
-RUN uv sync --frozen --no-dev --extra wandb
+RUN uv sync --frozen --no-dev --extra wandb --extra postgres
 ENV PATH="/app/.venv/bin:$PATH"
 EXPOSE 8088
 CMD ["uvicorn", "hosted_agents.app:create_app", "--factory", "--host", "0.0.0.0", "--port", "8088"]
