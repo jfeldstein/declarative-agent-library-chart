@@ -13,7 +13,7 @@
 
 ## 3. Grafana and observability docs
 
-- [ ] 3.1 `git mv` `grafana/cfha-agent-overview.json` → `grafana/dalc-overview.json`; update dashboard `uid`, `tags`, and titles that used **cfha** / **config-first-hosted-agents** to **dalc** / **declarative-agent-library-chart** as appropriate
+- [ ] 3.1 `git mv` `grafana/dalc-agent-overview.json` → `grafana/dalc-overview.json`; update dashboard `uid`, `tags`, and titles that used **cfha** / **config-first-hosted-agents** to **dalc** / **declarative-agent-library-chart** as appropriate
 - [ ] 3.2 Update `grafana/README.md` to document `dalc-overview.json` and import steps
 - [ ] 3.3 Update `docs/observability.md` (and root `README.md` if applicable) for new image name, dashboard path, and `agent.*` Helm paths
 
@@ -26,7 +26,7 @@
 ## 5. Spec traceability and verification
 
 - [ ] 5.1 Archive this change’s deltas into `openspec/specs/` per workflow (promote `dalc-library-chart-packaging`, apply MODIFIED blocks to `cfha-agent-o11y-logs-dashboards`) when implementing
-- [ ] 5.2 Update `docs/spec-test-traceability.md` rows for **[CFHA-REQ-O11Y-LOGS-001]**, **[CFHA-REQ-O11Y-LOGS-003]**, and new **[CFHA-REQ-DALC-PKG-***]** evidence paths
+- [ ] 5.2 Update `docs/spec-test-traceability.md` rows for **[DALC-REQ-O11Y-LOGS-001]**, **[DALC-REQ-O11Y-LOGS-003]**, and new **[DALC-REQ-DALC-PKG-***]** evidence paths
 - [ ] 5.3 Add requirement ID strings to pytest docstrings / helm unittest comments per ADR 0003
 - [ ] 5.4 Run `python3 scripts/check_spec_traceability.py` and fix any drift
 

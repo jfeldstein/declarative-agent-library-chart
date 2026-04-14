@@ -10,7 +10,7 @@
 #   for integration-specific variables (wired in ``helm/chart/templates/scraper-cronjobs.yaml``).
 #
 # When adding a new scraper implementation, also update: ``examples/with-scrapers/`` (this file
-# + tests), ``grafana/cfha-agent-overview.json`` (scraper metric panels), and the dispatch in
+# + tests), ``grafana/dalc-agent-overview.json`` (scraper metric panels), and the dispatch in
 # ``helm/chart/templates/scraper-cronjobs.yaml``. See ``hosted_agents.scrapers`` package docstring.
 declarative-agent-library:
   systemPrompt: |

@@ -21,8 +21,8 @@
 
 - [ ] 4.1 Update **`docs/runbook-checkpointing-wandb.md`**, **`docs/observability.md`**, chart README, and any scripts referencing old value keys.
 - [ ] 4.2 Document **`labelRegistry`**: feedback label taxonomy for **`HOSTED_AGENT_LABEL_REGISTRY_JSON`**, relocated under **`scrapers.slack.feedback`**.
-- [ ] 4.3 Update **`docs/spec-test-traceability.md`** and test comments for new or changed **`[CFHA-REQ-*]`** IDs; run **`python3 scripts/check_spec_traceability.py`**.
+- [ ] 4.3 Update **`docs/spec-test-traceability.md`** and test comments for new or changed **`[DALC-REQ-*]`** IDs; run **`python3 scripts/check_spec_traceability.py`**.
 
 ## 5. OpenSpec promotion (at apply/archive)
 
-- [ ] 5.1 Merge delta specs into **`openspec/specs/`** when implementing or archiving; ensure IDs on promoted **`### Requirement:`** lines match **`cfha-requirement-verification`**.
+- [ ] 5.1 Merge delta specs into **`openspec/specs/`** when implementing or archiving; ensure IDs on promoted **`### Requirement:`** lines match **`dalc-requirement-verification`**.

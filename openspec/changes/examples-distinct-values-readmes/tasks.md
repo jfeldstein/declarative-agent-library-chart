@@ -5,7 +5,7 @@
 ## 2. Specs and traceability
 
 - [ ] 2.1 Promote **`cfha-example-values-files`** and **`cfha-helm-unittest`** deltas from this change into **`openspec/specs/`** per OpenSpec apply/archive conventions (preserve requirement IDs).
-- [ ] 2.2 Update **`docs/spec-test-traceability.md`** with rows for **`[CFHA-REQ-EXAMPLE-VALUES-FILES-001]`**, **`[CFHA-REQ-EXAMPLE-VALUES-FILES-002]`**, and **`[CFHA-REQ-HELM-UNITTEST-004]`**; set evidence to planned **`helm/tests/`** paths and CI tier consistent with existing Helm unittest rows.
+- [ ] 2.2 Update **`docs/spec-test-traceability.md`** with rows for **`[DALC-REQ-EXAMPLE-VALUES-FILES-001]`**, **`[DALC-REQ-EXAMPLE-VALUES-FILES-002]`**, and **`[DALC-REQ-HELM-UNITTEST-004]`**; set evidence to planned **`helm/tests/`** paths and CI tier consistent with existing Helm unittest rows.
 - [ ] 2.3 Run **`python3 scripts/check_spec_traceability.py`** and fix any gaps.
 
 ## 3. Example values files and READMEs
@@ -16,7 +16,7 @@
 
 ## 4. Helm unittest
 
-- [ ] 4.1 Extend the matching suite under **`helm/tests/`** with a **`values:`** block (or equivalent) **per** documented values file; add **`it:`** cases with **`# [CFHA-REQ-HELM-UNITTEST-004]`** (and example-values IDs as appropriate) asserting setup-specific rendering.
+- [ ] 4.1 Extend the matching suite under **`helm/tests/`** with a **`values:`** block (or equivalent) **per** documented values file; add **`it:`** cases with **`# [DALC-REQ-HELM-UNITTEST-004]`** (and example-values IDs as appropriate) asserting setup-specific rendering.
 - [ ] 4.2 From each **`examples/<name>/`**, run **`helm dependency build --skip-refresh`** then **`helm unittest -f`** against the consolidated suite file; all tests pass.
 
 ## 5. Verification

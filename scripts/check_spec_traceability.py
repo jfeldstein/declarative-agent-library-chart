@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """Validate OpenSpec promoted spec requirement IDs and traceability matrix consistency.
 
-Traceability: [CFHA-VER-001]
+Traceability: [DALC-VER-001]
 
-Rules (see ``openspec/specs/cfha-requirement-verification/spec.md``, ``docs/adrs/0003-spec-test-traceability.md``,
+Rules (see ``openspec/specs/dalc-requirement-verification/spec.md``, ``docs/adrs/0003-spec-test-traceability.md``,
 and ``docs/spec-test-traceability.md``):
 
 - Every ``### Requirement:`` heading under ``openspec/specs/*/spec.md`` must include a bracketed
-  ``[CFHA-REQ-...]`` or ``[CFHA-VER-...]`` identifier **on the same line** as ``### Requirement:``.
+  ``[DALC-REQ-...]`` or ``[DALC-VER-...]`` identifier **on the same line** as ``### Requirement:``.
 - ``docs/spec-test-traceability.md`` must define a markdown table with one row per promoted ID.
 - Active (non-waived) rows: evidence paths must exist. Waived rows: see ADR 0003 (approver + reason required;
   evidence may be ``-``).
@@ -18,8 +18,10 @@ unittest YAML, the ID must appear in a ``#`` comment in the file.
 
 Environment:
 
-- ``CFHA_TRACEABILITY_STRICT=0`` — skip content checks for Python/YAML evidence (paths must still exist for
+- ``DALC_TRACEABILITY_STRICT=0`` — skip content checks for Python/YAML evidence (paths must still exist for
   active rows). Use only temporarily while backfilling annotations.
+- ``CFHA_TRACEABILITY_STRICT`` — deprecated alias for ``DALC_TRACEABILITY_STRICT``; if set without ``DALC_``,
+  a one-line warning is printed to stderr.
 """
 
 from __future__ import annotations
@@ -36,9 +38,9 @@ SPECS_DIR = ROOT / "openspec" / "specs"
 MATRIX_PATH = ROOT / "docs" / "spec-test-traceability.md"
 
 # ID must appear on the same line as ### Requirement:
-ID_PATTERN = re.compile(r"\[(CFHA-REQ-[A-Z0-9-]+-\d{3}|CFHA-VER-\d{3})\]")
+ID_PATTERN = re.compile(r"\[(DALC-REQ-[A-Z0-9-]+-\d{3}|DALC-VER-\d{3})\]")
 MATRIX_ID_CELL = re.compile(
-    r"^\s*(\[(?:CFHA-REQ-[A-Z0-9-]+-\d{3}|CFHA-VER-\d{3})\])\s*$",
+    r"^\s*(\[(?:DALC-REQ-[A-Z0-9-]+-\d{3}|DALC-VER-\d{3})\])\s*$",
 )
 GITHUB_LOGIN = re.compile(
     r"^(?!-)(?!.*--)[a-zA-Z0-9](?:[a-zA-Z0-9]|-(?=[a-zA-Z0-9])){0,37}[a-zA-Z0-9]$|^[a-zA-Z0-9]$",
@@ -46,12 +48,17 @@ GITHUB_LOGIN = re.compile(
 
 
 def _strict() -> bool:
-    return os.environ.get("CFHA_TRACEABILITY_STRICT", "1").strip().lower() not in (
-        "0",
-        "false",
-        "no",
-        "off",
-    )
+    if "DALC_TRACEABILITY_STRICT" in os.environ:
+        raw = os.environ["DALC_TRACEABILITY_STRICT"]
+    elif "CFHA_TRACEABILITY_STRICT" in os.environ:
+        print(
+            "warning: CFHA_TRACEABILITY_STRICT is deprecated; use DALC_TRACEABILITY_STRICT",
+            file=sys.stderr,
+        )
+        raw = os.environ["CFHA_TRACEABILITY_STRICT"]
+    else:
+        raw = "1"
+    return raw.strip().lower() not in ("0", "false", "no", "off")
 
 
 def _is_waiver_blank(cell: str) -> bool:
@@ -306,7 +313,7 @@ def main() -> None:
                         print(
                             f"error: {rid} not found in evidence {p.relative_to(ROOT)} ({hint}) "
                             f"— add docstring with the ID, narrow matrix to file.py::test_name, "
-                            f"or set CFHA_TRACEABILITY_STRICT=0 temporarily.",
+                            f"or set DALC_TRACEABILITY_STRICT=0 temporarily.",
                             file=sys.stderr,
                         )
                         sys.exit(1)
@@ -316,7 +323,7 @@ def main() -> None:
                         print(
                             f"error: {rid} not found in evidence file "
                             f"{p.relative_to(ROOT)} — add a YAML # comment with the ID, "
-                            f"or set CFHA_TRACEABILITY_STRICT=0 temporarily.",
+                            f"or set DALC_TRACEABILITY_STRICT=0 temporarily.",
                             file=sys.stderr,
                         )
                         sys.exit(1)
@@ -326,7 +333,7 @@ def main() -> None:
                         print(
                             f"error: {rid} not found in evidence file {p.relative_to(ROOT)} "
                             f"— add a comment or title field containing the ID, "
-                            f"or set CFHA_TRACEABILITY_STRICT=0 temporarily.",
+                            f"or set DALC_TRACEABILITY_STRICT=0 temporarily.",
                             file=sys.stderr,
                         )
                         sys.exit(1)

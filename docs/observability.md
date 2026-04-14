@@ -1,8 +1,8 @@
-<!-- Traceability: [CFHA-REQ-O11Y-LOGS-004] -->
+<!-- Traceability: [DALC-REQ-O11Y-LOGS-004] -->
 
-# Observability (CFHA runtime)
+# Observability (DALC runtime)
 
-<!-- Traceability: [CFHA-REQ-O11Y-LOGS-004] -->
+<!-- Traceability: [DALC-REQ-O11Y-LOGS-004] -->
 
 ## Checkpoints, W&B traces, and Slack correlation (OpenSpec)
 
@@ -114,7 +114,7 @@ Clients may send `**X-Request-Id**`; the server echoes it on responses and inclu
 
 ## Dashboards
 
-Import `**grafana/cfha-agent-overview.json**` (see `**grafana/README.md**`) for agent trigger rate / p95 latency and **RAG** embed + query rate panels (requires both scrape targets in Prometheus).
+Import `**grafana/dalc-agent-overview.json**` (see `**grafana/README.md**`) for agent trigger rate / p95 latency and **RAG** embed + query rate panels (requires both scrape targets in Prometheus).
 
 ### Metric names (RAG workload)
 

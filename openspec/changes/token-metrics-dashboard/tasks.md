@@ -6,10 +6,10 @@
 ## 2. Runtime instrumentation
 
 - [ ] 2.1 Attach LangChain/LangGraph callback or wrapper at the trigger LLM invocation site to capture token usage and stream timing
-- [ ] 2.2 Record **TTFT** once per invocation for streaming and non-streaming paths per **[CFHA-REQ-TOKEN-MET-003]**
-- [ ] 2.3 Increment **input/output** token counters and **`agent_runtime_llm_usage_missing_total`** when counts absent per **[CFHA-REQ-TOKEN-MET-001]** / **[CFHA-REQ-TOKEN-MET-002]**
-- [ ] 2.4 Observe trigger request/response byte sizes at HTTP boundary per **[CFHA-REQ-TOKEN-MET-004]** (clamp per design)
-- [ ] 2.5 Wire **estimated cost** counter from env-configured rates per **[CFHA-REQ-TOKEN-MET-005]**; document env vars in `docs/observability.md` and optional Helm `values` comments
+- [ ] 2.2 Record **TTFT** once per invocation for streaming and non-streaming paths per **[DALC-REQ-TOKEN-MET-003]**
+- [ ] 2.3 Increment **input/output** token counters and **`agent_runtime_llm_usage_missing_total`** when counts absent per **[DALC-REQ-TOKEN-MET-001]** / **[DALC-REQ-TOKEN-MET-002]**
+- [ ] 2.4 Observe trigger request/response byte sizes at HTTP boundary per **[DALC-REQ-TOKEN-MET-004]** (clamp per design)
+- [ ] 2.5 Wire **estimated cost** counter from env-configured rates per **[DALC-REQ-TOKEN-MET-005]**; document env vars in `docs/observability.md` and optional Helm `values` comments
 
 ## 3. Tests
 
@@ -19,7 +19,7 @@
 
 ## 4. Grafana dashboard
 
-- [ ] 4.1 Add `grafana/cfha-token-metrics.json` (or chosen filename) with panels for token rate, TTFT quantiles, payload histograms, estimated cost per **[CFHA-REQ-O11Y-LOGS-005]**
+- [ ] 4.1 Add `grafana/cfha-token-metrics.json` (or chosen filename) with panels for token rate, TTFT quantiles, payload histograms, estimated cost per **[DALC-REQ-O11Y-LOGS-005]**
 - [ ] 4.2 Update `grafana/README.md` with import path, datasource uid note, and cross-link to `docs/observability.md` metric names
 
 ## 5. Traceability (on promotion)

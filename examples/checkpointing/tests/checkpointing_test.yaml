@@ -1,4 +1,4 @@
-# Traceability: [CFHA-REQ-HELM-UNITTEST-001] [CFHA-REQ-HELM-UNITTEST-002]
+# Traceability: [DALC-REQ-HELM-UNITTEST-001] [DALC-REQ-HELM-UNITTEST-002]
 suite: checkpointing example enables LangGraph checkpoints (memory)
 release:
   name: cfha-ci-checkpointing

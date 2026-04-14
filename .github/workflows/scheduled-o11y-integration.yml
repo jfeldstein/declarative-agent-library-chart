@@ -1,4 +1,4 @@
-# Traceability: [CFHA-VER-004] — scheduled tier for kind + Prometheus integration (see docs/spec-test-traceability.md).
+# Traceability: [DALC-VER-004] — scheduled tier for kind + Prometheus integration (see docs/spec-test-traceability.md).
 #
 # Prerequisites match runtime/tests/scripts/integration_kind_o11y_prometheus.sh: docker, kind, kubectl, helm, curl.
 name: Scheduled o11y integration

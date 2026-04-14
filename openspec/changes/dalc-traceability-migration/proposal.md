@@ -1,6 +1,6 @@
 ## Why
 
-Product naming has moved from **config-first hosted agents (CFHA)** to **Declarative Agent Library Chart (DALC)**. Promoted OpenSpec capabilities still use **`cfha-*` folder names** and **`[CFHA-REQ-…]` / `[CFHA-VER-…]`** requirement IDs across specs, contributor docs, CI, and tests. Aligning **folder names** and **ID prefixes** with DALC removes a permanent second vocabulary and matches the dedicated naming work elsewhere.
+Product naming has moved from **config-first hosted agents (CFHA)** to **Declarative Agent Library Chart (DALC)**. Promoted OpenSpec capabilities used **`cfha-*` folder names** and **`[CFHA-REQ-…]` / `[CFHA-VER-…]`** requirement IDs across specs, contributor docs, CI, and tests. Aligning **folder names** and **ID prefixes** with DALC removes a permanent second vocabulary and matches the dedicated naming work elsewhere.
 
 ## What Changes
 
@@ -33,4 +33,4 @@ All promoted capabilities under `openspec/specs/` today:
 
 - **CI:** Traceability checker and any workflow comments/env that mention **CFHA** for IDs.
 - **Contributors:** All muscle memory for IDs and paths; ADR 0003 and AGENTS instructions.
-- **Downstream:** Forks or automation that grep for **`CFHA-REQ`** or **`openspec/specs/cfha-`** must update in lockstep—document in PR description and development log.
+- **Downstream:** Forks or automation that grep for **`CFHA-REQ`** / **`openspec/specs/cfha-`** must adopt **`DALC-REQ`** / **`openspec/specs/dalc-`** in lockstep—document in PR description and development log.

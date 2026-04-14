@@ -1,6 +1,6 @@
 # declarative-agent-library-chart
 
-<!-- Traceability: [CFHA-REQ-HELM-UNITTEST-003] [CFHA-REQ-CHART-CT-002] [CFHA-REQ-O11Y-LOGS-004] -->
+<!-- Traceability: [DALC-REQ-HELM-UNITTEST-003] [DALC-REQ-CHART-CT-002] [DALC-REQ-O11Y-LOGS-004] -->
 
 Standalone repository for **YAML-configured** hosted agents: a **Helm library chart** (`helm/chart/`) consumed by application charts, a **hello-world** example (`examples/hello-world/`), and a **Python** runtime (`hosted_agents`) that exposes **`POST /api/v1/trigger`** as the **only HTTP entry for launching agent work** (LangGraph-orchestrated). The root agent reads **`HOSTED_AGENT_SYSTEM_PROMPT`** from the environment (ConfigMap in-cluster) as **supervisor** instructions when **`subagents`** is configured; optional JSON can carry **`message`** (user input), **`load_skill`**, or a direct **`tool`** step (see below). This matches the LangChain **subagents** pattern ([docs](https://docs.langchain.com/oss/python/langchain/multi-agent/subagents)): specialists are **tools** on that root agent, not an HTTP-selected subagent.
 
@@ -74,7 +74,7 @@ python3 scripts/check_spec_traceability.py
 - **Metrics**: `GET /metrics` (Prometheus text) on the agent port; metric names and labels are documented in [docs/observability.md](docs/observability.md).
 - **Logs**: optional JSON to stdout via `HOSTED_AGENT_LOG_FORMAT=json` or Helm `o11y.structuredLogs.json`.
 - **Kubernetes**: opt-in `prometheus.io/*` annotations and optional **ServiceMonitor** under `declarative-agent-library.o11y` (see **`examples/with-observability/`**).
-- **Dashboards**: import [grafana/cfha-agent-overview.json](grafana/cfha-agent-overview.json) per [grafana/README.md](grafana/README.md).
+- **Dashboards**: import [grafana/dalc-agent-overview.json](grafana/dalc-agent-overview.json) per [grafana/README.md](grafana/README.md).
 
 ## Run API without Kubernetes
 

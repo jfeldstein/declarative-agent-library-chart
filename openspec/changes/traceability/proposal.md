@@ -4,7 +4,7 @@ Promoted normative specs use **SHALL** language, but **tests** are not mechanica
 
 ## What Changes
 
-- Introduce **test-to-spec traceability** (also called **spec–test traceability** in `docs/`): stable **requirement IDs** on **promoted** `openspec/specs/**/spec.md` **SHALL** rows, a **matrix** in **`docs/spec-test-traceability.md`**, and **pytest / Helm unittest** artifacts that cite those IDs—enforced by **`scripts/check_spec_traceability.py`** on the default PR path (exact rules in **`cfha-requirement-verification`** and ADR 0003).
+- Introduce **test-to-spec traceability** (also called **spec–test traceability** in `docs/`): stable **requirement IDs** on **promoted** `openspec/specs/**/spec.md` **SHALL** rows, a **matrix** in **`docs/spec-test-traceability.md`**, and **pytest / Helm unittest** artifacts that cite those IDs—enforced by **`scripts/check_spec_traceability.py`** on the default PR path (exact rules in **`dalc-requirement-verification`** and ADR 0003).
 - **Proposed-only** specs under `openspec/changes/.../specs/` that are **not** merged into `openspec/specs/` **do not** need matrix rows or test ID links until work is **implemented and promoted**; the obligation applies **when code ships** for a promoted **SHALL**, in the **same change** as the tests and matrix row (or an explicit waiver row).
 - Add / extend project **AGENTS.md** and **Cursor rules** so contributors use the term **test-to-spec traceability** when they mean this mechanism (avoid bare “traceability,” which invites unrelated meanings such as supply-chain provenance).
 - **Clarify** in **runtime-tools-mcp** that **MCP** names the **reference contract** (enablement, discovery-shaped tool lists, invocation semantics, metrics), not a mandate that every process runs a standalone MCP wire server—see design §“Contract vs wire.”
@@ -14,7 +14,7 @@ Promoted normative specs use **SHALL** language, but **tests** are not mechanica
 
 ### New Capabilities
 
-- `cfha-requirement-verification`: Stable requirement IDs, **test-to-spec** matrix and/or test docstrings, contributor rules (AGENTS/rules), and CI enforcement for spec–test linkage for **promoted** `openspec/specs/` capabilities (and conventions for change-local specs where applicable).
+- `dalc-requirement-verification`: Stable requirement IDs, **test-to-spec** matrix and/or test docstrings, contributor rules (AGENTS/rules), and CI enforcement for spec–test linkage for **promoted** `openspec/specs/` capabilities (and conventions for change-local specs where applicable).
 
 ### Modified Capabilities
 

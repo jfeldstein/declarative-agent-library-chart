@@ -1,5 +1,5 @@
 # Canonical CI for this repo (replaces the former root ci.sh). Python stages use uv only.
-# Traceability: [CFHA-REQ-HELM-UNITTEST-001] [CFHA-REQ-HELM-UNITTEST-002] [CFHA-REQ-HELM-UNITTEST-003] [CFHA-REQ-CHART-CT-001] [CFHA-REQ-CHART-CT-002] [CFHA-VER-004]
+# Traceability: [DALC-REQ-HELM-UNITTEST-001] [DALC-REQ-HELM-UNITTEST-002] [DALC-REQ-HELM-UNITTEST-003] [DALC-REQ-CHART-CT-001] [DALC-REQ-CHART-CT-002] [DALC-VER-004]
 #
 # Helm pins (keep in sync with README “Local parity”):
 #   - Helm 3.20.2+ (helm-unittest plugin uses platformHooks; Helm <3.18.10 fails to load the plugin)

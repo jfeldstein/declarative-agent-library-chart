@@ -1,4 +1,4 @@
-# Runbook: checkpoints, W&B, and feedback (CFHA runtime)
+# Runbook: checkpoints, W&B, and feedback (DALC runtime)
 
 ## Secrets
 

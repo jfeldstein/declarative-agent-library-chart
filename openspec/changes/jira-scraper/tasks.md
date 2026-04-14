@@ -13,8 +13,8 @@
 
 ## 3. Helm and values
 
-- [ ] 3.1 Add **`scrapers.jira`** to **`values.yaml`** and **`values.schema.json`** per **[CFHA-REQ-JIRA-SCRAPER-001]** (no top-level **`rag`**; no duplicate **`observability`** keys).
-- [ ] 3.2 Update **`scraper-cronjobs.yaml`** to run **`hosted_agents.scrapers.jira_job`** when **`SCRAPER_INTEGRATION`** is **`jira`** per **[CFHA-REQ-JIRA-SCRAPER-002]**.
+- [ ] 3.1 Add **`scrapers.jira`** to **`values.yaml`** and **`values.schema.json`** per **[DALC-REQ-JIRA-SCRAPER-001]** (no top-level **`rag`**; no duplicate **`observability`** keys).
+- [ ] 3.2 Update **`scraper-cronjobs.yaml`** to run **`hosted_agents.scrapers.jira_job`** when **`SCRAPER_INTEGRATION`** is **`jira`** per **[DALC-REQ-JIRA-SCRAPER-002]**.
 - [ ] 3.3 Render **env** (and optional **projected file**) from merged **`scrapers.jira`** + job overrides: **`JIRA_SITE_URL`**, secret-derived email/token, **`JIRA_PROJECT_KEYS`** or JSON project list, caps, overlap minutes, optional per-project JQL.
 
 ## 4. Examples and verification
@@ -22,4 +22,4 @@
 - [ ] 4.1 Add **`examples/`** fragment documenting **`scrapers.jira`** + one enabled **`scrapers.jobs`** entry (`SCRAPER_INTEGRATION=jira`, schedule, scope).
 - [ ] 4.2 Extend **Helm unittest** (if present) for template command selection for **`jira`** integration.
 - [ ] 4.3 Run **`uv run pytest`** for runtime tests; fix failures.
-- [ ] 4.4 If any new SHALL is **promoted** into **`openspec/specs/`** root specs, update **`docs/spec-test-traceability.md`** and test citations per **[CFHA-VER-005]**; run **`python3 scripts/check_spec_traceability.py`**.
+- [ ] 4.4 If any new SHALL is **promoted** into **`openspec/specs/`** root specs, update **`docs/spec-test-traceability.md`** and test citations per **[DALC-VER-005]**; run **`python3 scripts/check_spec_traceability.py`**.

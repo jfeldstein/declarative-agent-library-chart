@@ -13,7 +13,7 @@
 
 - [ ] 3.1 Replace every **`examples/.../tests/..._test.yaml`** evidence path in `docs/spec-test-traceability.md` with the matching `helm/tests/...` path; extend rows if a suite evidences requirements but was missing from the matrix (e.g. checkpointing).
 - [ ] 3.2 Update `.cursor/rules/spec-traceability.mdc` and `docs/AGENTS.md` prose that refers to `examples/*/tests/` for Helm unittest to `helm/tests/`.
-- [ ] 3.3 Merge this change’s deltas into promoted specs: apply `openspec/changes/consolidate-helm-tests/specs/cfha-requirement-verification/spec.md` and `.../cfha-helm-unittest/spec.md` to `openspec/specs/<capability>/spec.md` per OpenSpec archive/apply conventions (IDs unchanged on modified requirements).
+- [ ] 3.3 Merge this change’s deltas into promoted specs: apply `openspec/changes/consolidate-helm-tests/specs/dalc-requirement-verification/spec.md` and `.../cfha-helm-unittest/spec.md` to `openspec/specs/<capability>/spec.md` per OpenSpec archive/apply conventions (IDs unchanged on modified requirements).
 
 ## 4. Discoverable documentation
 

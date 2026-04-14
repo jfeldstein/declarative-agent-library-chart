@@ -24,8 +24,8 @@ Consolidation supports that pattern: unittest YAML today lives beside each examp
 
 ### Modified Capabilities
 
-- **`cfha-requirement-verification`**: **[CFHA-VER-002]** currently requires Helm unittest ID comments for suites under **`examples/*/tests/`**; update the SHALL to the new canonical path under **`helm/tests/`** (and keep the same comment rules).
-- **`cfha-helm-unittest`**: **[CFHA-REQ-HELM-UNITTEST-003]** “Reproducible unittest invocation” scenario mentions charts that contain **`tests/`** suites; update to describe the supported pattern (example chart + **`helm unittest -f …`** against **`helm/tests/*_test.yaml`**) so the spec matches CI after consolidation.
+- **`dalc-requirement-verification`**: **[DALC-VER-002]** currently requires Helm unittest ID comments for suites under **`examples/*/tests/`**; update the SHALL to the new canonical path under **`helm/tests/`** (and keep the same comment rules).
+- **`cfha-helm-unittest`**: **[DALC-REQ-HELM-UNITTEST-003]** “Reproducible unittest invocation” scenario mentions charts that contain **`tests/`** suites; update to describe the supported pattern (example chart + **`helm unittest -f …`** against **`helm/tests/*_test.yaml`**) so the spec matches CI after consolidation.
 
 ## Impact
 

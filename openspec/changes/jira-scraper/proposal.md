@@ -24,4 +24,4 @@ Operators need **project-scoped Jira context** (issues, workflow state, ownershi
 - **Runtime**: new module under **`hosted_agents.scrapers`**, optional small internal package for Jira REST calls and watermark I/O.
 - **Helm**: **`values.yaml`**, **`values.schema.json`**, scraper CronJob template; example values under **`examples/`**.
 - **Security**: Jira **API token** or OAuth app credentials via Kubernetes **Secrets**; document required OAuth scopes / classic permissions.
-- **CI**: **`uv run pytest`**; if new normative SHALLs are promoted into **`openspec/specs/`** later, follow **[CFHA-VER-005]** traceability (`scripts/check_spec_traceability.py`).
+- **CI**: **`uv run pytest`**; if new normative SHALLs are promoted into **`openspec/specs/`** later, follow **[DALC-VER-005]** traceability (`scripts/check_spec_traceability.py`).

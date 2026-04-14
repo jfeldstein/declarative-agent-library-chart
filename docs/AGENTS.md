@@ -16,13 +16,13 @@ Concise orientation for automated assistants working in this repository.
 | `docs/spec-test-traceability.md` | Test-to-spec matrix: requirement → evidence (parsed in CI) |
 | `docs/adrs/0003-spec-test-traceability.md` | Test-to-spec rules, waivers, pytest `::` convention |
 
-## OpenSpec test-to-spec traceability ([CFHA-VER-005])
+## OpenSpec test-to-spec traceability ([DALC-VER-005])
 
-**Test-to-spec traceability** is the ID + matrix + pytest/Helm citation practice for **promoted** `openspec/specs/` (see **[CFHA-VER-001]**). Prefer that term over bare **traceability**.
+**Test-to-spec traceability** is the ID + matrix + pytest/Helm citation practice for **promoted** `openspec/specs/` (see **[DALC-VER-001]**). Prefer that term over bare **traceability**.
 
 When you add or change a normative **SHALL** under `openspec/specs/*/spec.md`:
 
-1. Put **`[CFHA-REQ-…]`** or **`[CFHA-VER-…]`** on the **same line** as **`### Requirement:`** (see **[CFHA-VER-001]** / [ADR 0003](adrs/0003-spec-test-traceability.md)).
+1. Put **`[DALC-REQ-…]`** or **`[DALC-VER-…]`** on the **same line** as **`### Requirement:`** (see **[DALC-VER-001]** / [ADR 0003](adrs/0003-spec-test-traceability.md)).
 2. Update **`docs/spec-test-traceability.md`** with a matrix row (spec path, evidence paths, CI tier, waiver columns). **Waivers** need an approving maintainer **GitHub username** and **reason**; do not add waivers without explicit human approval.
 3. Add the same ID to **pytest** docstrings (use **`file.py::test_name`** in the matrix when one test maps to one requirement) or **Helm unittest** `#` comments.
 4. Run **`python3 scripts/check_spec_traceability.py`** from the repo root (also runs in CI).

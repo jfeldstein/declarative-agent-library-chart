@@ -6,7 +6,7 @@
 
 **Goals:**
 
-- Apply a **single atomic migration** on `main`: rename **`openspec/specs/cfha-*`** → **`dalc-*`**, and rename all **requirement ID prefixes** **`CFHA-` → `DALC-`** while preserving **`<SLUG>-<NNN>`** suffixes (e.g. `O11Y-SCRAPE-001`).
+- Apply a **single atomic migration** on `main`: rename **`openspec/specs/cfha-*`** → **`openspec/specs/dalc-*`**, and rename all **requirement ID prefixes** **`CFHA-` → `DALC-`** while preserving **`<SLUG>-<NNN>`** suffixes (e.g. `O11Y-SCRAPE-001`).
 - Update the traceability checker, matrix, ADR 0003, contributor docs, Cursor rules, and all test/Helm comments that embed IDs or spec paths.
 - Fix **in-spec cross-references** (e.g. `dalc-agent-o11y-scrape` instead of `cfha-agent-o11y-scrape` in body text).
 
@@ -29,7 +29,7 @@
 
    | From | To |
    |------|-----|
-   | `cfha-requirement-verification` | `dalc-requirement-verification` |
+   | `dalc-requirement-verification` | `dalc-requirement-verification` |
    | `cfha-chart-testing-ct` | `dalc-chart-testing-ct` |
    | `cfha-helm-unittest` | `dalc-helm-unittest` |
    | `cfha-agent-o11y-scrape` | `dalc-agent-o11y-scrape` |
@@ -44,13 +44,13 @@
 
 ## Risks / Trade-offs
 
-- **[Risk] Missed reference** → **Mitigation:** `rg 'CFHA-REQ|CFHA-VER|openspec/specs/cfha-'` on repo root; run **`python3 scripts/check_spec_traceability.py`** until green.
+- **[Risk] Missed reference** → **Mitigation:** `rg 'DALC-REQ|DALC-VER|openspec/specs/dalc-'` on repo root; run **`python3 scripts/check_spec_traceability.py`** until green.
 - **[Risk] OpenSpec archive / tooling** → **Mitigation:** If `openspec validate` or internal links use paths, update **active** change metadata; archive optional.
 - **[Trade-off] Large PR** → Acceptable: mechanical renames should stay one merge commit for consistency.
 
 ## Migration Plan
 
-1. `git mv` each `openspec/specs/cfha-*` → `dalc-*`.
+1. `git mv` each `openspec/specs/dalc-*` → `dalc-*`.
 2. Bulk-update **`### Requirement:`** lines and docstrings/comments.
 3. Update checker script + matrix + ADR + workflows.
 4. Run full pytest, helm unittest, traceability script, `ct lint` as in CI.

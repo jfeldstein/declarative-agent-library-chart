@@ -1,8 +1,8 @@
-# Grafana dashboards (CFHA)
+# Grafana dashboards (DALC)
 
-<!-- Traceability: [CFHA-REQ-O11Y-LOGS-003] -->
+<!-- Traceability: [DALC-REQ-O11Y-LOGS-003] -->
 
-## `cfha-agent-overview.json`
+## `dalc-agent-overview.json`
 
 Starter dashboard for the **config-first-hosted-agents** runtime (import one dashboard):
 
@@ -14,9 +14,9 @@ Prometheus must scrape **agent, RAG, and scraper** targets as applicable (e.g. `
 
 ### Import
 
-1. Grafana → **Dashboards** → **New** → **Import** → upload `cfha-agent-overview.json`.
+1. Grafana → **Dashboards** → **New** → **Import** → upload `dalc-agent-overview.json`.
 2. Select a **Prometheus** data source when prompted (the JSON uses placeholder uid **`prometheus`**; edit panel queries if your datasource uid differs).
 
 ### Related metrics
 
-The agent pod exposes MCP / subagent / skill metrics on the same `/metrics` as **`POST /api/v1/trigger`** when those features run through the trigger pipeline. RAG metrics live on the **RAG** Service (`*-rag`, path `/metrics`). Scraper metrics use the **`integration`** label (from `SCRAPER_INTEGRATION` or job name); extend **`cfha-agent-overview.json`** when you add a scraper that emits new series — and update **`examples/with-scrapers/`** so the chart values stay the canonical sample (see **`hosted_agents.scrapers`** package docstring).
+The agent pod exposes MCP / subagent / skill metrics on the same `/metrics` as **`POST /api/v1/trigger`** when those features run through the trigger pipeline. RAG metrics live on the **RAG** Service (`*-rag`, path `/metrics`). Scraper metrics use the **`integration`** label (from `SCRAPER_INTEGRATION` or job name); extend **`dalc-agent-overview.json`** when you add a scraper that emits new series — and update **`examples/with-scrapers/`** so the chart values stay the canonical sample (see **`hosted_agents.scrapers`** package docstring).

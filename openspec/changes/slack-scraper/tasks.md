@@ -18,11 +18,11 @@
 ## 4. Helm and operator docs
 
 - [ ] 4.1 Update **`scraper-cronjobs.yaml`** to select **`slack_job`** when **`SCRAPER_INTEGRATION`** is **`slack`** (per design), without breaking **`reference`** or the stub fallback.
-- [ ] 4.2 Extend **`values.schema.json`** (under **`scrapers`**) with documented optional fields or patterns for Slack jobs (token secret refs, searches JSON) while preserving **[CFHA-REQ-RAG-SCRAPERS-001]** (no top-level **`rag`** key).
+- [ ] 4.2 Extend **`values.schema.json`** (under **`scrapers`**) with documented optional fields or patterns for Slack jobs (token secret refs, searches JSON) while preserving **[DALC-REQ-RAG-SCRAPERS-001]** (no top-level **`rag`** key).
 - [ ] 4.3 Add an **`examples/`** fragment or README section showing a Slack scraper CronJob values block (schedule, env, secretKeyRef, example **`SLACK_SCRAPER_SEARCHES_JSON`**).
 
 ## 5. Verification
 
 - [ ] 5.1 Add unit tests for JSON parsing, message normalization, and embed payload construction (mock **`WebClient`** / HTTP).
 - [ ] 5.2 Run **`uv run pytest`** for the runtime test suite and fix failures.
-- [ ] 5.3 If new normative **`SHALL`** rows are promoted into **`openspec/specs/`**, update **`docs/spec-test-traceability.md`** and test docstrings per **[CFHA-VER-005]**; run **`python3 scripts/check_spec_traceability.py`**.
+- [ ] 5.3 If new normative **`SHALL`** rows are promoted into **`openspec/specs/`**, update **`docs/spec-test-traceability.md`** and test docstrings per **[DALC-VER-005]**; run **`python3 scripts/check_spec_traceability.py`**.

@@ -6,7 +6,7 @@ Operators cannot see **LLM token economics** or **streaming health** next to exi
 
 - Add **Prometheus metrics** (histograms/counters/gauges as appropriate) for: **time to first output token** (or first streamed chunk when token boundaries are unavailable), **output token throughput**, **input/output token counts**, **HTTP request and response body sizes** (bounded buckets; no raw content), and **estimated monetary cost** (configurable price table or env-derived rates; clearly labeled as **estimate**).
 - Ensure metrics use **low-cardinality** labels (`agent_id`, `model_id`, `route` or equivalent bounded enums—never raw prompts or full URLs).
-- Add or extend a **Grafana dashboard JSON** with panels for the above series, plus **`grafana/README.md`** import notes and datasource assumptions (aligned with **[CFHA-REQ-O11Y-LOGS-003]**).
+- Add or extend a **Grafana dashboard JSON** with panels for the above series, plus **`grafana/README.md`** import notes and datasource assumptions (aligned with **[DALC-REQ-O11Y-LOGS-003]**).
 - Wire instrumentation at the **trigger / LLM call** boundary where the runtime obtains token usage from LangChain/LangGraph callbacks or provider responses.
 - **BREAKING**: None for HTTP APIs; metric **names** are additive unless a follow-on deprecates experimental series explicitly in `design.md`.
 
@@ -23,7 +23,7 @@ Operators cannot see **LLM token economics** or **streaming health** next to exi
 ## Impact
 
 - **`runtime/src/hosted_agents/`**: metrics module extensions, LLM/trigger instrumentation (callbacks or wrappers), optional config for pricing inputs.
-- **`grafana/`**: new dashboard JSON or revision of `cfha-agent-overview.json` (per design).
+- **`grafana/`**: new dashboard JSON or revision of `dalc-agent-overview.json` (per design).
 - **`docs/observability.md`**: document new series names and cardinality rules.
 - **Helm**: optional values for cost-estimation env (no secrets in values); chart defaults unchanged when unset.
 - **CI**: pytest asserting metric registration and label bounds; Helm unchanged unless scrape annotations need notes.

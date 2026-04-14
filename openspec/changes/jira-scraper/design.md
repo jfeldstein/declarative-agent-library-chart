@@ -10,7 +10,7 @@ The chart runs scraper **CronJobs** that call the managed RAG **`POST /v1/embed`
 
 - **Incremental sync**: each run processes issues **created or updated** since a persisted **watermark** (per scope: e.g. project key or job `scope`), with a small **time overlap** (recommended **5 minutes**) to tolerate clock skew and API ordering edge cases.
 - **Rich issue slice**: for each candidate issue, material available to the model SHALL include at least **summary**, **description** (plain text where possible), **status** (workflow stage), **assignee** (display name / account id), **issue links** (outward/inward type + linked key + summary if returned), and **all comments** (author, created, body text), subject to operator caps.
-- **Helm**: add **`scrapers.jira`** with documented defaults; render **env vars** (or a projected **JSON** file) for the Jira job container; keep **[CFHA-REQ-RAG-SCRAPERS-001]** (no top-level **`rag`** key).
+- **Helm**: add **`scrapers.jira`** with documented defaults; render **env vars** (or a projected **JSON** file) for the Jira job container; keep **[DALC-REQ-RAG-SCRAPERS-001]** (no top-level **`rag`** key).
 - **Metrics**: bounded **`SCRAPER_INTEGRATION`** / Prometheus **`integration`** label value **`jira`** (or operator override if still within the repo’s **bounded set** documented in **`metrics.py`**).
 
 **Non-Goals:**
