@@ -22,7 +22,10 @@ configmapReload:
 server:
   persistentVolume:
     enabled: false
+  # Chart default tracks Prometheus 3.x; pin 2.x for stable args with this chart on kind CI.
   image:
+    repository: quay.io/prometheus/prometheus
+    tag: v2.55.1
     pullPolicy: Never
   global:
     scrape_interval: 3s

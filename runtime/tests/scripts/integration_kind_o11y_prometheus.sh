@@ -117,7 +117,7 @@ PROM_PRELOAD_IMAGES=()
 case "${PROM_CHART_VERSION}" in
   29.2.0)
     PROM_PRELOAD_IMAGES=(
-      "quay.io/prometheus/prometheus:v3.11.1"
+      "quay.io/prometheus/prometheus:v2.55.1"
       "quay.io/prometheus-operator/prometheus-config-reloader:v0.90.1"
     )
     ;;
@@ -191,6 +191,10 @@ if ! kubectl rollout status deployment/"${PROM_RELEASE}-prometheus-server" -n "$
   echo "error: prometheus server rollout failed; kubectl diagnostics:" >&2
   kubectl get pods -n "${NAMESPACE}" -o wide >&2 || true
   kubectl describe pod -n "${NAMESPACE}" -l "app.kubernetes.io/name=prometheus" >&2 || true
+  pod="$(kubectl get pods -n "${NAMESPACE}" -l "app.kubernetes.io/name=prometheus" -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)"
+  if [[ -n "${pod}" ]]; then
+    kubectl logs -n "${NAMESPACE}" "${pod}" -c prometheus-server --tail=80 >&2 || true
+  fi
   exit 1
 fi
 
