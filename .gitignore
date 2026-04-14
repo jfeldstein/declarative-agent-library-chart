@@ -12,3 +12,7 @@ examples/**/charts/*.tgz
 # Cursor hook ephemeral state (local machine)
 .cursor/hooks/state/agent-reflect-and-learn.json
 .claude/worktrees/
+
+# Parallel agent git worktrees (local only; see parallel-agents-in-local-worktrees skill in .claude/skills, ~/.claude/skills, .cursor/skills, or .cursor/skills)
+wt/**/*
+!wt/.gitkeep

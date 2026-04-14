@@ -1,5 +1,9 @@
 # Agent and contributor contract
 
+## Worktrees
+
+If you are starting a new body of work, create a new worktree for it. Read the parallel-agents-in-local-worktrees skill (at one of ~/.claude/skills, ~/.cursor/skills, .claude/skills, or .cursor/skills).
+
 ## OpenSpec test-to-spec traceability ([CFHA-VER-005])
 
 **Test-to-spec traceability** means: promoted **`openspec/specs/*/spec.md`** **SHALL** rows carry stable IDs, **`docs/spec-test-traceability.md`** lists evidence, and tests cite those IDs—see **`openspec/specs/cfha-requirement-verification/spec.md`**. Use this phrase (or **spec–test traceability**) when you mean this mechanism; bare **traceability** is ambiguous (e.g. data lineage, supply chain).
