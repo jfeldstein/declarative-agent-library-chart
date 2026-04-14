@@ -8,6 +8,8 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ## 2026-04-14
 
+**ARCHITECTURE.md** — New repository-root doc: user application charts vs `helm/chart` library chart, Kubernetes resources, observability (Prometheus `/metrics`, annotations, ServiceMonitors, structured logs), W&B and related `observability.*` wiring, scraper CronJobs and RAG deploy gate, `POST /api/v1/trigger` / LangGraph, agents (prompt, subagents), tools (MCP allowlist, skills); compact Helm ↔ runtime env table; links to promoted specs in `openspec/specs/`.
+
 **OpenSpec `slack-trigger` + `slack-tools`** — Two changes (no **`slack-bot`** umbrella): **`openspec/changes/slack-trigger/`** (inbound **`app_mention`** → **`run_trigger_graph`**, URL challenge / signing or Socket Mode, **`[CFHA-REQ-SLACK-TRIGGER-*]`**, no **`/v1/embed`** on trigger path) and **`openspec/changes/slack-tools/`** (**`slack_sdk`** tools for ack/reply/history, **`[CFHA-REQ-SLACK-TOOLS-*]`**, keys disjoint from scraper and from trigger). Each has proposal, design, **`tasks.md`**, **`specs/<name>/spec.md`**. Implementation pending apply workflow.
 
 **OpenSpec `jira-bot`** — Same pattern under **`openspec/changes/jira-bot/`**: **`jira-trigger`** (`specs/jira-trigger/spec.md`, **`[CFHA-REQ-JIRA-TRIGGER-*]`**, webhooks → **`run_trigger_graph`**, verification, no default **`/v1/embed`**, config disjoint from **`scrapers.jira`**) and **`jira-tools`** (`specs/jira-tools/spec.md`, **`[CFHA-REQ-JIRA-TOOLS-*]`**, **`httpx`** REST, scoped search/mutate, no default RAG ingest). Stub **`openspec/changes/jira-tools/.openspec.yaml`** parallels **`slack-tools`**. Implementation pending apply workflow.
