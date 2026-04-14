@@ -17,8 +17,8 @@
 
 ## 4. Discoverable documentation
 
-- [ ] 4.1 Add `helm/tests/AGENTS.md` describing directory purpose, naming rule (`hello-world` → `hello_world_test.yaml`), `values:` convention, and CI `helm unittest -f` invocation.
-- [ ] 4.2 Add `examples/AGENTS.md` by migrating content from `examples/AGENT.md`, adding a short section: Helm unittest suites live under `helm/tests/`; new examples need a suite file + CI registration.
+- [ ] 4.1 Add `helm/tests/AGENTS.md` describing directory purpose, naming rule (`hello-world` → `hello_world_test.yaml`), `values:` convention, CI `helm unittest -f` invocation, and that the library chart is values-driven—**examples + unittest** are how we keep template behavior honest.
+- [ ] 4.2 Add `examples/AGENTS.md` by migrating content from `examples/AGENT.md`, adding a short section: Helm unittest suites live under `helm/tests/`; new examples need a suite file + CI registration; new or notable library components SHOULD land in an example with unittest coverage.
 - [ ] 4.3 Update `examples/README.md` (link to `AGENTS.md`, “Adding a new example” step for unittest location).
 - [ ] 4.4 Delete `examples/AGENT.md` after links are updated.
 
