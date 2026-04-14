@@ -51,3 +51,17 @@ The system SHALL reference the official helm-unittest installation method (`helm
 
 - **WHEN** a maintainer follows the documented install steps
 - **THEN** `helm unittest` runs successfully for each example application chart when invoked from that chart’s directory with the documented **`-f`** path to the corresponding suite file under **`helm/tests/`**, with the suite’s **`values:`** entries pointing at that example’s committed **`values.yaml`** (paths relative to the suite file, e.g. **`../../examples/<example>/values.yaml`**) so rendering matches the example defaults
+
+### Requirement: [DALC-REQ-HELM-UNITTEST-004] Helm-unittest covers each documented multi-setup values file
+
+For any **`examples/<name>/`** chart whose **README documents two or more** distinct values files as separate setups (per **`dalc-example-values-files`**), the repository SHALL run helm-unittest (suites under **`helm/tests/`** following repository conventions) such that **each** documented values file is loaded in **at least one** test case or suite `values:` block, and assertions SHALL validate behavior specific to that setup (for example presence or absence of workloads, labels, or annotations described for that file).
+
+#### Scenario: Every documented setup file has unittest coverage
+
+- **WHEN** an example README lists multiple values files as distinct setups
+- **THEN** the matching `helm/tests/` suite SHALL include coverage that targets each listed file (or equivalent inlined values) with at least one `it:` (or equivalent) whose expectations match that setup’s description
+
+#### Scenario: Single-file examples do not require extra values files
+
+- **WHEN** an example documents only one values story
+- **THEN** this requirement SHALL NOT require additional values files beyond what **`dalc-example-values-files`** and existing **`dalc-helm-unittest`** requirements already impose

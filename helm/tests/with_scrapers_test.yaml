@@ -1,9 +1,9 @@
-# Traceability: [DALC-REQ-HELM-UNITTEST-001] [DALC-REQ-RAG-SCRAPERS-002]
+# Traceability: [DALC-REQ-HELM-UNITTEST-001] [DALC-REQ-RAG-SCRAPERS-002] [DALC-REQ-HELM-UNITTEST-004] [DALC-REQ-EXAMPLE-VALUES-FILES-001]
 values:
   - ../../examples/with-scrapers/values.yaml
 suite: with-scrapers default values
 release:
-  name: cfha-ci-scrapers
+  name: dalc-ci-scrapers
 tests:
   - it: renders one ConfigMap per enabled jira and slack job
     template: charts/declarative-agent-library/templates/scraper-job-configmaps.yaml
@@ -46,3 +46,55 @@ tests:
       - equal:
           path: metadata.labels["app.kubernetes.io/component"]
           value: rag
+  # Per-test values: below repeat the same paths (jira-only / slack-only); helm-unittest
+  # has no shared values anchor for multiple it: blocks, so duplication is intentional.
+  - it: jira-only values render one scraper ConfigMap # [DALC-REQ-HELM-UNITTEST-004]
+    values:
+      - ../../examples/with-scrapers/values.jira-only.yaml
+    template: charts/declarative-agent-library/templates/scraper-job-configmaps.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+  - it: jira-only single CronJob runs jira_job module
+    values:
+      - ../../examples/with-scrapers/values.jira-only.yaml
+    template: charts/declarative-agent-library/templates/scraper-cronjobs.yaml
+    documentIndex: 0
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].command[2]
+          value: hosted_agents.scrapers.jira_job
+  - it: jira-only values render RAG deployment
+    values:
+      - ../../examples/with-scrapers/values.jira-only.yaml
+    template: charts/declarative-agent-library/templates/rag-deployment.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+  - it: slack-only values render one scraper ConfigMap # [DALC-REQ-HELM-UNITTEST-004]
+    values:
+      - ../../examples/with-scrapers/values.slack-only.yaml
+    template: charts/declarative-agent-library/templates/scraper-job-configmaps.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+  - it: slack-only single CronJob runs slack_job module
+    values:
+      - ../../examples/with-scrapers/values.slack-only.yaml
+    template: charts/declarative-agent-library/templates/scraper-cronjobs.yaml
+    documentIndex: 0
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].command[2]
+          value: hosted_agents.scrapers.slack_job
+  - it: slack-only values render RAG deployment
+    values:
+      - ../../examples/with-scrapers/values.slack-only.yaml
+    template: charts/declarative-agent-library/templates/rag-deployment.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
