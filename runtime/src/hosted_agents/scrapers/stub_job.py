@@ -1,4 +1,9 @@
-"""Stub scraper: no external integration; records a successful run and exposes /metrics."""
+"""Stub scraper: no external integration; records a successful run and exposes /metrics.
+
+Used for any CronJob ``name`` other than ``reference`` until a dedicated module exists.
+``SCRAPER_NAME`` / ``SCRAPER_INTEGRATION`` drive the ``integration`` metrics label — see
+``examples/with-scrapers/`` and ``metrics.py`` (maintainer checklist for new scrapers).
+"""
 
 from __future__ import annotations
 

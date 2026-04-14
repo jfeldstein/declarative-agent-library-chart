@@ -1,6 +1,6 @@
 apiVersion: v2
 name: with-scrapers
-description: Example application chart — reference scraper CronJob (deploys managed RAG)
+description: Example application chart — reference + stub scraper CronJobs (deploys managed RAG)
 type: application
 version: 0.1.0
 dependencies:

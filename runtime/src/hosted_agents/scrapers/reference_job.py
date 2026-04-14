@@ -1,4 +1,9 @@
-"""Reference scraper: pushes fixture text + entity graph slice to the RAG HTTP API."""
+"""Reference scraper: pushes fixture text + entity graph slice to the RAG HTTP API.
+
+Env: ``RAG_SERVICE_URL``, ``SCRAPER_SCOPE``, optional ``REFERENCE_SCRAPER_TEXT``,
+``SCRAPER_INTEGRATION`` (Prometheus ``integration`` label). See ``examples/with-scrapers/`` and
+``metrics.py`` (maintainer checklist for new scrapers).
+"""
 
 from __future__ import annotations
 
@@ -45,7 +50,9 @@ def _embed_payload() -> dict:
     }
 
 
-def _post_embed(client: httpx.Client, base: str, payload: dict, integration: str) -> None:
+def _post_embed(
+    client: httpx.Client, base: str, payload: dict, integration: str
+) -> None:
     try:
         r = client.post(f"{base}/v1/embed", json=payload)
         r.raise_for_status()

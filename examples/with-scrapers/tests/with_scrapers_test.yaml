@@ -3,13 +3,31 @@ suite: with-scrapers default values
 release:
   name: cfha-ci-scrapers
 tests:
-  - it: renders at least one CronJob when a scraper job is enabled
+  - it: renders one CronJob per enabled scraper job
     template: charts/declarative-agent-library/templates/scraper-cronjobs.yaml
     asserts:
       - hasDocuments:
-          count: 1
+          count: 2
       - isKind:
           of: CronJob
+          documentIndex: 0
+      - isKind:
+          of: CronJob
+          documentIndex: 1
+  - it: reference scraper CronJob runs reference_job module
+    template: charts/declarative-agent-library/templates/scraper-cronjobs.yaml
+    documentIndex: 0
+    asserts:
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].command[2]
+          value: hosted_agents.scrapers.reference_job
+  - it: non-reference scraper CronJob runs stub_job module
+    template: charts/declarative-agent-library/templates/scraper-cronjobs.yaml
+    documentIndex: 1
+    asserts:
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].command[2]
+          value: hosted_agents.scrapers.stub_job
   - it: renders RAG deployment when a scraper job is enabled
     template: charts/declarative-agent-library/templates/rag-deployment.yaml
     asserts:

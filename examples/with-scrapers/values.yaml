@@ -1,4 +1,17 @@
-# Example: reference scraper CronJob + managed RAG (RAG deploys when a job is enabled).
+# Example: all ``scrapers`` Helm keys and both built-in job entrypoints.
+#
+# - ``name: reference`` → ``python -m hosted_agents.scrapers.reference_job`` (POSTs fixture
+#   payload to RAG ``/v1/embed``; see ``REFERENCE_SCRAPER_TEXT`` / ``SCRAPER_SCOPE`` in code).
+# - Any other ``name`` → ``python -m hosted_agents.scrapers.stub_job`` (no external API;
+#   metrics-only / placeholder for new integrations).
+# - At least one job with ``enabled: true`` deploys the managed RAG Deployment+Service.
+# - Per-job env: chart sets ``RAG_SERVICE_URL``, ``SCRAPER_NAME``, ``SCRAPER_SCOPE`` (defaults
+#   to job name), ``SCRAPER_METRICS_ADDR``, ``SCRAPER_METRICS_GRACE_SECONDS``; use ``extraEnv``
+#   for integration-specific variables (wired in ``helm/chart/templates/scraper-cronjobs.yaml``).
+#
+# When adding a new scraper implementation, also update: ``examples/with-scrapers/`` (this file
+# + tests), ``grafana/cfha-agent-overview.json`` (scraper metric panels), and the dispatch in
+# ``helm/chart/templates/scraper-cronjobs.yaml``. See ``hosted_agents.scrapers`` package docstring.
 declarative-agent-library:
   systemPrompt: |
     Respond, "Hello :wave:"
@@ -7,7 +20,48 @@ declarative-agent-library:
     tag: local
     pullPolicy: Never
   scrapers:
+    # Applied to every scraper CronJob container (optional).
+    resources:
+      limits:
+        cpu: 500m
+        memory: 256Mi
+      requests:
+        cpu: 50m
+        memory: 128Mi
+    # Managed RAG HTTP API; rendered only when ``jobs`` contains ``enabled: true``.
+    ragService:
+      replicaCount: 1
+      service:
+        type: ClusterIP
+        port: 8090
+      resources:
+        limits:
+          cpu: "1"
+          memory: 512Mi
+        requests:
+          cpu: 100m
+          memory: 256Mi
     jobs:
+      # Reference integration: embeds text + entity graph into RAG (``agent_runtime_scraper_rag_submissions_*``).
       - name: reference
         enabled: true
         schedule: "0 * * * *"
+        # Maps to ``SCRAPER_SCOPE`` (RAG payload + metrics ``integration`` unless overridden).
+        scope: demo-reference-scope
+        extraEnv:
+          - name: SCRAPER_INTEGRATION
+            value: reference
+          - name: REFERENCE_SCRAPER_TEXT
+            value: "with-scrapers example: optional fixture text for /v1/embed."
+      # Non-reference name → stub_job (same ``agent_runtime_scraper_*`` metrics; no RAG POST).
+      - name: example-stub
+        enabled: true
+        schedule: "15 */2 * * *"
+        scope: demo-stub-scope
+        extraEnv:
+          - name: SCRAPER_INTEGRATION
+            value: example_stub
+      # Documented pattern only: no CronJob is rendered when ``enabled: false``.
+      - name: disabled-placeholder
+        enabled: false
+        schedule: "0 0 * * *"

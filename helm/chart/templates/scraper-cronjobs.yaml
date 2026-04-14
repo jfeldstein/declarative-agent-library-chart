@@ -1,3 +1,9 @@
+{{/*
+  Scraper dispatch: job ``name`` ``reference`` runs ``hosted_agents.scrapers.reference_job``;
+  any other name runs ``stub_job`` until a new module is added. When introducing a scraper,
+  add a branch here and update ``examples/with-scrapers/`` (+ unittest), ``grafana/``, and
+  ``hosted_agents.scrapers`` (see package docstring / ``metrics.py`` checklist).
+*/}}
 {{- range .Values.scrapers.jobs }}
 {{- if .enabled }}
 ---

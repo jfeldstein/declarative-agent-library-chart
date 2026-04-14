@@ -1,4 +1,18 @@
-"""Prometheus metrics for scheduled scraper jobs (agent_runtime_scraper_* prefix)."""
+"""Prometheus metrics for scheduled scraper jobs (``agent_runtime_scraper_*`` prefix).
+
+New integration checklist (keep in sync when adding a scraper implementation):
+
+- **Helm:** extend ``helm/chart/templates/scraper-cronjobs.yaml`` so the job ``name`` maps to
+  the correct ``python -m ...`` module (today: ``reference`` → ``reference_job``, else
+  ``stub_job``).
+- **Example:** update ``examples/with-scrapers/values.yaml`` and
+  ``examples/with-scrapers/tests/with_scrapers_test.yaml`` so operators see every value key
+  and CI asserts rendering for each built-in kind.
+- **Dashboard:** add or adjust panels in ``grafana/cfha-agent-overview.json`` for new metric
+  labels or series; document scrape in ``grafana/README.md`` / ``docs/observability.md``.
+- **Runtime:** register counters/histograms on :data:`SCRAPER_REGISTRY` here so CronJob pods do
+  not mix scraper series with the agent/RAG default registry.
+"""
 
 from __future__ import annotations
 
@@ -9,7 +23,13 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Literal
 
 import httpx
-from prometheus_client import CONTENT_TYPE_LATEST, CollectorRegistry, Counter, Histogram, generate_latest
+from prometheus_client import (
+    CONTENT_TYPE_LATEST,
+    CollectorRegistry,
+    Counter,
+    Histogram,
+    generate_latest,
+)
 
 # Dedicated registry so scraper CronJob pods do not expose agent/RAG metrics from the global REGISTRY.
 SCRAPER_REGISTRY = CollectorRegistry()
@@ -63,10 +83,14 @@ def _classify_http_status(status_code: int) -> RagSubmitResult:
     return "success"
 
 
-def observe_scraper_run(integration: str, success: bool, elapsed_seconds: float) -> None:
+def observe_scraper_run(
+    integration: str, success: bool, elapsed_seconds: float
+) -> None:
     result: str = "success" if success else "error"
     SCRAPER_RUNS.labels(integration=integration, result=result).inc()
-    SCRAPER_RUN_DURATION.labels(integration=integration).observe(max(elapsed_seconds, 0.0))
+    SCRAPER_RUN_DURATION.labels(integration=integration).observe(
+        max(elapsed_seconds, 0.0)
+    )
 
 
 def observe_rag_embed_attempt(integration: str, result: RagSubmitResult) -> None:
