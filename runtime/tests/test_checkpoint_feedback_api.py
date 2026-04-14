@@ -10,7 +10,11 @@ import pytest
 from fastapi.testclient import TestClient
 
 from hosted_agents.app import create_app
-from hosted_agents.observability.correlation import SlackMessageRef, ToolCorrelation, correlation_store
+from hosted_agents.observability.correlation import (
+    SlackMessageRef,
+    ToolCorrelation,
+    correlation_store,
+)
 from hosted_agents.observability.feedback import feedback_store
 from hosted_agents.observability.run_context import bind_run_context, set_wandb_session
 from hosted_agents.observability.settings import ObservabilitySettings
@@ -25,7 +29,9 @@ def _reset_graph() -> None:
     reset_compiled_trigger_graph_cache()
 
 
-def test_runtime_summary_includes_observability_flags(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_runtime_summary_includes_observability_flags(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setenv("HOSTED_AGENT_CHECKPOINTS_ENABLED", "1")
     monkeypatch.setenv("HOSTED_AGENT_WANDB_ENABLED", "true")
     app = create_app(system_prompt='Respond, "Hi"')
@@ -50,7 +56,9 @@ def test_thread_state_and_history_when_checkpointing_enabled(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setenv("HOSTED_AGENT_CHECKPOINTS_ENABLED", "1")
-    monkeypatch.setenv("HOSTED_AGENT_ENABLED_MCP_TOOLS_JSON", json.dumps(["sample.echo"]))
+    monkeypatch.setenv(
+        "HOSTED_AGENT_ENABLED_MCP_TOOLS_JSON", json.dumps(["sample.echo"])
+    )
     _reset_graph()
     app = create_app(system_prompt='Respond, "Hi"')
     client = TestClient(app)
@@ -69,9 +77,13 @@ def test_thread_state_and_history_when_checkpointing_enabled(
     assert len(hist.json()["checkpoints"]) >= 1
 
 
-def test_ephemeral_skips_checkpoint_persistence(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_ephemeral_skips_checkpoint_persistence(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setenv("HOSTED_AGENT_CHECKPOINTS_ENABLED", "1")
-    monkeypatch.setenv("HOSTED_AGENT_ENABLED_MCP_TOOLS_JSON", json.dumps(["sample.echo"]))
+    monkeypatch.setenv(
+        "HOSTED_AGENT_ENABLED_MCP_TOOLS_JSON", json.dumps(["sample.echo"])
+    )
     _reset_graph()
     app = create_app(system_prompt='Respond, "Hi"')
     client = TestClient(app)
@@ -93,7 +105,9 @@ def test_ephemeral_skips_checkpoint_persistence(monkeypatch: pytest.MonkeyPatch)
 
 
 def test_side_effects_route_lists_slack_post(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("HOSTED_AGENT_ENABLED_MCP_TOOLS_JSON", json.dumps(["slack.post_message"]))
+    monkeypatch.setenv(
+        "HOSTED_AGENT_ENABLED_MCP_TOOLS_JSON", json.dumps(["slack.post_message"])
+    )
     _reset_graph()
     feedback_store.reset()
     side_effect_checkpoints.reset()
@@ -190,7 +204,9 @@ def test_atif_export_requires_flag_and_run_id(monkeypatch: pytest.MonkeyPatch) -
 def test_run_tool_json_logs_span_when_wandb_session_bound(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setenv("HOSTED_AGENT_ENABLED_MCP_TOOLS_JSON", json.dumps(["sample.echo"]))
+    monkeypatch.setenv(
+        "HOSTED_AGENT_ENABLED_MCP_TOOLS_JSON", json.dumps(["sample.echo"])
+    )
     calls: list[dict] = []
 
     class _Sess:
@@ -211,7 +227,9 @@ def test_run_tool_json_logs_span_when_wandb_session_bound(
 
 def test_get_thread_state_functions_directly(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("HOSTED_AGENT_CHECKPOINTS_ENABLED", "1")
-    monkeypatch.setenv("HOSTED_AGENT_ENABLED_MCP_TOOLS_JSON", json.dumps(["sample.echo"]))
+    monkeypatch.setenv(
+        "HOSTED_AGENT_ENABLED_MCP_TOOLS_JSON", json.dumps(["sample.echo"])
+    )
     _reset_graph()
     from hosted_agents.agent_models import TriggerBody
     from hosted_agents.runtime_config import RuntimeConfig

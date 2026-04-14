@@ -7,7 +7,11 @@ import time
 import uuid
 from dataclasses import dataclass
 
-from hosted_agents.observability.run_context import get_run_id, get_thread_id, get_tool_call_id
+from hosted_agents.observability.run_context import (
+    get_run_id,
+    get_thread_id,
+    get_tool_call_id,
+)
 
 
 @dataclass(frozen=True)

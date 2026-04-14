@@ -28,7 +28,9 @@ def test_reference_job_posts_embed(monkeypatch: pytest.MonkeyPatch) -> None:
     mock_client = MagicMock()
     mock_client.__enter__.return_value.post = mock_post
     mock_client.__exit__.return_value = None
-    monkeypatch.setattr("hosted_agents.scrapers.reference_job.httpx.Client", lambda **kw: mock_client)
+    monkeypatch.setattr(
+        "hosted_agents.scrapers.reference_job.httpx.Client", lambda **kw: mock_client
+    )
     reference_job.run()
     mock_post.assert_called_once()
     args, kwargs = mock_post.call_args
@@ -46,14 +48,24 @@ def test_reference_job_metrics_on_success(monkeypatch: pytest.MonkeyPatch) -> No
     mock_client = MagicMock()
     mock_client.__enter__.return_value.post = mock_post
     mock_client.__exit__.return_value = None
-    monkeypatch.setattr("hosted_agents.scrapers.reference_job.httpx.Client", lambda **kw: mock_client)
+    monkeypatch.setattr(
+        "hosted_agents.scrapers.reference_job.httpx.Client", lambda **kw: mock_client
+    )
     reference_job.run()
     text = generate_latest(SCRAPER_REGISTRY).decode()
-    assert 'agent_runtime_scraper_runs_total{integration="reference",result="success"}' in text
-    assert 'agent_runtime_scraper_rag_submissions_total{integration="reference",result="success"}' in text
+    assert (
+        'agent_runtime_scraper_runs_total{integration="reference",result="success"}'
+        in text
+    )
+    assert (
+        'agent_runtime_scraper_rag_submissions_total{integration="reference",result="success"}'
+        in text
+    )
 
 
-def test_reference_job_metrics_on_embed_server_error(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_reference_job_metrics_on_embed_server_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setenv("RAG_SERVICE_URL", "http://rag:8090")
     monkeypatch.delenv("SCRAPER_METRICS_ADDR", raising=False)
     req = httpx.Request("POST", "http://rag:8090/v1/embed")
@@ -66,9 +78,17 @@ def test_reference_job_metrics_on_embed_server_error(monkeypatch: pytest.MonkeyP
     mock_client = MagicMock()
     mock_client.__enter__.return_value.post = mock_post
     mock_client.__exit__.return_value = None
-    monkeypatch.setattr("hosted_agents.scrapers.reference_job.httpx.Client", lambda **kw: mock_client)
+    monkeypatch.setattr(
+        "hosted_agents.scrapers.reference_job.httpx.Client", lambda **kw: mock_client
+    )
     with pytest.raises(httpx.HTTPStatusError):
         reference_job.run()
     text = generate_latest(SCRAPER_REGISTRY).decode()
-    assert 'agent_runtime_scraper_runs_total{integration="reference",result="error"}' in text
-    assert 'agent_runtime_scraper_rag_submissions_total{integration="reference",result="server_error"}' in text
+    assert (
+        'agent_runtime_scraper_runs_total{integration="reference",result="error"}'
+        in text
+    )
+    assert (
+        'agent_runtime_scraper_rag_submissions_total{integration="reference",result="server_error"}'
+        in text
+    )

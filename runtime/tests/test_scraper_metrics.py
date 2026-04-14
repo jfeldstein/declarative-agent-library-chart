@@ -19,7 +19,9 @@ from hosted_agents.scrapers.metrics import SCRAPER_REGISTRY, parse_scraper_metri
         ("[::1]:9092", "::1", 9092),
     ],
 )
-def test_parse_scraper_metrics_addr(addr: str, expected_host: str, expected_port: int) -> None:
+def test_parse_scraper_metrics_addr(
+    addr: str, expected_host: str, expected_port: int
+) -> None:
     assert parse_scraper_metrics_addr(addr) == (expected_host, expected_port)
 
 
@@ -38,4 +40,7 @@ def test_stub_job_records_run_metric(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("SCRAPER_INTEGRATION", raising=False)
     stub_job.run()
     text = generate_latest(SCRAPER_REGISTRY).decode()
-    assert 'agent_runtime_scraper_runs_total{integration="customstub",result="success"}' in text
+    assert (
+        'agent_runtime_scraper_runs_total{integration="customstub",result="success"}'
+        in text
+    )

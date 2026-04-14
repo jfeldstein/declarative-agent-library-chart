@@ -55,7 +55,12 @@ def run_tool_json(cfg: RuntimeConfig, tool: str, arguments: dict[str, Any]) -> s
         trajectory_recorder.append(
             run_id,
             "tool",
-            {"tool": tool, "tool_call_id": tool_call_id, "arguments": arguments, "result": result},
+            {
+                "tool": tool,
+                "tool_call_id": tool_call_id,
+                "arguments": arguments,
+                "result": result,
+            },
         )
     wandb_sess = get_wandb_session()
     if wandb_sess is not None:

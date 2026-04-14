@@ -46,7 +46,9 @@ class RuntimeConfig:
             rag_base_url=rag,
             subagents=_load_json_list("HOSTED_AGENT_SUBAGENTS_JSON"),
             skills=_load_json_list("HOSTED_AGENT_SKILLS_JSON"),
-            enabled_mcp_tools=_load_json_str_list("HOSTED_AGENT_ENABLED_MCP_TOOLS_JSON"),
+            enabled_mcp_tools=_load_json_str_list(
+                "HOSTED_AGENT_ENABLED_MCP_TOOLS_JSON"
+            ),
         )
 
 

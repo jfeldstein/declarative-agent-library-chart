@@ -9,6 +9,19 @@ Implement tasks from an OpenSpec change.
 
 **Input**: Optionally specify a change name (e.g., `/opsx:apply add-auth`). If omitted, check if it can be inferred from conversation context. If vague or ambiguous you MUST prompt for available changes.
 
+## Work in a worktree
+
+Do implementation **in a dedicated git worktree**, not on the repo root’s checkout. Repo root should stay on the base branch; isolate feature work under `wt/` (or another path you create with `git worktree add`). **AGENTS.md** (section **Worktrees**) requires this pattern.
+
+Read **`parallel-agents-in-local-worktrees`** for setup, branch naming, and spawning subagents with `working_directory`:
+
+- `~/.claude/skills/parallel-agents-in-local-worktrees/SKILL.md`
+- `~/.cursor/skills/parallel-agents-in-local-worktrees/SKILL.md`
+- `.claude/skills/parallel-agents-in-local-worktrees/SKILL.md`
+- `.cursor/skills/parallel-agents-in-local-worktrees/SKILL.md`
+
+If you use subagents, also follow **`worktree-isolation-workflow`** where installed (`~/.claude/skills/worktree-isolation-workflow/SKILL.md` or `.cursor/skills/...`).
+
 **Steps**
 
 1. **Select the change**
@@ -80,8 +93,18 @@ Implement tasks from an OpenSpec change.
    Display:
    - Tasks completed this session
    - Overall progress: "N/M tasks complete"
-   - If all done: suggest archive
+   - If all done: proceed to ship + suggest archive (next step)
    - If paused: explain why and wait for guidance
+
+8. **When all tasks are complete — ship the change**
+
+   Working **in the worktree** (or the branch used for the change), complete the loop:
+
+   - Commit any remaining changes with a clear message (conventional commits if the repo uses them).
+   - **Push** the branch to `origin` (or the remote you use for PRs).
+   - **Open a pull request** targeting the base branch (**`main`** by default; use another base if the project uses e.g. `develop`).
+
+   If the user’s environment cannot open a PR automatically, give exact commands (e.g. `gh pr create --base main`) and the remote branch name.
 
 **Output During Implementation**
 
@@ -111,7 +134,7 @@ Working on task 4/7: <task description>
 - [x] Task 2
 ...
 
-All tasks complete! You can archive this change with `/opsx:archive`.
+All tasks complete! Branch pushed and PR opened (base: main). You can archive this change with `/opsx:archive` when the PR is merged or you are done with the worktree.
 ```
 
 **Output On Pause (Issue Encountered)**
@@ -135,6 +158,7 @@ What would you like to do?
 ```
 
 **Guardrails**
+- Prefer doing all implementation and commits **in a worktree**; keep repo root on the base branch per `AGENTS.md` and `parallel-agents-in-local-worktrees`
 - Keep going through tasks until done or blocked
 - Always read context files before starting (from the apply instructions output)
 - If task is ambiguous, pause and ask before implementing

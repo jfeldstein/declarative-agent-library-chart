@@ -22,7 +22,10 @@ from hosted_agents.observability.settings import ObservabilitySettings
 from hosted_agents.observability.shadow import ShadowSettings, should_run_shadow
 from hosted_agents.observability.side_effects import record_side_effect_checkpoint
 from hosted_agents.observability.slack_ingest import handle_slack_reaction_event
-from hosted_agents.observability.trajectory import TrajectoryRecorder, trajectory_recorder
+from hosted_agents.observability.trajectory import (
+    TrajectoryRecorder,
+    trajectory_recorder,
+)
 from hosted_agents.observability.wandb_trace import WandbTraceSession
 
 __all__ = [

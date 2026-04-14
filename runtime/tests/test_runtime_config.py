@@ -32,7 +32,9 @@ def test_from_env_lists(monkeypatch: pytest.MonkeyPatch) -> None:
         "HOSTED_AGENT_SKILLS_JSON",
         json.dumps([{"name": "sk", "prompt": "x", "extra_tools": ["sample.echo"]}]),
     )
-    monkeypatch.setenv("HOSTED_AGENT_ENABLED_MCP_TOOLS_JSON", json.dumps(["sample.echo"]))
+    monkeypatch.setenv(
+        "HOSTED_AGENT_ENABLED_MCP_TOOLS_JSON", json.dumps(["sample.echo"])
+    )
     cfg = RuntimeConfig.from_env()
     assert cfg.rag_base_url == "http://rag:8090"
     assert cfg.subagents[0]["name"] == "a"

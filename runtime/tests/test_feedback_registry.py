@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from hosted_agents.feedback_registry import load_feedback_registry, resolve_slack_reaction
+from hosted_agents.feedback_registry import (
+    load_feedback_registry,
+    resolve_slack_reaction,
+)
 
 
 def test_load_registry() -> None:

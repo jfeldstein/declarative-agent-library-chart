@@ -46,7 +46,9 @@ class RAGStore:
             for ent in entities:
                 eid = str(ent["id"])
                 row = {"entity_type": ent.get("entity_type")}
-                self._entities[(scope, eid)] = {k: v for k, v in row.items() if v is not None}
+                self._entities[(scope, eid)] = {
+                    k: v for k, v in row.items() if v is not None
+                }
 
     def add_relationships(
         self,
@@ -133,7 +135,9 @@ class RAGStore:
                 allowed_types = set(relationship_types)
             for seed in seeds:
                 related.extend(
-                    self._neighbors(scope, seed, allowed_types, hops=max_hops, edges=edges_snapshot),
+                    self._neighbors(
+                        scope, seed, allowed_types, hops=max_hops, edges=edges_snapshot
+                    ),
                 )
         return hits, related
 
@@ -156,7 +160,10 @@ class RAGStore:
             for e in edges:
                 if e.scope != scope:
                     continue
-                if allowed_types is not None and e.relationship_type not in allowed_types:
+                if (
+                    allowed_types is not None
+                    and e.relationship_type not in allowed_types
+                ):
                     continue
                 if e.source in frontier:
                     key = (e.source, e.target, e.relationship_type)

@@ -36,7 +36,11 @@ def _cfha_root() -> Path:
 )
 def test_kind_o11y_prometheus_integration() -> None:
     root = _cfha_root()
-    script = Path(__file__).resolve().parent.parent / "scripts" / "integration_kind_o11y_prometheus.sh"
+    script = (
+        Path(__file__).resolve().parent.parent
+        / "scripts"
+        / "integration_kind_o11y_prometheus.sh"
+    )
     assert script.is_file(), f"missing {script}"
 
     env = os.environ.copy()

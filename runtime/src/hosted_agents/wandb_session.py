@@ -48,7 +48,9 @@ def _tag_dict_for_run(ctx: TriggerContext) -> dict[str, str]:
 
 
 @contextmanager
-def wandb_run_scope(ctx: TriggerContext) -> Generator[dict[str, Any] | None, None, None]:
+def wandb_run_scope(
+    ctx: TriggerContext,
+) -> Generator[dict[str, Any] | None, None, None]:
     """Start/finish a W&B run when tracing is fully configured; else yield ``None``."""
     if not wandb_tracing_ready():
         yield None

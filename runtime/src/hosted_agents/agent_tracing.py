@@ -9,7 +9,10 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 
-from hosted_agents.checkpointing import checkpoints_globally_enabled, effective_checkpoint_store
+from hosted_agents.checkpointing import (
+    checkpoints_globally_enabled,
+    effective_checkpoint_store,
+)
 
 # Canonical keys per openspec/changes/agent-checkpointing-wandb-feedback/specs/wandb-agent-traces/spec.md
 MANDATORY_WANDB_TAG_KEYS: tuple[str, ...] = (
@@ -73,7 +76,9 @@ def observability_summary() -> dict[str, object]:
         "checkpoint_store": checkpoint_store_kind(),
         "feature_flags": {
             "checkpoints_enabled": checkpoints_globally_enabled(),
-            "slack_feedback_enabled": _env_truthy("HOSTED_AGENT_SLACK_FEEDBACK_ENABLED"),
+            "slack_feedback_enabled": _env_truthy(
+                "HOSTED_AGENT_SLACK_FEEDBACK_ENABLED"
+            ),
         },
         "wandb": {
             "tracing_enabled_intent": wb.tracing_enabled_intent,

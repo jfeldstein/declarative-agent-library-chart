@@ -15,7 +15,9 @@ LOG_FORMAT_ENV = "HOSTED_AGENT_LOG_FORMAT"
 _configured = False
 
 
-def _event_to_message(_logger: Any, _method: str, event_dict: dict[str, Any]) -> dict[str, Any]:
+def _event_to_message(
+    _logger: Any, _method: str, event_dict: dict[str, Any]
+) -> dict[str, Any]:
     if "event" in event_dict:
         event_dict["message"] = event_dict.pop("event")
     return event_dict

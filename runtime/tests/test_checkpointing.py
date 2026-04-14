@@ -35,7 +35,9 @@ def client(monkeypatch: pytest.MonkeyPatch) -> TestClient:
     return TestClient(create_app())
 
 
-def test_thread_checkpoints_grow_with_invokes(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_thread_checkpoints_grow_with_invokes(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
     patch_supervisor_fake_model(
         monkeypatch,
         tool_then_text_responses("subagent_s1", {"task": "go"}, final_text="ok"),
@@ -53,7 +55,9 @@ def test_thread_checkpoints_grow_with_invokes(client: TestClient, monkeypatch: p
     assert n2 > n1
 
 
-def test_thread_state_returns_snapshot(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_thread_state_returns_snapshot(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
     patch_supervisor_fake_model(
         monkeypatch,
         tool_then_text_responses("subagent_s1", {"task": "go"}, final_text="ok"),
@@ -95,7 +99,9 @@ def test_ephemeral_invocation_leaves_no_history(
     assert hist == []
 
 
-def test_thread_id_from_header(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_thread_id_from_header(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
     patch_supervisor_fake_model(
         monkeypatch,
         tool_then_text_responses("subagent_s1", {"task": "go"}, final_text="ok"),

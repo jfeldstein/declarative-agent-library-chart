@@ -30,10 +30,14 @@ class ShadowSettings:
         if not vid:
             return None
         allow = data.get("tool_allowlist") or []
-        tools = frozenset(str(x) for x in allow) if isinstance(allow, list) else frozenset()
+        tools = (
+            frozenset(str(x) for x in allow) if isinstance(allow, list) else frozenset()
+        )
         return cls(
             variant_id=vid,
-            skill_version=(str(data["skill_version"]) if data.get("skill_version") else None),
+            skill_version=(
+                str(data["skill_version"]) if data.get("skill_version") else None
+            ),
             model_id=(str(data["model_id"]) if data.get("model_id") else None),
             prompt_hash=(str(data["prompt_hash"]) if data.get("prompt_hash") else None),
             tool_allowlist=tools,

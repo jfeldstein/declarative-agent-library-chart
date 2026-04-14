@@ -6,7 +6,9 @@ import contextvars
 from typing import Any
 from uuid import uuid4
 
-_run_id: contextvars.ContextVar[str | None] = contextvars.ContextVar("obs_run_id", default=None)
+_run_id: contextvars.ContextVar[str | None] = contextvars.ContextVar(
+    "obs_run_id", default=None
+)
 _thread_id: contextvars.ContextVar[str | None] = contextvars.ContextVar(
     "obs_thread_id", default=None
 )

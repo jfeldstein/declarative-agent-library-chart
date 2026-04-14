@@ -45,7 +45,10 @@ def _redact(obj: Any, blocklist_keys: set[str]) -> Any:
 
 
 def _agent_block() -> dict[str, Any]:
-    name = os.environ.get("HOSTED_AGENT_ATIF_AGENT_NAME", "").strip() or "config-first-hosted-agents"
+    name = (
+        os.environ.get("HOSTED_AGENT_ATIF_AGENT_NAME", "").strip()
+        or "config-first-hosted-agents"
+    )
     version = os.environ.get("HOSTED_AGENT_ATIF_AGENT_VERSION", "").strip() or "0.1.0"
     model = os.environ.get("HOSTED_AGENT_ATIF_MODEL_NAME", "").strip() or "unknown"
     return {"name": name, "version": version, "model_name": model}
@@ -146,7 +149,9 @@ def export_atif_batch(
     """Emit one ATIF v1.4 trajectory document per :class:`CanonicalTrajectory`."""
 
     return [
-        canonical_to_atif_v1_4(tr, schema_version=schema_version, redact_keys=redact_keys)
+        canonical_to_atif_v1_4(
+            tr, schema_version=schema_version, redact_keys=redact_keys
+        )
         for tr in trajectories
     ]
 

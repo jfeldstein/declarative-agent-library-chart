@@ -42,7 +42,9 @@ def test_checkpoint_store_override(monkeypatch: pytest.MonkeyPatch) -> None:
     assert checkpoint_store_kind() == "memory"
 
 
-def test_checkpoint_store_none_disables_feature_flag(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_checkpoint_store_none_disables_feature_flag(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setenv("HOSTED_AGENT_CHECKPOINT_STORE", "none")
     assert checkpoint_store_kind() == "none"
     assert checkpoints_globally_enabled() is False

@@ -31,7 +31,9 @@ class TrajectoryRecorder:
 
     def start(self, run_id: str, thread_id: str) -> None:
         with self._lock:
-            self._by_run[run_id] = CanonicalTrajectory(run_id=run_id, thread_id=thread_id)
+            self._by_run[run_id] = CanonicalTrajectory(
+                run_id=run_id, thread_id=thread_id
+            )
 
     def append(self, run_id: str, kind: str, payload: dict[str, Any]) -> None:
         with self._lock:

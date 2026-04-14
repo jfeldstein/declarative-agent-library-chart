@@ -5,7 +5,11 @@ from __future__ import annotations
 from typing import Any
 
 from hosted_agents.observability.correlation import SlackMessageRef, correlation_store
-from hosted_agents.observability.feedback import HumanFeedbackEvent, OrphanReactionEvent, feedback_store
+from hosted_agents.observability.feedback import (
+    HumanFeedbackEvent,
+    OrphanReactionEvent,
+    feedback_store,
+)
 from hosted_agents.observability.label_registry import get_label_registry
 from hosted_agents.observability.settings import ObservabilitySettings
 from hosted_agents.observability.trajectory import trajectory_recorder

@@ -9,7 +9,11 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 
-from hosted_agents.o11y_logging import SERVICE_NAME, configure_request_logging, get_logger
+from hosted_agents.o11y_logging import (
+    SERVICE_NAME,
+    configure_request_logging,
+    get_logger,
+)
 
 
 class ObservabilityMiddleware(BaseHTTPMiddleware):
@@ -19,7 +23,9 @@ class ObservabilityMiddleware(BaseHTTPMiddleware):
         configure_request_logging()
         structlog.contextvars.clear_contextvars()
         request_id = request.headers.get("x-request-id") or str(uuid.uuid4())
-        request.state.request_id = request_id  # same id echoed on response and forwarded outbound
+        request.state.request_id = (
+            request_id  # same id echoed on response and forwarded outbound
+        )
         structlog.contextvars.bind_contextvars(
             request_id=request_id,
             service=SERVICE_NAME,

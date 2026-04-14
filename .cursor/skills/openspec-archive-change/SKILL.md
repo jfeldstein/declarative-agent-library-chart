@@ -91,6 +91,40 @@ Archive a completed change in the experimental workflow.
    - Whether specs were synced (if applicable)
    - Note about any warnings (incomplete artifacts/tasks)
 
+7. **Clean up the feature worktree (if apply used one under `wt/`)**
+
+   OpenSpec archive only moves `openspec/changes/...`; it does not remove git worktrees. If implementation ran in a dedicated worktree (see `AGENTS.md`, `parallel-agents-in-local-worktrees`), finish by tearing down that worktree **from the main repo checkout** (not from inside the worktree you are removing):
+
+   1. **Remove the worktree registration** (preferred; use the path you used with `git worktree add`, e.g. `wt/<worktree-path>`):
+
+      ```bash
+      git worktree remove --force "$(git rev-parse --show-toplevel)/wt/<worktree-path>"
+      ```
+
+      If `git worktree remove` cannot run (e.g. path already gone), continue with prune and manual removal below.
+
+   2. **Delete the feature branch** when the PR is merged or you are abandoning the branch:
+
+      ```bash
+      git branch -d "<feature-branch-name>"
+      ```
+
+      Use `-D` only if you intend to delete without merging.
+
+   3. **Prune stale worktree metadata:**
+
+      ```bash
+      git worktree prune
+      ```
+
+   4. **Remove any leftover directory** (if the folder under `wt/` still exists):
+
+      ```bash
+      rm -rf "$(git rev-parse --show-toplevel)/wt/<worktree-path>"
+      ```
+
+   Skip this step if no `wt/...` worktree was used for the change.
+
 **Output On Success**
 
 ```
@@ -102,9 +136,12 @@ Archive a completed change in the experimental workflow.
 **Specs:** ✓ Synced to main specs (or "No delta specs" or "Sync skipped")
 
 All artifacts complete. All tasks complete.
+
+If you used a `wt/...` worktree for apply, run **step 7** (worktree cleanup) when finished.
 ```
 
 **Guardrails**
+- After archiving, remind the user to run **worktree cleanup** (step 7) when the change was implemented in `wt/...`
 - Always prompt for change selection if not provided
 - Use artifact graph (openspec status --json) for completion checking
 - Don't block archive on warnings - just inform and confirm

@@ -8,7 +8,11 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 
-from hosted_agents.rag.metrics import classify_http_status, observe_rag_embed, observe_rag_query
+from hosted_agents.rag.metrics import (
+    classify_http_status,
+    observe_rag_embed,
+    observe_rag_query,
+)
 
 
 class RAGMetricsMiddleware(BaseHTTPMiddleware):
@@ -16,7 +20,11 @@ class RAGMetricsMiddleware(BaseHTTPMiddleware):
         path = request.url.path
         method = request.method.upper()
 
-        if method != "POST" or path in ("/metrics", "/health") or path.startswith("/docs"):
+        if (
+            method != "POST"
+            or path in ("/metrics", "/health")
+            or path.startswith("/docs")
+        ):
             return await call_next(request)
 
         start = time.perf_counter()

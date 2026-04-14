@@ -5,8 +5,16 @@ from __future__ import annotations
 import time
 from typing import Any
 
-from hosted_agents.observability.correlation import SlackMessageRef, ToolCorrelation, correlation_store
-from hosted_agents.observability.run_context import get_run_id, get_thread_id, get_tool_call_id
+from hosted_agents.observability.correlation import (
+    SlackMessageRef,
+    ToolCorrelation,
+    correlation_store,
+)
+from hosted_agents.observability.run_context import (
+    get_run_id,
+    get_thread_id,
+    get_tool_call_id,
+)
 from hosted_agents.observability.side_effects import record_side_effect_checkpoint
 
 

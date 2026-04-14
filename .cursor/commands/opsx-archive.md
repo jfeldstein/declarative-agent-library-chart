@@ -87,6 +87,40 @@ Archive a completed change in the experimental workflow.
    - Spec sync status (synced / sync skipped / no delta specs)
    - Note about any warnings (incomplete artifacts/tasks)
 
+7. **Clean up the feature worktree (if apply used one under `wt/`)**
+
+   OpenSpec archive only moves `openspec/changes/...`; it does not remove git worktrees. If implementation ran in a dedicated worktree, read **`parallel-agents-in-local-worktrees`** (same locations as in `AGENTS.md`: `~/.claude/skills`, `~/.cursor/skills`, `.claude/skills`, or `.cursor/skills`). Tear down the worktree **from the main repo checkout** (not from inside the worktree you are removing):
+
+   1. **Remove the worktree registration** (preferred; use the path from `git worktree add`, e.g. `wt/<worktree-path>`):
+
+      ```bash
+      git worktree remove --force "$(git rev-parse --show-toplevel)/wt/<worktree-path>"
+      ```
+
+      If `git worktree remove` cannot run (e.g. path already gone), continue with prune and manual removal below.
+
+   2. **Delete the feature branch** when the PR is merged or you are abandoning the branch:
+
+      ```bash
+      git branch -d "<feature-branch-name>"
+      ```
+
+      Use `-D` only if you intend to delete without merging.
+
+   3. **Prune stale worktree metadata:**
+
+      ```bash
+      git worktree prune
+      ```
+
+   4. **Remove any leftover directory** (if the folder under `wt/` still exists):
+
+      ```bash
+      rm -rf "$(git rev-parse --show-toplevel)/wt/<worktree-path>"
+      ```
+
+   Skip this step if no `wt/...` worktree was used for the change.
+
 **Output On Success**
 
 ```
@@ -98,6 +132,8 @@ Archive a completed change in the experimental workflow.
 **Specs:** ✓ Synced to main specs
 
 All artifacts complete. All tasks complete.
+
+If you used a `wt/...` worktree for apply, run **step 7** (worktree cleanup) when finished.
 ```
 
 **Output On Success (No Delta Specs)**
@@ -111,6 +147,8 @@ All artifacts complete. All tasks complete.
 **Specs:** No delta specs
 
 All artifacts complete. All tasks complete.
+
+If you used a `wt/...` worktree for apply, run **step 7** (worktree cleanup) when finished.
 ```
 
 **Output On Success With Warnings**
@@ -129,6 +167,8 @@ All artifacts complete. All tasks complete.
 - Delta spec sync was skipped (user chose to skip)
 
 Review the archive if this was not intentional.
+
+If you used a `wt/...` worktree for apply, run **step 7** (worktree cleanup) when finished.
 ```
 
 **Output On Error (Archive Exists)**
@@ -148,6 +188,7 @@ Target archive directory already exists.
 ```
 
 **Guardrails**
+- After archiving, remind the user to run **worktree cleanup** (step 7) when the change was implemented in `wt/...`
 - Always prompt for change selection if not provided
 - Use artifact graph (openspec status --json) for completion checking
 - Don't block archive on warnings - just inform and confirm

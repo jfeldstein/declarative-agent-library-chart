@@ -25,7 +25,12 @@ from hosted_agents.observability.shadow import ShadowSettings, should_run_shadow
 from hosted_agents.observability.trajectory import trajectory_recorder
 from hosted_agents.observability.wandb_trace import WandbTraceSession
 from hosted_agents.reply import trigger_reply_text
-from hosted_agents.run_context import TriggerRunIds, reset_tool_sequence, reset_trigger_ids, set_trigger_ids
+from hosted_agents.run_context import (
+    TriggerRunIds,
+    reset_tool_sequence,
+    reset_trigger_ids,
+    set_trigger_ids,
+)
 from hosted_agents.runtime_config import RuntimeConfig
 from hosted_agents.supervisor import run_supervisor_agent
 from hosted_agents.trigger_context import TriggerContext
@@ -164,7 +169,9 @@ def _graph_key(ctx: TriggerContext) -> tuple[Any, ...]:
     return (use_cp, obs.checkpoints_enabled, backend, ctx.ephemeral)
 
 
-def _resolve_checkpointer(ctx: TriggerContext, obs: ObservabilitySettings) -> Any | None:
+def _resolve_checkpointer(
+    ctx: TriggerContext, obs: ObservabilitySettings
+) -> Any | None:
     if not checkpoints_globally_enabled() or ctx.ephemeral:
         return None
     if obs.checkpoints_enabled:
@@ -293,7 +300,9 @@ def run_trigger_graph(ctx: TriggerContext) -> str:
         )
 
     graph = compiled_trigger_graph(ctx)
-    thread_cfg: dict[str, Any] = {"configurable": {"ctx": ctx, "thread_id": ctx.thread_id}}
+    thread_cfg: dict[str, Any] = {
+        "configurable": {"ctx": ctx, "thread_id": ctx.thread_id}
+    }
     try:
         result = graph.invoke({"output": ""}, config=thread_cfg)
     finally:

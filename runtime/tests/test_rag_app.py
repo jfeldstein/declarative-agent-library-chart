@@ -27,7 +27,12 @@ def test_embed_and_query(client: TestClient) -> None:
         "/v1/embed",
         json={
             "scope": "demo",
-            "items": [{"text": "The project codename is banana stand.", "metadata": {"src": "doc1"}}],
+            "items": [
+                {
+                    "text": "The project codename is banana stand.",
+                    "metadata": {"src": "doc1"},
+                }
+            ],
         },
     )
     assert emb.status_code == 200
@@ -45,7 +50,10 @@ def test_embed_and_query(client: TestClient) -> None:
 
 
 def test_embed_requires_payload(client: TestClient) -> None:
-    r = client.post("/v1/embed", json={"scope": "x", "items": [], "entities": [], "relationships": []})
+    r = client.post(
+        "/v1/embed",
+        json={"scope": "x", "items": [], "entities": [], "relationships": []},
+    )
     assert r.status_code == 400
 
 
@@ -55,8 +63,13 @@ def test_relate_and_query_expansion(client: TestClient) -> None:
         "/v1/embed",
         json={
             "scope": scope,
-            "entities": [{"id": "e1", "entity_type": "issue"}, {"id": "e2", "entity_type": "epic"}],
-            "relationships": [{"source": "e1", "target": "e2", "relationship_type": "belongs_to"}],
+            "entities": [
+                {"id": "e1", "entity_type": "issue"},
+                {"id": "e2", "entity_type": "epic"},
+            ],
+            "relationships": [
+                {"source": "e1", "target": "e2", "relationship_type": "belongs_to"}
+            ],
             "items": [
                 {
                     "text": "Issue 42 fixes login.",
@@ -81,7 +94,9 @@ def test_relate_and_query_expansion(client: TestClient) -> None:
     rel = data["related"]
     assert rel
     assert any(
-        r["entity_id"] == "e1" and r["neighbor_id"] == "e2" and r["relationship_type"] == "belongs_to"
+        r["entity_id"] == "e1"
+        and r["neighbor_id"] == "e2"
+        and r["relationship_type"] == "belongs_to"
         for r in rel
     )
 
@@ -97,7 +112,12 @@ def test_relate_endpoint(client: TestClient) -> None:
     )
     r = client.post(
         "/v1/relate",
-        json={"scope": "g2", "relationships": [{"source": "a", "target": "b", "relationship_type": "links"}]},
+        json={
+            "scope": "g2",
+            "relationships": [
+                {"source": "a", "target": "b", "relationship_type": "links"}
+            ],
+        },
     )
     assert r.status_code == 200
     assert r.json()["relationships_recorded"] == 1
