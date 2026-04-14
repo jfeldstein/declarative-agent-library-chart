@@ -21,7 +21,7 @@ tests:
       - equal:
           path: metadata.annotations["prometheus.io/scrape"]
           value: "true"
-  - it: RAG Deployment pod template has prometheus scrape annotations
+  - it: optional managed RAG Deployment has prometheus scrape annotations when deployed
     template: charts/declarative-agent-library/templates/rag-deployment.yaml
     asserts:
       - hasDocuments:
@@ -29,7 +29,7 @@ tests:
       - equal:
           path: spec.template.metadata.annotations["prometheus.io/scrape"]
           value: "true"
-  - it: RAG Service has prometheus scrape annotations
+  - it: optional managed RAG Service has prometheus scrape annotations when deployed
     template: charts/declarative-agent-library/templates/rag-service.yaml
     asserts:
       - hasDocuments:
@@ -47,7 +47,7 @@ tests:
       - matchRegex:
           path: metadata.name
           pattern: -agent$
-  - it: renders RAG ServiceMonitor
+  - it: renders ServiceMonitor for optional managed RAG when that Service is deployed
     template: charts/declarative-agent-library/templates/rag-servicemonitor.yaml
     asserts:
       - hasDocuments:
@@ -57,3 +57,19 @@ tests:
       - matchRegex:
           path: metadata.name
           pattern: -rag$
+  - it: with ServiceMonitor enabled but RAG not deployed, rag ServiceMonitor template renders nothing
+    values:
+      - ../../examples/with-observability/values-o11y-no-rag.yaml
+    template: charts/declarative-agent-library/templates/rag-servicemonitor.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: with ServiceMonitor enabled but RAG not deployed, agent ServiceMonitor still renders
+    values:
+      - ../../examples/with-observability/values-o11y-no-rag.yaml
+    template: charts/declarative-agent-library/templates/servicemonitor.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ServiceMonitor

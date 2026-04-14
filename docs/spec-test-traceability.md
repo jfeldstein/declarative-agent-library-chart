@@ -21,7 +21,7 @@ The table is parsed by `scripts/check_spec_traceability.py`; keep the **Matrix**
 
 | ID | Spec | Evidence | CI tier | Waiver approver | Waiver reason |
 | --- | --- | --- | --- | --- | --- |
-| [DALC-REQ-HELM-UNITTEST-001] | `openspec/specs/dalc-helm-unittest/spec.md` | `helm/tests/hello_world_test.yaml`, `helm/tests/with_scrapers_test.yaml`, `helm/tests/with_observability_test.yaml`, `helm/tests/checkpointing_test.yaml`, `.github/workflows/ci.yml` | default PR | - | - |
+| [DALC-REQ-HELM-UNITTEST-001] | `openspec/specs/dalc-helm-unittest/spec.md` | `helm/tests/hello_world_test.yaml`, `helm/tests/with_scrapers_test.yaml`, `helm/tests/with_observability_test.yaml`, `helm/tests/checkpointing_test.yaml`, `examples/with-observability/values-o11y-no-rag.yaml`, `.github/workflows/ci.yml` | default PR | - | - |
 | [DALC-REQ-HELM-UNITTEST-002] | `openspec/specs/dalc-helm-unittest/spec.md` | `helm/tests/hello_world_test.yaml`, `helm/tests/checkpointing_test.yaml`, `ct.yaml`, `.github/workflows/ci.yml` | default PR | - | - |
 | [DALC-REQ-HELM-UNITTEST-003] | `openspec/specs/dalc-helm-unittest/spec.md` | `.github/workflows/ci.yml`, `README.md` | default PR | - | - |
 | [DALC-REQ-RAG-SCRAPERS-001] | `openspec/specs/dalc-rag-from-scrapers/spec.md` | `helm/chart/values.schema.json` | default PR | - | - |
@@ -32,11 +32,12 @@ The table is parsed by `scripts/check_spec_traceability.py`; keep the **Matrix**
 | [DALC-REQ-O11Y-SCRAPE-002] | `openspec/specs/dalc-agent-o11y-scrape/spec.md` | `runtime/tests/test_o11y_metrics.py::test_trigger_success_increments_counter`, `runtime/tests/test_o11y_metrics.py::test_trigger_client_error_increments_client_error` | default PR | - | - |
 | [DALC-REQ-O11Y-SCRAPE-003] | `openspec/specs/dalc-agent-o11y-scrape/spec.md` | `runtime/tests/test_o11y_metrics.py::test_subagent_and_skill_and_mcp_metrics` | default PR | - | - |
 | [DALC-REQ-O11Y-SCRAPE-004] | `openspec/specs/dalc-agent-o11y-scrape/spec.md` | `helm/tests/with_observability_test.yaml` | default PR | - | - |
-| [DALC-REQ-O11Y-SCRAPE-005] | `openspec/specs/dalc-agent-o11y-scrape/spec.md` | `helm/tests/with_observability_test.yaml` | default PR | - | - |
+| [DALC-REQ-O11Y-SCRAPE-005] | `openspec/specs/dalc-agent-o11y-scrape/spec.md` | `helm/tests/with_observability_test.yaml`, `examples/with-observability/values-o11y-no-rag.yaml` | default PR | - | - |
 | [DALC-REQ-O11Y-LOGS-001] | `openspec/specs/dalc-agent-o11y-logs-dashboards/spec.md` | `runtime/tests/test_o11y_metrics.py::test_json_log_format_emits_message_key` | default PR | - | - |
 | [DALC-REQ-O11Y-LOGS-002] | `openspec/specs/dalc-agent-o11y-logs-dashboards/spec.md` | `runtime/tests/test_o11y_metrics.py::test_x_request_id_echo_and_generation` | default PR | - | - |
 | [DALC-REQ-O11Y-LOGS-003] | `openspec/specs/dalc-agent-o11y-logs-dashboards/spec.md` | `grafana/dalc-agent-overview.json`, `grafana/README.md` | default PR | - | - |
 | [DALC-REQ-O11Y-LOGS-004] | `openspec/specs/dalc-agent-o11y-logs-dashboards/spec.md` | `docs/observability.md`, `README.md` | default PR | - | - |
+| [DALC-REQ-O11Y-LOGS-005] | `openspec/specs/dalc-agent-o11y-logs-dashboards/spec.md` | `grafana/README.md` | default PR | - | - |
 | [DALC-REQ-CHART-CT-001] | `openspec/specs/dalc-chart-testing-ct/spec.md` | `.github/workflows/ci.yml`, `ct.yaml` | default PR | - | - |
 | [DALC-REQ-CHART-CT-002] | `openspec/specs/dalc-chart-testing-ct/spec.md` | `.github/workflows/ci.yml`, `README.md` | default PR | - | - |
 | [DALC-VER-001] | `openspec/specs/dalc-requirement-verification/spec.md` | `scripts/check_spec_traceability.py` | default PR | - | - |
