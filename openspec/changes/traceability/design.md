@@ -24,7 +24,7 @@ The repository already enforces **85% Python line coverage** and runs **helm uni
 
 ### 1. Requirement ID format
 
-Use **`CFHA-REQ-<DOMAIN>-<NNN>`** (three-digit zero-padded) **or** shorter **`CFHA-VER-NNN`** for verification meta-requirements—pick one family per capability file to avoid collisions. **Promoted specs** (`openspec/specs/`) gain IDs when edited; **change-local** specs gain IDs before archive when feasible.
+Use **`DALC-REQ-<DOMAIN>-<NNN>`** (three-digit zero-padded) **or** shorter **`DALC-VER-NNN`** for verification meta-requirements—pick one family per capability file to avoid collisions. **Promoted specs** (`openspec/specs/`) gain IDs when edited; **change-local** specs gain IDs before archive when feasible.
 
 **Rationale:** Human-greppable, stable across moves from `changes/` to `openspec/specs/`.
 
@@ -82,7 +82,7 @@ The **`runtime-tools-mcp`** spec describes **operator-visible behavior**: which 
 
 ## Migration Plan
 
-1. Land **delta** for `runtime-tools-mcp` and **ADDED** `cfha-requirement-verification`.
+1. Land **delta** for `runtime-tools-mcp` and **ADDED** `dalc-requirement-verification`.
 2. Backfill IDs + matrix rows for **existing** promoted specs in the same change series or a fast follow-up task (tasks.md may split).
 3. Enable CI script; fix gaps until green.
 

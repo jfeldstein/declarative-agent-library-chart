@@ -1,5 +1,5 @@
 # Chart-testing (ct) — https://github.com/helm/chart-testing
-# Traceability: [CFHA-REQ-CHART-CT-001] [CFHA-REQ-HELM-UNITTEST-002]
+# Traceability: [DALC-REQ-CHART-CT-001] [DALC-REQ-HELM-UNITTEST-002]
 # Run from this directory: ct lint --config ct.yaml --all
 chart-dirs:
   - helm

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "declarative-agent-library chart values [CFHA-REQ-RAG-SCRAPERS-001] (draft + runtime v1)",
+  "title": "declarative-agent-library chart values [DALC-REQ-RAG-SCRAPERS-001] (draft + runtime v1)",
   "type": "object",
   "properties": {
     "replicaCount": { "type": "integer", "minimum": 1 },
@@ -71,7 +71,7 @@
     },
     "scrapers": {
       "type": "object",
-      "description": "CronJob-backed scrapers; reference job POSTs to RAG_SERVICE_URL. RAG Deployment+Service render when jobs contains at least one enabled: true. Traceability: [CFHA-REQ-RAG-SCRAPERS-003]",
+      "description": "CronJob-backed scrapers; reference job POSTs to RAG_SERVICE_URL. RAG Deployment+Service render when jobs contains at least one enabled: true. Traceability: [DALC-REQ-RAG-SCRAPERS-003]",
       "properties": {
         "resources": { "type": "object" },
         "ragService": {

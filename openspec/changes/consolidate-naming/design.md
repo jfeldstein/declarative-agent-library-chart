@@ -1,6 +1,6 @@
 ## Context
 
-The repo previously standardized chart naming to `declarative-agent-library` (see archived change `declarative-agent-library-chart`). The desired **product line** is **Declarative Agent Library Chart**, abbreviated **DALC** in dashboards and informal identifiers. The legacy image/repo name **`config-first-hosted-agents`** and Grafana file **`cfha-agent-overview.json`** still imply the old **CFHA** acronym.
+The repo previously standardized chart naming to `declarative-agent-library` (see archived change `declarative-agent-library-chart`). The desired **product line** is **Declarative Agent Library Chart**, abbreviated **DALC** in dashboards and informal identifiers. The legacy image/repo name **`config-first-hosted-agents`** and Grafana file **`dalc-agent-overview.json`** still imply the old **CFHA** acronym.
 
 ## Goals / Non-Goals
 
@@ -9,12 +9,12 @@ The repo previously standardized chart naming to `declarative-agent-library` (se
 - Set the Helm library chart **`name`** to **`declarative-agent-library-chart`** and rename Helm **helper** prefixes (`declarative-agent-library.*` → `declarative-agent-library-chart.*`) consistently in `helm/chart`.
 - Use **`agent`** as the **parent values key** in example charts via **`dependencies[].alias: agent`** while keeping **`dependencies[].name: declarative-agent-library-chart`** matching the packaged chart name.
 - Replace deprecated **`config-first-hosted-agents`** with **`declarative-agent-library-chart`** for the default **`image.repository`** segment and for the runtime **`service`** / `SERVICE_NAME` constant where it represents the same product identifier.
-- Ship **`grafana/dalc-overview.json`** (rename from `cfha-agent-overview.json`), update **`uid`/tags/titles** in the JSON to **dalc** where they denote the product, and refresh **`grafana/README.md`**.
+- Ship **`grafana/dalc-overview.json`** (rename from `dalc-agent-overview.json`), update **`uid`/tags/titles** in the JSON to **dalc** where they denote the product, and refresh **`grafana/README.md`**.
 - Grep and update **docs**, **scripts**, and **tests** that still reference old strings (including `declarative-agent-library` as a values key or release name fragment in examples).
 
 **Non-Goals:**
 
-- Renaming **`[CFHA-REQ-…]`** requirement IDs or **`openspec/specs/cfha-*`** folder names (traceability and CI tooling assume stable IDs/paths).
+- Renaming **`[DALC-REQ-…]`** requirement IDs or **`openspec/specs/dalc-*`** folder names (traceability and CI tooling assume stable IDs/paths).
 - Changing **behavior** of the HTTP API, metrics **names**, or LangGraph checkpoints beyond identifier strings visible to operators.
 - Renaming unrelated historical assets (e.g. patch filenames under `patches/`) unless needed for broken references—prefer leaving filenames and adding a one-line note.
 

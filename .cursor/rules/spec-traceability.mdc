@@ -9,6 +9,6 @@ globs:
   - examples/**/tests/**/*.yaml
 ---
 
-# Test-to-spec traceability ([CFHA-VER-005])
+# Test-to-spec traceability ([DALC-VER-005])
 
-If you edit a **SHALL** in `openspec/specs/*/spec.md`: put **`[CFHA-REQ-…]`** or **`[CFHA-VER-…]`** on the **same line** as **`### Requirement:`**; follow **`docs/adrs/0003-spec-test-traceability.md`**; update **`docs/spec-test-traceability.md`**. For pytest, prefer matrix evidence **`path.py::test_function`** and put the ID in **that function’s** docstring; for Helm unittest use **`#` comments**. **Waivers** require maintainer **GitHub username** + **reason** in the matrix—**no drive-by waiver edits**. Run **`python3 scripts/check_spec_traceability.py`**.
+If you edit a **SHALL** in `openspec/specs/*/spec.md`: put **`[DALC-REQ-…]`** or **`[DALC-VER-…]`** on the **same line** as **`### Requirement:`**; follow **`docs/adrs/0003-spec-test-traceability.md`**; update **`docs/spec-test-traceability.md`**. For pytest, prefer matrix evidence **`path.py::test_function`** and put the ID in **that function’s** docstring; for Helm unittest use **`#` comments**. **Waivers** require maintainer **GitHub username** + **reason** in the matrix—**no drive-by waiver edits**. Run **`python3 scripts/check_spec_traceability.py`**.

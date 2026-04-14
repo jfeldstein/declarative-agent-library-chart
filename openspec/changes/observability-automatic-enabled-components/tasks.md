@@ -1,7 +1,7 @@
 ## 1. Specs and traceability
 
-- [ ] 1.1 Merge delta specs from `openspec/changes/observability-automatic-enabled-components/specs/` into `openspec/specs/cfha-agent-o11y-scrape/spec.md`, `openspec/specs/cfha-agent-o11y-logs-dashboards/spec.md`, and `openspec/specs/cfha-helm-unittest/spec.md` (or follow project archive workflow if merging happens at archive time—keep repo consistent with **CFHA-VER-005**).
-- [ ] 1.2 Update `docs/spec-test-traceability.md` for any new or materially changed **`### Requirement:`** lines (`[CFHA-REQ-O11Y-LOGS-005]`, modified scrape/unittest rows).
+- [ ] 1.1 Merge delta specs from `openspec/changes/observability-automatic-enabled-components/specs/` into `openspec/specs/dalc-agent-o11y-scrape/spec.md`, `openspec/specs/dalc-agent-o11y-logs-dashboards/spec.md`, and `openspec/specs/dalc-helm-unittest/spec.md` (or follow project archive workflow if merging happens at archive time—keep repo consistent with **DALC-VER-005**).
+- [ ] 1.2 Update `docs/spec-test-traceability.md` for any new or materially changed **`### Requirement:`** lines (`[DALC-REQ-O11Y-LOGS-005]`, modified scrape/unittest rows).
 - [ ] 1.3 Run `python3 scripts/check_spec_traceability.py` and fix any gaps.
 
 ## 2. Helm unittest (`examples/with-observability`)
@@ -14,7 +14,7 @@
 ## 3. Grafana artifact and README
 
 - [ ] 3.1 Rewrite `grafana/README.md` Prometheus section so instructions are **generic** (every enabled metrics `Service` / matching scrape jobs)—remove “scrape **both** targets” framing; align with `examples/with-observability` and `runtime/tests/scripts/prometheus-kind-o11y-values.yaml` without RAG-only assumptions.
-- [ ] 3.2 Update `grafana/cfha-agent-overview.json` so **optional component** metrics (e.g. RAG) are **optional in the UX** per **LOGS-003** (variables, repeated rows, or clearly titled sections with dependency called out)—document the mechanism in the README.
+- [ ] 3.2 Update `grafana/dalc-agent-overview.json` so **optional component** metrics (e.g. RAG) are **optional in the UX** per **LOGS-003** (variables, repeated rows, or clearly titled sections with dependency called out)—document the mechanism in the README.
 - [ ] 3.3 If dashboard JSON structure changes, smoke-check import instructions still work.
 
 ## 4. Verification

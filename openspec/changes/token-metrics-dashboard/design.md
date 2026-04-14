@@ -1,6 +1,6 @@
 ## Context
 
-The runtime already exposes **`agent_runtime_*`** counters and histograms on **`GET /metrics`** (`hosted_agents/metrics.py`) and documents import of **`grafana/cfha-agent-overview.json`** under **[CFHA-REQ-O11Y-LOGS-003]**. LangChain/LangGraph LLM calls return **usage metadata** (token counts) in many providers; streaming callbacks expose **chunk timing** suitable for **time-to-first-token** when the transport is streaming.
+The runtime already exposes **`agent_runtime_*`** counters and histograms on **`GET /metrics`** (`hosted_agents/metrics.py`) and documents import of **`grafana/dalc-agent-overview.json`** under **[DALC-REQ-O11Y-LOGS-003]**. LangChain/LangGraph LLM calls return **usage metadata** (token counts) in many providers; streaming callbacks expose **chunk timing** suitable for **time-to-first-token** when the transport is streaming.
 
 ## Goals / Non-Goals
 
@@ -41,7 +41,7 @@ The runtime already exposes **`agent_runtime_*`** counters and histograms on **`
    - **Alternatives**: External recording rule only (harder for ad-hoc dashboards).
 
 6. **Dashboard placement**  
-   - **Decision**: Add **`grafana/cfha-token-metrics.json`** (name TBD) alongside **`cfha-agent-overview.json`**; link from **`grafana/README.md`**.  
+   - **Decision**: Add **`grafana/cfha-token-metrics.json`** (name TBD) alongside **`dalc-agent-overview.json`**; link from **`grafana/README.md`**.  
    - **Alternatives**: Collapse all panels into one JSON (file size / ownership blur).
 
 ## Risks / Trade-offs

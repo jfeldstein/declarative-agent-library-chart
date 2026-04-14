@@ -1,6 +1,6 @@
 # ADR 0003: Spec–test traceability (requirement IDs, matrix, waivers)
 
-<!-- Traceability: [CFHA-VER-003] — normative description of docs/spec-test-traceability.md -->
+<!-- Traceability: [DALC-VER-003] — normative description of docs/spec-test-traceability.md -->
 
 ## Status
 
@@ -14,8 +14,8 @@ Normative **SHALL** requirements live in OpenSpec under `openspec/specs/`. Revie
 
 ### 1. IDs on promoted requirements
 
-- Heading form: **`### Requirement: [<ID>] <title>`** with the bracketed ID **on the same line** as `### Requirement:` (see **[CFHA-VER-001]**).
-- Capability requirements: **`[CFHA-REQ-<CAPABILITY-SLUG>-<NNN>]`**; verification meta-requirements: **`[CFHA-VER-<NNN>]`**.
+- Heading form: **`### Requirement: [<ID>] <title>`** with the bracketed ID **on the same line** as `### Requirement:` (see **[DALC-VER-001]**).
+- Capability requirements: **`[DALC-REQ-<CAPABILITY-SLUG>-<NNN>]`**; verification meta-requirements: **`[DALC-VER-<NNN>]`**.
 
 ### 2. Matrix as source of truth
 
@@ -34,12 +34,12 @@ Normative **SHALL** requirements live in OpenSpec under `openspec/specs/`. Revie
 
 ### 4. Tests citing specs
 
-- **Pytest:** Matrix may use **`file.py::test_name`**; then the ID MUST appear in **that function’s** docstring. A bare **`file.py`** allows the ID in any module/class/function docstring (see **[CFHA-VER-002]**).
+- **Pytest:** Matrix may use **`file.py::test_name`**; then the ID MUST appear in **that function’s** docstring. A bare **`file.py`** allows the ID in any module/class/function docstring (see **[DALC-VER-002]**).
 - **Helm unittest:** IDs in **`#` comments** (suite or `it:`-adjacent preferred).
 
 ### 5. Local vs CI
 
-- Default PR CI runs **`python3 scripts/check_spec_traceability.py`** (see **`.github/workflows/ci.yml`**). **`CFHA_TRACEABILITY_STRICT=0`** disables content checks temporarily; paths must still exist for active rows.
+- Default PR CI runs **`python3 scripts/check_spec_traceability.py`** (see **`.github/workflows/ci.yml`**). **`DALC_TRACEABILITY_STRICT=0`** disables content checks temporarily; paths must still exist for active rows. **`CFHA_TRACEABILITY_STRICT`** is a deprecated alias (stderr warning).
 
 ## Consequences
 

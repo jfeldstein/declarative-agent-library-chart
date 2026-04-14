@@ -1,4 +1,4 @@
-# Traceability: [CFHA-REQ-HELM-UNITTEST-001] [CFHA-REQ-O11Y-SCRAPE-004] [CFHA-REQ-O11Y-SCRAPE-005]
+# Traceability: [DALC-REQ-HELM-UNITTEST-001] [DALC-REQ-O11Y-SCRAPE-004] [DALC-REQ-O11Y-SCRAPE-005]
 suite: with-observability prometheus and ServiceMonitors
 release:
   name: cfha-ci-o11y

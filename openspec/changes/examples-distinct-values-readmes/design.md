@@ -31,7 +31,7 @@ Example charts under `examples/<name>/` depend on `helm/chart`. Maintainers ofte
    **Alternatives:** Only `values-*.yaml` — acceptable if team prefers hyphen; document the chosen pattern in `examples/README.md` once.
 
 3. **Unittest mapping**  
-   **Decision:** For each non-default values file, add a **`values:`** block in the suite under `helm/tests/` that points at `../examples/<dir>/<file>.yaml` (same relative pattern as consolidation), or duplicate inline values only when necessary for clarity. Each block gets at least one **`it:`** with assertions tied to that setup (and **`# [CFHA-REQ-…]`** comments).
+   **Decision:** For each non-default values file, add a **`values:`** block in the suite under `helm/tests/` that points at `../examples/<dir>/<file>.yaml` (same relative pattern as consolidation), or duplicate inline values only when necessary for clarity. Each block gets at least one **`it:`** with assertions tied to that setup (and **`# [DALC-REQ-…]`** comments).
 
 4. **Ordering vs `consolidate-helm-tests`**  
    **Decision:** Land **Helm Test File Consolidation** first; this change only adds/edits files under `examples/*/`, `helm/tests/`, specs, and `docs/spec-test-traceability.md` as needed.
