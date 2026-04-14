@@ -16,20 +16,15 @@ prometheus-pushgateway:
 server:
   persistentVolume:
     enabled: false
-  global:
-    scrape_interval: 3s
-    evaluation_interval: 3s
 
 extraScrapeConfigs: |
   - job_name: cfha-agent-metrics
     metrics_path: /metrics
-    scrape_interval: 3s
     static_configs:
       - targets:
           - "@SCRAPE_TARGET_AGENT@"
   - job_name: cfha-rag-metrics
     metrics_path: /metrics
-    scrape_interval: 3s
     static_configs:
       - targets:
           - "@SCRAPE_TARGET_RAG@"

@@ -151,8 +151,8 @@ curl -sf -X POST "http://127.0.0.1:18189/v1/query" \
   -H 'content-type: application/json' \
   -d '{"scope":"o11y-it","query":"integration corpus","top_k":3}' >/dev/null
 
-echo "==> wait for Prometheus scrape (allow ~25s at 3s interval, two jobs)"
-sleep 25
+echo "==> wait for Prometheus scrape (chart default global interval is 1m)"
+sleep 90
 
 QUERY='sum(agent_runtime_http_trigger_requests_total{result="success"})'
 echo "==> PromQL: ${QUERY}"
