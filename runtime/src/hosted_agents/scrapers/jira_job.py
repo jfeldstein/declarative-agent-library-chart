@@ -1,6 +1,7 @@
 """Jira Cloud pull scraper: incremental JQL → comments → RAG ``/v1/embed``.
 
-Uses ``httpx`` against Jira REST v3. Env includes ``JIRA_SITE_URL``, ``JIRA_EMAIL``,
+Uses ``httpx`` against Jira REST v3 (**``POST /rest/api/3/search/jql``** + ``nextPageToken``).
+Env includes ``JIRA_SITE_URL``, ``JIRA_EMAIL``,
 ``JIRA_API_TOKEN``, ``JIRA_PROJECT_KEYS`` (comma-separated), ``JIRA_WATERMARK_DIR``,
 ``SCRAPER_SCOPE``. See ``openspec/changes/jira-scraper/``.
 """
@@ -95,17 +96,19 @@ def search_issues(
     fields: list[str],
     max_results: int,
 ) -> list[dict[str, Any]]:
-    """POST /rest/api/3/search — used by tests and ``run()``."""
-    url = f"{base.rstrip('/')}/rest/api/3/search"
+    """POST /rest/api/3/search/jql — JQL enhanced search with ``nextPageToken`` pagination."""
+    url = f"{base.rstrip('/')}/rest/api/3/search/jql"
     issues: list[dict[str, Any]] = []
-    start_at = 0
+    next_page_token: str | None = None
     while len(issues) < max_results:
-        body = {
+        page_size = min(50, max_results - len(issues))
+        body: dict[str, Any] = {
             "jql": jql,
-            "startAt": start_at,
-            "maxResults": min(50, max_results - len(issues)),
             "fields": fields,
+            "maxResults": page_size,
         }
+        if next_page_token:
+            body["nextPageToken"] = next_page_token
         r = client.post(url, json=body)
         r.raise_for_status()
         data = r.json()
@@ -113,10 +116,13 @@ def search_issues(
         if not batch:
             break
         issues.extend(batch)
-        start_at += len(batch)
-        total = int(data.get("total", 0))
-        if start_at >= total or len(batch) < body["maxResults"]:
+        raw_token = data.get("nextPageToken")
+        if raw_token is None or raw_token == "":
             break
+        token = str(raw_token).strip()
+        if not token or token == next_page_token:
+            break
+        next_page_token = token
     return issues[:max_results]
 
 

@@ -17,11 +17,13 @@ def test_search_issues_single_page() -> None:
                 "fields": {"updated": "2024-01-01T00:00:00.000+0000"},
             },
         ],
-        "total": 1,
     }
 
     def handler(request: httpx.Request) -> httpx.Response:
-        assert "/rest/api/3/search" in str(request.url)
+        assert "/rest/api/3/search/jql" in str(request.url)
+        payload = json.loads(request.content.decode("utf-8"))
+        assert "nextPageToken" not in payload
+        assert payload["jql"] == 'project = "DEMO"'
         return httpx.Response(200, json=body)
 
     transport = httpx.MockTransport(handler)
@@ -29,6 +31,43 @@ def test_search_issues_single_page() -> None:
     issues = search_issues(client, "https://x.example.net", 'project = "DEMO"', ["summary"], 10)
     assert len(issues) == 1
     assert issues[0]["key"] == "DEMO-1"
+
+
+def test_search_issues_next_page_token() -> None:
+    """Second request includes ``nextPageToken`` from the first response."""
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert "/rest/api/3/search/jql" in str(request.url)
+        payload = json.loads(request.content.decode("utf-8"))
+        if payload.get("nextPageToken") == "t2":
+            return httpx.Response(
+                200,
+                json={
+                    "issues": [
+                        {
+                            "key": "DEMO-2",
+                            "fields": {"updated": "2024-01-02T00:00:00.000+0000"},
+                        },
+                    ],
+                },
+            )
+        return httpx.Response(
+            200,
+            json={
+                "issues": [
+                    {
+                        "key": "DEMO-1",
+                        "fields": {"updated": "2024-01-01T00:00:00.000+0000"},
+                    },
+                ],
+                "nextPageToken": "t2",
+            },
+        )
+
+    transport = httpx.MockTransport(handler)
+    client = httpx.Client(transport=transport)
+    issues = search_issues(client, "https://x.example.net", "project = DEMO", ["summary"], 10)
+    assert [i["key"] for i in issues] == ["DEMO-1", "DEMO-2"]
 
 
 def test_watermark_roundtrip(tmp_path, monkeypatch) -> None:
