@@ -13,9 +13,17 @@ prometheus-node-exporter:
 prometheus-pushgateway:
   enabled: false
 
+# Pre-loaded into kind via ctr import; avoid registry pulls that stall on CI.
+configmapReload:
+  prometheus:
+    image:
+      pullPolicy: Never
+
 server:
   persistentVolume:
     enabled: false
+  image:
+    pullPolicy: Never
   global:
     scrape_interval: 3s
     evaluation_interval: 3s

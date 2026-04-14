@@ -12,7 +12,9 @@
 #   CLEANUP_KIND=1      delete cluster on exit (success or failure)
 #   NAMESPACE           (default: default)
 #   PROM_CHART_VERSION  (default: 29.2.0)
-#   HELM_WAIT_TIMEOUT   (default: 15m)
+#   HELM_WAIT_TIMEOUT   (default: 20m; example chart helm --wait)
+#   PROM_ROLLOUT_TIMEOUT (default: 30m; kubectl rollout for prometheus server)
+#   PROM_PROGRESS_DEADLINE_SEC (default: 3600; deployment progressDeadlineSeconds; chart default 600s is too low for kind on CI)
 #   ROLLOUT_TIMEOUT     (default: 600s)
 
 set -euo pipefail
@@ -23,11 +25,14 @@ cd "$ROOT"
 
 KIND_CLUSTER_NAME="${KIND_CLUSTER_NAME:-cfha-o11y-it}"
 NAMESPACE="${NAMESPACE:-default}"
-AGENT_RELEASE="${AGENT_RELEASE:-o11y-kind-it}"
+# Release name caps CronJob metadata at 52 chars: <release>-declarative-agent-library-scraper-reference
+AGENT_RELEASE="${AGENT_RELEASE:-o11y-it}"
 PROM_RELEASE="${PROM_RELEASE:-cfha-prom-it}"
 PROM_CHART_VERSION="${PROM_CHART_VERSION:-29.2.0}"
 TRIGGER_COUNT="${TRIGGER_COUNT:-5}"
-HELM_WAIT_TIMEOUT="${HELM_WAIT_TIMEOUT:-15m}"
+HELM_WAIT_TIMEOUT="${HELM_WAIT_TIMEOUT:-20m}"
+PROM_ROLLOUT_TIMEOUT="${PROM_ROLLOUT_TIMEOUT:-45m}"
+PROM_PROGRESS_DEADLINE_SEC="${PROM_PROGRESS_DEADLINE_SEC:-3600}"
 ROLLOUT_TIMEOUT="${ROLLOUT_TIMEOUT:-600s}"
 
 need() {
@@ -45,6 +50,9 @@ need curl
 need python3
 
 TMP_VALUES=""
+# Host-side tars for docker cp → ctr import (cleaned up in cleanup_all).
+PROM_PRELOAD_TMP=""
+AGENT_IMAGE_TMP=""
 
 cleanup_pf() {
   if [[ -n "${PF_PROM_PID:-}" ]] && kill -0 "${PF_PROM_PID}" 2>/dev/null; then
@@ -67,6 +75,8 @@ cleanup_kind() {
 cleanup_all() {
   cleanup_pf
   [[ -n "${TMP_VALUES}" ]] && rm -f "${TMP_VALUES}"
+  [[ -n "${PROM_PRELOAD_TMP}" ]] && rm -f "${PROM_PRELOAD_TMP}"
+  [[ -n "${AGENT_IMAGE_TMP}" ]] && rm -f "${AGENT_IMAGE_TMP}"
   cleanup_kind
 }
 
@@ -80,11 +90,68 @@ fi
 
 kubectl config use-context "kind-${KIND_CLUSTER_NAME}"
 
-echo "==> docker build"
-docker build -t config-first-hosted-agents:local .
+# Docker container name for the control-plane node (kind versions differ:
+# `kind-<cluster>-control-plane` vs `<cluster>-control-plane`).
+KIND_CP=""
+for cand in "kind-${KIND_CLUSTER_NAME}-control-plane" "${KIND_CLUSTER_NAME}-control-plane"; do
+  if docker inspect "${cand}" &>/dev/null; then
+    KIND_CP="${cand}"
+    break
+  fi
+done
+if [[ -z "${KIND_CP}" ]]; then
+  echo "error: could not find kind control-plane container for cluster ${KIND_CLUSTER_NAME}" >&2
+  docker ps -a --format '{{.Names}}' >&2 || true
+  exit 1
+fi
 
-echo "==> kind load image"
-kind load docker-image config-first-hosted-agents:local --name "${KIND_CLUSTER_NAME}"
+echo "==> helm repo (prometheus-community)"
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts 2>/dev/null || true
+helm repo update prometheus-community
+
+# Load chart images into kind so the node does not pull from quay during helm --wait
+# (GitHub runners often exceed Helm deadlines on slow in-cluster pulls). Pins MUST
+# match prometheus-community/prometheus for PROM_CHART_VERSION — update when bumping the chart.
+echo "==> kind preload images for prometheus-community/prometheus (${PROM_CHART_VERSION})"
+PROM_PRELOAD_IMAGES=()
+case "${PROM_CHART_VERSION}" in
+  29.2.0)
+    PROM_PRELOAD_IMAGES=(
+      "quay.io/prometheus/prometheus:v3.11.1"
+      "quay.io/prometheus-operator/prometheus-config-reloader:v0.90.1"
+    )
+    ;;
+  *)
+    echo "warning: no prometheus image preload pins for PROM_CHART_VERSION=${PROM_CHART_VERSION}; helm install may be slow or time out" >&2
+    ;;
+esac
+if [[ ${#PROM_PRELOAD_IMAGES[@]} -gt 0 ]]; then
+  for img in "${PROM_PRELOAD_IMAGES[@]}"; do
+    docker pull "${img}"
+  done
+  # File on disk + docker cp avoids stdin import deadlines on large images (GitHub Actions).
+  PROM_PRELOAD_TMP="$(mktemp "${TMPDIR:-/tmp}/cfha-prom-preload.XXXXXX")"
+  docker save "${PROM_PRELOAD_IMAGES[@]}" -o "${PROM_PRELOAD_TMP}"
+  # Use /var, not /tmp: ctr inside kindest/node did not see files copied to /tmp.
+  docker cp "${PROM_PRELOAD_TMP}" "${KIND_CP}:/var/cfha-prom-preload.tar"
+  docker exec "${KIND_CP}" ctr -n k8s.io images import /var/cfha-prom-preload.tar
+  docker exec "${KIND_CP}" rm -f /var/cfha-prom-preload.tar
+  rm -f "${PROM_PRELOAD_TMP}"
+  PROM_PRELOAD_TMP=""
+fi
+
+echo "==> docker build"
+# Smaller image (no wandb) — faster import into the kind node on GitHub Actions.
+docker build -t config-first-hosted-agents:local --build-arg WITH_WANDB=0 .
+
+echo "==> import app image into kind (docker cp + ctr import)"
+AGENT_IMAGE_TMP="$(mktemp "${TMPDIR:-/tmp}/cfha-agent-image.XXXXXX")"
+docker save config-first-hosted-agents:local -o "${AGENT_IMAGE_TMP}"
+docker cp "${AGENT_IMAGE_TMP}" "${KIND_CP}:/var/cfha-agent-image.tar"
+docker exec "${KIND_CP}" ctr -n k8s.io images import /var/cfha-agent-image.tar
+docker exec "${KIND_CP}" rm -f /var/cfha-agent-image.tar
+rm -f "${AGENT_IMAGE_TMP}"
+AGENT_IMAGE_TMP=""
 
 echo "==> helm dependency (with-observability)"
 (cd examples/with-observability && helm dependency build --skip-refresh)
@@ -108,19 +175,24 @@ sed \
   -e "s|@SCRAPE_TARGET_RAG@|${SCRAPE_TARGET_RAG}|g" \
   "${SCRIPT_DIR}/prometheus-kind-o11y-values.yaml" >"${TMP_VALUES}"
 
-echo "==> helm repo (prometheus-community)"
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts 2>/dev/null || true
-helm repo update prometheus-community
-
 echo "==> helm install prometheus (${PROM_RELEASE})"
+# Do not use helm --wait here: it tracks many sub-resources and hits multi-hour gRPC
+# context deadlines on GitHub Actions. The server Deployment + rollout status suffices.
 helm upgrade --install "${PROM_RELEASE}" prometheus-community/prometheus \
   --version "${PROM_CHART_VERSION}" \
   --namespace "${NAMESPACE}" \
-  -f "${TMP_VALUES}" \
-  --wait \
-  --timeout "${HELM_WAIT_TIMEOUT}"
+  -f "${TMP_VALUES}"
 
-kubectl rollout status deployment/"${PROM_RELEASE}-prometheus-server" -n "${NAMESPACE}" --timeout="${ROLLOUT_TIMEOUT}"
+# Chart default progressDeadlineSeconds is 600; slow image pulls / probes on kind CI hit that first.
+kubectl patch deployment "${PROM_RELEASE}-prometheus-server" -n "${NAMESPACE}" \
+  --type merge -p "{\"spec\":{\"progressDeadlineSeconds\":${PROM_PROGRESS_DEADLINE_SEC}}}"
+
+if ! kubectl rollout status deployment/"${PROM_RELEASE}-prometheus-server" -n "${NAMESPACE}" --timeout="${PROM_ROLLOUT_TIMEOUT}"; then
+  echo "error: prometheus server rollout failed; kubectl diagnostics:" >&2
+  kubectl get pods -n "${NAMESPACE}" -o wide >&2 || true
+  kubectl describe pod -n "${NAMESPACE}" -l "app.kubernetes.io/name=prometheus" >&2 || true
+  exit 1
+fi
 
 echo "==> port-forward agent + rag + prometheus"
 kubectl port-forward -n "${NAMESPACE}" "svc/${AGENT_RELEASE}-declarative-agent-library" 18088:8088 &
