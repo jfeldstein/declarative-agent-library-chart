@@ -18,25 +18,21 @@ def test_pglite_noop_when_disabled(monkeypatch: pytest.MonkeyPatch) -> None:
     assert pr._manager is None
 
 
-def test_pglite_does_not_mutate_env_when_legacy_checkpoint_url_only(
+def test_pglite_skips_embed_when_postgres_url_set(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.delenv("HOSTED_AGENT_USE_PGLITE", raising=False)
-    u = "postgresql://a:b@db:5432/x"
-    monkeypatch.setenv("HOSTED_AGENT_CHECKPOINT_POSTGRES_URL", u)
-    monkeypatch.delenv("HOSTED_AGENT_POSTGRES_URL", raising=False)
-    monkeypatch.delenv("HOSTED_AGENT_OBSERVABILITY_POSTGRES_URL", raising=False)
+    monkeypatch.setenv("HOSTED_AGENT_USE_PGLITE", "1")
+    monkeypatch.setenv("HOSTED_AGENT_POSTGRES_URL", "postgresql://a:b@c:1/d")
+    pr.stop_pglite_embedded()
     pr.ensure_pglite_embedded()
-    assert os.environ.get("HOSTED_AGENT_OBSERVABILITY_POSTGRES_URL") is None
+    assert pr._manager is None
 
 
-def test_pglite_starts_embedded_and_sets_urls(
+def test_pglite_starts_embedded_and_sets_url(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setenv("HOSTED_AGENT_USE_PGLITE", "1")
     monkeypatch.delenv("HOSTED_AGENT_POSTGRES_URL", raising=False)
-    monkeypatch.delenv("HOSTED_AGENT_CHECKPOINT_POSTGRES_URL", raising=False)
-    monkeypatch.delenv("HOSTED_AGENT_OBSERVABILITY_POSTGRES_URL", raising=False)
 
     fake_uri = "postgresql://postgres:postgres@127.0.0.1:65432/postgres?sslmode=disable"
     mgr = MagicMock()
@@ -58,8 +54,6 @@ def test_pglite_starts_embedded_and_sets_urls(
 def test_pglite_missing_dependency_raises(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("HOSTED_AGENT_USE_PGLITE", "1")
     monkeypatch.delenv("HOSTED_AGENT_POSTGRES_URL", raising=False)
-    monkeypatch.delenv("HOSTED_AGENT_CHECKPOINT_POSTGRES_URL", raising=False)
-    monkeypatch.delenv("HOSTED_AGENT_OBSERVABILITY_POSTGRES_URL", raising=False)
 
     class _Missing(types.ModuleType):
         def __getattr__(self, _name: str) -> None:

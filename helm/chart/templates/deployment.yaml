@@ -59,10 +59,9 @@ spec:
             - name: HOSTED_AGENT_LOG_FORMAT
               value: "json"
             {{- end }}
-            {{- $pgUrl := or .Values.observability.postgresUrl .Values.observability.checkpoints.postgresUrl }}
-            {{- if $pgUrl }}
+            {{- if .Values.observability.postgresUrl }}
             - name: HOSTED_AGENT_POSTGRES_URL
-              value: {{ $pgUrl | quote }}
+              value: {{ .Values.observability.postgresUrl | quote }}
             {{- end }}
             {{- if .Values.observability.checkpoints.enabled }}
             - name: HOSTED_AGENT_CHECKPOINTS_ENABLED

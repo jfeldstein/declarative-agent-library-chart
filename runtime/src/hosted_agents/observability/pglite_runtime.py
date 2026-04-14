@@ -52,7 +52,7 @@ def ensure_pglite_embedded() -> None:
     """Optionally start embedded PGlite and set ``HOSTED_AGENT_POSTGRES_URL``.
 
     When ``HOSTED_AGENT_USE_PGLITE`` is set and no effective Postgres URL is
-    configured (see :func:`hosted_agents.observability.postgres_env.effective_postgres_url`),
+    configured (see :func:`hosted_agents.observability.postgres_env.postgres_url`),
     starts PGlite in TCP mode and writes the DSN to ``HOSTED_AGENT_POSTGRES_URL`` only.
     If the flag is unset or a URL is already set, no-op. Requires optional
     ``py-pglite[psycopg]`` and a working Node.js install for the first run
@@ -60,11 +60,11 @@ def ensure_pglite_embedded() -> None:
     """
 
     global _manager
-    from hosted_agents.observability.postgres_env import effective_postgres_url
+    from hosted_agents.observability.postgres_env import postgres_url
 
     if not _truthy("HOSTED_AGENT_USE_PGLITE"):
         return
-    if effective_postgres_url():
+    if postgres_url():
         return
 
     with _lock:
