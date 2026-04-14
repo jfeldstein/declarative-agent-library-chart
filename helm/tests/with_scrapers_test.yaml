@@ -53,13 +53,17 @@ tests:
     asserts:
       - hasDocuments:
           count: 1
-  - it: jira-only values render one CronJob
+  - it: jira-only single CronJob runs jira_job module
     values:
       - ../../examples/with-scrapers/values.jira-only.yaml
     template: charts/declarative-agent-library/templates/scraper-cronjobs.yaml
+    documentIndex: 0
     asserts:
       - hasDocuments:
           count: 1
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].command[2]
+          value: hosted_agents.scrapers.jira_job
   - it: jira-only values render RAG deployment
     values:
       - ../../examples/with-scrapers/values.jira-only.yaml
@@ -67,15 +71,6 @@ tests:
     asserts:
       - hasDocuments:
           count: 1
-  - it: jira-only CronJob runs jira_job module
-    values:
-      - ../../examples/with-scrapers/values.jira-only.yaml
-    template: charts/declarative-agent-library/templates/scraper-cronjobs.yaml
-    documentIndex: 0
-    asserts:
-      - equal:
-          path: spec.jobTemplate.spec.template.spec.containers[0].command[2]
-          value: hosted_agents.scrapers.jira_job
   - it: slack-only values render one scraper ConfigMap # [DALC-REQ-HELM-UNITTEST-004]
     values:
       - ../../examples/with-scrapers/values.slack-only.yaml
@@ -83,13 +78,17 @@ tests:
     asserts:
       - hasDocuments:
           count: 1
-  - it: slack-only values render one CronJob
+  - it: slack-only single CronJob runs slack_job module
     values:
       - ../../examples/with-scrapers/values.slack-only.yaml
     template: charts/declarative-agent-library/templates/scraper-cronjobs.yaml
+    documentIndex: 0
     asserts:
       - hasDocuments:
           count: 1
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].command[2]
+          value: hosted_agents.scrapers.slack_job
   - it: slack-only values render RAG deployment
     values:
       - ../../examples/with-scrapers/values.slack-only.yaml
@@ -97,12 +96,3 @@ tests:
     asserts:
       - hasDocuments:
           count: 1
-  - it: slack-only CronJob runs slack_job module
-    values:
-      - ../../examples/with-scrapers/values.slack-only.yaml
-    template: charts/declarative-agent-library/templates/scraper-cronjobs.yaml
-    documentIndex: 0
-    asserts:
-      - equal:
-          path: spec.jobTemplate.spec.template.spec.containers[0].command[2]
-          value: hosted_agents.scrapers.slack_job
