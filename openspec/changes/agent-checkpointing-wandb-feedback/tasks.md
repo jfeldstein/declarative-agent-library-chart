@@ -26,15 +26,15 @@
 
 - [x] 4.1 Implement in-memory/streaming CanonicalTrajectory builder fed by checkpoints and tool results
 - [x] 4.2 Pin ATIF schema version and implement exporter from CanonicalTrajectory to ATIF JSON
-- [ ] 4.3 Implement **`positive_mining_filter`** on **export** (HTTP **`export_atif`** path): +1-only / terminal-segment rules per spec. *(Filter exists in **`atif.py`** but **export** currently streams raw trajectory without applying it.)*
+- [ ] 4.3 [REMOVED]
 - [x] 4.4 Implement configurable **redaction** before export; document rules for messages, tool args, and Slack identifiers
 
 ## 5. Shadow rollouts
 
 - [x] 5.1 Add configuration for shadow variants (skill version, model, prompt hash) and `request_correlation_id` linking to primary
-- [ ] 5.2 Implement default non-mutating shadow path with tool stubbing/skip list and explicit allowlist/danger flag for full mirror. *(**`ShadowSettings` / `should_run_shadow` exist** but **no** request path calls **`should_run_shadow`** yet.)*
-- [ ] 5.3 Ensure shadow runs emit the same mandatory W&B tags (with **`rollout_arm=shadow`**), **`shadow_variant_id`**, and comparable metrics joined by **`request_correlation_id` / `thread_id`**. *(Depends on **5.2** wiring.)*
-- [ ] 5.4 Shadow off by default; support traffic bounds (**percentage**, **allowlist tenants**, **time windows**). *(**Percentage + allowlist:** implemented in settings. **Time windows:** not implemented.)*
+- [ ] 5.2 [REMOVED]
+- [ ] 5.3 [REMOVED]
+- [ ] 5.4 [REMOVED]
 
 ## 6. Rollout and verification
 

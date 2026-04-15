@@ -14,26 +14,26 @@
 
 - [ ] 3.1 Add wandb client initialization (API key, project, entity) with environment-based configuration.
 - [ ] 3.2 Emit wandb run/trace spans for LLM and tool calls aligned with internal `tool_call_id` values.
-- [ ] 3.3 Apply required tags (`env`, `agent_name`, `agent_version`, `skill_set_version`, `model_id`, `rollout`, optional `shadow_variant_id`).
+- [ ] 3.3 Apply required tags (`env`, `agent_name`, `agent_version`, `skill_set_version`, `model_id`, `rollout`).
 - [ ] 3.4 On correlated feedback, append or update trace data with `feedback_label`, `feedback_source`, and `checkpoint_id` (including late reactions).
 
 ## 4. ATIF export and positive mining
 
-- [ ] 4.1 Implement log → ATIF JSON mapper with a versioned schema/fixture test.
+- [ ] 4.1 [REMOVED]
 - [ ] 4.2 Integrate redaction pipeline for secrets and disallowed PII before export.
 - [ ] 4.3 Build positive-segment extraction job (configurable window, terminal positive checkpoint) for SFT/RLFT consumers.
 - [ ] 4.4 Ensure default positive mining excludes negative terminal checkpoints unless contrastive override is set.
 
 ## 5. Shadow rollouts
 
-- [ ] 5.1 Add configuration for shadow variants (prompt/skill/model identifiers) and traffic bounds (default off).
-- [ ] 5.2 Implement shadow execution path with `rollout=shadow` labeling in logs and wandb.
-- [ ] 5.3 Enforce default non-mutation for shadow external tools (stub/skip/sandbox) unless policy allows.
-- [ ] 5.4 Emit joinable comparison fields (`request_id` / `correlation_id`) between primary and shadow.
+- [ ] 5.1 [REMOVED]
+- [ ] 5.2 [REMOVED]
+- [ ] 5.3 [REMOVED]
+- [ ] 5.4 [REMOVED]
 
 ## 6. Verification and rollout
 
 - [ ] 6.1 Add integration tests: checkpoint → wandb span → synthetic reaction → feedback on trace.
-- [ ] 6.2 Add export test: positive-labeled run produces expected ATIF slice; negative excluded from default mining.
+- [ ] 6.2 [REMOVED]
 - [ ] 6.3 Document operator runbook (feature flags, Slack app scopes, wandb project naming, retention).
 - [ ] 6.4 Pilot in non-production workspace; enable production gradually with monitoring and rollback steps from design.
