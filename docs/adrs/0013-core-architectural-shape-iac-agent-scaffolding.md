@@ -50,35 +50,41 @@ Forces:
 Proportions: **upper ~2/3** = product surface (agentic | non-agentic); **lower ~1/3** = IaC/hosting.
 
 ```
-+-------------------------------------------------------------------+
-|                          PRODUCT SURFACE                          |
-|  +---------------------------+ +-------------------------------+  |
-|  |        AGENTIC            | |    NON-AGENTIC SCAFFOLDING    |  |
-|  |  (supervisor, subagents,  | |  sources of context           |  |
-|  |   tools, RLHF / feedback) | |  workflow triggers -> /trigger|  |
-|  +---------------------------+ +-------------------------------+  |
-+-------------------------------------------------------------------+
-|  IaC / HOSTING (Helm chart, K8s resources, observability hooks)   |
-+-------------------------------------------------------------------+
+**Declarative-Agent-Library-Chart gives you:**
+
++-----------------------------------------------------------------------------+
+|                                        |                                    |
+|      NON-AGENTIC SCAFFOLDING           |              THE AGENT             |
+|   (HTTP triggers, sources of context)  |  (harness, tools, RLHF / feedback) |
+|                                        |                                    |
++-----------------------------------------------------------------------------+
+|                                                                             |
+|                                       IaC                                   |
+|                                                                             |
++-----------------------------------------------------------------------------+
 ```
 
 ### 5. Diagram — subcomponents (aligned columns; tools subdivided)
 
 ```
 +-------------------------------------------------------------------+
-| AGENTIC                         | NON-AGENTIC SCAFFOLDING         |
-|  + Agent (prompt, config,       |  + Sources of context           |
-|    subagents)                  |    (scrapers / ETL -> RAG)      |
-|  + Tools:                       |  + Triggers (webhooks, bridges, |
-|    | RAG (if context enabled)  |    cron->HTTP) -> single entry  |
-|    | Built-in (jira, slack, …)  |                                 |
-|    | Extendable (user chart)    |                                 |
-|  + RLHF / feedback (future      |                                 |
-|    experience lib, SFT/RLHF)    |                                 |
-+----------------------------------+---------------------------------+
-| IaC / HOSTING + OBSERVABILITY (metrics, dashboards, scrape config) |
+| NON-AGENTIC SCAFFOLDING         | AGENTIC                         |
+|  + Sources of context           |  + Agent (system prompt,        |
+|    (scrapers / ETL -> RAG,      |    config, subagents, skills,   |
+|    entities/relationships)      |    chat model, checkpoints,     |
+|                                 |    W&B, etc.)                   |
+|  + Workflow triggers (webhooks, |  + Tools:                       |
+|    bridges, cron->HTTP) ->      |    | RAG (zero-config)          |
+|    single programmatic entry    |    | Built-in (Jira, Slack, …)  |
+|                                 |    | Extendable (in your chart) |
+|                                 |  + RLHF / feedback (persistence |
+|                                 |    & telemetry, future:         |
+|                                 |    experience library, SFT/RLHF |
++----------------------------------+--------------------------------+
+| IaC                                                               |
+| + K8s Resources                                                   |
+| + Observability (everything exports metrics, dashboards OOTB)     |
 +-------------------------------------------------------------------+
-```
 
 ## Consequences
 
