@@ -6,6 +6,10 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ---
 
+## 2026-04-15 (docs)
+
+**Local CI** — Moved merge-gate command recipes from root **README** to **[docs/local-ci.md](local-ci.md)**; **README** now links there and lists the file in the layout table. Cross-references updated (**ADR 0012**, **ADR 0001**, **docs/AGENTS.md**, **`.github/workflows/ci.yml`** header comment).
+
 ## 2026-04-15 (architecture ADRs batch)
 
 **ADR 0013** — **[Core architectural shape](adrs/0013-core-architectural-shape-iac-agent-scaffolding.md)** (IaC vs agent vs non-agentic scaffolding; observability first-class; tools as RAG / built-in / extendable; triggers vs tools; Helm values mental map; glossary). Index: **[docs/adrs/README.md](adrs/README.md)** now lists **0001–0013**.
@@ -70,7 +74,7 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 **OpenSpec `traceability` (tasks closure)** — Implementation was already on **`main`** (IDs, matrix, **`scripts/check_spec_traceability.py`**, CI job, scheduled o11y workflow, **`AGENTS.md`** / **`.cursor/rules/spec-traceability.mdc`**). Marked **`openspec/changes/traceability/tasks.md`** **15/15** complete; aligned **`openspec/changes/agent-runtime-components/specs/runtime-tools-mcp/spec.md`** section title with the **`traceability`** copy (**`## MODIFIED Requirements`**).
 
-**Local CI parity (README)** — Ran end-to-end on a dev machine: **`./scripts/check_adr_numbers.sh`**, **`python3 scripts/check_spec_traceability.py`**, **`uv run ruff check`** + **`uv run pytest tests/`** under **`helm/src/`**, **`helm dependency build --skip-refresh`** + **`helm unittest .`** for each **`examples/*/`**, **`ct lint --config ct.yaml --all`**, **`uv run python tests/integration/smoke_rag.py`** (from **`helm/src/`**). All exited **0** (records **`openspec/changes/traceability/tasks.md`** §6.1 verification, not only Python + OpenSpec).
+**Local CI parity ([docs/local-ci.md](local-ci.md))** — Ran end-to-end on a dev machine: **`./scripts/check_adr_numbers.sh`**, **`python3 scripts/check_spec_traceability.py`**, **`uv run ruff check`** + **`uv run pytest tests/`** under **`helm/src/`**, **`helm dependency build --skip-refresh`** + **`helm unittest .`** for each **`examples/*/`**, **`ct lint --config ct.yaml --all`**, **`uv run python tests/integration/smoke_rag.py`** (from **`helm/src/`**). All exited **0** (records **`openspec/changes/traceability/tasks.md`** §6.1 verification, not only Python + OpenSpec).
 
 ## 2026-04-12
 

@@ -32,7 +32,7 @@ When you add or change a normative **SHALL** under `openspec/specs/*/spec.md`:
 
 From the repo root:
 
-- **CI parity:** follow the “Local CI” section in [README.md](../README.md) (Python via **uv**, Helm via **helm** + **ct** + **helm-unittest**, ADRs via `scripts/check_adr_numbers.sh`). GitHub runs the same stages in [`.github/workflows/ci.yml`](../.github/workflows/ci.yml).
+- **CI parity:** follow [docs/local-ci.md](local-ci.md) (Python via **uv**, Helm via **helm** + **ct** + **helm-unittest**, ADRs via `scripts/check_adr_numbers.sh`, spec traceability via `scripts/check_spec_traceability.py`). GitHub runs the same stages in [`.github/workflows/ci.yml`](../.github/workflows/ci.yml).
 - **Python only:** `uv sync --all-groups --project helm/src` then `cd helm/src` and `uv run ruff check hosted_agents tests`, `uv run pytest tests/ -v --tb=short`
 
 ## ADR numbering

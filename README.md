@@ -2,7 +2,46 @@
 
 <!-- Traceability: [DALC-REQ-HELM-UNITTEST-003] [DALC-REQ-CHART-CT-002] [DALC-REQ-O11Y-LOGS-004] -->
 
-Standalone repository for **YAML-configured** hosted agents: a **Helm library chart** (`helm/chart/`) consumed by application charts, a **hello-world** example (`examples/hello-world/`), and a **Python** runtime (`hosted_agents`) that exposes **`POST /api/v1/trigger`** as the **only HTTP entry for launching agent work** (LangGraph-orchestrated). The root agent reads **`HOSTED_AGENT_SYSTEM_PROMPT`** from the environment (ConfigMap in-cluster) as **supervisor** instructions when **`subagents`** is configured; optional JSON can carry **`message`** (user input), **`load_skill`**, or a direct **`tool`** step (see below). This matches the LangChain **subagents** pattern ([docs](https://docs.langchain.com/oss/python/langchain/multi-agent/subagents)): specialists are **tools** on that root agent, not an HTTP-selected subagent.
+# Declarative Agent Library Chart
+
+This repo is a **Helm library chart** (`helm/chart/`). Add it as a dependency in `Chart.yaml`, and add your config in `values.yaml`.
+
+## Architecture
+
+```
++-----------------------------------------------------------------------------+
+|                                        |                                    |
+|      NON-AGENTIC SCAFFOLDING           |              THE AGENT             |
+|   (HTTP triggers, sources of context)  |  (harness, tools, RLHF / feedback) |
+|                                        |                                    |
++-----------------------------------------------------------------------------+
+|                                                                             |
+|                                       IaC                                   |
+|                                                                             |
++-----------------------------------------------------------------------------+
+```
+
+### Subcomponents
+
+```
++-------------------------------------------------------------------+
+| NON-AGENTIC SCAFFOLDING         | AGENTIC                         |
+|  + Sources of context           |  + Agent (system prompt,        |
+|    (scrapers / ETL -> RAG,      |    config, subagents, skills,   |
+|    entities/relationships)      |    chat model, checkpoints,     |
+|                                 |    W&B, etc.)                   |
+|  + Workflow triggers (webhooks, |  + Tools:                       |
+|    bridges, cron->HTTP) ->      |    | RAG (zero-config)          |
+|    single programmatic entry    |    | Built-in (Jira, Slack, …)  |
+|                                 |    | Extendable (in your chart) |
+|                                 |  + RLHF / feedback (persistence |
+|                                 |    & telemetry, future:         |
+|                                 |    experience library, SFT/RLHF |
++----------------------------------+--------------------------------+
+| IaC                                                               |
+| + K8s Resources                                                   |
+| + Observability (everything exports metrics, dashboards OOTB)     |
++-------------------------------------------------------------------+
 
 ## Layout
 
@@ -17,61 +56,19 @@ Standalone repository for **YAML-configured** hosted agents: a **Helm library ch
 | `helm/tests/chart/` | Notes for Helm `helm test` hooks |
 | `examples/hello-world/` | Minimal application chart depending on `file://../../helm/chart` |
 | `examples/with-observability/` | Example chart with Kubernetes `observability` values (Prometheus annotations, ServiceMonitor, JSON logs) |
-| `examples/with-scrapers/` | Example chart with RAG + Jira/Slack scraper `CronJob`s (validated in CI; see below) |
+| `examples/with-scrapers/` | Example chart with RAG + Jira/Slack scraper `CronJob`s (validated in CI; see [docs/local-ci.md](docs/local-ci.md)) |
 | `examples/checkpointing/` | Example chart with LangGraph checkpoints enabled (`memory` backend) |
 | `helm/Dockerfile` | Production-style image for the Python runtime (build context: repository root) |
 | `skaffold.yaml` / `devspace.yaml` | Local deploy + **port-forward `localhost:8088` → service :8088** |
 | `docs/observability.md` | Metrics (`/metrics`), structured logs, Helm scrape hints, Grafana import |
+| `docs/local-ci.md` | Run the same checks locally as GitHub Actions (Python, Helm, ADRs, spec traceability) |
 | `docs/development-log.md` | Notable chart/runtime changes (breaking API, env, values); ADRs live under `docs/adrs/` |
 | `grafana/` | Starter Grafana dashboard JSON + import notes |
 
-## Decisions
 
-Locked design choices: [docs/adrs/](docs/adrs/README.md) (`NNNN-short-title.md`; boilerplate: [0000-topic.md](docs/adrs/0000-topic.md)).
+## Local checks (CI parity)
 
-## Requirements
-
-- Python 3.11+ (see `helm/src/.python-version`), [uv](https://docs.astral.sh/uv/)
-- For cluster paths: **kind** (or compatible Kubernetes), **Helm 3**, **kubectl**
-- Optional: [Skaffold](https://skaffold.dev/), [DevSpace](https://www.devspace.sh/)
-
-## Local CI (parity with GitHub Actions)
-
-Canonical automation lives in [`.github/workflows/ci.yml`](.github/workflows/ci.yml). From a clone of [github.com/jfeldstein/declarative-agent-library-chart](https://github.com/jfeldstein/declarative-agent-library-chart):
-
-**Python (uv)** — from repo root:
-
-```bash
-uv sync --all-groups --project helm/src
-cd helm/src
-uv run ruff check hosted_agents tests
-uv run pytest tests/ -v --tb=short --cov-report=term-missing
-uv run python tests/integration/smoke_rag.py
-```
-
-**Helm** — install [Helm](https://helm.sh/) **3.20.2+**, [chart-testing](https://github.com/helm/chart-testing) (`ct`), and the [helm-unittest](https://github.com/helm-unittest/helm-unittest) plugin (**v1.0.3** matches CI). Then from repo root:
-
-```bash
-set -euo pipefail
-for chart_dir in examples/*/; do
-  chart=$(basename "$chart_dir")
-  suite="${chart//-/_}_test.yaml"
-  (cd "examples/$chart" && helm dependency build --skip-refresh && helm unittest -f "../../helm/tests/${suite}" .)
-done
-ct lint --config ct.yaml --all
-```
-
-**ADR numbering** (same as the `docs` job):
-
-```bash
-./scripts/check_adr_numbers.sh
-```
-
-**Spec traceability** (same as the `traceability` job):
-
-```bash
-python3 scripts/check_spec_traceability.py
-```
+Commands that mirror the PR merge gate live in **[docs/local-ci.md](docs/local-ci.md)** (see [`.github/workflows/ci.yml`](.github/workflows/ci.yml)).
 
 ## Observability
 
