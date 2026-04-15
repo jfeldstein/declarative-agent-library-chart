@@ -6,16 +6,16 @@
 ## 0. Context (read first)
 
 - **Linear checklist:** Tier **3** in `docs/openspec-implementation-order.md` — centralize helm-unittest suites under **`helm/tests/`**; CI uses **`helm unittest -f …`** per example; **test-to-spec traceability** matrix evidence paths update. **`examples-distinct-values-readmes`** (step 4) and **`observability-automatic-enabled-components`** (step 5) assume this layout.
-- **Upstream alignment:** After **`dedupe-helm-values-observability`** ([`docs/implementation-specs/01-dedupe-helm-values-observability-spec.md`](01-dedupe-helm-values-observability-spec.md)) and **`consolidate-naming`** ([`docs/implementation-specs/02-consolidate-naming-spec.md`](02-consolidate-naming-spec.md)): example **`values.yaml`** use the post-dedupe keys (`agent.observability.*`, `agent.checkpoints.*`, …) and **`template:`** paths in suites reference the vendored subchart folder name from step 2 (**`charts/declarative-agent-library-chart/templates/...`**), not legacy `declarative-agent-library` or `o11y` keys.
+- **Upstream alignment:** After **`dedupe-helm-values-observability`** ([`docs/implementation-specs/01-dedupe-helm-values-observability-spec.md`](01-dedupe-helm-values-observability-spec.md)) and **`consolidate-naming`** ([`docs/implementation-specs/02-consolidate-naming-spec.md`](02-consolidate-naming-spec.md)): example **`values.yaml`** use the post-dedupe keys (`agent.observability.*`, `agent.checkpoints.*`, …). **`template:`** paths in suites **as of `main` before step 2** use **`charts/declarative-agent-library/templates/...`** (unpacked folder matches chart **`name:`** `declarative-agent-library`). **Target (after step 2):** **`charts/declarative-agent-library-chart/templates/...`**. Do not use the **`o11y`** values key after step 1.
 - **Authoritative change bundle:** `openspec/changes/consolidate-helm-tests/` — `proposal.md`, `design.md`, `tasks.md`, delta specs under `specs/*/spec.md`.
 - **Non-goals:** Do not move or merge **`helm/chart/templates/tests/`** (install-time `helm test` hooks). Do not add new examples or new assertion scenarios beyond relocation, **`values:`** wiring, CI/docs/spec/traceability updates.
 
 ## 1. Goal
 
-1. **One suite file per covered example** at **`helm/tests/<example_basename>_test.yaml`**, where **`hello-world` → `hello_world_test.yaml`** (hyphens → underscores in the filename only).
+1. **One suite file per covered example** at **`helm/tests/<example_basename>_test.yaml`**, where **`hello-world` → `hello_world_test.yaml`** (hyphens → underscores in the filename only). **Covered examples today** include **`hello-world`**, **`with-scrapers`**, **`with-observability`**, and **`checkpointing`** (see **`helm/tests/checkpointing_test.yaml`**).
 2. **Remove** per-example **`examples/*/tests/`** trees after relocation.
 3. Each suite **SHALL** declare **`values:`** loading that example’s committed **`values.yaml`** via a path **relative to the suite file** under **`helm/tests/`** (canonical form: **`../../examples/<example-dir>/values.yaml`** — resolves to repo root then `examples/`).
-4. **CI and README** SHALL run **`helm unittest -f "../../helm/tests/${chart//-/_}_test.yaml" .`** from **`examples/<chart>/`** after **`helm dependency build --skip-refresh`** (same pattern for local parity).
+4. **CI and README** SHALL run **`helm unittest -f "../../helm/tests/${chart//-/_}_test.yaml" .`** from **`examples/<chart>/`** after **`helm dependency build --skip-refresh`** (same pattern for local parity). **Note:** `.github/workflows/ci.yml` uses **`helm dependency build --skip-refresh`** in the example loop; if root **`README.md`** shows bare **`helm dependency build`** in a one-off line, prefer the **CI** form for parity (or align the doc).
 5. **Traceability:** **`docs/spec-test-traceability.md`** and contributor rules cite **`helm/tests/*.yaml`** (not **`examples/*/tests/`**). Merge delta specs into **`openspec/specs/`** per project OpenSpec apply/archive conventions.
 
 ## 2. Entities and interfaces (signatures only; no bodies)
@@ -25,7 +25,8 @@
 ```text
 helm/tests/
   AGENTS.md                    # maintainer contract (add/update)
-  <example_underscore>_test.yaml
+  <example_underscore>_test.yaml   # e.g. hello_world_test.yaml, checkpointing_test.yaml, with_observability_test.yaml
+  chart/                       # optional nested docs or suites (see repo)
 examples/<kebab-example>/
   Chart.yaml
   values.yaml
@@ -115,6 +116,7 @@ def main() -> None: ...
 | with-scrapers: CronJob | `helm/tests/with_scrapers_test.yaml` | ≥1 CronJob. |
 | with-scrapers: RAG | same | ≥1 RAG component label. |
 | with-observability: scrape + ServiceMonitors | `helm/tests/with_observability_test.yaml` | Multiple **`prometheus.io/scrape`**, one ServiceMonitor per deployed metrics Service, correct negative case when RAG disabled (per spec wording — align keys with post–step 1 **`observability.serviceMonitor`** / equivalent). |
+| checkpointing: checkpoint env | `helm/tests/checkpointing_test.yaml` | Deployment env includes **`HOSTED_AGENT_CHECKPOINTS_ENABLED`** / **`HOSTED_AGENT_CHECKPOINT_BACKEND`** per documented values path (post–step 1: top-level **`checkpoints`**, not under **`observability`**). |
 
 ### 4.3 `[DALC-REQ-HELM-UNITTEST-002]`
 
@@ -193,5 +195,7 @@ cd examples/<example> && helm dependency build --skip-refresh && helm unittest -
 python3 scripts/check_spec_traceability.py
 ct lint --config ct.yaml --all
 ```
+
+**Canonical commands:** [`docs/implementation-specs/README.md`](README.md) when present, else root **`README.md`**.
 
 `````

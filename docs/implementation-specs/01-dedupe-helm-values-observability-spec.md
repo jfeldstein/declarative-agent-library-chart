@@ -60,7 +60,9 @@ scrapers:
 
 ### 2.2 Template ↔ values contract
 
-Templates that **today** read `.Values.o11y.*` **SHALL** read `.Values.observability.*` for the same semantics:
+**Pre-migration (typical `main` before this change):** scrape annotations, structured JSON logs, and `ServiceMonitor` toggles are read from **`.Values.o11y.*`**. Other concerns (checkpoints, wandb, Slack feedback, ATIF/shadow, label registry) already live under **`.Values.observability.*`** in a separate subtree.
+
+**Target (post–step 1):** the **`o11y`** subtree is **removed**; **only** cluster/Prometheus/log/scrape toggles live under **`.Values.observability.*`** for the same semantics as today’s **`o11y`** keys:
 
 - `helm/chart/templates/deployment.yaml` (pod annotations + `HOSTED_AGENT_LOG_FORMAT`)
 - `helm/chart/templates/service.yaml`
@@ -70,7 +72,7 @@ Templates that **today** read `.Values.o11y.*` **SHALL** read `.Values.observabi
 - `helm/chart/templates/rag-servicemonitor.yaml`
 - `helm/chart/templates/scraper-cronjobs.yaml`
 
-Templates that **today** read `.Values.observability.{postgresUrl,checkpoints,wandb,slackFeedback,atifExport,shadow,labelRegistry}` **SHALL** be rewired:
+Templates that **today** read `.Values.observability.{postgresUrl,checkpoints,wandb,slackFeedback,atifExport,shadow,labelRegistry}` **SHALL** be rewired (this is the **overloaded** `observability` object this change removes):
 
 | Concern | New values path |
 |--------|------------------|
@@ -82,9 +84,9 @@ Templates that **today** read `.Values.observability.{postgresUrl,checkpoints,wa
 
 ### 2.3 ConfigMap data keys
 
-Today (`helm/chart/templates/configmap.yaml`): `label-registry.json`, `slack-emoji-label-map.json`, `shadow-allow-tenants.json`.
+**Pre-migration:** `helm/chart/templates/configmap.yaml` typically mounts **`label-registry.json`**, **`slack-emoji-label-map.json`**, and (when shadow is in scope) **`shadow-allow-tenants.json`**. If your branch already dropped shadow, treat the removal as done and only verify there is **no** remaining volume/env reference.
 
-**Required:**
+**Required (target contract):**
 
 - **Remove** `shadow-allow-tenants.json` entirely (and all volume/env references).
 - Keep **human feedback** label taxonomy as JSON mounted/used as **`HOSTED_AGENT_LABEL_REGISTRY_JSON`**; source values move under `scrapers.slack.feedback` (implementation may rename the ConfigMap key for clarity, but then **update every consumer** consistently).
@@ -115,7 +117,7 @@ class ObservabilitySettings:
 
 ```python
 # helm/src/hosted_agents/app.py — remove or replace exports that reference ATIF/shadow
-def build_app(...) -> ...: ...
+def create_app(...) -> ...: ...
 ```
 
 ```python
@@ -127,7 +129,7 @@ Any **public JSON** payloads that today expose `atif_export_enabled` / `shadow_e
 
 ### 2.5 Shared utilities
 
-If `hosted_agents.observability.wandb_trace` (or others) imports symbols from `atif.py` that are still needed (e.g. hashing helpers), **extract** those into a neutral module (e.g. `observability/tags.py`) **before** deleting `atif.py`, or inline minimal logic — **no** ATIF export surface may remain.
+If `hosted_agents.observability.wandb_trace` (or others) imports symbols from `hosted_agents/observability/atif.py` that are still needed (e.g. hashing helpers), **extract** those into a neutral module (e.g. `observability/tags.py`) **before** deleting `atif.py`, or inline minimal logic — **no** ATIF export surface may remain. **If `atif.py` / `shadow.py` are already gone on your branch**, skip deletion and only fix imports, settings, and tests.
 
 ## 3. Spec files (normative)
 
@@ -185,9 +187,11 @@ Use **TDD**: for each stage below, **add or modify tests first** so they fail on
 
 ### 4.2 Python (runtime under `helm/src/`)
 
-Run from `helm/src` after `uv sync` (see root `README.md`):
+From repo root, sync then run tests from `helm/src` (canonical commands also indexed under **[`docs/implementation-specs/README.md`](README.md)** when present, else root **`README.md`**):
 
 ```bash
+uv sync --all-groups --project helm/src
+cd helm/src
 uv run pytest tests/ -v --tb=short
 ```
 
@@ -196,7 +200,7 @@ uv run pytest tests/ -v --tb=short
 | Test path | Expectation |
 |-----------|-------------|
 | `helm/src/tests/test_postgres_env.py` | Construct `ObservabilitySettings.from_env()` after env contract changes; update any assumptions on removed fields. |
-| `helm/src/tests/test_checkpoint_feedback_api.py` | Remove or replace **`test_atif_export_requires_flag_and_run_id`** and any shadow-specific cases; adjust fixtures that built `ObservabilitySettings` with ATIF/shadow. |
+| `helm/src/tests/test_checkpoint_feedback_api.py` | Remove or replace **ATIF export** and **shadow** assertions (and any tests that depended on removed settings); adjust fixtures that built `ObservabilitySettings` with ATIF/shadow. **Do not cite a fixed test name** if your tree already deleted those cases. |
 | `helm/src/tests/test_o11y_metrics.py` | Unchanged behavior for `/metrics` and logs **unless** settings wiring breaks imports. |
 | `helm/src/tests/integration/test_kind_o11y_prometheus.py` | Must stay green when `RUN_KIND_O11Y_INTEGRATION=1` — update `helm/src/tests/scripts/integration_kind_o11y_prometheus.sh` **`--set`** paths from `declarative-agent-library.o11y.*` to `declarative-agent-library.observability.*`. |
 
@@ -234,9 +238,9 @@ Add/adjust **`# Traceability: [ID]`** comments in modified helm unittest YAML an
 
 **Write/update first:** delete or xfailing pytest that asserted ATIF HTTP export and shadow behavior; add tests proving **`503`/missing route** for removed export if any public behavior remains intentionally.
 
-**Then implement:** remove modules/routes (`app.py`, `observability/__init__.py`, `atif.py`, `shadow.py`, trigger graph branches), slim `ObservabilitySettings`, fix `wandb_trace` imports, until:
+**Then implement:** remove modules/routes (`app.py`, `observability/__init__.py`, `atif.py`, `shadow.py`, trigger graph branches) **if still present**, slim `ObservabilitySettings`, fix `wandb_trace` imports, until:
 
-- `uv run pytest tests/ -v --tb=short` passes from `helm/src`.
+- `uv run pytest tests/ -v --tb=short` passes from `helm/src` (after `uv sync --all-groups --project helm/src` from repo root).
 
 ### Stage 4 — Docs + OpenSpec promotion
 
@@ -262,11 +266,14 @@ Add/adjust **`# Traceability: [ID]`** comments in modified helm unittest YAML an
 # Helm
 helm unittest -f ../../helm/tests/<suite>.yaml .   # from each example chart dir; see README
 
-# Python
+# Python (from repo root)
+uv sync --all-groups --project helm/src
 cd helm/src && uv run pytest tests/ -v --tb=short
 
-# Traceability
+# Traceability (from repo root)
 python3 scripts/check_spec_traceability.py
 ```
+
+**Canonical command list:** [`docs/implementation-specs/README.md`](README.md) (when checked in) and root **`README.md`** Local CI.
 
 `````

@@ -6,7 +6,7 @@
 ## 0. Context (read first)
 
 - **Linear checklist:** Tier **4** in `docs/openspec-implementation-order.md` — **after** `consolidate-helm-tests` (step 3): one committed **values file per demonstrated setup**, **per-example README** index, and **helm-unittest** loads **each** documented file under **`helm/tests/`** with assertions that match the README.
-- **Upstream alignment:** Re-read [`docs/implementation-specs/01-dedupe-helm-values-observability-spec.md`](01-dedupe-helm-values-observability-spec.md) (values shape: `observability` vs `o11y`, `checkpoints`, etc.), [`02-consolidate-naming-spec.md`](02-consolidate-naming-spec.md) (`agent:` parent key, chart folder **`charts/declarative-agent-library-chart/`**), and [`03-consolidate-helm-tests-spec.md`](03-consolidate-helm-tests-spec.md) (suite location, **`values:`** relative paths). **This brief’s “current tree” snapshot is the repo as of authoring;** if steps 1–3 merged on your branch, **grep and match their target layout** instead of stale names below.
+- **Upstream alignment:** Re-read [`docs/implementation-specs/01-dedupe-helm-values-observability-spec.md`](01-dedupe-helm-values-observability-spec.md) (values shape: `observability` vs `o11y`, `checkpoints`, etc.), [`02-consolidate-naming-spec.md`](02-consolidate-naming-spec.md) (**as of `main` before step 2:** vendored library folder **`charts/declarative-agent-library/`**; **target:** **`charts/declarative-agent-library-chart/`** after rename; parent values **`agent:`**), and [`03-consolidate-helm-tests-spec.md`](03-consolidate-helm-tests-spec.md) (suite location, **`values:`** relative paths, **`helm/tests/checkpointing_test.yaml`**). **This brief’s “current tree” snapshot is the repo as of authoring;** if steps 1–3 merged on your branch, **grep and match their target layout** instead of stale names below.
 - **Authoritative change bundle:** `openspec/changes/examples-distinct-values-readmes/` — `proposal.md`, `design.md`, `tasks.md`, delta specs under `specs/*/spec.md`. **Note:** proposal text may still say `cfha-*`; promoted capability folder is **`dalc-example-values-files`** and **`dalc-helm-unittest`** (see `openspec/specs/`).
 - **Non-goals:** No change to **library** `helm/chart` default semantics; no replacement of kind/Prometheus integration tests; cardinality-aware (single-story examples stay single-file).
 
@@ -27,7 +27,7 @@ examples/
   hello-world/
     values.yaml                      # single story
   checkpointing/
-    values.yaml                      # single story (checkpoints under declarative-agent-library.observability.checkpoints today)
+    values.yaml                      # single story — **Helm contract (post–step 1):** **`<library-key>.checkpoints`** (e.g. `declarative-agent-library.checkpoints` before step 2 renames the parent key). **Not** `declarative-agent-library.observability.checkpoints`. *Pre–dedupe trees may still nest checkpoints under `observability` until step 1 merges.*
   with-scrapers/
     README.md                        # table: values.yaml, values.jira-only.yaml, values.slack-only.yaml
     values.yaml
@@ -40,9 +40,10 @@ examples/
 
 helm/tests/
   hello_world_test.yaml
-  checkpointing_test.yaml
+  checkpointing_test.yaml            # checkpoint env from values.yaml (see step 1 path)
   with_scrapers_test.yaml            # suite values: default; per-it values: jira-only + slack-only files
   with_observability_test.yaml       # suite values: default; per-it values: values-o11y-no-rag.yaml
+  chart/                             # optional nested content (present in repo)
 ```
 
 ### 2.2 Parent values key and vendored chart folder (today vs post–steps 1–3)
@@ -54,7 +55,7 @@ declarative-agent-library:
 ```
 
 ```text
-# Today: unittest template: paths (representative)
+# As of main before step 2: unittest template: paths (representative)
 charts/declarative-agent-library/templates/deployment.yaml
 ```
 
@@ -157,7 +158,7 @@ helm/tests/*.yaml                   # # Traceability: … and per-it # [DALC-REQ
 ### 4.3 Gates (commands)
 
 ```bash
-# From repo root — same shape as step 3 / CI
+# From repo root — same shape as step 3 / CI (.github/workflows/ci.yml uses --skip-refresh)
 for d in examples/*/; do
   ( cd "$d" && helm dependency build --skip-refresh && chart=$(basename "$d" | tr -d '/') && helm unittest -f "../../helm/tests/${chart//-/_}_test.yaml" . )
 done
@@ -165,6 +166,8 @@ done
 python3 scripts/check_spec_traceability.py
 ct lint --config ct.yaml --all
 ```
+
+**Canonical commands:** [`docs/implementation-specs/README.md`](README.md) when present, else root **`README.md`**.
 
 ## 5. TDD-style execution (tests first where behavior changes)
 
@@ -207,4 +210,6 @@ cd examples/<example> && helm dependency build --skip-refresh && helm unittest -
 python3 scripts/check_spec_traceability.py
 ct lint --config ct.yaml --all
 ```
+
+**Canonical commands:** [`docs/implementation-specs/README.md`](README.md) when present, else root **`README.md`**.
 `````

@@ -18,8 +18,8 @@
 2. **Helm helpers** and all `include "declarative-agent-library.*"` → **`declarative-agent-library-chart.*`** (match chart `name` convention).
 3. Example application charts: dependency **`name: declarative-agent-library-chart`**, **`alias: agent`**, parent **`values.yaml`** nests under **`agent:`** (remove **`declarative-agent-library:`** root key).
 4. Default **`image.repository`** segment → **`declarative-agent-library-chart`** (replace **`config-first-hosted-agents`**).
-5. **`git mv`** `grafana/dalc-agent-overview.json` → **`grafana/dalc-overview.json`**; dashboard **`uid` / tags / titles**: product-facing **cfha** → **dalc** (do not alter **requirement ID** strings like `[DALC-REQ-…]`).
-6. Runtime **`SERVICE_NAME`** (and equivalent OpenAPI / user-facing product labels) → **`declarative-agent-library-chart`** where they denoted the old product string.
+5. **`git mv`** `grafana/dalc-agent-overview.json` → **`grafana/dalc-overview.json`**; dashboard **`uid` / tags / titles**: product-facing **cfha** → **dalc** (do not alter **requirement ID** strings like `[DALC-REQ-…]`). **As of `main` before this step:** the starter dashboard file is **`grafana/dalc-agent-overview.json`**. **Target (step 2):** only **`grafana/dalc-overview.json`** remains.
+6. Runtime **`SERVICE_NAME`** (and equivalent OpenAPI / user-facing product labels) → **`declarative-agent-library-chart`** where they denoted the old product string. **As of `main` before this step:** logs/tests may still assert the legacy **`service`** id; **target (step 2):** align to **`declarative-agent-library-chart`** (or the documented DALC equivalent).
 7. Scripts/docs/README/**`docs/spec-test-traceability.md`** / integration values: update paths and **human-facing** job/cluster/release fragments (**cfha-** → **dalc-** where design applies).
 
 After merge: promote deltas per OpenSpec workflow; **`python3 scripts/check_spec_traceability.py`** exits **0**.
@@ -80,18 +80,20 @@ Library **`values.yaml`** remains **flat** at subchart root (no nested `agent` i
 
 ### 2.4 Helm unittest template paths (example charts)
 
-Example charts vendor the dependency under `charts/<chart-name>-<version>.tgz` unpacked as **`charts/<dependency-chart-name>/`**. After rename, suite `template:` paths **SHALL** use:
+Example charts vendor the dependency under `charts/<chart-name>-<version>.tgz` unpacked as **`charts/<dependency-chart-name>/`**.
+
+**As of `main` before this step:** suites use **`charts/declarative-agent-library/templates/<file>.yaml`** (chart **`name:`** `declarative-agent-library`).
+
+**Target (step 2):** after the library chart renames to **`declarative-agent-library-chart`**, suite `template:` paths **SHALL** use:
 
 ```text
 charts/declarative-agent-library-chart/templates/<file>.yaml
 ```
 
-(not `charts/declarative-agent-library/...`).
-
 ### 2.5 Grafana artifact
 
 ```json
-// grafana/dalc-overview.json — conceptual interface
+// Target: grafana/dalc-overview.json — conceptual interface
 {
   "uid": "string",
   "tags": ["string"],
@@ -100,7 +102,7 @@ charts/declarative-agent-library-chart/templates/<file>.yaml
 }
 ```
 
-**SHALL** exist at repo path **`grafana/dalc-overview.json`**. **`dalc-agent-overview.json`** SHALL NOT remain the documented import path.
+**Target (step 2):** repo path **`grafana/dalc-overview.json`** SHALL be the documented import path. **Before step 2:** expect **`grafana/dalc-agent-overview.json`** on disk.
 
 ### 2.6 Runtime logging / OpenAPI
 
@@ -122,7 +124,7 @@ def create_app(...) -> FastAPI: ...
 | Path | Notes |
 |------|--------|
 | `openspec/changes/consolidate-naming/specs/dalc-library-chart-packaging/spec.md` | **ADDED** `[DALC-REQ-DALC-PKG-001]` … **`003`** (chart name, `agent` alias, image repo). |
-| `openspec/changes/consolidate-naming/specs/dalc-agent-o11y-logs-dashboards/spec.md` | **MODIFIED** `[DALC-REQ-O11Y-LOGS-001]` (example `service` id), **`[DALC-REQ-O11Y-LOGS-003]`** (dashboard path **`grafana/dalc-overview.json`**). When promoting, capability folder stays **`dalc-agent-o11y-logs-dashboards`**; fix any stale reference to **`cfha-agent-o11y-scrape`** in prose to **`dalc-agent-o11y-scrape`**. |
+| `openspec/changes/consolidate-naming/specs/dalc-agent-o11y-logs-dashboards/spec.md` | **MODIFIED** `[DALC-REQ-O11Y-LOGS-001]` (example `service` id), **`[DALC-REQ-O11Y-LOGS-003]`** (dashboard path **`grafana/dalc-overview.json`** **after** rename). When promoting, capability folder stays **`dalc-agent-o11y-logs-dashboards`**; fix any stale reference to **`cfha-agent-o11y-scrape`** (or other **`cfha-agent-o11y-*`**) in copied delta prose to **`dalc-agent-o11y-scrape`**. |
 
 ### 3.2 Promoted specs to update on merge (naming + consistency with step 1)
 
@@ -150,7 +152,7 @@ Update **`docs/spec-test-traceability.md`**:
 
 | Assertion family | Expectation |
 |------------------|-------------|
-| **Template paths** | Every `template:` path under **`charts/declarative-agent-library-chart/templates/`** resolves after dependency update. |
+| **Template paths** | **Target:** every `template:` path under **`charts/declarative-agent-library-chart/templates/`** resolves after dependency update. **Before step 2:** suites still point at **`charts/declarative-agent-library/templates/`**. |
 | **Release names** | Where tests assert labels/metadata tied to `release.Name`, update only if implementation changes default release names or documented CI fixtures (**cfha-ci** → **dalc-ci** or equivalent per `design.md`). |
 | **Behavioral SHALLs** | Preserve `[DALC-REQ-HELM-UNITTEST-001]` / **`004`** semantics: CronJob/RAG presence per example, scrape annotations + `ServiceMonitor` counts, checkpoint env wiring — but values loaded from examples **must** use **`agent:`** and **post–step-1** keys (`agent.observability`, not `o11y`). |
 | **Traceability** | Keep/update `# Traceability: [ID]` headers per ADR 0003. |
@@ -160,12 +162,13 @@ Update **`docs/spec-test-traceability.md`**:
 ### 4.2 Python (runtime `helm/src`)
 
 ```bash
+uv sync --all-groups --project helm/src
 cd helm/src && uv run pytest tests/ -v --tb=short
 ```
 
 | Test / area | Expectation |
 |-------------|-------------|
-| `helm/src/tests/test_o11y_metrics.py` (e.g. `test_json_log_format_emits_message_key`) | JSON logs include **`service`** matching **`declarative-agent-library-chart`** when asserting static id (**`[DALC-REQ-O11Y-LOGS-001]`**). |
+| `helm/src/tests/test_o11y_metrics.py` (e.g. `test_json_log_format_emits_message_key`) | **Target:** JSON logs include **`service`** matching **`declarative-agent-library-chart`** when asserting static id (**`[DALC-REQ-O11Y-LOGS-001]`**). Update expectations from the pre-step-2 id where needed. |
 | `test_x_request_id_echo_and_generation` | Still satisfies **`[DALC-REQ-O11Y-LOGS-002]`** (no behavior change beyond correlation). |
 | Integration | `RUN_KIND_O11Y_INTEGRATION=1`: `integration/test_kind_o11y_prometheus.py` green after **`integration_kind_o11y_prometheus.sh`** / **`prometheus-kind-o11y-values.yaml`** use **dalc-** job/cluster strings and **new image repo:tag** documented in README. |
 
@@ -211,7 +214,7 @@ python3 scripts/check_spec_traceability.py
 
 **Implement:** `o11y_logging.py`, OpenAPI titles, `helm/src/tests/scripts/*`, shell integration scripts, `skaffold.yaml` / `devspace.yaml` if in scope (product image names).
 
-**Green when:** `uv run pytest tests/ -v --tb=short` green; optional kind integration green where machine supports it.
+**Green when:** `uv sync --all-groups --project helm/src` then `uv run pytest tests/ -v --tb=short` from `helm/src` green; optional kind integration green where machine supports it.
 
 ### Stage E — OpenSpec promotion + final sweep
 
@@ -225,8 +228,8 @@ python3 scripts/check_spec_traceability.py
 - [ ] No `define "declarative-agent-library.` / no `include "declarative-agent-library.` in `helm/chart`.
 - [ ] All examples use **`agent:`** + **`alias: agent`**; no `declarative-agent-library:` values root for the library.
 - [ ] Default image repository segment is **`declarative-agent-library-chart`**.
-- [ ] `grafana/dalc-overview.json` exists; `grafana/dalc-agent-overview.json` does not.
-- [ ] JSON logs / tests use **`service: declarative-agent-library-chart`** (or documented equivalent).
+- [ ] **Target:** `grafana/dalc-overview.json` exists; `grafana/dalc-agent-overview.json` does not.
+- [ ] **Target:** JSON logs / tests use **`service: declarative-agent-library-chart`** (or documented equivalent).
 - [ ] Example + unittest Helm paths use **post–step-1** value keys under **`agent.`** (`observability`, `checkpoints`, …).
 - [ ] `python3 scripts/check_spec_traceability.py` passes; CI-equivalent helm tests pass.
 
@@ -241,9 +244,12 @@ helm dependency update examples/hello-world
 helm unittest -f ../../helm/tests/hello_world_test.yaml .
 
 # Python
+uv sync --all-groups --project helm/src
 cd helm/src && uv run pytest tests/ -v --tb=short
 
 # Traceability
 python3 scripts/check_spec_traceability.py
 ```
+
+**Canonical commands:** [`docs/implementation-specs/README.md`](README.md) when present, else root **`README.md`**.
 `````

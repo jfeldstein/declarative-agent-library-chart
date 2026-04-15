@@ -8,7 +8,7 @@
 - **Linear checklist:** Tier **4** (step **5**) in `docs/openspec-implementation-order.md` — **after** `consolidate-naming` and **`consolidate-helm-tests`**, alongside `examples-distinct-values-readmes`; targets **component-neutral** scrape / `ServiceMonitor` / Grafana behavior and tests under post-move **`helm/tests/`**.
 - **Upstream alignment (mandatory):**
   - Step **1** ([`01-dedupe-helm-values-observability-spec.md`](01-dedupe-helm-values-observability-spec.md)): library scrape + log toggles live under **`observability`** (not `o11y`); no checkpoints/wandb under that key.
-  - Step **2** ([`02-consolidate-naming-spec.md`](02-consolidate-naming-spec.md)): example parent values under **`agent:`**; vendored path **`charts/declarative-agent-library-chart/templates/...`**; starter dashboard path **`grafana/dalc-overview.json`** (not `dalc-agent-overview.json`).
+  - Step **2** ([`02-consolidate-naming-spec.md`](02-consolidate-naming-spec.md)): example parent values under **`agent:`**; **as of `main` before step 2:** vendored path **`charts/declarative-agent-library/templates/...`**; **target:** **`charts/declarative-agent-library-chart/templates/...`**. **As of `main` before step 2:** starter dashboard **`grafana/dalc-agent-overview.json`**; **target (step 2):** **`grafana/dalc-overview.json`**.
   - Step **3** ([`03-consolidate-helm-tests-spec.md`](03-consolidate-helm-tests-spec.md)): suites live in **`helm/tests/<example_underscore>_test.yaml`** with **`values:`** → **`../../examples/<dir>/values.yaml`**; CI **`helm unittest -f …`** from each **`examples/<chart>/`**.
   - Step **4** ([`04-examples-distinct-values-readmes-spec.md`](04-examples-distinct-values-readmes-spec.md)): every README-listed **`values*.yaml`** for multi-setup examples is loaded in unittest with matching assertions (**[DALC-REQ-HELM-UNITTEST-004]**).
 - **Authoritative change bundle:** `openspec/changes/observability-automatic-enabled-components/` — `proposal.md`, `design.md`, `tasks.md`, delta specs under `specs/*/spec.md`. Treat **`cfha-*`** / **`examples/.../tests/`** mentions in those files as **stale**; implement against **`dalc-*`** capability folders and **`helm/tests/`** paths.
@@ -18,7 +18,7 @@
 
 1. **Specs:** Generalize scrape + `ServiceMonitor` requirements so they apply to **every chart-managed workload** that exposes **`/metrics` via a `Service`**, when that workload is **enabled and deployed** — with explicit **negative** scenarios when an optional metrics **`Service`** is absent. Align prose and value paths with **post–step 1** **`observability.*`** (and **`agent.observability.*`** in examples), not legacy **`o11y`** strings in delta snippets.
 2. **Helm unittest (`with-observability` example):** Refactor **`helm/tests/with_observability_test.yaml`** to **component-neutral** `it:` titles; prove **one `ServiceMonitor` document per deployed metrics `Service`** when multiple components are on; prove **zero** documents from the optional workload’s **`ServiceMonitor` template** when that workload is off while the **agent** monitor still renders when **`agent.observability.serviceMonitor.enabled`** (or equivalent) is true.
-3. **Grafana:** Update **`grafana/README.md`** and **`grafana/dalc-overview.json`** so Prometheus scrape guidance is **generic** (enabled components / endpoints), optional component panels are **optional in UX** per **[DALC-REQ-O11Y-LOGS-003]**, and **[DALC-REQ-O11Y-LOGS-005]** is evidenced (no fixed “scrape both targets” / RAG-mandatory wording).
+3. **Grafana:** Update **`grafana/README.md`** and the starter dashboard JSON (**as of `main`:** **`grafana/dalc-agent-overview.json`**; **rename target:** **`grafana/dalc-overview.json`**) so Prometheus scrape guidance is **generic** (enabled components / endpoints), optional component panels are **optional in UX** per **[DALC-REQ-O11Y-LOGS-003]**, and **[DALC-REQ-O11Y-LOGS-005]** is evidenced (no fixed “scrape both targets” / RAG-mandatory wording).
 4. **Traceability:** Any new or materially changed **`### Requirement:`** **SHALL** lines keep stable **`[DALC-REQ-…]`** IDs; update **`docs/spec-test-traceability.md`** and **`#` / docstring** citations per **ADR 0003** / **DALC-VER-005**; **`python3 scripts/check_spec_traceability.py`** exits **0**.
 
 ## 2. Entities and interfaces
@@ -51,16 +51,18 @@ helm/chart/templates/rag-servicemonitor.yaml      # optional RAG HTTP Service (w
 
 ```yaml
 # Conceptual: helm-unittest document assertions
-# - template: charts/declarative-agent-library-chart/templates/servicemonitor.yaml
+# As of main before step 2, paths use charts/declarative-agent-library/templates/...
+# - template: charts/declarative-agent-library/templates/servicemonitor.yaml
 #   documentIndex / count when agent SM expected
-# - template: charts/declarative-agent-library-chart/templates/rag-servicemonitor.yaml
+# - template: charts/declarative-agent-library/templates/rag-servicemonitor.yaml
 #   count: 0 when RAG / optional metrics Service not deployed
 ```
 
 ### 2.3 Grafana starter dashboard
 
 ```json
-// grafana/dalc-overview.json — conceptual only
+// As of main: grafana/dalc-agent-overview.json — conceptual only
+// Target (step 2): grafana/dalc-overview.json
 {
   "uid": "string",
   "tags": ["string"],
@@ -70,7 +72,7 @@ helm/chart/templates/rag-servicemonitor.yaml      # optional RAG HTTP Service (w
 }
 ```
 
-**Contract:** Default import remains usable **agent-only**; sections for optional metrics **`Service`** targets are **optional or clearly dependency-labeled** per **`grafana/README.md`** (**[DALC-REQ-O11Y-LOGS-003]**).
+**Contract:** Default import remains usable **agent-only**; sections for optional metrics **`Service`** targets are **optional or clearly dependency-labeled** per **`grafana/README.md`** (**[DALC-REQ-O11Y-LOGS-003]**). Traceability rows that cite a path should use **`dalc-agent-overview.json`** until step 2 renames the file.
 
 ## 3. Normative specs
 
@@ -110,6 +112,8 @@ helm/chart/templates/rag-servicemonitor.yaml      # optional RAG HTTP Service (w
 cd examples/with-observability && helm dependency build --skip-refresh && helm unittest -f "../../helm/tests/with_observability_test.yaml" .
 ```
 
+**CI parity:** `.github/workflows/ci.yml` runs **`helm dependency build --skip-refresh`** before unittest for each example; align local commands with that job (root **`README.md`** sometimes shows bare **`helm dependency build`** — prefer **`--skip-refresh`** for reproducible vendor trees).
+
 Repeat full example loop from **`03`** / CI if any shared assertion changes.
 
 ### 4.2 Python / integration
@@ -117,6 +121,7 @@ Repeat full example loop from **`03`** / CI if any shared assertion changes.
 - **Default:** No runtime code change required; if **`helm/src/tests/scripts/prometheus-kind-o11y-values.yaml`** or integration shell still implies “always two targets,” align wording / **`--set`** paths with **`agent.observability.*`** and generic multi-target language.
 
 ```bash
+uv sync --all-groups --project helm/src
 cd helm/src && uv run pytest tests/ -v --tb=short   # if any pytest or script touched
 ```
 
@@ -144,13 +149,13 @@ python3 scripts/check_spec_traceability.py
 
 **Green when:** **`helm unittest -f "../../helm/tests/with_observability_test.yaml"`** from **`examples/with-observability/`** passes; full per-example unittest loop passes if required by CI.
 
-### Stage C — Grafana README + `dalc-overview.json`
+### Stage C — Grafana README + dashboard JSON
 
 **Tests first:** None automated for JSON — manual smoke per **`design.md`**.
 
-**Implement:** **`grafana/README.md`** generic scrape targets (**[DALC-REQ-O11Y-LOGS-005]**); **`grafana/dalc-overview.json`** optional UX for optional metrics sections (**[DALC-REQ-O11Y-LOGS-003]**).
+**Implement:** **`grafana/README.md`** generic scrape targets (**[DALC-REQ-O11Y-LOGS-005]**); edit **`grafana/dalc-agent-overview.json`** on **`main`**, then **`git mv`** to **`grafana/dalc-overview.json`** when executing step 2 naming — optional UX for optional metrics sections (**[DALC-REQ-O11Y-LOGS-003]**).
 
-**Green when:** Import steps in README still valid; **`check_spec_traceability.py`** still **0** if matrix cites dashboard path.
+**Green when:** Import steps in README still valid; **`check_spec_traceability.py`** still **0** if matrix cites dashboard path (**`dalc-agent-overview.json`** until rename).
 
 ### Stage D — Docs + changelog
 
@@ -163,7 +168,7 @@ python3 scripts/check_spec_traceability.py
 - [ ] Promoted **`openspec/specs/dalc-agent-o11y-scrape/spec.md`**, **`dalc-agent-o11y-logs-dashboards/spec.md`**, **`dalc-helm-unittest/spec.md`** match merged deltas and **post–steps 1–2** value path vocabulary.
 - [ ] **`helm/tests/with_observability_test.yaml`** uses **component-neutral** test names; covers **multi-`ServiceMonitor`** and **zero optional-template `ServiceMonitor`** with **`agent.observability.serviceMonitor.enabled`** true.
 - [ ] **`grafana/README.md`** describes scraping **all enabled** chart metrics endpoints without implying a fixed optional component count (**[DALC-REQ-O11Y-LOGS-005]**).
-- [ ] **`grafana/dalc-overview.json`** agent-only default is usable; optional metrics sections are optional per README (**[DALC-REQ-O11Y-LOGS-003]**).
+- [ ] **As of `main`:** **`grafana/dalc-agent-overview.json`** agent-only default is usable; **target (step 2):** **`grafana/dalc-overview.json`** — optional metrics sections optional per README (**[DALC-REQ-O11Y-LOGS-003]**).
 - [ ] **`docs/spec-test-traceability.md`** and test **`#`** comments cite correct IDs/paths; **`python3 scripts/check_spec_traceability.py`** passes.
 - [ ] No reintroduction of per-workload-only Prometheus values flags forbidden by **[DALC-REQ-O11Y-SCRAPE-004]**.
 
@@ -176,7 +181,10 @@ for d in examples/*/; do ( cd "$d" && helm dependency build --skip-refresh && ch
 
 python3 scripts/check_spec_traceability.py
 
+uv sync --all-groups --project helm/src
 cd helm/src && uv run pytest tests/ -v --tb=short   # if Python touched
 ```
+
+**Canonical commands:** [`docs/implementation-specs/README.md`](README.md) when present, else root **`README.md`**.
 
 `````
