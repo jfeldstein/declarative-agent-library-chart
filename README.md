@@ -72,10 +72,12 @@ Commands that mirror the PR merge gate live in **[docs/local-ci.md](docs/local-c
 
 ## Observability
 
-- **Metrics**: `GET /metrics` (Prometheus text) on the agent port; metric names and labels are documented in [docs/observability.md](docs/observability.md).
-- **Logs**: optional JSON to stdout via `HOSTED_AGENT_LOG_FORMAT=json` or Helm `observability.structuredLogs.json`.
-- **Kubernetes**: opt-in `prometheus.io/*` annotations and optional **ServiceMonitor** under `declarative-agent-library.observability` (see **`examples/with-observability/`**).
-- **Dashboards**: import [grafana/dalc-agent-overview.json](grafana/dalc-agent-overview.json) per [grafana/README.md](grafana/README.md).
+You get **baseline observability without writing instrumentation**: the FastAPI runtime already exposes Prometheus metrics, structured logging hooks, and request correlation. Your chart mostly decides **how the cluster scrapes and ships** that data (annotations, Operator `ServiceMonitor`, JSON vs console logs). Deeper reference (RAG and scraper metrics, label rules, kind + Prometheus recipe) lives in [docs/observability.md](docs/observability.md).
+
+- **Metrics (always on the agent)**: `GET /metrics` on the same port as the HTTP API (default **8088**), Prometheus text format. Counters and histograms cover triggers, MCP tools, subagents, and skill loads; label values are **config-bounded** (not free-form user text), which keeps cardinality safe. When the chart deploys **managed RAG** (enabled scraper jobs), the RAG pod exposes its own `/metrics` (`agent_runtime_rag_*`). Scraper `CronJob` pods expose a separate **`/metrics`** on **9091** with scraper-only series (`agent_runtime_scraper_*`).
+- **Logs**: default **console** lines for local dev; set **`HOSTED_AGENT_LOG_FORMAT=json`** or Helm **`declarative-agent-library.observability.structuredLogs.json`** for one JSON object per line on stdout (Loki / ELK / Vector friendly). **`X-Request-Id`** is echoed on responses and included in structured logs; the agent forwards it to RAG on proxy calls.
+- **Kubernetes scrape hints (opt-in)**: under **`declarative-agent-library.observability`**, turn on **`prometheusAnnotations`** for `prometheus.io/scrape|port|path` on agent (and RAG and scraper pods when those workloads exist), and/or **`serviceMonitor`** for Prometheus Operator. Example wiring: **`examples/with-observability/`**.
+- **Dashboards**: starter panels for agent triggers and RAG traffic in [grafana/dalc-agent-overview.json](grafana/dalc-agent-overview.json) — import steps in [grafana/README.md](grafana/README.md).
 
 ## Run API without Kubernetes
 
