@@ -13,7 +13,7 @@ spec:
     metadata:
       labels:
         {{- include "declarative-agent-library.agentSelectorLabels" . | nindent 8 }}
-      {{- if .Values.o11y.prometheusAnnotations.enabled }}
+      {{- if .Values.observability.prometheusAnnotations.enabled }}
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: {{ .Values.service.port | quote }}
@@ -55,33 +55,33 @@ spec:
                 configMapKeyRef:
                   name: {{ include "declarative-agent-library.fullname" . }}-config
                   key: enabled-mcp-tools.json
-            {{- if .Values.o11y.structuredLogs.json }}
+            {{- if .Values.observability.structuredLogs.json }}
             - name: HOSTED_AGENT_LOG_FORMAT
               value: "json"
             {{- end }}
-            {{- if .Values.observability.postgresUrl }}
+            {{- if .Values.checkpoints.postgresUrl }}
             - name: HOSTED_AGENT_POSTGRES_URL
-              value: {{ .Values.observability.postgresUrl | quote }}
+              value: {{ .Values.checkpoints.postgresUrl | quote }}
             {{- end }}
-            {{- if .Values.observability.checkpoints.enabled }}
+            {{- if .Values.checkpoints.enabled }}
             - name: HOSTED_AGENT_CHECKPOINTS_ENABLED
               value: "true"
             - name: HOSTED_AGENT_CHECKPOINT_BACKEND
-              value: {{ .Values.observability.checkpoints.backend | quote }}
+              value: {{ .Values.checkpoints.backend | quote }}
             {{- end }}
-            {{- if .Values.observability.wandb.enabled }}
+            {{- if .Values.wandb.enabled }}
             - name: HOSTED_AGENT_WANDB_ENABLED
               value: "true"
-            {{- if .Values.observability.wandb.project }}
+            {{- if .Values.wandb.project }}
             - name: WANDB_PROJECT
-              value: {{ .Values.observability.wandb.project | quote }}
+              value: {{ .Values.wandb.project | quote }}
             {{- end }}
-            {{- if .Values.observability.wandb.entity }}
+            {{- if .Values.wandb.entity }}
             - name: WANDB_ENTITY
-              value: {{ .Values.observability.wandb.entity | quote }}
+              value: {{ .Values.wandb.entity | quote }}
             {{- end }}
             {{- end }}
-            {{- if .Values.observability.slackFeedback.enabled }}
+            {{- if .Values.scrapers.slack.feedback.enabled }}
             - name: HOSTED_AGENT_SLACK_FEEDBACK_ENABLED
               value: "true"
             - name: HOSTED_AGENT_SLACK_EMOJI_LABEL_MAP_JSON
@@ -90,26 +90,7 @@ spec:
                   name: {{ include "declarative-agent-library.fullname" . }}-config
                   key: slack-emoji-label-map.json
             {{- end }}
-            {{- if .Values.observability.atifExport.enabled }}
-            - name: HOSTED_AGENT_ATIF_EXPORT_ENABLED
-              value: "true"
-            {{- end }}
-            {{- if .Values.observability.shadow.enabled }}
-            - name: HOSTED_AGENT_SHADOW_ENABLED
-              value: "true"
-            - name: HOSTED_AGENT_SHADOW_SAMPLE_RATE
-              value: {{ .Values.observability.shadow.sampleRate | quote }}
-            {{- if .Values.observability.shadow.variantJson }}
-            - name: HOSTED_AGENT_SHADOW_VARIANT_JSON
-              value: {{ .Values.observability.shadow.variantJson | quote }}
-            {{- end }}
-            - name: HOSTED_AGENT_SHADOW_ALLOW_TENANTS_JSON
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "declarative-agent-library.fullname" . }}-config
-                  key: shadow-allow-tenants.json
-            {{- end }}
-            {{- if .Values.observability.labelRegistry }}
+            {{- if .Values.scrapers.slack.feedback.labelRegistry }}
             - name: HOSTED_AGENT_LABEL_REGISTRY_JSON
               valueFrom:
                 configMapKeyRef:

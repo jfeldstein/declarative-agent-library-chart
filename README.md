@@ -16,7 +16,7 @@ Standalone repository for **YAML-configured** hosted agents: a **Helm library ch
 | `helm/src/` | Python project root (`pyproject.toml`, `hosted_agents/`, `tests/`) |
 | `helm/tests/chart/` | Notes for Helm `helm test` hooks |
 | `examples/hello-world/` | Minimal application chart depending on `file://../../helm/chart` |
-| `examples/with-observability/` | Example chart with `o11y` (Prometheus annotations, ServiceMonitor, JSON logs) |
+| `examples/with-observability/` | Example chart with Kubernetes `observability` values (Prometheus annotations, ServiceMonitor, JSON logs) |
 | `examples/with-scrapers/` | Example chart with RAG + Jira/Slack scraper `CronJob`s (validated in CI; see below) |
 | `examples/checkpointing/` | Example chart with LangGraph checkpoints enabled (`memory` backend) |
 | `helm/Dockerfile` | Production-style image for the Python runtime (build context: repository root) |
@@ -76,8 +76,8 @@ python3 scripts/check_spec_traceability.py
 ## Observability
 
 - **Metrics**: `GET /metrics` (Prometheus text) on the agent port; metric names and labels are documented in [docs/observability.md](docs/observability.md).
-- **Logs**: optional JSON to stdout via `HOSTED_AGENT_LOG_FORMAT=json` or Helm `o11y.structuredLogs.json`.
-- **Kubernetes**: opt-in `prometheus.io/*` annotations and optional **ServiceMonitor** under `declarative-agent-library.o11y` (see **`examples/with-observability/`**).
+- **Logs**: optional JSON to stdout via `HOSTED_AGENT_LOG_FORMAT=json` or Helm `observability.structuredLogs.json`.
+- **Kubernetes**: opt-in `prometheus.io/*` annotations and optional **ServiceMonitor** under `declarative-agent-library.observability` (see **`examples/with-observability/`**).
 - **Dashboards**: import [grafana/dalc-agent-overview.json](grafana/dalc-agent-overview.json) per [grafana/README.md](grafana/README.md).
 
 ## Run API without Kubernetes

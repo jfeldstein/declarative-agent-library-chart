@@ -15,7 +15,7 @@ spec:
     metadata:
       labels:
         {{- include "declarative-agent-library.ragSelectorLabels" . | nindent 8 }}
-      {{- if .Values.o11y.prometheusAnnotations.enabled }}
+      {{- if .Values.observability.prometheusAnnotations.enabled }}
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: {{ .Values.scrapers.ragService.service.port | quote }}

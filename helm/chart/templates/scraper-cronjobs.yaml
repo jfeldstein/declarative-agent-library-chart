@@ -23,7 +23,7 @@ spec:
       backoffLimit: 2
       template:
         metadata:
-          {{- if $root.Values.o11y.prometheusAnnotations.enabled }}
+          {{- if $root.Values.observability.prometheusAnnotations.enabled }}
           annotations:
             prometheus.io/scrape: "true"
             prometheus.io/port: "9091"
@@ -125,7 +125,7 @@ spec:
       backoffLimit: 2
       template:
         metadata:
-          {{- if $root.Values.o11y.prometheusAnnotations.enabled }}
+          {{- if $root.Values.observability.prometheusAnnotations.enabled }}
           annotations:
             prometheus.io/scrape: "true"
             prometheus.io/port: "9091"

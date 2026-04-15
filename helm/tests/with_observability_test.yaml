@@ -1,4 +1,4 @@
-# Traceability: [DALC-REQ-HELM-UNITTEST-001] [DALC-REQ-O11Y-SCRAPE-004] [DALC-REQ-O11Y-SCRAPE-005]
+# Traceability: [DALC-REQ-HELM-UNITTEST-001] [DALC-REQ-O11Y-SCRAPE-004] [DALC-REQ-O11Y-SCRAPE-005] [DALC-REQ-O11Y-SCRAPE-006]
 values:
   - ../../examples/with-observability/values.yaml
 suite: with-observability prometheus and ServiceMonitors
@@ -13,6 +13,11 @@ tests:
       - equal:
           path: spec.template.metadata.annotations["prometheus.io/scrape"]
           value: "true"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HOSTED_AGENT_LOG_FORMAT
+            value: json
   - it: agent Service has prometheus scrape annotations
     template: charts/declarative-agent-library/templates/service.yaml
     asserts:
@@ -59,14 +64,14 @@ tests:
           pattern: -rag$
   - it: with ServiceMonitor enabled but RAG not deployed, rag ServiceMonitor template renders nothing
     values:
-      - ../../examples/with-observability/values-o11y-no-rag.yaml
+      - ../../examples/with-observability/values-observability-no-rag.yaml
     template: charts/declarative-agent-library/templates/rag-servicemonitor.yaml
     asserts:
       - hasDocuments:
           count: 0
   - it: with ServiceMonitor enabled but RAG not deployed, agent ServiceMonitor still renders
     values:
-      - ../../examples/with-observability/values-o11y-no-rag.yaml
+      - ../../examples/with-observability/values-observability-no-rag.yaml
     template: charts/declarative-agent-library/templates/servicemonitor.yaml
     asserts:
       - hasDocuments:

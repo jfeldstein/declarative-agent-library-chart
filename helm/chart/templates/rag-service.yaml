@@ -6,7 +6,7 @@ metadata:
   labels:
     {{- include "declarative-agent-library.labels" . | nindent 4 }}
     app.kubernetes.io/component: rag
-  {{- if .Values.o11y.prometheusAnnotations.enabled }}
+  {{- if .Values.observability.prometheusAnnotations.enabled }}
   annotations:
     prometheus.io/scrape: "true"
     prometheus.io/port: {{ .Values.scrapers.ragService.service.port | quote }}

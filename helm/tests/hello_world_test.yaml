@@ -1,4 +1,4 @@
-# Traceability: [DALC-REQ-HELM-UNITTEST-001] [DALC-REQ-HELM-UNITTEST-002] [DALC-REQ-RAG-SCRAPERS-002] [DALC-REQ-RAG-SCRAPERS-004] [DALC-VER-002]
+# Traceability: [DALC-REQ-HELM-UNITTEST-001] [DALC-REQ-HELM-UNITTEST-002] [DALC-REQ-RAG-SCRAPERS-002] [DALC-REQ-RAG-SCRAPERS-004] [DALC-REQ-CHART-RTV-001] [DALC-REQ-CHART-RTV-002] [DALC-REQ-CHART-RTV-003] [DALC-VER-002]
 values:
   - ../../examples/hello-world/values.yaml
 suite: hello-world default values
@@ -30,3 +30,42 @@ tests:
     asserts:
       - hasDocuments:
           count: 0
+  - it: checkpoints postgresUrl maps to HOSTED_AGENT_POSTGRES_URL
+    set:
+      declarative-agent-library.checkpoints.postgresUrl: "postgresql://u:p@h:5432/db"
+    template: charts/declarative-agent-library/templates/deployment.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HOSTED_AGENT_POSTGRES_URL
+            value: "postgresql://u:p@h:5432/db"
+  - it: wandb enabled with project sets env
+    set:
+      declarative-agent-library.wandb.enabled: true
+      declarative-agent-library.wandb.project: myproj
+      declarative-agent-library.wandb.entity: acme
+    template: charts/declarative-agent-library/templates/deployment.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HOSTED_AGENT_WANDB_ENABLED
+            value: "true"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: WANDB_PROJECT
+            value: myproj
+  - it: scrapers.slack.feedback.enabled wires Slack feedback env
+    set:
+      declarative-agent-library.scrapers.slack.feedback.enabled: true
+    template: charts/declarative-agent-library/templates/deployment.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HOSTED_AGENT_SLACK_FEEDBACK_ENABLED
+            value: "true"

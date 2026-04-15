@@ -27,20 +27,16 @@ def _json_obj(key: str) -> dict | None:
 
 @dataclass(frozen=True)
 class ObservabilitySettings:
-    """Layered feature flags (see ``docs/runbook-checkpointing-wandb.md``)."""
+    """Runtime integration flags (checkpoints, W&B, Slack feedback); env-driven."""
 
     checkpoints_enabled: bool
     checkpoint_backend: str
     checkpoint_postgres_url: str | None
     wandb_enabled: bool
     slack_feedback_enabled: bool
-    atif_export_enabled: bool
-    shadow_enabled: bool
     wandb_project: str | None
     wandb_entity: str | None
     slack_emoji_map: dict[str, str]
-    shadow_sample_rate: float
-    shadow_allow_tenants: frozenset[str]
     operational_mapper_flags: dict[str, bool]
 
     @classmethod
@@ -60,20 +56,6 @@ class ObservabilitySettings:
         for k, v in mapper_raw.items():
             if isinstance(k, str) and isinstance(v, bool):
                 mappers[k] = v
-        tenants_raw = os.environ.get(
-            "HOSTED_AGENT_SHADOW_ALLOW_TENANTS_JSON", ""
-        ).strip()
-        tenants: set[str] = set()
-        if tenants_raw:
-            data = json.loads(tenants_raw)
-            if isinstance(data, list):
-                tenants = {str(x) for x in data}
-        rate_raw = os.environ.get("HOSTED_AGENT_SHADOW_SAMPLE_RATE", "0").strip()
-        try:
-            rate = float(rate_raw)
-        except ValueError:
-            rate = 0.0
-        rate = max(0.0, min(1.0, rate))
         return cls(
             checkpoints_enabled=_truthy("HOSTED_AGENT_CHECKPOINTS_ENABLED"),
             checkpoint_backend=os.environ.get(
@@ -83,12 +65,8 @@ class ObservabilitySettings:
             checkpoint_postgres_url=postgres_url() or None,
             wandb_enabled=_truthy("HOSTED_AGENT_WANDB_ENABLED"),
             slack_feedback_enabled=_truthy("HOSTED_AGENT_SLACK_FEEDBACK_ENABLED"),
-            atif_export_enabled=_truthy("HOSTED_AGENT_ATIF_EXPORT_ENABLED"),
-            shadow_enabled=_truthy("HOSTED_AGENT_SHADOW_ENABLED"),
             wandb_project=os.environ.get("WANDB_PROJECT", "").strip() or None,
             wandb_entity=os.environ.get("WANDB_ENTITY", "").strip() or None,
             slack_emoji_map=emoji_map,
-            shadow_sample_rate=rate,
-            shadow_allow_tenants=frozenset(tenants),
             operational_mapper_flags=mappers,
         )

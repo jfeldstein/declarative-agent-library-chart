@@ -6,6 +6,16 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ---
 
+## 2026-04-14 (dedupe Helm observability values)
+
+**`openspec/dedupe-helm-values-observability` (apply)** — Reserved Helm key **`observability`** for Kubernetes/Prometheus only (ex-**`o11y`**). Split runtime integration into top-level **`checkpoints`**, **`wandb`**, and **`scrapers.slack.feedback`** (including **`labelRegistry`** → **`HOSTED_AGENT_LABEL_REGISTRY_JSON`**). Removed chart wiring and runtime code for **ATIF export** and **shadow**; dropped **`/api/v1/runtime/exports/atif`**. Promoted **`dalc-chart-runtime-values`** and updated **`dalc-agent-o11y-scrape`** (incl. **[DALC-REQ-O11Y-SCRAPE-006]**); **`examples/with-observability/values-observability-no-rag.yaml`** replaces **`values-o11y-no-rag.yaml`**.
+
+## 2026-04-15
+
+**OpenSpec task checkbox audit** — Spawned read-only subagents per active change to compare each **`tasks.md`** line to the tree; ran **`uv run pytest`** (**helm/src**, 101 passed), **`python3 scripts/check_spec_traceability.py`**, **`helm unittest`** for all **`examples/*/`**, and **`ct lint --all`**. Updated checkboxes (and a few stale task paths) in **`openspec/changes/*/tasks.md`**: e.g. **`consolidate-helm-tests`** and **`observability-automatic-enabled-components`** marked complete; **`cfha-helm-library`** / **`config-first-hosted-agents`** **1.2** open (**`Chart.yaml`** still **`type: application`**); **`slack-scraper`** / **`jira-scraper`** partial unchecks where implementation diverges from task text; **`agent-checkpointing-wandb-feedback`** and **`agent-runtime-components`** unchecks where specs overshoot code; **`traceability`** / **`dalc-traceability-migration`** wording aligned to **`helm/tests/`** and **`check_spec_traceability.py`**.
+
+**OpenSpec task prose (intentional drift)** — Refreshed **`tasks.md`** copy in **`slack-scraper`**, **`jira-scraper`**, **`agent-runtime-components`**, **`agent-checkpointing-wandb-feedback`**, **`cfha-helm-library`**, and **`config-first-hosted-agents`** so bullets describe shipped behavior (**`SCRAPER_JOB_CONFIG`** / **`job.json`**, RTS vs **`search.messages`**, **`last_updated`** watermarks, RAG under **`scrapers.ragService`**, **`StateGraph`** vs **`@entrypoint`**, shadow/correlation gaps) and what remains open, without implying unimplemented chart entrypoints (**`reference`** scraper) or obsolete **`ci.sh`**.
+
 ## 2026-04-14
 
 **Operational-event persistence removed** — Dropped the **`RunOperationalEvent`** / in-memory ops stream, shadow-schedule logging in **`run_trigger_graph`**, and the **“Operational signals storage”** SHALL from **`openspec/changes/postgres-agent-persistence`**. Postgres persistence OpenSpec and tasks now cover correlation, human feedback, side-effects, and span summaries only; **`agent-checkpointing-wandb-feedback`** tasks **7.3–7.4** removed accordingly.
