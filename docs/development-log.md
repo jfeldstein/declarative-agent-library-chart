@@ -8,6 +8,8 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ## 2026-04-14
 
+**Implementation-spec handoffs (`docs/implementation-specs/`)** — Added **`README.md`** with canonical **`helm/src`** pytest and **example-chart + `helm/tests/`** helm-unittest invocations, vendored subchart dirname (**`charts/declarative-agent-library/`**), and explicit **as-of-main vs target (after step N)** labeling. Audited and corrected **01–17** `*-spec.md` files for path/command drift, requirement-ID mixups (e.g. Slack trigger **004** vs scraper), and **`runtime/`** → **`helm/src/`** references; **`docs/openspec-implementation-order.md`** links the README for maintainers.
+
 **Operational-event persistence removed** — Dropped the **`RunOperationalEvent`** / in-memory ops stream, shadow-schedule logging in **`run_trigger_graph`**, and the **“Operational signals storage”** SHALL from **`openspec/changes/postgres-agent-persistence`**. Postgres persistence OpenSpec and tasks now cover correlation, human feedback, side-effects, and span summaries only; **`agent-checkpointing-wandb-feedback`** tasks **7.3–7.4** removed accordingly.
 
 **OpenSpec `examples-distinct-values-readmes` (apply)** — Promoted **`dalc-example-values-files`** (**[DALC-REQ-EXAMPLE-VALUES-FILES-001]** / **002**) and **[DALC-REQ-HELM-UNITTEST-004]** under **`dalc-helm-unittest`**. **`examples/with-scrapers`**: split **`values.jira-only.yaml`** and **`values.slack-only.yaml`**, new **`README.md`** (values index + **`helm upgrade --install -f`**), **`helm/tests/with_scrapers_test.yaml`** loads each file; **`examples/README.md`** index updated; **`docs/spec-test-traceability.md`** matrix rows added.
