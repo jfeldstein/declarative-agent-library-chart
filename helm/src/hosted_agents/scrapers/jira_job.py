@@ -70,31 +70,12 @@ def _watermark_path(scope: str, query: str) -> Path:
     return root / f"watermark-{safe_scope}-{qhash}.json"
 
 
-def _read_watermark(path: Path, overlap_minutes: int) -> str | None:
-    if not path.is_file():
+def _jql_watermark_after_overlap(last_updated_iso: str | None, overlap_minutes: int) -> str | None:
+    """Turn stored Jira ``last_updated`` ISO into the JQL ``updated >=`` string (with overlap)."""
+    if not last_updated_iso:
         return None
     try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-        iso = str(data.get("last_updated", "")).strip()
-        if not iso:
-            return None
-        raw = iso.replace("Z", "+00:00")
-        if raw.endswith("+0000"):
-            raw = raw[:-5] + "+00:00"
-        dt = datetime.fromisoformat(raw)
-        if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)
-        dt = dt - timedelta(minutes=max(overlap_minutes, 0))
-        return dt.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M")
-    except (OSError, json.JSONDecodeError, ValueError):
-        return None
-
-
-def _watermark_from_iso(iso: str | None, overlap_minutes: int) -> str | None:
-    if not iso:
-        return None
-    try:
-        raw = str(iso).replace("Z", "+00:00")
+        raw = str(last_updated_iso).replace("Z", "+00:00")
         if raw.endswith("+0000"):
             raw = raw[:-5] + "+00:00"
         dt = datetime.fromisoformat(raw)
@@ -104,6 +85,17 @@ def _watermark_from_iso(iso: str | None, overlap_minutes: int) -> str | None:
         return dt.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M")
     except ValueError:
         return None
+
+
+def _read_watermark(path: Path, overlap_minutes: int) -> str | None:
+    if not path.is_file():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        iso = str(data.get("last_updated", "")).strip()
+    except (OSError, json.JSONDecodeError):
+        return None
+    return _jql_watermark_after_overlap(iso or None, overlap_minutes)
 
 
 def _write_watermark(path: Path, iso: str) -> None:
@@ -299,7 +291,7 @@ def run() -> None:
             fields = list(dict.fromkeys(fields + [str(x) for x in extra]))
 
         store = cursor_store_from_env()
-        wm = _watermark_from_iso(store.get_state("jira", scope, base_query), overlap)
+        wm = _jql_watermark_after_overlap(store.get_state("jira", scope, base_query), overlap)
         jql = _build_jql(base_query, wm)
 
         all_payloads: list[dict[str, Any]] = []

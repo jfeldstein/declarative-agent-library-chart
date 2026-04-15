@@ -147,13 +147,13 @@ class PostgresCursorStore(CursorStore):
 
 def cursor_store_from_env() -> CursorStore:
     backend = os.environ.get("SCRAPER_CURSOR_BACKEND", "file").strip().lower() or "file"
-    if backend == "postgres":
-        dsn = os.environ.get("SCRAPER_POSTGRES_URL", "").strip() or os.environ.get(
-            "HOSTED_AGENT_POSTGRES_URL", ""
-        ).strip()
-        if not dsn:
-            raise RuntimeError(
-                "SCRAPER_CURSOR_BACKEND=postgres requires SCRAPER_POSTGRES_URL or HOSTED_AGENT_POSTGRES_URL"
-            )
-        return PostgresCursorStore(dsn)
-    return FileCursorStore()
+    if backend != "postgres":
+        return FileCursorStore()
+    dsn = os.environ.get("SCRAPER_POSTGRES_URL", "").strip() or os.environ.get(
+        "HOSTED_AGENT_POSTGRES_URL", ""
+    ).strip()
+    if not dsn:
+        raise RuntimeError(
+            "SCRAPER_CURSOR_BACKEND=postgres requires SCRAPER_POSTGRES_URL or HOSTED_AGENT_POSTGRES_URL"
+        )
+    return PostgresCursorStore(dsn)
