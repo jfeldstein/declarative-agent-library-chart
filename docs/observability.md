@@ -171,7 +171,8 @@ Scraper incremental state defaults to the existing file paths (`JIRA_WATERMARK_D
 - Scraper pods get `SCRAPER_CURSOR_BACKEND=postgres` only when cursor backend is enabled.
 - DSN precedence is scraper-specific Secret override first (`scrapers.cursorStore.postgresUrlSecretName`/`postgresUrlSecretKey`), then shared `checkpoints.postgresUrl` as `HOSTED_AGENT_POSTGRES_URL`.
 - Secrets stay in pod env via Secret refs; DSNs are not embedded in scraper `job.json` ConfigMaps.
-- Runtime uses lazy, idempotent DDL (`CREATE TABLE IF NOT EXISTS scraper_cursor_state`) at first use, then upsert writes keyed by `(integration, scope, key_hash)`.
+- Runtime uses lazy, idempotent DDL (`CREATE TABLE IF NOT EXISTS scraper_cursor_state`) at first use, then upsert writes keyed by `(integration, scope, key_hash)`. The agent image includes **`psycopg`** so Postgres cursor mode works without a custom image.
+- If `backend: postgres` while at least one scraper job is configured, the chart **`helm template` / `helm upgrade` fails** unless you set `scrapers.cursorStore.postgresUrlSecretName` or `checkpoints.postgresUrl` (shared DSN).
 - Recommended ops posture: keep `concurrencyPolicy: Forbid` (default), scope keys per environment, and ensure Postgres connection limits account for short-lived CronJobs.
 
 Migration from file mode to Postgres can be a cold cutover (first run re-establishes cursor state) or one-time copy of existing file cursors into `scraper_cursor_state` before flipping `backend`.

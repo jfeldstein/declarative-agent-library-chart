@@ -11,10 +11,7 @@ import os
 import re
 from pathlib import Path
 
-try:  # optional dependency in this repository
-    import psycopg  # type: ignore[import-not-found]
-except Exception:  # pragma: no cover - exercised via runtime error path
-    psycopg = None
+import psycopg
 
 
 def _safe_scope(scope: str) -> str:
@@ -158,7 +155,5 @@ def cursor_store_from_env() -> CursorStore:
             raise RuntimeError(
                 "SCRAPER_CURSOR_BACKEND=postgres requires SCRAPER_POSTGRES_URL or HOSTED_AGENT_POSTGRES_URL"
             )
-        if psycopg is None:
-            raise RuntimeError("psycopg is required for SCRAPER_CURSOR_BACKEND=postgres")
         return PostgresCursorStore(dsn)
     return FileCursorStore()

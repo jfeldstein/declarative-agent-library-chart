@@ -81,7 +81,7 @@
             "backend": {
               "type": "string",
               "enum": ["file", "postgres"],
-              "description": "file keeps existing local cursor files; postgres enables DSN env wiring for scraper CronJobs"
+              "description": "file keeps existing local cursor files; postgres enables DSN env wiring for scraper CronJobs. When postgres and scraper jobs exist, chart rendering fails unless postgresUrlSecretName or checkpoints.postgresUrl is set"
             },
             "postgresUrlSecretName": {
               "type": "string",
