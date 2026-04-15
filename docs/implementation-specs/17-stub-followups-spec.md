@@ -7,6 +7,7 @@
 
 - **Linear checklist:** Step **17** in `docs/openspec-implementation-order.md` — activate or merge **stub** OpenSpec changes after platform work (**steps 1–15**) and optional **`agent-maker-system`** (**step 16**). Stubs are **not** an implementation queue until **`tasks.md`** + normative delta specs exist (or scope is absorbed by a parent change).
 - **DAG:** `subagent-reference-system` and `ci-delta-flagging` have **dashed** edges into `agent-maker-system` — **soft coupling**; agent-maker **must not** assume their semantics until promoted (**`docs/implementation-specs/16-agent-maker-system-spec.md`**).
+- **Subagent spec location:** A delta file also lives under **`openspec/changes/agent-maker-system/specs/subagent-reference-system/`**; canonical ownership and reconciliation are described in **step 16** (defer to stub change **`openspec/changes/subagent-reference-system/`** when activated). See [**16-agent-maker-system-spec.md**](16-agent-maker-system-spec.md) §0 / §3.2.
 - **Authoritative stubs today:**
   - `openspec/changes/subagent-reference-system/proposal.md` (+ `.openspec.yaml` only).
   - `openspec/changes/ci-delta-flagging/proposal.md` (+ `.openspec.yaml` only).
@@ -81,7 +82,7 @@ subagents:
 |----------|--------|
 | New delta `openspec/changes/subagent-reference-system/specs/dalc-subagent-reference-system/spec.md` (name illustrative) | Add **`[DALC-REQ-SUBAGENT-*]`** (stable IDs) for validation, depth, correlation |
 | `docs/spec-test-traceability.md` | Rows for each new ID with evidence paths + CI tier |
-| Pytest under `helm/src/tests/` (or `runtime/tests/` if tree moved) | Docstrings contain requirement ID strings |
+| Pytest under `helm/src/tests/` | Docstrings contain requirement ID strings |
 | `python3 scripts/check_spec_traceability.py` | Exit **0** |
 
 **Assertions (conceptual):**
