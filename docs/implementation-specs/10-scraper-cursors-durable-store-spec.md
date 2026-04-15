@@ -110,10 +110,13 @@ scrapers:
 
 **Gate:**
 
+Canonical commands: [`README.md`](README.md).
+
 ```bash
-cd helm && uv run pytest src/tests/test_jira_job.py src/tests/test_slack_job.py -v --tb=short
+uv sync --all-groups --project helm/src
+cd helm/src && uv run pytest tests/test_jira_job.py tests/test_slack_job.py -v --tb=short
 # extend to full suite per CI / tasks.md
-helm unittest -f tests/with_scrapers_test.yaml .
+(cd examples/with-scrapers && helm dependency build --skip-refresh && helm unittest -f "../../helm/tests/with_scrapers_test.yaml" .)
 python3 scripts/check_spec_traceability.py
 ```
 
@@ -167,8 +170,11 @@ python3 scripts/check_spec_traceability.py
 ## 8. Commands summary
 
 ```bash
-cd helm && uv run pytest src/tests/test_jira_job.py src/tests/test_slack_job.py -v --tb=short
-helm unittest -f tests/with_scrapers_test.yaml .
+uv sync --all-groups --project helm/src
+cd helm/src && uv run pytest tests/test_jira_job.py tests/test_slack_job.py -v --tb=short
+(cd examples/with-scrapers && helm dependency build --skip-refresh && helm unittest -f "../../helm/tests/with_scrapers_test.yaml" .)
 python3 scripts/check_spec_traceability.py
 ```
+
+See [`README.md`](README.md) for CI-aligned defaults.
 `````

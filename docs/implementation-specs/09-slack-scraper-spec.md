@@ -48,7 +48,7 @@ class SlackScraperJobConfig:
 
 ### 2.3 Helm values (`scrapers.slack`)
 
-**`scrapers.slack.enabled`**, **`jobs[]`** (each job: **`schedule`**, **`enabled`**, **`source`**, type-specific fields), **`defaults`**, **`auth.*`**, optional **`stateDir`**, **`resources`**. **Do not** add top-level **`rag`** (align **`[DALC-REQ-RAG-SCRAPERS-001]`** / chart schema).
+**`scrapers.slack.enabled`**, **`jobs[]`** (each job: **`schedule`**, **`enabled`**, **`source`**, type-specific fields), **`defaults`**, **`auth.*`**, optional **`stateDir`**. **Scraper CronJob CPU/memory:** use shared **`scrapers.resources`** (library **`values.yaml`** / **`values.schema.json`**) — there is **no** per-integration **`scrapers.slack.resources`** today; RAG workload limits are **`scrapers.ragService.resources`**. **Do not** add top-level **`rag`** (align **`[DALC-REQ-RAG-SCRAPERS-001]`** / chart schema).
 
 ### 2.4 Runtime module (`hosted_agents.scrapers.slack_job`)
 
@@ -108,9 +108,12 @@ def run() -> None: ...
 
 ### 3.3 Commands (evidence before “done”)
 
+Canonical snippets: [`README.md`](README.md).
+
 ```bash
-cd helm && uv run pytest src/tests/test_slack_job.py -v --tb=short
-helm unittest -f tests/with_scrapers_test.yaml .
+uv sync --all-groups --project helm/src
+cd helm/src && uv run pytest tests/test_slack_job.py -v --tb=short
+(cd examples/with-scrapers && helm dependency build --skip-refresh && helm unittest -f "../../helm/tests/with_scrapers_test.yaml" .)
 python3 scripts/check_spec_traceability.py   # after any promoted SHALL / matrix edit
 ```
 

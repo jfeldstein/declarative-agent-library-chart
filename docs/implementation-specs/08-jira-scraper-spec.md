@@ -9,6 +9,7 @@
 - **Prior implementation specs:** [`01-dedupe-helm-values-observability-spec.md`](01-dedupe-helm-values-observability-spec.md) through [`07-postgres-agent-persistence-spec.md`](07-postgres-agent-persistence-spec.md) — especially **dedupe** (scraper/env + o11y paths charts still reference) and **postgres** (future cursor store DSN story).
 - **Authoritative change bundle:** `openspec/changes/jira-scraper/` — `proposal.md`, `design.md`, `tasks.md`, normative delta **`specs/jira-scraper/spec.md`** (`[DALC-REQ-JIRA-SCRAPER-001]` … **`[DALC-REQ-JIRA-SCRAPER-005]`**).
 - **OpenSpec `tasks.md` status:** **13/14 checked**; the only **unchecked** item is **4.4** (promotion + **DALC-VER-005** traceability **if** SHALLs move to `openspec/specs/` root).
+- **WARNING — `tasks.md` §3.3 vs shipped chart:** Historical **`tasks.md` §3.3** prose mentions **`JIRA_PROJECT_KEYS`** (or JSON project list). The **library chart** wires Jira jobs from merged **`scrapers.jira.jobs[]`** into mounted **`SCRAPER_JOB_CONFIG`** (`job.json`); there is **no** separate **`JIRA_PROJECT_KEYS`** env in the current template contract. Treat **`tasks.md` §3.3** as stale checklist wording unless/until reconciled with **`SCRAPER_JOB_CONFIG`** + JQL in **`job.json`**.
 
 ## 1. Goal (“finish”)
 
@@ -108,9 +109,12 @@ CronJob container **`command`** SHALL end with **`hosted_agents.scrapers.jira_jo
 
 ### 3.3 Commands (evidence before “done”)
 
+Canonical snippets: [`README.md`](README.md).
+
 ```bash
-cd helm && uv run pytest src/tests/test_jira_job.py -v --tb=short
-helm unittest -f tests/with_scrapers_test.yaml .
+uv sync --all-groups --project helm/src
+cd helm/src && uv run pytest tests/test_jira_job.py -v --tb=short
+(cd examples/with-scrapers && helm dependency build --skip-refresh && helm unittest -f "../../helm/tests/with_scrapers_test.yaml" .)
 python3 scripts/check_spec_traceability.py   # required after any promoted SHALL / matrix edit
 ```
 
