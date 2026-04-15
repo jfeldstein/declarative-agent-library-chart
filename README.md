@@ -6,30 +6,38 @@
 
 This repo is a **Helm library chart** (`helm/chart/`). Add it as a dependency in `Chart.yaml`, and add your config in `values.yaml`.
 
-## Example
+## Examples
 
-Chart.yaml:
+### hello-world
 
-```yaml
-dependencies:
-  - name: declarative-agent-library
-    version: 0.1.0
-    repository: https://github.com/jfeldstein/declarative-agent-library-chart
-```
+To make an agentic Slack bot, you need:
 
-values.yaml:
+1. Chart.yaml:
 
-```yaml
-declarative-agent-library:
-  systemPrompt: |
-    Respond, "Hello :wave:"
-  presence:
-    slackBotId:
-      secretName: slack-bot-token
-      secretKey: token
-```
+    ```yaml
+    dependencies:
+      - name: declarative-agent-library
+        version: 0.1.0
+        repository: https://github.com/jfeldstein/declarative-agent-library-chart
+    ```
 
-Create a Slack bot, deploy the chart, and @-tag your bot on slack.
+2. and a values.yaml:
+
+    ```yaml
+    declarative-agent-library:
+      systemPrompt: |
+        Respond, "Hello :wave:"
+      presence:
+        slackBotId:
+          secretName: slack-bot-token
+          secretKey: token
+    ```
+
+3. Register your bot on Slack
+
+You can now deploy the chart, and @-tag your bot on slack. That's it!
+
+(See [hello-world example](examples/hello-world) for more details.)
 
 ## Architecture
 
@@ -57,47 +65,31 @@ Create a Slack bot, deploy the chart, and @-tag your bot on slack.
 |                                 |    W&B, etc.)                   |
 |  + Workflow triggers (webhooks, |  + Tools:                       |
 |    bridges, cron->HTTP) ->      |    | RAG (zero-config)          |
-|    single programmatic entry    |    | Built-in (Jira, Slack, …)  |
-|                                 |    | Extendable (in your chart) |
+|    everything routes to         |    | Built-in (Jira, Slack, …)  |
+|    POST /trigger endpoint       |    | Extendable (in your chart) |
 |                                 |  + RLHF / feedback (persistence |
-|                                 |    & telemetry, future:         |
-|                                 |    experience library, SFT/RLHF |
+|                                 |    & telemetry, experience lib) |
 +----------------------------------+--------------------------------+
 | IaC                                                               |
 | + K8s Resources                                                   |
 | + Observability (everything exports metrics, dashboards OOTB)     |
 +-------------------------------------------------------------------+
+```
 
-## Layout
+### Layout
 
-| Path | Purpose |
-|------|---------|
-| `helm/src/hosted_agents/` | Python application (FastAPI, LangGraph trigger pipeline, RAG service module, scrapers, tools) |
-| `docs/rag-http-api.md` | RAG HTTP contract (`/v1/embed`, `/v1/query`, `/v1/relate`) |
-| `helm/src/tests/` | Pytest suite (85%+ coverage enforced in CI) |
-| `helm/src/pyproject.toml` | `uv` project + Hatch packaging + pytest/coverage config |
-| `helm/chart/` | **Declarative Agent Library Chart** (`declarative-agent-library`; Helm subchart / optional direct install) |
-| `helm/src/` | Python project root (`pyproject.toml`, `hosted_agents/`, `tests/`) |
-| `helm/tests/chart/` | Notes for Helm `helm test` hooks |
-| `examples/hello-world/` | Minimal application chart depending on `file://../../helm/chart` |
-| `examples/with-observability/` | Example chart with Kubernetes `observability` values (Prometheus annotations, ServiceMonitor, JSON logs) |
-| `examples/with-scrapers/` | Example chart with RAG + Jira/Slack scraper `CronJob`s (validated in CI; see [docs/local-ci.md](docs/local-ci.md)) |
-| `examples/checkpointing/` | Example chart with LangGraph checkpoints enabled (`memory` backend) |
-| `helm/Dockerfile` | Production-style image for the Python runtime (build context: repository root) |
-| `skaffold.yaml` / `devspace.yaml` | Local deploy + **port-forward `localhost:8088` → service :8088** |
-| `docs/observability.md` | Metrics (`/metrics`), structured logs, Helm scrape hints, Grafana import |
-| `docs/local-ci.md` | Run the same checks locally as GitHub Actions (Python, Helm, ADRs, spec traceability) |
-| `docs/development-log.md` | Notable chart/runtime changes (breaking API, env, values); ADRs live under `docs/adrs/` |
-| `grafana/` | Starter Grafana dashboard JSON + import notes |
+| Path                        | Purpose                                                      |
+|-----------------------------|--------------------------------------------------------------|
+| `helm/chart/`               | Declarative Agent Library Helm chart                         |
+| `helm/src/hosted_agents/`   | Python app: FastAPI entry, trigger logic, RAG, scrapers      |
+| `examples/hello-world/`     | Minimal example chart, uses the agent subchart               |
 
-
-## Local checks (CI parity)
-
-Commands that mirror the PR merge gate live in **[docs/local-ci.md](docs/local-ci.md)** (see [`.github/workflows/ci.yml`](.github/workflows/ci.yml)).
 
 ## Observability
 
-You get **baseline observability without writing instrumentation**: the FastAPI runtime already exposes Prometheus metrics, structured logging hooks, and request correlation. Your chart mostly decides **how the cluster scrapes and ships** that data (annotations, Operator `ServiceMonitor`, JSON vs console logs). Deeper reference (RAG and scraper metrics, label rules, kind + Prometheus recipe) lives in [docs/observability.md](docs/observability.md).
+You get **baseline observability without writing instrumentation**: the FastAPI runtime already exposes Prometheus metrics, structured logging hooks, and request correlation. 
+
+You decides **what scrapes and ships** that data (annotations, Operator `ServiceMonitor`, JSON vs console logs). Deeper reference (RAG and scraper metrics, label rules, kind + Prometheus recipe) lives in [docs/observability.md](docs/observability.md).
 
 - **Metrics (always on the agent)**: `GET /metrics` on the same port as the HTTP API (default **8088**), Prometheus text format. Counters and histograms cover triggers, MCP tools, subagents, and skill loads; label values are **config-bounded** (not free-form user text), which keeps cardinality safe. When the chart deploys **managed RAG** (enabled scraper jobs), the RAG pod exposes its own `/metrics` (`agent_runtime_rag_*`). Scraper `CronJob` pods expose a separate **`/metrics`** on **9091** with scraper-only series (`agent_runtime_scraper_*`).
 - **Logs**: default **console** lines for local dev; set **`HOSTED_AGENT_LOG_FORMAT=json`** or Helm **`declarative-agent-library.observability.structuredLogs.json`** for one JSON object per line on stdout (Loki / ELK / Vector friendly). **`X-Request-Id`** is echoed on responses and included in structured logs; the agent forwards it to RAG on proxy calls.
