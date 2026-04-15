@@ -6,6 +6,10 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ---
 
+## 2026-04-15 (OpenSpec propose)
+
+**`ci-cyclomatic-complexity`** — OpenSpec change scaffolded (`openspec/changes/ci-cyclomatic-complexity/`): proposal, design, **`dalc-python-complexity-ci`** spec (Ruff **`C901`** + [complexipy](https://github.com/rohaquinlop/complexipy)), and implementation tasks; not yet applied to **`helm/src`** or **`.github/workflows/ci.yml`**.
+
 ## 2026-04-15 (docs)
 
 **Local CI** — Moved merge-gate command recipes from root **README** to **[docs/local-ci.md](local-ci.md)**; **README** now links there and lists the file in the layout table. Cross-references updated (**ADR 0012**, **ADR 0001**, **docs/AGENTS.md**, **`.github/workflows/ci.yml`** header comment).
