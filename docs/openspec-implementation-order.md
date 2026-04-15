@@ -4,7 +4,7 @@ This document captures **dependency ordering** for OpenSpec **changes that are n
 
 **Sources:** proposal cross-references (`examples-distinct-values-readmes` → `consolidate-helm-tests`), shared artifact overlap (values schema, Grafana JSON, unittest paths), and product coupling (Slack trigger vs tools; scrapers vs cursor store). `.openspec.yaml` files do **not** declare edges; some links are **judgment calls**—see caveats.
 
-**As of:** 2026-04-14.
+**As of:** 2026-04-15.
 
 ---
 
@@ -37,7 +37,8 @@ flowchart TB
   BASE[baseten-inference-provider]
   STR[slack-trigger]
   STO[slack-tools]
-  JBOT[jira-bot]
+  JTL[jira-tools]
+  JTR[jira-trigger]
   AMK[agent-maker-system]
   SUB[subagent-reference-system stub]
   CDF[ci-delta-flagging stub]
@@ -52,7 +53,8 @@ flowchart TB
   JSCR --> CURS
   SSCR --> CURS
   PG -.-> CURS
-  STR -.-> STO
+  STO -.-> STR
+  JTL -.-> JTR
   SUB -.-> AMK
   CDF -.-> AMK
 ```
@@ -122,10 +124,10 @@ flowchart TB
 | **6** | Finish `slack-scraper` / `jira-scraper` (remaining tasks) | Current watermark / cursor behavior; **`scraper-cursors-durable-store`** generalizes those jobs. |
 | **7** | `scraper-cursors-durable-store` | DSN reuse + abstraction; after **dedupe** (paths), after **scrapers** code paths; smoother after **postgres** exists. |
 | **Parallel / leaf** | `baseten-inference-provider`, `declarative-langgraph-hitl` | Mostly additive; still touches shared tree—rebase often or land after **tiers 1–2**. |
-| **Slack path** | `slack-trigger` → `slack-tools` | Trigger = ingress; tools = LLM-time replies; soft order for end-to-end “mention → run → reply”. |
-| **Jira path** | `jira-bot` | Webhook trigger + REST tools; separate from Slack. |
+| **Slack path** | `slack-tools` → `slack-trigger` | Tools first so trigger-launched runs can respond immediately; ingress and tools still need coordinated keys/tests. |
+| **Jira path** | `jira-tools` → `jira-trigger` | Same split/order as Slack: LLM-time REST tools first, then webhook ingress using disjoint trigger keys. |
 | **Later / meta** | `agent-maker-system` | Defers **`subagent-reference-system`**, **`ci-delta-flagging`**; consumes existing checkpoint / trace mechanisms. |
-| **Stubs** | `jira-tools` (no tasks in list), `subagent-reference-system`, `ci-delta-flagging` | Not an implementation queue until tasks exist or scope merges (e.g. into `jira-bot`). |
+| **Stubs** | `subagent-reference-system`, `ci-delta-flagging` | Not an implementation queue until tasks exist. |
 
 ---
 
@@ -145,11 +147,12 @@ Use this as **one valid topological sort**. Re-run `openspec list --json` after 
 - [ ] **10.** `scraper-cursors-durable-store` — durable watermark/cursor backends; reuse DSN story from **steps 1, 7**; builds on **8–9** code paths.
 - [ ] **11.** `baseten-inference-provider` — inference provider subtree + runtime client (additive).
 - [ ] **12.** `declarative-langgraph-hitl` — declarative interrupt/resume model (additive; checkpointing already complete).
-- [ ] **13.** `slack-trigger` — inbound Slack → trigger pipeline.
-- [ ] **14.** `slack-tools` — LLM-time Slack Web API tools (pairs with **13** for full UX).
-- [ ] **15.** `jira-bot` — Jira webhook trigger + Jira REST tools (distinct Helm secrets from scrapers).
-- [ ] **16.** `agent-maker-system` — bot + prefix convention slices; after platform stable enough for templates.
-- [ ] **17.** Stub follow-ups — `subagent-reference-system`, `ci-delta-flagging`, or scoped `jira-tools` when OpenSpec tasks exist or scope is merged from **`jira-bot`**.
+- [ ] **13.** `slack-tools` — LLM-time Slack Web API tools.
+- [ ] **14.** `slack-trigger` — inbound Slack → trigger pipeline (coordinate with **13** for mention → run → reply).
+- [ ] **15.** `jira-tools` — LLM-time Jira REST tools (search/read/comment/transition/create-update).
+- [ ] **16.** `jira-trigger` — Jira webhook ingress → hosted trigger pipeline (coordinate with **15**).
+- [ ] **17.** `agent-maker-system` — bot + prefix convention slices; after platform stable enough for templates.
+- [ ] **18.** Stub follow-ups — `subagent-reference-system`, `ci-delta-flagging`.
 
 ---
 

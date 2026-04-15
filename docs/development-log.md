@@ -6,6 +6,10 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ---
 
+## 2026-04-15
+
+**ADR 0005 terminology split** — Added **[ADR 0005](adrs/0005-observability-vs-execution-persistence.md)** to formalize wording: **Prometheus observability metrics** (scrape/alert/dashboard telemetry) vs **execution persistence data** (durable run-state such as checkpoints, correlation, feedback, and optional span summaries). The ADR intentionally avoids "lane" language and recommends avoiding unqualified "observability data" in normative text.
+
 ## 2026-04-14 (dedupe Helm observability values)
 
 **`openspec/dedupe-helm-values-observability` (apply)** — Reserved Helm key **`observability`** for Kubernetes/Prometheus only (ex-**`o11y`**). Split runtime integration into top-level **`checkpoints`**, **`wandb`**, and **`scrapers.slack.feedback`** (including **`labelRegistry`** → **`HOSTED_AGENT_LABEL_REGISTRY_JSON`**). Removed chart wiring and runtime code for **ATIF export** and **shadow**; dropped **`/api/v1/runtime/exports/atif`**. Promoted **`dalc-chart-runtime-values`** and updated **`dalc-agent-o11y-scrape`** (incl. **[DALC-REQ-O11Y-SCRAPE-006]**); **`examples/with-observability/values-observability-no-rag.yaml`** replaces **`values-o11y-no-rag.yaml`**.
@@ -42,7 +46,7 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 **OpenSpec `slack-trigger` + `slack-tools`** — Two changes (no **`slack-bot`** umbrella): **`openspec/changes/slack-trigger/`** (inbound **`app_mention`** → **`run_trigger_graph`**, URL challenge / signing or Socket Mode, **`[DALC-REQ-SLACK-TRIGGER-*]`**, no **`/v1/embed`** on trigger path) and **`openspec/changes/slack-tools/`** (**`slack_sdk`** tools for ack/reply/history, **`[DALC-REQ-SLACK-TOOLS-*]`**, keys disjoint from scraper and from trigger). Each has proposal, design, **`tasks.md`**, **`specs/<name>/spec.md`**. Implementation pending apply workflow.
 
-**OpenSpec `jira-bot`** — Same pattern under **`openspec/changes/jira-bot/`**: **`jira-trigger`** (`specs/jira-trigger/spec.md`, **`[DALC-REQ-JIRA-TRIGGER-*]`**, webhooks → **`run_trigger_graph`**, verification, no default **`/v1/embed`**, config disjoint from **`scrapers.jira`**) and **`jira-tools`** (`specs/jira-tools/spec.md`, **`[DALC-REQ-JIRA-TOOLS-*]`**, **`httpx`** REST, scoped search/mutate, no default RAG ingest). Stub **`openspec/changes/jira-tools/.openspec.yaml`** parallels **`slack-tools`**. Implementation pending apply workflow.
+**OpenSpec `jira-trigger` + `jira-tools`** — Jira now mirrors Slack’s split changes: **`openspec/changes/jira-tools/`** covers LLM-time Jira REST tools (`specs/jira-tools/spec.md`, **`[DALC-REQ-JIRA-TOOLS-*]`**, no default RAG ingest), and **`openspec/changes/jira-trigger/`** covers webhook ingress into **`run_trigger_graph`** (`specs/jira-trigger/spec.md`, **`[DALC-REQ-JIRA-TRIGGER-*]`**, verification, no default **`/v1/embed`**). Ordering guidance is **tools before trigger**; config keys remain disjoint from **`scrapers.jira`**.
 
 ## 2026-04-13
 
