@@ -6,19 +6,17 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ---
 
-## 2026-04-15
+## 2026-04-15 (architecture ADRs batch)
 
-**ADR 0005 terminology split** — Added **[ADR 0005](adrs/0005-observability-vs-execution-persistence.md)** to formalize wording: **Prometheus observability metrics** (scrape/alert/dashboard telemetry) vs **execution persistence data** (durable run-state such as checkpoints, correlation, feedback, and optional span summaries). The ADR intentionally avoids "lane" language and recommends avoiding unqualified "observability data" in normative text.
-
-## 2026-04-14 (dedupe Helm observability values)
-
-**`openspec/dedupe-helm-values-observability` (apply)** — Reserved Helm key **`observability`** for Kubernetes/Prometheus only (ex-**`o11y`**). Split runtime integration into top-level **`checkpoints`**, **`wandb`**, and **`scrapers.slack.feedback`** (including **`labelRegistry`** → **`HOSTED_AGENT_LABEL_REGISTRY_JSON`**). Removed chart wiring and runtime code for **ATIF export** and **shadow**; dropped **`/api/v1/runtime/exports/atif`**. Promoted **`dalc-chart-runtime-values`** and updated **`dalc-agent-o11y-scrape`** (incl. **[DALC-REQ-O11Y-SCRAPE-006]**); **`examples/with-observability/values-observability-no-rag.yaml`** replaces **`values-o11y-no-rag.yaml`**.
-
-## 2026-04-15
+**ADRs 0005–0012** — Documented **[ADR 0005](adrs/0005-observability-vs-execution-persistence.md)** (Prometheus metrics vs execution persistence wording; avoids “lane” language and unqualified “observability data” in normative text), **[ADR 0006](adrs/0006-config-surface-alpha-breaking-changes.md)** (alpha Helm/env may break without deprecation until a stability ADR), **[ADR 0007](adrs/0007-feature-lifecycle-policy.md)** (OpenSpec lifecycle and removal discipline), **[ADR 0008](adrs/0008-persistence-backend-strategy.md)** (memory for tests/dev vs durable execution persistence for long-running envs), **[ADR 0009](adrs/0009-scraper-job-contract-standard.md)** (CronJob + `job.json` + RAG + scraper metrics), **[ADR 0010](adrs/0010-trigger-contract-standard.md)** (`POST /api/v1/trigger` and `*-trigger` vs scrapers/tools), **[ADR 0011](adrs/0011-prometheus-metrics-schema-and-cardinality.md)** (metric prefixes and cardinality-safe labels), **[ADR 0012](adrs/0012-ci-parity-as-merge-gate.md)** (merge gate = `ci.yml` parity). **[docs/adrs/README.md](adrs/README.md)** index lists **0001–0012**.
 
 **OpenSpec task checkbox audit** — Spawned read-only subagents per active change to compare each **`tasks.md`** line to the tree; ran **`uv run pytest`** (**helm/src**, 101 passed), **`python3 scripts/check_spec_traceability.py`**, **`helm unittest`** for all **`examples/*/`**, and **`ct lint --all`**. Updated checkboxes (and a few stale task paths) in **`openspec/changes/*/tasks.md`**: e.g. **`consolidate-helm-tests`** and **`observability-automatic-enabled-components`** marked complete; **`cfha-helm-library`** / **`config-first-hosted-agents`** **1.2** open (**`Chart.yaml`** still **`type: application`**); **`slack-scraper`** / **`jira-scraper`** partial unchecks where implementation diverges from task text; **`agent-checkpointing-wandb-feedback`** and **`agent-runtime-components`** unchecks where specs overshoot code; **`traceability`** / **`dalc-traceability-migration`** wording aligned to **`helm/tests/`** and **`check_spec_traceability.py`**.
 
 **OpenSpec task prose (intentional drift)** — Refreshed **`tasks.md`** copy in **`slack-scraper`**, **`jira-scraper`**, **`agent-runtime-components`**, **`agent-checkpointing-wandb-feedback`**, **`cfha-helm-library`**, and **`config-first-hosted-agents`** so bullets describe shipped behavior (**`SCRAPER_JOB_CONFIG`** / **`job.json`**, RTS vs **`search.messages`**, **`last_updated`** watermarks, RAG under **`scrapers.ragService`**, **`StateGraph`** vs **`@entrypoint`**, shadow/correlation gaps) and what remains open, without implying unimplemented chart entrypoints (**`reference`** scraper) or obsolete **`ci.sh`**.
+
+## 2026-04-14 (dedupe Helm observability values)
+
+**`openspec/dedupe-helm-values-observability` (apply)** — Reserved Helm key **`observability`** for Kubernetes/Prometheus only (ex-**`o11y`**). Split runtime integration into top-level **`checkpoints`**, **`wandb`**, and **`scrapers.slack.feedback`** (including **`labelRegistry`** → **`HOSTED_AGENT_LABEL_REGISTRY_JSON`**). Removed chart wiring and runtime code for **ATIF export** and **shadow**; dropped **`/api/v1/runtime/exports/atif`**. Promoted **`dalc-chart-runtime-values`** and updated **`dalc-agent-o11y-scrape`** (incl. **[DALC-REQ-O11Y-SCRAPE-006]**); **`examples/with-observability/values-observability-no-rag.yaml`** replaces **`values-o11y-no-rag.yaml`**.
 
 ## 2026-04-14
 
