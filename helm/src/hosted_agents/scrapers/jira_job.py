@@ -29,6 +29,7 @@ from hosted_agents.scrapers.metrics import (
     observe_scraper_run,
     stop_scraper_metrics_http,
 )
+from hosted_agents.scrapers.cursor_store import cursor_store_from_env
 
 
 def _integration_label() -> str:
@@ -86,6 +87,22 @@ def _read_watermark(path: Path, overlap_minutes: int) -> str | None:
         dt = dt - timedelta(minutes=max(overlap_minutes, 0))
         return dt.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M")
     except (OSError, json.JSONDecodeError, ValueError):
+        return None
+
+
+def _watermark_from_iso(iso: str | None, overlap_minutes: int) -> str | None:
+    if not iso:
+        return None
+    try:
+        raw = str(iso).replace("Z", "+00:00")
+        if raw.endswith("+0000"):
+            raw = raw[:-5] + "+00:00"
+        dt = datetime.fromisoformat(raw)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        dt = dt - timedelta(minutes=max(overlap_minutes, 0))
+        return dt.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M")
+    except ValueError:
         return None
 
 
@@ -281,8 +298,8 @@ def run() -> None:
         if isinstance(extra, list):
             fields = list(dict.fromkeys(fields + [str(x) for x in extra]))
 
-        wm_path = _watermark_path(scope, base_query)
-        wm = _read_watermark(wm_path, overlap)
+        store = cursor_store_from_env()
+        wm = _watermark_from_iso(store.get_state("jira", scope, base_query), overlap)
         jql = _build_jql(base_query, wm)
 
         all_payloads: list[dict[str, Any]] = []
@@ -304,7 +321,7 @@ def run() -> None:
                 if isinstance(upd, str):
                     max_upd = max(max_upd, upd) if max_upd else upd
             if max_upd:
-                _write_watermark(wm_path, max_upd)
+                store.set_state("jira", scope, base_query, max_upd)
 
         if not all_payloads:
             run_ok = True

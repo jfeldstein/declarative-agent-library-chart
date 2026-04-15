@@ -164,6 +164,18 @@ Every enabled scraper container listens on **`SCRAPER_METRICS_ADDR`** (Helm sets
 
 When **`observability.prometheusAnnotations.enabled`** is true, the chart adds **`prometheus.io/*`** annotations on **all** scraper Job pods (port **9091**, path **`/metrics`**).
 
+### Durable scraper cursor store (Jira/Slack)
+
+Scraper incremental state defaults to the existing file paths (`JIRA_WATERMARK_DIR`, `SLACK_STATE_DIR`). To use a durable backend, set `scrapers.cursorStore.backend: postgres`.
+
+- Scraper pods get `SCRAPER_CURSOR_BACKEND=postgres` only when cursor backend is enabled.
+- DSN precedence is scraper-specific Secret override first (`scrapers.cursorStore.postgresUrlSecretName`/`postgresUrlSecretKey`), then shared `checkpoints.postgresUrl` as `HOSTED_AGENT_POSTGRES_URL`.
+- Secrets stay in pod env via Secret refs; DSNs are not embedded in scraper `job.json` ConfigMaps.
+- Runtime uses lazy, idempotent DDL (`CREATE TABLE IF NOT EXISTS scraper_cursor_state`) at first use, then upsert writes keyed by `(integration, scope, key_hash)`.
+- Recommended ops posture: keep `concurrencyPolicy: Forbid` (default), scope keys per environment, and ensure Postgres connection limits account for short-lived CronJobs.
+
+Migration from file mode to Postgres can be a cold cutover (first run re-establishes cursor state) or one-time copy of existing file cursors into `scraper_cursor_state` before flipping `backend`.
+
 ## Integration test (kind + Prometheus)
 
 End-to-end check that `**examples/with-observability`** deploys to **kind** (agent **+** RAG), **Prometheus** (community Helm chart) scrapes **both** Services, and PromQL sees:

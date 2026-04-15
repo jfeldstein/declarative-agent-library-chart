@@ -6,9 +6,15 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ---
 
-## 2026-04-15 (OpenSpec propose)
+## 2026-04-15
 
 **`ci-cyclomatic-complexity`** — OpenSpec change scaffolded (`openspec/changes/ci-cyclomatic-complexity/`): proposal, design, **`dalc-python-complexity-ci`** spec (Ruff **`C901`** + [complexipy](https://github.com/rohaquinlop/complexipy)), and implementation tasks; not yet applied to **`helm/src`** or **`.github/workflows/ci.yml`**.
+
+**`presence-slack-jira-ootb`** — OpenSpec change scaffolded (`openspec/changes/presence-slack-jira-ootb/`): proposal, design, **`dalc-chart-presence`** spec, and tasks for Slack/Jira identity via chart **`presence`** values; not yet applied to Helm templates.
+
+**OpenSpec `scraper-cursors-durable-store` (apply)** — Added `hosted_agents.scrapers.cursor_store` with selectable `file|postgres` backends (`SCRAPER_CURSOR_BACKEND`), preserving Jira/Slack file compatibility (`last_updated` / `watermark_ts`) and adding Postgres upsert persistence via `scraper_cursor_state` with lazy idempotent DDL. Refactored `jira_job` and `slack_job` to use the shared cursor store abstraction without changing metrics or RAG payload shape. Helm now supports `scrapers.cursorStore.*` with Secret override precedence for DSN wiring, only injects scraper Postgres env when backend is `postgres`, and adds unittest coverage for DSN presence/absence + Secret sourcing. Promoted `dalc-scraper-cursor-store` spec and updated `docs/spec-test-traceability.md` matrix entries for `[DALC-REQ-SCRAPER-CURSOR-001..004]`; documented runbook guidance in `docs/observability.md`.
+
+**Follow-up** — Declared **`psycopg[binary]`** in `helm/src/pyproject.toml`; chart **`fail`s** when `cursorStore.backend=postgres` with scraper jobs but no DSN Secret or **`checkpoints.postgresUrl`**; **`design.md`** aligned with **`checkpoints.postgresUrl`**. Refactor: deduplicated Jira watermark overlap logic in **`jira_job`**.
 
 ## 2026-04-15 (docs)
 

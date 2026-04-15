@@ -74,6 +74,25 @@
       "description": "CronJob-backed scrapers under jira and slack; RAG deploys when any enabled job exists. Traceability: [DALC-REQ-RAG-SCRAPERS-003]",
       "properties": {
         "resources": { "type": "object" },
+        "cursorStore": {
+          "type": "object",
+          "description": "Durable cursor backend for scraper incremental state. Traceability: [DALC-REQ-SCRAPER-CURSOR-003] [DALC-REQ-SCRAPER-CURSOR-004]",
+          "properties": {
+            "backend": {
+              "type": "string",
+              "enum": ["file", "postgres"],
+              "description": "file keeps existing local cursor files; postgres enables DSN env wiring for scraper CronJobs"
+            },
+            "postgresUrlSecretName": {
+              "type": "string",
+              "description": "Optional Secret name for scraper-specific Postgres DSN override"
+            },
+            "postgresUrlSecretKey": {
+              "type": "string",
+              "description": "Secret key containing the Postgres DSN (default: url)"
+            }
+          }
+        },
         "ragService": {
           "type": "object",
           "description": "Managed RAG HTTP service (/v1/embed, /v1/query, /v1/relate); deployed only when an enabled scraper job exists",

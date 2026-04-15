@@ -98,3 +98,65 @@ tests:
     asserts:
       - hasDocuments:
           count: 1
+  - it: scraper jobs do not inherit postgres DSN when cursor backend is file [DALC-REQ-SCRAPER-CURSOR-003]
+    template: charts/declarative-agent-library/templates/scraper-cronjobs.yaml
+    set:
+      declarative-agent-library:
+        checkpoints:
+          postgresUrl: postgres://shared.example/db
+    documentIndex: 0
+    asserts:
+      - notContains:
+          path: spec.jobTemplate.spec.template.spec.containers[0].env
+          content:
+            name: HOSTED_AGENT_POSTGRES_URL
+      - notContains:
+          path: spec.jobTemplate.spec.template.spec.containers[0].env
+          content:
+            name: SCRAPER_CURSOR_BACKEND
+  - it: scraper jobs wire shared postgres DSN when cursor backend is postgres [DALC-REQ-SCRAPER-CURSOR-003]
+    template: charts/declarative-agent-library/templates/scraper-cronjobs.yaml
+    set:
+      declarative-agent-library:
+        checkpoints:
+          postgresUrl: postgres://shared.example/db
+        scrapers:
+          cursorStore:
+            backend: postgres
+    documentIndex: 0
+    asserts:
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.containers[0].env
+          content:
+            name: SCRAPER_CURSOR_BACKEND
+            value: postgres
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.containers[0].env
+          content:
+            name: HOSTED_AGENT_POSTGRES_URL
+            value: postgres://shared.example/db
+  - it: scraper jobs prefer DSN Secret override for postgres backend [DALC-REQ-SCRAPER-CURSOR-004]
+    template: charts/declarative-agent-library/templates/scraper-cronjobs.yaml
+    set:
+      declarative-agent-library:
+        checkpoints:
+          postgresUrl: postgres://shared.example/db
+        scrapers:
+          cursorStore:
+            backend: postgres
+            postgresUrlSecretName: scraper-dsn
+            postgresUrlSecretKey: url
+    documentIndex: 0
+    asserts:
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.containers[0].env
+          content:
+            name: SCRAPER_POSTGRES_URL
+            valueFrom:
+              secretKeyRef:
+                name: scraper-dsn
+                key: url
+      - notContains:
+          path: spec.jobTemplate.spec.template.spec.containers[0].env
+          content:
+            name: HOSTED_AGENT_POSTGRES_URL

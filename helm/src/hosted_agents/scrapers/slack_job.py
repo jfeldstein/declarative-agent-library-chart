@@ -35,6 +35,7 @@ from hosted_agents.scrapers.metrics import (
     observe_scraper_run,
     stop_scraper_metrics_http,
 )
+from hosted_agents.scrapers.cursor_store import CursorStore, cursor_store_from_env
 
 
 def _integration_label() -> str:
@@ -355,19 +356,13 @@ def _run_slack_channel(
     scope: str,
     rag_base: str,
     integration: str,
+    store: CursorStore,
 ) -> None:
     cid = str(job.get("conversationId", "")).strip()
     if not cid:
         print("slack_channel job requires conversationId", file=sys.stderr)  # noqa: T201
         sys.exit(1)
-    state_path = _state_dir() / f"{_safe_scope(scope)}-{cid}.json"
-    state: dict[str, Any] = {}
-    if state_path.is_file():
-        try:
-            state = json.loads(state_path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            state = {}
-    watermark = state.get("watermark_ts")
+    watermark = store.get_state("slack", scope, cid)
 
     collected: list[dict[str, Any]] = []
     slack_cursor: str | None = None
@@ -397,8 +392,7 @@ def _run_slack_channel(
             break
 
     if max_seen is not None:
-        state["watermark_ts"] = _float_to_slack_ts(max_seen)
-        state_path.write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
+        store.set_state("slack", scope, cid, _float_to_slack_ts(max_seen))
 
     items = _build_items_from_messages(collected)
     if not items:
@@ -428,6 +422,7 @@ def run() -> None:
             print("RAG_SERVICE_URL is required", file=sys.stderr)  # noqa: T201
             sys.exit(1)
         scope = os.environ.get("SCRAPER_SCOPE", "slack").strip() or "slack"
+        store = cursor_store_from_env()
 
         user_token = os.environ.get("SLACK_USER_TOKEN", "").strip()
         bot_token = os.environ.get("SLACK_BOT_TOKEN", "").strip()
@@ -453,7 +448,7 @@ def run() -> None:
                 sys.exit(1)
             bot = WebClient(token=bot_token)
             try:
-                _run_slack_channel(bot, cfg, scope, rag_base, integration)
+                _run_slack_channel(bot, cfg, scope, rag_base, integration, store)
             except SlackApiError as exc:
                 print(f"Slack API error: {exc}", file=sys.stderr)  # noqa: T201
                 sys.exit(1)
