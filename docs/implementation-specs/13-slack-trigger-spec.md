@@ -5,7 +5,7 @@
 
 ## 0. Context (read first)
 
-- **Linear checklist:** Step **13** in `docs/openspec-implementation-order.md` — **Slack path:** inbound **Slack → hosted trigger** bridge; **soft successor** to **`slack-tools`** (step **14**) for end-to-end “mention → run → reply” (`STR -.-> STO` in the DAG).
+- **Linear checklist:** Step **13** in `docs/openspec-implementation-order.md` — **Slack path:** inbound **Slack → hosted trigger** bridge; **precedes** **`slack-tools`** (step **14**) in the checklist—**counterpart** / **pairs with** tools for end-to-end “mention → run → reply” (DAG: **`STR -.-> STO`** — trigger first, then tools).
 - **Prior implementation specs:** [`01-dedupe-helm-values-observability-spec.md`](01-dedupe-helm-values-observability-spec.md) … [`12-declarative-langgraph-hitl-spec.md`](12-declarative-langgraph-hitl-spec.md) — especially **step 9** ([`09-slack-scraper-spec.md`](09-slack-scraper-spec.md)): CronJob **`scrapers.slack.*`** tokens and **`slack_job`** are **not** the trigger; **step 1/2** for post-dedupe **`agent:`** / values layout and naming.
 - **Authoritative change bundle:** `openspec/changes/slack-trigger/` — `proposal.md`, `design.md`, `tasks.md`, normative delta **`specs/slack-trigger/spec.md`** (`[DALC-REQ-SLACK-TRIGGER-001]` … **`[DALC-REQ-SLACK-TRIGGER-005]`**).
 - **Design locks:** (1) **Topology** — Socket Mode when no stable public URL; **HTTP Events API** when ingress exists. (2) **Invocation** — prefer **direct** `run_trigger_graph(TriggerContext(...))` over loopback `POST /api/v1/trigger` (document if HTTP is chosen). (3) **Idempotency** — optional **`event_id`** dedupe for Slack retries (`tasks.md` §3.2). (4) **Outbound** — trigger path **never** calls Slack **`chat.*`**; user-visible replies belong in **`slack-tools`**.
@@ -16,7 +16,7 @@
 
 1. **Inbound delivery:** Accept Slack **`app_mention`** (v1 scope per open question: DMs optional) via **HTTP Events** (URL challenge + signing secret) and/or **Socket Mode** (app-level token), per operator configuration.
 2. **Trigger equivalence:** Each verified mention **SHALL** enter the same **trigger pipeline** as **`POST /api/v1/trigger`** — i.e. build **`TriggerContext`** and call **`run_trigger_graph`** — with **plain text** in **`TriggerBody.message`** plus **structured Slack identifiers** available to downstream runtime (so step **14** `slack-tools` does not guess channel/thread).
-3. **Config isolation:** Helm/env keys for the trigger **SHALL** be **disjoint** from **`scrapers.slack.*`** and from **`slack-tools`** secrets (`[DALC-REQ-SLACK-TRIGGER-004]`; coordinate folder `openspec/changes/slack-tools/`).
+3. **Config isolation:** Helm/env keys for the trigger **SHALL** be **disjoint** from **`scrapers.slack.*`** per **`[DALC-REQ-SLACK-TRIGGER-004]`** (trigger vs **scraper** only). Trigger vs **Slack tools** credentials **SHALL** stay distinct under **`[DALC-REQ-SLACK-TOOLS-002]`** when step **14** lands; coordinate `openspec/changes/slack-tools/`.
 4. **Safety:** No **`/v1/embed`** on the trigger forwarding step (`[DALC-REQ-SLACK-TRIGGER-002]`); signing secrets / app tokens **never** in logs or metric labels (`[DALC-REQ-SLACK-TRIGGER-005]`).
 
 ## 2. Entities and interfaces (signatures only; no bodies)

@@ -5,14 +5,14 @@
 
 ## 0. Context (read first)
 
-- **Linear checklist:** Step **12** in `docs/openspec-implementation-order.md` — **parallel / leaf** with `baseten-inference-provider` (step **11**); **additive** declarative **human-in-the-loop (HITL)** using LangGraph **functional API** (`interrupt`, `Command`); foundation checklist notes **checkpointing** is already complete in OpenSpec—this change expresses **pause/resume** in config and HTTP contracts.
+- **Linear checklist:** Step **12** in `docs/openspec-implementation-order.md` — **parallel / leaf** with `baseten-inference-provider` (step **11**); **additive** declarative **human-in-the-loop (HITL)** using LangGraph **functional API** (`interrupt`, `Command`). **Checkpointing** work may already be described in **OpenSpec change deltas** (`openspec/changes/...`) and **archived** changes; **promoted** normative text lives under **`openspec/specs/*/spec.md`** once merged. This change expresses **pause/resume** in config and HTTP contracts on top of that story.
 - **Upstream alignment (mandatory):**
   - Step **1** ([`01-dedupe-helm-values-observability-spec.md`](01-dedupe-helm-values-observability-spec.md)): checkpoints env / values semantics (`checkpoints.*`, `HOSTED_AGENT_POSTGRES_URL`, `HOSTED_AGENT_CHECKPOINTS_*`)—HITL **requires** a LangGraph-compatible checkpointer; do not re-nest checkpoints under `observability`.
   - Step **2** ([`02-consolidate-naming-spec.md`](02-consolidate-naming-spec.md)): example parent values under **`agent:`**; keep chart/runtime naming consistent with promoted DALC conventions.
   - Step **7** ([`07-postgres-agent-persistence-spec.md`](07-postgres-agent-persistence-spec.md)): **production** durable pause/resume **SHOULD** target the same Postgres checkpointer story when operators enable HITL in cluster environments; reconcile dual checkpoint env gates documented in that brief so HITL docs do not describe a dead configuration path.
 - **Authoritative change bundle:** `openspec/changes/declarative-langgraph-hitl/` — `proposal.md`, `design.md`, `tasks.md`, normative delta **`specs/declarative-langgraph-hitl/spec.md`**.
 - **Terminology (from `design.md`):** **HITL** = LangGraph **`interrupt()` / `Command(resume=…)`** pre-continuation gates. **Post-hoc human feedback** (e.g. Slack emoji after the assistant replied) is **not** this change—reserve **human feedback** / **reaction correlation** for `tool-feedback-slack` and related stores.
-- **Traceability:** When promoting **`### Requirement:`** rows to `openspec/specs/*/spec.md`, assign stable **`[DALC-REQ-…]`** (or **`[DALC-VER-…]`** if verification meta) per **`openspec/specs/dalc-requirement-verification/spec.md`** and **ADR 0003** / **DALC-VER-005**; update **`docs/spec-test-traceability.md`**; add requirement ID strings to **pytest docstrings** and/or **helm unittest `#`** comments; run **`python3 scripts/check_spec_traceability.py`** until exit **0**.
+- **Traceability:** When promoting **`### Requirement:`** rows to **`openspec/specs/*/spec.md`**, assign stable **`[DALC-REQ-…]`** (or **`[DALC-VER-…]`** if verification meta) per **`openspec/specs/dalc-requirement-verification/spec.md`** and **ADR 0003**. **DALC-VER-005** is the **contributor-contract** rule (AGENTS / rules reference test-to-spec); the **full** promotion gate for normative specs also satisfies **[DALC-VER-001]**–**[DALC-VER-004]** (IDs on headings, explicit test citations, matrix rows, CI running **`scripts/check_spec_traceability.py`**). Update **`docs/spec-test-traceability.md`**; add requirement ID strings to **pytest docstrings** and/or **helm unittest `#`** comments; run **`python3 scripts/check_spec_traceability.py`** until exit **0**.
 - **Non-goals:** No full approval UI; no mandatory replacement of every non-functional-API graph; no cross-tenant **authorization** for “who may resume” beyond documenting hooks (`design.md`).
 
 ## 1. Goal
@@ -172,7 +172,7 @@ def hitl_settings_from_env() -> HitlSettings: ...
 
 | Path | Notes |
 |------|--------|
-| `openspec/specs/dalc-postgres-agent-persistence/spec.md` | If promoted—Postgres checkpointer + env gates must align with HITL production story |
+| `openspec/specs/dalc-postgres-agent-persistence/spec.md` | **May not exist until step 7** is promoted; until then use the **`openspec/changes/`** delta for postgres agent persistence (if present) and avoid assuming this promoted path on disk. When it exists—Postgres checkpointer + env gates must align with HITL production story. |
 | Checkpoint / trigger specs already in `openspec/specs/` | Grep for `thread_id`, `checkpointer`, `trigger` language—update prose only if this change narrows contracts |
 
 ## 4. Tests and assertions (TDD; all must end green)
@@ -270,7 +270,7 @@ python3 scripts/check_spec_traceability.py
 - [ ] HTTP layer uses **JSON** descriptors and resume bodies—no Python-type leakage at boundary (`spec.md`).
 - [ ] Invalid resume → **4xx** with clear errors (`design.md`).
 - [ ] HITL disabled → no behavior regression (`tasks.md` 4.2).
-- [ ] **DALC-VER-005** satisfied on promotion: IDs, matrix, citations, **`check_spec_traceability.py`** **0**.
+- [ ] **DALC-VER-001**–**004** and **DALC-VER-005** satisfied on promotion: IDs on headings, matrix, test citations, CI traceability script **`0`**.
 
 ## 7. Commands summary
 

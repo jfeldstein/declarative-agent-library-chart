@@ -115,7 +115,7 @@ helm/src/pyproject.toml  # SHALL list slack_sdk with version policy ([DALC-REQ-S
 
 | Path | Why |
 |------|-----|
-| `openspec/changes/slack-trigger/specs/slack-trigger/spec.md` | **`[DALC-REQ-SLACK-TRIGGER-004]`** — trigger vs tools env isolation must remain true after both land |
+| `openspec/changes/slack-trigger/specs/slack-trigger/spec.md` | **`[DALC-REQ-SLACK-TRIGGER-004]`** — trigger vs **Slack scraper** configuration isolation (not trigger vs tools). Cross-check that **`[DALC-REQ-SLACK-TOOLS-002]`** still covers tools vs scraper/trigger credential separation after both land. |
 
 ## 4. Tests and assertions (TDD; all must end green)
 

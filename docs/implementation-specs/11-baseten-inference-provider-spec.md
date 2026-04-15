@@ -16,9 +16,11 @@
 2. **Runtime:** When provider is **`baseten`** and required env is present, perform **OpenAI-compatible** `chat.completions` against configured **`baseUrl`** with auth from the Secret; return assistant text to the caller. When **`none`** or unset, preserve **deterministic** behavior (`trigger_reply_text` semantics unchanged).
 3. **Helm:** Wire agent **Deployment** env from values + **`secretKeyRef`** for credentials only—never plain values for the token.
 4. **Tests:** Mocked HTTP or patched client—**no** external network or credentials in CI (`spec.md` automated-tests requirement).
-5. **Docs:** Operator onboarding (Secret, values, URL shape, 401/timeout troubleshooting) in **existing** README/chart README per `tasks.md` 5.1—no new markdown file unless repo convention already expects one.
+5. **Docs:** Operator onboarding (Secret, values, URL shape, 401/timeout troubleshooting) in **`README.md`** (repo root and/or chart README as already conventional) per `tasks.md` 5.1—no new markdown file unless repo convention already expects one.
 
 ## 2. Runtime integration points (read before coding)
+
+**Source tree:** Implement under **`helm/src/hosted_agents/`** (Python package **`hosted_agents`**). Do not assume a separate **`runtime/`** directory beside **`hosted_agents/`**.
 
 | Location | Role today | BaseTen v1 intent |
 |----------|------------|-------------------|
@@ -45,7 +47,7 @@ inference:
 ```
 
 ```python
-# hosted_agents.runtime_config or dedicated module — signatures only
+# helm/src/hosted_agents/ (e.g. runtime_config or dedicated inference module) — signatures only
 
 @dataclass(frozen=True)
 class InferenceSettings:
@@ -120,7 +122,7 @@ def _resolve_default_subagent_output(
 
 ```bash
 cd helm/src && uv run pytest tests/ -v --tb=short   # or project-documented path from repo root
-helm unittest -f tests/… .                          # agent deployment suite that covers new env
+cd examples/<example> && helm dependency build --skip-refresh && helm unittest -f "../../helm/tests/<suite>.yaml" .
 python3 scripts/check_spec_traceability.py          # after promotion + IDs on spec headings
 ```
 
@@ -148,6 +150,6 @@ python3 scripts/check_spec_traceability.py          # after promotion + IDs on s
 - `helm/src/hosted_agents/reply.py` — only if extracting shared helpers; avoid behavior change for `none`
 - `helm/chart/values.yaml`, `helm/chart/values.schema.json`, `helm/chart/templates/deployment.yaml`
 - `helm/src/tests/*.py` — new tests + extend subagent coverage
-- `helm/pyproject.toml` / lockfile if adding `openai` or similar
+- `helm/src/pyproject.toml` / lockfile if adding `openai` or similar
 
 `````
