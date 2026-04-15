@@ -8,7 +8,8 @@
 - **Linear checklist:** Step **7** in `docs/openspec-implementation-order.md` — **after** `dedupe-helm-values-observability` (step **1**) so `HOSTED_AGENT_POSTGRES_URL` / chart **`checkpoints.postgresUrl`** wiring matches the tier-1 contract; coordinate with **step 2** naming if Grafana/docs paths still say legacy product strings.
 - **Prior implementation specs:** [`01-dedupe-helm-values-observability-spec.md`](01-dedupe-helm-values-observability-spec.md) (checkpoints values + env), [`02-consolidate-naming-spec.md`](02-consolidate-naming-spec.md), [`03-consolidate-helm-tests-spec.md`](03-consolidate-helm-tests-spec.md), [`04-examples-distinct-values-readmes-spec.md`](04-examples-distinct-values-readmes-spec.md), [`05-observability-automatic-enabled-components-spec.md`](05-observability-automatic-enabled-components-spec.md), [`06-token-metrics-dashboard-spec.md`](06-token-metrics-dashboard-spec.md).
 - **Authoritative change bundle:** `openspec/changes/postgres-agent-persistence/` — `proposal.md`, `design.md`, `tasks.md`, delta spec `specs/dalc-postgres-agent-persistence/spec.md`.
-- **Naming:** Proposal lists capability `cfha-postgres-agent-persistence`; on promotion use **`dalc-*`** folder/slug conventions consistent with other `openspec/specs/dalc-*` capabilities. Assign stable **`[DALC-REQ-…]`** IDs on `### Requirement:` lines and wire **ADR 0003** / **DALC-VER-005** traceability before merge.
+- **Traceability gap (delta today):** The change-local delta uses bare **`### Requirement:`** headings **without** **`[DALC-REQ-…]`** bracket IDs on the same line. **Before promotion / merge** (per **DALC-VER-005**), every promoted **`### Requirement:`** **SHALL** carry a stable **`[DALC-REQ-…]`**, plus **`docs/spec-test-traceability.md`** rows and test citations.
+- **Naming:** Proposal lists capability `cfha-postgres-agent-persistence`; on promotion use **`dalc-*`** folder/slug conventions consistent with other `openspec/specs/dalc-*` capabilities. Wire **ADR 0003** / **DALC-VER-005** traceability before merge.
 - **Critical runtime nuance — two checkpoint gates:** `hosted_agents.trigger_graph._resolve_checkpointer` uses **`build_checkpointer(obs)`** only when `ObservabilitySettings.checkpoints_enabled` is true; otherwise it falls back to **`hosted_agents.checkpointing.resolve_checkpointer()`**, which keys off **`HOSTED_AGENT_CHECKPOINT_STORE`** (`memory` / `none` / reserved `postgres`/`redis`). A Postgres LangGraph saver must be reachable in the **obs-settings path** when operators enable checkpointing via **`HOSTED_AGENT_CHECKPOINTS_ENABLED`** + **`HOSTED_AGENT_CHECKPOINT_BACKEND=postgres`**. If `checkpoints_enabled` is false, **`HOSTED_AGENT_CHECKPOINT_STORE=postgres`** still raises from `resolve_checkpointer` today — **document and/or unify** so operators cannot configure a dead half-path (acceptable outcomes: single env story, or explicit validation error at startup).
 
 ## 1. Goal
@@ -45,7 +46,9 @@ def build_checkpointer(settings: ObservabilitySettings) -> Any | None:
 
 ```python
 # LangGraph — illustrative dependency surface (pin exact package per langgraph version in helm/src/pyproject.toml)
-# from langgraph_checkpoint_postgres import ...  # package name TBD at implementation time
+# PyPI distribution name may use hyphens (e.g. langgraph-checkpoint-postgres); Python import/module typically uses
+# underscores — resolve both from the landed dependency entry in pyproject.toml (TBD until the package is pinned).
+# from <resolved_module> import ...  # noqa: illustrative
 def make_postgres_checkpointer(dsn: str, *, pool_settings: ...) -> Any: ...
 ```
 
@@ -78,6 +81,7 @@ class SideEffectRepository(Protocol):
     def add(self, rec: SideEffectCheckpoint) -> None: ...
     def by_thread(self, thread_id: str) -> list[SideEffectCheckpoint]: ...
 
+# Naming: design.md uses RunSpanRepository; this brief uses RunSpanSummaryRepository for the same protocol.
 class RunSpanSummaryRepository(Protocol):
     def record_tool_span(self, row: ToolSpanSummary) -> None: ...
     def list_by_run(self, run_id: str) -> list[ToolSpanSummary]: ...
@@ -105,8 +109,10 @@ class ToolSpanSummary:
 
 ### 2.4 Migrations
 
+**Target (after step 7):** versioned SQL (or agreed tool) under repo control — the tree may not yet contain this directory until the change lands.
+
 ```text
-helm/src/migrations/   # or agreed path from design — SQL files only for v1
+helm/src/migrations/   # planned / agreed path from design — SQL files only for v1
   V001__hosted_agents_schema.sql
   V002__correlation_feedback_side_effects.sql
   ...
@@ -130,7 +136,7 @@ Map to **`HOSTED_AGENT_POSTGRES_URL`**, **`HOSTED_AGENT_CHECKPOINTS_ENABLED`**, 
 ## 3. Dependencies and versions
 
 - Pin **`langgraph`**-compatible Postgres checkpointer package + **`psycopg`** (v3) per `design.md`; document worker/pool sizing in `docs/runbook-checkpointing-wandb.md`.
-- **CI:** default PR path = unit tests with mocks; optional **`pytest` marker** (e.g. `@pytest.mark.postgres`) + job or local **testcontainers** / `docker run postgres` for integration — follow repo CI budget conventions.
+- **CI:** default PR path = unit tests with mocks; optional integration tests behind a **`pytest` marker** — **`@pytest.mark.postgres`** only after adding a **`postgres`** entry to **`helm/src/pyproject.toml`** **`[tool.pytest.ini_options].markers`** (today the project defines **`integration`** and **`pglite`**, not **`postgres`**); or reuse an existing marker and document it. Optional job or local **testcontainers** / `docker run postgres` — follow repo CI budget conventions.
 
 ## 4. Spec ↔ tests (must pass; write tests first)
 
@@ -151,8 +157,9 @@ Map to **`HOSTED_AGENT_POSTGRES_URL`**, **`HOSTED_AGENT_CHECKPOINTS_ENABLED`**, 
 
 ```bash
 python3 scripts/check_spec_traceability.py
+uv sync --all-groups --project helm/src
 cd helm/src && uv run pytest tests/ -v --tb=short
-# helm unittest suites per project README / step 3 layout
+# Helm unittest: see docs/implementation-specs/README.md and examples/with-scrapers + helm/tests/
 ```
 
 ## 5. Staged execution (TDD; tests in each stage, not deferred)
@@ -189,7 +196,7 @@ cd helm/src && uv run pytest tests/ -v --tb=short
 
 **Promote:** delta spec → `openspec/specs/`, archive change per workflow; traceability matrix + test comments.
 
-**Green when:** `./ci.sh` (or documented CI-equivalent) and traceability script **0**.
+**Green when:** **Local CI** parity per repository **[README.md](../../README.md)** (Python, Helm, ADRs) and **`.github/workflows/ci.yml`** pass; **`python3 scripts/check_spec_traceability.py`** exits **0**.
 
 ## 6. Acceptance checklist
 
@@ -205,7 +212,8 @@ cd helm/src && uv run pytest tests/ -v --tb=short
 
 ```bash
 python3 scripts/check_spec_traceability.py
+uv sync --all-groups --project helm/src
 cd helm/src && uv run pytest tests/ -v --tb=short
-# Helm: follow README / CI for helm unittest paths under helm/tests/
+# Helm: docs/implementation-specs/README.md and .github/workflows/ci.yml
 ```
 `````

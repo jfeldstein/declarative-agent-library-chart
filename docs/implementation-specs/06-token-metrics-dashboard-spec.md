@@ -5,11 +5,12 @@
 
 ## 0. Context (read first)
 
-- **Linear checklist:** Step **6** in `docs/openspec-implementation-order.md` — **Prometheus** token / cost / streaming health metrics on the existing agent **`/metrics`** scrape path, plus a **Grafana** dashboard and docs; keep paths and naming aligned with **step 2** ([`02-consolidate-naming-spec.md`](02-consolidate-naming-spec.md): starter dashboard **`grafana/dalc-overview.json`**, **`agent:`** parent values, chart **`charts/declarative-agent-library-chart/`**) and **step 5** ([`05-observability-automatic-enabled-components-spec.md`](05-observability-automatic-enabled-components-spec.md): **[DALC-REQ-O11Y-LOGS-003]** optional panels, **[DALC-REQ-O11Y-LOGS-005]** generic scrape guidance — do not imply fixed optional target counts).
+- **Linear checklist:** Step **6** in `docs/openspec-implementation-order.md` — **Prometheus** token / cost / streaming health metrics on the existing agent **`/metrics`** scrape path, plus a **Grafana** dashboard and docs; keep paths and naming aligned with **step 2** ([`02-consolidate-naming-spec.md`](02-consolidate-naming-spec.md): **`agent:`** parent values; vendored library unpack path **`charts/declarative-agent-library/`** in example charts after `helm dependency build` — see [`README.md`](README.md)) and **step 5** ([`05-observability-automatic-enabled-components-spec.md`](05-observability-automatic-enabled-components-spec.md): **[DALC-REQ-O11Y-LOGS-003]** optional panels; **[DALC-REQ-O11Y-LOGS-005]** generic README scrape guidance on the **promoted** spec — do not imply fixed optional target counts).
+- **Canonical commands** (pytest, helm unittest, traceability): [`docs/implementation-specs/README.md`](README.md).
 - **Coordination:** `docs/openspec-implementation-order.md` notes steps **5** and **6** can swap if Grafana ownership is serialized; avoid parallel PRs that both rewrite **`grafana/README.md`** / dashboard set without agreement.
 - **Authoritative change bundle:** `openspec/changes/token-metrics-dashboard/` — `proposal.md`, `design.md`, `tasks.md`, delta specs under `specs/*/spec.md`.
-- **Naming hygiene:** Proposal/tasks may say **`cfha-*`**; promoted capability folders are **`dalc-runtime-token-metrics`** and **`dalc-agent-o11y-logs-dashboards`**. New dashboard file: prefer **`grafana/dalc-token-metrics.json`** (not `cfha-token-metrics.json` / not `dalc-agent-overview.json`).
-- **ID collision (must fix before promotion):** Delta `openspec/changes/token-metrics-dashboard/specs/dalc-agent-o11y-logs-dashboards/spec.md` labels an ADDED requirement **`[DALC-REQ-O11Y-LOGS-005]`**, but promoted `openspec/specs/dalc-agent-o11y-logs-dashboards/spec.md` already defines **005** for README scrape targets. **Rename** the token-dashboard requirement to the next free ID (e.g. **`[DALC-REQ-O11Y-LOGS-006]`**) in the delta + matrix + tests **before** merge, per **ADR 0003** / **DALC-VER-005**.
+- **Naming hygiene:** Proposal/tasks may say **`cfha-*`**; promoted capability folders are **`dalc-runtime-token-metrics`** and **`dalc-agent-o11y-logs-dashboards`**. **As of this repo (main):** committed starter dashboard is **`grafana/dalc-agent-overview.json`**. **Target (after consolidate-naming / this step):** **`grafana/dalc-overview.json`** (rename) and a **new** distinct **`grafana/dalc-token-metrics.json`** for token metrics — not `cfha-token-metrics.json`.
+- **ID collision (must fix before promotion — already documented in delta/tasks):** The token-metrics **delta** once labeled an ADDED Grafana block **`[DALC-REQ-O11Y-LOGS-005]`**, which **collides** with **promoted** **`openspec/specs/dalc-agent-o11y-logs-dashboards/spec.md`**, where **005** is already **README scrape targets**. **Resolution:** keep **005** = scrape guidance; **rename the token-dashboard file obligation** to the next free ID (**`[DALC-REQ-O11Y-LOGS-006]`**) everywhere (delta, **`docs/spec-test-traceability.md`**, test/helm comments) **before** merge, per **ADR 0003** / **DALC-VER-005**. Until renamed, do not cite “005” for the new token dashboard JSON.
 
 ## 1. Goal
 
@@ -22,9 +23,9 @@
 
 ## 2. Entities and interfaces
 
-### 2.1 Prometheus metrics module (`helm/src/hosted_agents/metrics.py`)
+### 2.1 Prometheus metrics module (`helm/src/hosted_agents/metrics.py`) — **target (after step 6)**
 
-Extend existing pattern (`Counter` / `Histogram`, `agent_runtime_*` prefix, `observe_*` helpers):
+The collectors and helpers below are the **intended contract** for this step; **do not** assume they already exist in **`metrics.py`** until implemented. Extend the existing pattern (`Counter` / `Histogram`, `agent_runtime_*` prefix, `observe_*` helpers):
 
 ```python
 from prometheus_client import Counter, Histogram
@@ -111,7 +112,7 @@ class LlmPricingConfig:
 }
 ```
 
-**Contract:** Distinct path from **`grafana/dalc-overview.json`**; import documented in **`grafana/README.md`** (renamed token-dashboard requirement ID after collision fix, e.g. **[DALC-REQ-O11Y-LOGS-006]**).
+**Contract:** Distinct path from the **starter** dashboard (**`grafana/dalc-agent-overview.json`** today; **target** name **`grafana/dalc-overview.json`** after naming work); import documented in **`grafana/README.md`**. Cite the **renamed** token-dashboard requirement ID after the **005/006** collision fix (e.g. **[DALC-REQ-O11Y-LOGS-006]**), not **005**.
 
 ## 3. Normative specs
 
@@ -157,7 +158,8 @@ class LlmPricingConfig:
 | HELP | **`/metrics`** or registry export: HELP substrings for each new family match **provider-reported** / **estimate** semantics (**[DALC-REQ-TOKEN-MET-006]**). |
 
 ```bash
-cd helm/src && uv sync --all-groups && uv run pytest tests/ -v --tb=short
+uv sync --all-groups --project helm/src
+cd helm/src && uv run pytest tests/ -v --tb=short
 ```
 
 Add requirement ID strings to **docstrings** of tests used as matrix evidence (**DALC-VER-005**).
@@ -216,14 +218,17 @@ Import **`grafana/dalc-token-metrics.json`** per **`grafana/README.md`**; panels
 
 - [ ] All **`[DALC-REQ-TOKEN-MET-001]`**–**`[006]`** behaviors evidenced by pytest (or waived per maintainer process — not default).
 - [ ] **`grafana/dalc-token-metrics.json`** exists; PromQL uses real **`agent_runtime_*`** names from spec.
-- [ ] **`grafana/README.md`** documents import path + Prometheus datasource assumption; consistent with **[DALC-REQ-O11Y-LOGS-003]** / **[DALC-REQ-O11Y-LOGS-005]** (scrape guidance remains generic).
+- [ ] **`grafana/README.md`** documents import path + Prometheus datasource assumption; consistent with **[DALC-REQ-O11Y-LOGS-003]** and **[DALC-REQ-O11Y-LOGS-005]** (generic scrape guidance). Token dashboard file obligation uses **[DALC-REQ-O11Y-LOGS-006]** (or agreed non-colliding ID), not **005**.
 - [ ] No high-cardinality labels; no raw prompts/bodies in metrics.
 - [ ] Token-dashboard requirement uses **non-colliding** ID vs promoted **005**.
 - [ ] **`python3 scripts/check_spec_traceability.py`** passes.
 
 ## 7. Commands summary
 
+See [`README.md`](README.md) for the full canonical snippets. Abbreviated:
+
 ```bash
+uv sync --all-groups --project helm/src
 cd helm/src && uv run pytest tests/ -v --tb=short
 python3 scripts/check_spec_traceability.py
 # Optional: full example helm unittest loop from docs/implementation-specs/03-*.md if Helm touched
