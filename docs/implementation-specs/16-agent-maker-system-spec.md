@@ -11,9 +11,9 @@
 - **Authoritative change bundle:** `openspec/changes/agent-maker-system/` — `proposal.md`, `design.md`, `tasks.md`, `.openspec.yaml`, and delta specs under `specs/*/spec.md`.
 - **In-scope capabilities (implement):** **`agent-prefix-convention`** (operator-facing policy), **`agent-maker-bot`** (constrained NL → validated **GitHub PR**).
 - **Deferred / reference-only (do not implement as part of step 16):**
-  - `openspec/changes/agent-maker-system/specs/subagent-reference-system/spec.md` — owned by **`openspec/changes/subagent-reference-system`** when that change is activated (**proposal.md** §3).
-  - `openspec/changes/agent-maker-system/specs/code-committed-evals/spec.md` — eval suites, W&B sync, versioning: **consume** **`agent-checkpointing-wandb-feedback`** (and successors); **no parallel eval semantics** in agent-maker (**proposal.md** §4, **design.md** goals).
-  - **`ci-delta-flagging`** — **`openspec/changes/ci-delta-flagging`** stub (**proposal.md** §5).
+  - `openspec/changes/agent-maker-system/specs/subagent-reference-system/spec.md` — owned by **`openspec/changes/subagent-reference-system`** when that change is activated (**`openspec/changes/agent-maker-system/proposal.md`** numbered list item **3**).
+  - `openspec/changes/agent-maker-system/specs/code-committed-evals/spec.md` — eval suites, W&B sync, versioning: **consume** **`agent-checkpointing-wandb-feedback`** (and successors); **no parallel eval semantics** in agent-maker (**`proposal.md`** item **4**, **design.md** goals).
+  - **`ci-delta-flagging`** — **`openspec/changes/ci-delta-flagging`** stub (**`proposal.md`** item **5**).
 - **Scope reconciliation:** **`specs/agent-prefix-convention/spec.md`** currently states **CI SHALL** validate `#agent-` prefixes broadly and **linters SHALL** enforce. **`design.md` / `tasks.md` Slice 1** call for **operator documentation** first. **v1 SHALL** satisfy **tasks.md** (doc + cross-link). **Full-repo CI/linter prefix enforcement** is **out of v1** unless a maintainer explicitly expands scope—if you add checks, keep them **narrow** (e.g. documented paths or examples only) and avoid breaking unrelated trees.
 - **Removed product scope:** **shadow** rollout / twin execution — **no** integration in agent-maker (**proposal.md**).
 - **Traceability:** When promoting normative **SHALL** rows to `openspec/specs/*/spec.md`, assign stable **`[DALC-REQ-…]`** / **`[DALC-VER-…]`** per **`openspec/specs/dalc-requirement-verification/spec.md`**, **ADR 0003**, **AGENTS.md** (**DALC-VER-005**); update **`docs/spec-test-traceability.md`**; cite IDs in **pytest** docstrings and/or **helm unittest `#`** comments; **`python3 scripts/check_spec_traceability.py`** exit **0**.
@@ -124,7 +124,7 @@ agentMaker:
 ### 2.5 File placement (suggested — align with repo layout in PR)
 
 ```text
-runtime/src/hosted_agents/agent_maker/   # or sibling package — match existing hosted_agents patterns
+helm/src/hosted_agents/agent_maker/   # or sibling package — match existing hosted_agents patterns
 helm/chart/templates/…                   # only if Slice 3 requires rendered resources
 docs/operator/agent-prefix-convention.md # or path chosen with maintainers
 ```
@@ -163,7 +163,7 @@ Until **`[DALC-REQ-…]`** rows exist on promoted specs, use **test docstrings**
 
 **Rule:** Add **failing tests first** for each behavior row, then implementation. Test-writing is **not** a separate stage from code.
 
-### 4.1 Pytest (`runtime/tests/` or `helm/src/tests/` — follow existing CI layout for new code)
+### 4.1 Pytest (`helm/src/tests/`)
 
 | Intent | Assertion |
 |--------|------------|
@@ -175,10 +175,11 @@ Until **`[DALC-REQ-…]`** rows exist on promoted specs, use **test docstrings**
 | **GitHub client** | Mock **`GitHubPullRequestClient`**: correct branch name, file map keys stable, **title/body** include agent summary; **no** `Authorization` string in logs/captured replies. |
 | **Telegram handler** | Mock transport: **one** pipeline invocation per message; dedupe **message_id** optional (**document** if skipped in v1). |
 
-**Invocation (adjust path if code lives under `helm/src`):**
+**Invocation** (canonical — see root **`README.md`** *Local CI*; run from **repository root**):
 
 ```bash
-cd runtime && uv sync --all-groups && uv run pytest tests/ -v --tb=short
+uv sync --all-groups --project helm/src
+(cd helm/src && uv run pytest tests/ -v --tb=short --cov-report=term-missing)
 ```
 
 ### 4.2 Helm unittest (`helm/tests/`)
@@ -225,8 +226,9 @@ python3 scripts/check_spec_traceability.py
 ## 7. Commands summary
 
 ```bash
-cd runtime && uv run pytest tests/ -v --tb=short
-cd examples/<example> && helm dependency build --skip-refresh && helm unittest -f "../../helm/tests/<suite>.yaml" .
+uv sync --all-groups --project helm/src
+(cd helm/src && uv run pytest tests/ -v --tb=short --cov-report=term-missing)
+(cd examples/<example> && helm dependency build --skip-refresh && helm unittest -f "../../helm/tests/<suite>.yaml" .)
 python3 scripts/check_spec_traceability.py
 ```
 

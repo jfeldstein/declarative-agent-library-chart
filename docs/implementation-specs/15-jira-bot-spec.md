@@ -16,7 +16,7 @@
 
 1. **`jira-trigger`:** HTTP route (or documented ingress path) accepts Jira webhook JSON; **verify** per topology; map accepted payload → **`TriggerBody`** (or equivalent) + **`run_trigger_graph`** with **issue key**, **project key**, **event type**, **plain text** for **`TriggerBody.message`**, **stable issue URL** when available (**`[DALC-REQ-JIRA-TRIGGER-001]`**).
 2. **`jira-tools`:** Allowlisted **`tools_impl`** tools for bounded **search/read**, **comment**, **transition**, **scoped create/update`** per configured scopes (**`[DALC-REQ-JIRA-TOOLS-003]`**, **`[DALC-REQ-JIRA-TOOLS-004]`**); structured errors, 429 backoff / bounded batches on tools path (`design.md`).
-3. **Helm / values:** Extend **`values.schema.json`** / **`values.yaml`** (or documented subtrees) for trigger + tools; reconcile draft **`tools.jira`** in chart when implementing (**`tasks.md` 1.2**); **secrets only** via **`secretKeyRef`** — never ConfigMap literals for tokens.
+3. **Helm / values:** Extend **`values.schema.json`** / **`values.yaml`** (or documented subtrees) for trigger + tools; reconcile any draft **`tools.jira`** (or equivalent) called out in **`tasks.md`** / **`design.md`** when implementing (**`tasks.md` 1.2**). **Forward-looking:** the chart **does not** ship a **`tools.jira`** subtree today — sketches below use **`jiraTools`** / **`jiraTrigger`**-style keys until a maintainer aligns naming; treat **`tools.jira`** as **planned**, not present. **Secrets only** via **`secretKeyRef`** — never ConfigMap literals for tokens.
 4. **Observability:** Correlation + side-effect checkpoint patterns for real Jira calls (**`[DALC-REQ-JIRA-TOOLS-006]`**); trigger + tools paths **never** log signing secrets / **`Authorization`** / tokens or put them on metric labels (**`[DALC-REQ-JIRA-TRIGGER-005]`**, **`[DALC-REQ-JIRA-TOOLS-006]`**).
 5. **CI / docs:** Unit tests for verification, mapping, REST tool paths; operator docs for webhook setup + required OAuth/scopes vs scraper CronJob (**`tasks.md`**).
 
@@ -101,9 +101,11 @@ def jira_create_issue(client: httpx.Client, project_key: str, fields: dict[str, 
 ```python
 # hosted_agents.tools_impl.dispatch — conceptual
 
-def invoke_tool(tool_id: str, arguments: dict[str, Any]) -> dict[str, Any]: ...
+def invoke_tool(tool: str, arguments: dict[str, Any]) -> dict[str, Any]: ...
 """Route allowlisted jira.* tool ids; no /v1/embed in default configuration ([DALC-REQ-JIRA-TOOLS-001])."""
 ```
+
+**Naming:** The first parameter is the **tool id** (string), e.g. `jira.search_issues`. Some modules or docs call the same value **`tool_id`**; **`tool`** vs **`tool_id`** here is **one** conceptual argument — do not assume two different fields.
 
 ### 2.3 Helm / env (disjoint keys — exact names TBD; must satisfy 004 / 002)
 
@@ -221,8 +223,8 @@ python3 scripts/check_spec_traceability.py
 2. **Trigger: verification + rejection paths** — pytest for **003**, **005**; FastAPI route behind feature flag.
 3. **Trigger: payload mapping + `run_trigger_graph`** — pytest for **001**, **002**.
 4. **Tools: settings + `httpx` factory** — pytest for **005**, **006** partial; simulation default (**001**).
-5. **Tools: allowlisted REST operations + dispatch** — pytest for **003**, **004**, **006**; register tools + **`tools_impl/README.md`** (**tasks.md` 3.3**).
-6. **Observability + side-effect checkpoints** — extend tests for **TOOLS-006** / correlation (**tasks.md` 3.4**).
+5. **Tools: allowlisted REST operations + dispatch** — pytest for **003**, **004**, **006**; register tools + **`tools_impl/README.md`** (**tasks.md**, slice **3.3**).
+6. **Observability + side-effect checkpoints** — extend tests for **TOOLS-006** / correlation (**tasks.md**, slice **3.4**).
 7. **OpenSpec promotion** — merge deltas into **`openspec/specs/`** when workflow requires; matrix + **`#`** / docstring IDs; **`check_spec_traceability.py`** **0**.
 
 ## 6. Acceptance checklist
