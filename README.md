@@ -6,6 +6,31 @@
 
 This repo is a **Helm library chart** (`helm/chart/`). Add it as a dependency in `Chart.yaml`, and add your config in `values.yaml`.
 
+## Example
+
+Chart.yaml:
+
+```yaml
+dependencies:
+  - name: declarative-agent-library
+    version: 0.1.0
+    repository: https://github.com/jfeldstein/declarative-agent-library-chart
+```
+
+values.yaml:
+
+```yaml
+declarative-agent-library:
+  systemPrompt: |
+    Respond, "Hello :wave:"
+  presence:
+    slackBotId:
+      secretName: slack-bot-token
+      secretKey: token
+```
+
+Create a Slack bot, deploy the chart, and @-tag your bot on slack.
+
 ## Architecture
 
 ```
