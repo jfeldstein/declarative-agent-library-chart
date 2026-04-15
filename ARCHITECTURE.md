@@ -77,9 +77,9 @@ Optional **NodePort** is supported via `service.type` and `service.nodePort`.
 Promoted requirements: [dalc-agent-o11y-scrape](openspec/specs/dalc-agent-o11y-scrape/spec.md), [dalc-agent-o11y-logs-dashboards](openspec/specs/dalc-agent-o11y-logs-dashboards/spec.md).
 
 - **Metrics:** The runtime exposes **`GET /metrics`** (Prometheus text format) on the agent HTTP port. Histogram/counter names for `POST /api/v1/trigger` are specified in [DALC-REQ-O11Y-SCRAPE-002](openspec/specs/dalc-agent-o11y-scrape/spec.md). When RAG is deployed, the RAG process also exposes `/metrics` on the RAG HTTP port.
-- **Scrape discovery:** `o11y.prometheusAnnotations.enabled` toggles `prometheus.io/scrape`, `port`, and `path` on **agent** and **RAG** (and scraper pods use a documented metrics side port). A single switch applies to all chart-managed scrape targets ([DALC-REQ-O11Y-SCRAPE-004](openspec/specs/dalc-agent-o11y-scrape/spec.md)).
-- **Prometheus Operator:** `o11y.serviceMonitor.enabled` renders `ServiceMonitor` resources for the agent Service and, when RAG is deployed, the RAG Service ([DALC-REQ-O11Y-SCRAPE-005](openspec/specs/dalc-agent-o11y-scrape/spec.md)).
-- **Structured logs:** `o11y.structuredLogs.json` sets `HOSTED_AGENT_LOG_FORMAT=json` so the agent emits JSON lines to stdout ([DALC-REQ-O11Y-LOGS-001](openspec/specs/dalc-agent-o11y-logs-dashboards/spec.md)). Request handling ties into correlation IDs for triggers ([DALC-REQ-O11Y-LOGS-002](openspec/specs/dalc-agent-o11y-logs-dashboards/spec.md)).
+- **Scrape discovery:** `observability.prometheusAnnotations.enabled` toggles `prometheus.io/scrape`, `port`, and `path` on **agent** and **RAG** (and scraper pods use a documented metrics side port). A single switch applies to all chart-managed scrape targets ([DALC-REQ-O11Y-SCRAPE-004](openspec/specs/dalc-agent-o11y-scrape/spec.md)).
+- **Prometheus Operator:** `observability.serviceMonitor.enabled` renders `ServiceMonitor` resources for the agent Service and, when RAG is deployed, the RAG Service ([DALC-REQ-O11Y-SCRAPE-005](openspec/specs/dalc-agent-o11y-scrape/spec.md)).
+- **Structured logs:** `observability.structuredLogs.json` sets `HOSTED_AGENT_LOG_FORMAT=json` so the agent emits JSON lines to stdout ([DALC-REQ-O11Y-LOGS-001](openspec/specs/dalc-agent-o11y-logs-dashboards/spec.md)). Request handling ties into correlation IDs for triggers ([DALC-REQ-O11Y-LOGS-002](openspec/specs/dalc-agent-o11y-logs-dashboards/spec.md)).
 - **Dashboards:** The repo includes Grafana JSON (see spec [DALC-REQ-O11Y-LOGS-003](openspec/specs/dalc-agent-o11y-logs-dashboards/spec.md)) under `grafana/` for operator import.
 
 ### W&B tracing and extended observability
@@ -98,7 +98,7 @@ These are **runtime** concerns; the chart’s role is to pass consistent env and
 - **Configuration:** `scrapers.jira` and `scrapers.slack` each expose `enabled`, shared auth/site settings, `defaults`, and a `jobs` list (`schedule`, `source`, and source-specific fields). Non-secret fields render into a per-job `ConfigMap` (`job.json`).
 - **Dispatch:** `templates/scraper-cronjobs.yaml` runs `jira_job` or `slack_job` only; unknown `source` values fail at runtime (process exit non-zero).
 - **Environment:** Each job receives `RAG_SERVICE_URL` (cluster-internal base URL to the managed RAG Service), `SCRAPER_NAME`, `SCRAPER_SCOPE`, and metrics bind settings (`SCRAPER_METRICS_ADDR`, grace period).
-- **Metrics:** Scraper pods expose Prometheus metrics on port **9091** (separate from the agent’s `/metrics` on the main HTTP port), with optional scrape annotations when `o11y.prometheusAnnotations.enabled` is true.
+- **Metrics:** Scraper pods expose Prometheus metrics on port **9091** (separate from the agent’s `/metrics` on the main HTTP port), with optional scrape annotations when `observability.prometheusAnnotations.enabled` is true.
 
 Scrapers exist to **feed** the managed RAG service (embed/ingest); they are not the agent’s synchronous request path.
 
@@ -143,8 +143,10 @@ Tool invocation paths also include direct **`tool`** / **`tool_arguments`** on t
 | `chatModel` | `HOSTED_AGENT_CHAT_MODEL` |
 | `subagents`, `skills`, `mcp.enabledTools` | `HOSTED_AGENT_*_JSON` |
 | RAG deployed (helper) | `HOSTED_AGENT_RAG_BASE_URL` |
-| `o11y.structuredLogs.json` | `HOSTED_AGENT_LOG_FORMAT=json` |
-| `observability.*` | W&B, checkpoints, Slack, ATIF, shadow, label registry env + ConfigMap |
+| `observability.structuredLogs.json` | `HOSTED_AGENT_LOG_FORMAT=json` |
+| `observability.*` (Helm) | Prometheus scrape annotations, optional `ServiceMonitor`, structured JSON logs |
+| `checkpoints.*`, `wandb.*` | Checkpoint + W&B env vars |
+| `scrapers.slack.feedback.*` | Slack reaction feedback + `label-registry.json` / `HOSTED_AGENT_LABEL_REGISTRY_JSON` |
 | `extraEnv` | Additional passthrough env on agent container |
 
 Scraper jobs use `RAG_SERVICE_URL` (same internal base URL pattern as the chart helper) rather than the agent’s `HOSTED_AGENT_RAG_BASE_URL`.

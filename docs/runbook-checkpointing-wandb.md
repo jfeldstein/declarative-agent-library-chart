@@ -1,6 +1,6 @@
-# Runbook: checkpoints, Slack feedback, W&B, ATIF export, shadow
+# Runbook: checkpoints, Slack feedback, and W&B
 
-This runbook covers the **runtime** feature flags added for OpenSpec change `agent-checkpointing-wandb-feedback`: durable LangGraph checkpoints, Slack reaction correlation, optional Weights & Biases traces, ATIF-shaped exports, and shadow rollout hooks.
+This runbook covers the **runtime** feature flags for durable LangGraph checkpoints, Slack reaction correlation, and optional Weights & Biases traces (see OpenSpec change `agent-checkpointing-wandb-feedback`). **ATIF export** and **shadow rollout** Helm/runtime surfaces were removed; use `extraEnv` on a fork if you still need those env toggles.
 
 ## Thread and checkpoint identifiers
 
@@ -36,15 +36,14 @@ Set **`HOSTED_AGENT_USE_PGLITE=1`** to start an embedded [PGlite](https://pglite
 - `GET /api/v1/runtime/threads/{thread_id}/side-effects` — logical checkpoints around visible side effects (Slack posts).
 - `POST /api/v1/integrations/slack/reactions` — normalized reaction payload (`channel_id`, `message_ts`, `reaction`, `event_id`, `user_id`).
 - `GET /api/v1/runtime/feedback/human` — recorded human feedback events (process-local store in default build).
-- `GET /api/v1/runtime/exports/atif?run_id=...` — **ATIF v1.4** trajectory JSON (Harbor Agent Trajectory Format; see [ADR 0004](adrs/0004-pin-atif-v1-4-trajectory-export.md) and [Harbor ATIF docs](https://www.harborframework.com/docs/agents/trajectory-format)); requires `HOSTED_AGENT_ATIF_EXPORT_ENABLED`. Optional env: `HOSTED_AGENT_ATIF_AGENT_NAME`, `HOSTED_AGENT_ATIF_AGENT_VERSION`, `HOSTED_AGENT_ATIF_MODEL_NAME`.
 
 ## Secrets, retention, rollback, PII
 
 - **Secrets:** store `WANDB_API_KEY`, Slack tokens, and database URLs in Kubernetes Secrets; reference them from the Deployment (not committed to values).
 - **Retention:** checkpoint and trajectory retention are deployment-specific; the default in-memory stores reset on restart.
 - **Rollback:** disable feature flags (`HOSTED_AGENT_CHECKPOINTS_ENABLED`, `HOSTED_AGENT_WANDB_ENABLED`, `HOSTED_AGENT_SLACK_FEEDBACK_ENABLED`, etc.) via Helm values; the runtime remains compatible with older clients.
-- **PII:** enable redaction in export paths (`export_atif_batch` redacts common secret key names); extend blocklists before sending data to W&B or external training stores.
+- **PII:** scrub prompts, tokens, and user identifiers before sending data to W&B or external stores; keep W&B tags low-cardinality per `docs/observability.md`.
 
 ## Helm values (short)
 
-See `helm/chart/values.yaml` → `observability.*` for toggles that map to the env vars above. **`observability.postgresUrl`** sets **`HOSTED_AGENT_POSTGRES_URL`**. Optional `observability.labelRegistry` overrides the default global label registry JSON.
+See `helm/chart/values.yaml` → top-level **`checkpoints`**, **`wandb`**, and **`scrapers.slack.feedback`** for toggles that map to the env vars above. **`checkpoints.postgresUrl`** sets **`HOSTED_AGENT_POSTGRES_URL`**. Optional **`scrapers.slack.feedback.labelRegistry`** overrides the default global feedback label registry JSON (`HOSTED_AGENT_LABEL_REGISTRY_JSON`).

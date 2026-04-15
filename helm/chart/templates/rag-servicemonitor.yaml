@@ -1,4 +1,4 @@
-{{- if and (include "declarative-agent-library.ragDeployed" .) .Values.o11y.serviceMonitor.enabled }}
+{{- if and (include "declarative-agent-library.ragDeployed" .) .Values.observability.serviceMonitor.enabled }}
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
@@ -6,7 +6,7 @@ metadata:
   labels:
     {{- include "declarative-agent-library.labels" . | nindent 4 }}
     app.kubernetes.io/component: rag
-    {{- with .Values.o11y.serviceMonitor.extraLabels }}
+    {{- with .Values.observability.serviceMonitor.extraLabels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
@@ -19,6 +19,6 @@ spec:
   endpoints:
     - port: http
       path: /metrics
-      interval: {{ .Values.o11y.serviceMonitor.interval | quote }}
-      scrapeTimeout: {{ .Values.o11y.serviceMonitor.scrapeTimeout | quote }}
+      interval: {{ .Values.observability.serviceMonitor.interval | quote }}
+      scrapeTimeout: {{ .Values.observability.serviceMonitor.scrapeTimeout | quote }}
 {{- end }}

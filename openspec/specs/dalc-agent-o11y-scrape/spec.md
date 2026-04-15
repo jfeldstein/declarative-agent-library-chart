@@ -44,21 +44,21 @@ When this deployment integrates **tools**, **subagents**, and/or **skills** as s
 
 ### Requirement: [DALC-REQ-O11Y-SCRAPE-004] Helm values control scrape discovery
 
-The Helm library chart SHALL expose **values** that allow operators to enable **Prometheus discovery metadata** on **each chart-managed workload that exposes a `/metrics` endpoint** via a **single** operator-controlled switch under **`o11y.prometheusAnnotations`** (for example **`prometheus.io/scrape`**, **`prometheus.io/port`**, **`prometheus.io/path`**), without editing templates manually. **Initially**, the chart documents at least the **agent** deployment and, **when deployed**, the **managed RAG HTTP service** and **scraper CronJob** pods as metrics endpoints; additional workloads SHALL follow the same pattern when added. The feature SHALL default to **disabled** so existing releases remain unchanged until opted in. The chart SHALL NOT define a separate per-workload values flag (such as `rag.prometheusAnnotations.enabled`) solely to enable annotations on one optional workload.
+The Helm library chart SHALL expose **values** that allow operators to enable **Prometheus discovery metadata** on **each chart-managed workload that exposes a `/metrics` endpoint** via a **single** operator-controlled switch under **`observability.prometheusAnnotations`** (for example **`prometheus.io/scrape`**, **`prometheus.io/port`**, **`prometheus.io/path`**), without editing templates manually. **Initially**, the chart documents at least the **agent** deployment and, **when deployed**, the **managed RAG HTTP service** and **scraper CronJob** pods as metrics endpoints; additional workloads SHALL follow the same pattern when added. The feature SHALL default to **disabled** so existing releases remain unchanged until opted in. The chart SHALL NOT define a separate per-workload values flag (such as `rag.prometheusAnnotations.enabled`) solely to enable annotations on one optional workload.
 
 #### Scenario: Operator enables annotation-based scrape
 
-- **WHEN** an operator sets **`o11y.prometheusAnnotations.enabled`** to enable Prometheus annotations
+- **WHEN** an operator sets **`observability.prometheusAnnotations.enabled`** to enable Prometheus annotations
 - **THEN** rendered manifests SHALL include the annotations on the **agent** Pod template and/or **agent** Service as documented, with **port** and **path** consistent with the agent **`/metrics`** endpoint
 
 #### Scenario: Optional metrics services inherit the same annotation policy when deployed
 
-- **WHEN** **`o11y.prometheusAnnotations.enabled`** is true and the chart deploys an optional metrics-exporting workload documented for scrape (for example the **managed RAG HTTP service** when the scraper gate is satisfied)
+- **WHEN** **`observability.prometheusAnnotations.enabled`** is true and the chart deploys an optional metrics-exporting workload documented for scrape (for example the **managed RAG HTTP service** when the scraper gate is satisfied)
 - **THEN** rendered manifests SHALL include the same class of Prometheus scrape annotations on that workload’s Pod template and/or **Service** with **port** and **path** consistent with its **`/metrics`** endpoint on the documented HTTP port
 
 #### Scenario: Optional metrics workload not deployed
 
-- **WHEN** **`o11y.prometheusAnnotations.enabled`** is true and a given optional metrics workload is **not** deployed (for example RAG not deployed because no scraper jobs enable it)
+- **WHEN** **`observability.prometheusAnnotations.enabled`** is true and a given optional metrics workload is **not** deployed (for example RAG not deployed because no scraper jobs enable it)
 - **THEN** rendered manifests SHALL **not** include scrape annotations for that absent workload’s Services or Pods
 
 ### Requirement: [DALC-REQ-O11Y-SCRAPE-005] Optional ServiceMonitor for Prometheus Operator
@@ -79,3 +79,12 @@ When a documented values flag requests a **`ServiceMonitor`**, the chart SHALL r
 
 - **WHEN** an operator enables the ServiceMonitor values and a given optional metrics **`Service`** is **not** deployed (for example no scraper-gated RAG)
 - **THEN** `helm template` (or install) SHALL **not** produce a `ServiceMonitor` for that absent workload
+
+### Requirement: [DALC-REQ-O11Y-SCRAPE-006] Helm values for structured JSON logs
+
+The Helm library chart SHALL expose a boolean **`observability.structuredLogs.json`** that, when **true**, configures the agent container so structured **JSON** logs are emitted per **`dalc-agent-o11y-logs-dashboards`**. When **false** or unset, the chart SHALL NOT force JSON log format via that values key.
+
+#### Scenario: Operator enables JSON logs via values
+
+- **WHEN** an operator sets **`observability.structuredLogs.json`** to **true**
+- **THEN** rendered manifests SHALL set **`HOSTED_AGENT_LOG_FORMAT`** to **`json`** on the agent container (or an equivalent documented mechanism achieving the same effect)

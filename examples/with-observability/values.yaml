@@ -2,7 +2,7 @@
 # See docs/observability.md and grafana/README.md.
 #
 # RAG is deployed when ``scrapers.jira`` or ``scrapers.slack`` has at least one enabled
-# job (parent ``enabled: true``); RAG Prometheus annotations follow o11y.prometheusAnnotations.
+# job (parent ``enabled: true``); RAG Prometheus annotations follow observability.prometheusAnnotations.
 declarative-agent-library:
   systemPrompt: |
     Respond, "Hello :wave:"
@@ -10,7 +10,7 @@ declarative-agent-library:
     repository: config-first-hosted-agents
     tag: local
     pullPolicy: Never
-  o11y:
+  observability:
     prometheusAnnotations:
       enabled: true
     structuredLogs:

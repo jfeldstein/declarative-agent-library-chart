@@ -7,15 +7,15 @@
 Starter dashboard for the **Declarative Agent Library** runtime (import one dashboard):
 
 - **Agent** (port 8088): rate of `agent_runtime_http_trigger_requests_total` by `result`; p95 latency from `agent_runtime_http_trigger_duration_seconds`
-- **Optional rows** (see section titles in the JSON): when the chart deploys additional metrics endpoints, matching panels apply—for example **managed RAG HTTP** (embed/query rates on the RAG Service port, default **8090** when scraper jobs enable RAG) and **scraper CronJob** metrics (`agent_runtime_scraper_*` on port **9091** when `o11y.prometheusAnnotations.enabled`)
+- **Optional rows** (see section titles in the JSON): when the chart deploys additional metrics endpoints, matching panels apply—for example **managed RAG HTTP** (embed/query rates on the RAG Service port, default **8090** when scraper jobs enable RAG) and **scraper CronJob** metrics (`agent_runtime_scraper_*` on port **9091** when `observability.prometheusAnnotations.enabled`)
 
 The dashboard groups optional workloads under **row** headings so agent-only deployments stay readable; empty series for absent components are expected.
 
 ### Prometheus scrape alignment
 
-Configure Prometheus (or the Prometheus Operator) so **every `Service` / workload that exports `/metrics` in your release** is scraped—for example by installing the chart’s optional **`ServiceMonitor`** resources under `o11y.serviceMonitor`, or by adding **static scrape jobs** that mirror those endpoints. The number of targets **depends on values**: at minimum the agent; additional targets appear when optional components (RAG, annotated scraper pods, etc.) are enabled and deployed. Do **not** assume a fixed count of targets across all installs.
+Configure Prometheus (or the Prometheus Operator) so **every `Service` / workload that exports `/metrics` in your release** is scraped—for example by installing the chart’s optional **`ServiceMonitor`** resources under `observability.serviceMonitor`, or by adding **static scrape jobs** that mirror those endpoints. The number of targets **depends on values**: at minimum the agent; additional targets appear when optional components (RAG, annotated scraper pods, etc.) are enabled and deployed. Do **not** assume a fixed count of targets across all installs.
 
-See **`docs/observability.md`**, **`examples/with-observability/`** (RAG + scraper enabled), and **`examples/with-observability/values-o11y-no-rag.yaml`** (o11y without RAG) for concrete value shapes.
+See **`docs/observability.md`**, **`examples/with-observability/`** (RAG + scraper enabled), and **`examples/with-observability/values-observability-no-rag.yaml`** (Kubernetes observability without RAG) for concrete value shapes.
 
 ### Import
 

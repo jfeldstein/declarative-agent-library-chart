@@ -25,6 +25,13 @@ This section aligns with **`openspec/changes/agent-checkpointing-wandb-feedback`
 
 **`GET /api/v1/runtime/summary`** → **`observability`**: `checkpoint_store`, **`feature_flags`** (`checkpoints_enabled`, `slack_feedback_enabled`), **`wandb.tracing_ready`**, and **`wandb.mandatory_run_tag_keys`**.
 
+### Helm value paths (library subchart)
+
+- **`checkpoints.*`**: `postgresUrl` → `HOSTED_AGENT_POSTGRES_URL`; `enabled` / `backend` → LangGraph checkpoint env vars.
+- **`wandb.*`**: maps to `HOSTED_AGENT_WANDB_ENABLED`, `WANDB_PROJECT`, and `WANDB_ENTITY` when enabled.
+- **`scrapers.slack.feedback.*`**: `enabled` and `emojiLabelMap` configure reaction ingestion (`HOSTED_AGENT_SLACK_FEEDBACK_ENABLED`, `HOSTED_AGENT_SLACK_EMOJI_LABEL_MAP_JSON`). **`labelRegistry`** is the **human feedback label taxonomy** (ConfigMap `label-registry.json` → **`HOSTED_AGENT_LABEL_REGISTRY_JSON`**); it is **not** Kubernetes or Prometheus label metadata.
+- **`observability.*`**: cluster scrape hints only—`prometheus.io/*` annotations, optional **`ServiceMonitor`**, and **`structuredLogs.json`** → `HOSTED_AGENT_LOG_FORMAT=json`.
+
 **Thread APIs** (when `HOSTED_AGENT_CHECKPOINT_STORE` ≠ `none`):
 
 - **`GET /api/v1/trigger/threads/{thread_id}/state`**
@@ -43,8 +50,6 @@ This section aligns with **`openspec/changes/agent-checkpointing-wandb-feedback`
 | `model_id` | From config, bounded. |
 | `prompt_hash` | Hash or sentinel, not raw prompt text. |
 | `thread_id` | Stable conversation/run id. |
-
-**Shadow**-related W&B tags (`rollout_arm`, `shadow_variant_id`) may appear when runtime shadow configuration is enabled; there is **no** separate OpenSpec change documenting shadow behavior in this repo.
 
 ## Metrics (Prometheus)
 
@@ -67,7 +72,7 @@ This is separate from Uvicorn’s own access logs; it applies to the structured 
 | `HOSTED_AGENT_LOG_FORMAT` | `console` (default), `json` | See above. |
 
 
-Helm: set `o11y.structuredLogs.json: true` under the `declarative-agent-library` subchart to inject `HOSTED_AGENT_LOG_FORMAT=json`.
+Helm: set `observability.structuredLogs.json: true` under the `declarative-agent-library` subchart to inject `HOSTED_AGENT_LOG_FORMAT=json`.
 
 ### Metric names (agent process)
 
@@ -88,15 +93,15 @@ Helm: set `o11y.structuredLogs.json: true` under the `declarative-agent-library`
 
 ### Kubernetes scrape discovery (Helm)
 
-Under `declarative-agent-library.o11y`:
+Under `declarative-agent-library.observability` (Kubernetes scrape and log format only; checkpoints, W&B, and Slack feedback use other top-level keys—see `helm/chart/values.yaml`):
 
-- `**prometheusAnnotations.enabled`**: adds `prometheus.io/scrape`, `prometheus.io/port`, `prometheus.io/path` to the agent **Pod** and **Service** (for scrapers that honor these annotations).
-- `**serviceMonitor.enabled`**: renders a `**monitoring.coreos.com/v1` `ServiceMonitor`** selecting the agent `Service` on port `**http**`, path `**/metrics**`. Requires the **Prometheus Operator** CRDs in the cluster.
+- `**observability.prometheusAnnotations.enabled`**: adds `prometheus.io/scrape`, `prometheus.io/port`, `prometheus.io/path` to the agent **Pod** and **Service** (for scrapers that honor these annotations).
+- `**observability.serviceMonitor.enabled`**: renders a `**monitoring.coreos.com/v1` `ServiceMonitor`** selecting the agent `Service` on port `**http**`, path `**/metrics**`. Requires the **Prometheus Operator** CRDs in the cluster.
 
 When the chart deploys the **managed RAG** workload (at least one enabled job under `**scrapers.jira**` or `**scrapers.slack**`; see [DALC-REQ-RAG-SCRAPERS-002](../openspec/specs/dalc-rag-from-scrapers/spec.md)):
 
-- `**o11y.prometheusAnnotations.enabled**`: the **same** annotation triad as the agent is applied to the **RAG** Pod and **RAG** Service (port from `**scrapers.ragService.service.port`**, default **8090**). There is no separate RAG-only scrape flag.
-- `**o11y.serviceMonitor.enabled`**: also renders a second `**ServiceMonitor`** (`metadata.name` suffix `**-rag**`) selecting the RAG Service, path `**/metrics**`, same interval / timeout / `**extraLabels**` as the agent monitor so Prometheus Operator selectors (e.g. `release: prometheus`) pick up **both** targets.
+- `**observability.prometheusAnnotations.enabled**`: the **same** annotation triad as the agent is applied to the **RAG** Pod and **RAG** Service (port from `**scrapers.ragService.service.port`**, default **8090**). There is no separate RAG-only scrape flag.
+- `**observability.serviceMonitor.enabled`**: also renders a second `**ServiceMonitor`** (`metadata.name` suffix `**-rag**`) selecting the RAG Service, path `**/metrics**`, same interval / timeout / `**extraLabels**` as the agent monitor so Prometheus Operator selectors (e.g. `release: prometheus`) pick up **both** targets.
 
 Worked example chart: `**examples/with-observability/`** (enables an enabled scraper job so **RAG** is present, **agent + RAG** annotations, and **two** `ServiceMonitor` resources when the Operator is present).
 
@@ -129,7 +134,7 @@ The **RAG** HTTP server (separate Deployment when an enabled scraper job exists;
 | `agent_runtime_rag_query_duration_seconds` | `result`             | Query latency            |
 
 
-Helm: set `**o11y.prometheusAnnotations.enabled: true**` under `declarative-agent-library` to add `prometheus.io/*` hints on **both** agent and RAG Service/Pod when RAG is deployed (RAG port from `**scrapers.ragService.service.port`**).
+Helm: set `**observability.prometheusAnnotations.enabled: true**` under `declarative-agent-library` to add `prometheus.io/*` hints on **both** agent and RAG Service/Pod when RAG is deployed (RAG port from `**scrapers.ragService.service.port`**).
 
 ### Subagent roles (agent process)
 
@@ -157,7 +162,7 @@ Every enabled scraper container listens on **`SCRAPER_METRICS_ADDR`** (Helm sets
 
 **`SCRAPER_METRICS_ADDR`** accepts **`host:port`** or IPv6 **`[addr]:port`** (for example **`[::]:9091`**).
 
-When **`o11y.prometheusAnnotations.enabled`** is true, the chart adds **`prometheus.io/*`** annotations on **all** scraper Job pods (port **9091**, path **`/metrics`**).
+When **`observability.prometheusAnnotations.enabled`** is true, the chart adds **`prometheus.io/*`** annotations on **all** scraper Job pods (port **9091**, path **`/metrics`**).
 
 ## Integration test (kind + Prometheus)
 
@@ -165,7 +170,7 @@ End-to-end check that `**examples/with-observability`** deploys to **kind** (age
 
 - `**agent_runtime_http_trigger_requests_total`** after several `POST /api/v1/trigger` calls, and  
 - `**agent_runtime_rag_embed_requests_total`** / `**agent_runtime_rag_query_requests_total**` after `POST /v1/embed` and `POST /v1/query` on RAG.
-- **Script:** `[helm/src/tests/scripts/integration_kind_o11y_prometheus.sh](../helm/src/tests/scripts/integration_kind_o11y_prometheus.sh)` — installs Prometheus with **two** static scrape jobs (`cfha-agent-metrics`, `cfha-rag-metrics`); disables **ServiceMonitor** on the release (`--set declarative-agent-library.o11y.serviceMonitor.enabled=false`) so **Prometheus Operator CRDs** are not required.
+- **Script:** `[helm/src/tests/scripts/integration_kind_o11y_prometheus.sh](../helm/src/tests/scripts/integration_kind_o11y_prometheus.sh)` — installs Prometheus with **two** static scrape jobs (`cfha-agent-metrics`, `cfha-rag-metrics`); disables **ServiceMonitor** on the release (`--set declarative-agent-library.observability.serviceMonitor.enabled=false`) so **Prometheus Operator CRDs** are not required.
 - **Prometheus values template:** `[helm/src/tests/scripts/prometheus-kind-o11y-values.yaml](../helm/src/tests/scripts/prometheus-kind-o11y-values.yaml)` — placeholders `**@SCRAPE_TARGET_AGENT@`** (`…declarative-agent-library…:8088`) and `**@SCRAPE_TARGET_RAG@`** (`…declarative-agent-library-rag…:8090`).
 - **Pytest wrapper (opt-in):** `RUN_KIND_O11Y_INTEGRATION=1 pytest tests/integration/test_kind_o11y_prometheus.py -v --no-cov` from `helm/src/` (avoids coverage floor when only this test runs).
 

@@ -1,11 +1,11 @@
-# Traceability: [DALC-REQ-HELM-UNITTEST-001] [DALC-REQ-HELM-UNITTEST-002]
+# Traceability: [DALC-REQ-HELM-UNITTEST-001] [DALC-REQ-HELM-UNITTEST-002] [DALC-REQ-CHART-RTV-001]
 values:
   - ../../examples/checkpointing/values.yaml
 suite: checkpointing example enables LangGraph checkpoints (memory)
 release:
   name: cfha-ci-checkpointing
 tests:
-  - it: agent Deployment sets checkpoint env from observability.checkpoints
+  - it: agent Deployment sets checkpoint env from checkpoints [DALC-REQ-CHART-RTV-001]
     template: charts/declarative-agent-library/templates/deployment.yaml
     asserts:
       - hasDocuments:

@@ -31,7 +31,7 @@ The system SHALL use the official [helm-unittest](https://github.com/helm-unitte
 
 #### Scenario: with-observability does not render ServiceMonitor for an optional metrics workload that is disabled
 
-- **WHEN** helm-unittest runs against `examples/with-observability` with **`o11y.serviceMonitor.enabled`** true (or equivalent) but values **do not** deploy a given optional metrics **`Service`** (for example RAG not deployed)
+- **WHEN** helm-unittest runs against `examples/with-observability` with **`observability.serviceMonitor.enabled`** true (or equivalent) but values **do not** deploy a given optional metrics **`Service`** (for example RAG not deployed)
 - **THEN** the rendered output SHALL include **no** `ServiceMonitor` document from that optional workload’s chart template
 
 ### Requirement: [DALC-REQ-HELM-UNITTEST-002] Library chart is covered by unittest where applicable

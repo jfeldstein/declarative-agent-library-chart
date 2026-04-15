@@ -160,6 +160,21 @@
               }
             },
             "defaults": { "type": "object" },
+            "feedback": {
+              "type": "object",
+              "description": "Slack reaction → human feedback labels; maps to HOSTED_AGENT_SLACK_* and HOSTED_AGENT_LABEL_REGISTRY_JSON. Traceability: [DALC-REQ-CHART-RTV-003]",
+              "properties": {
+                "enabled": { "type": "boolean" },
+                "emojiLabelMap": {
+                  "type": "object",
+                  "additionalProperties": { "type": "string" }
+                },
+                "labelRegistry": {
+                  "type": "object",
+                  "description": "Feedback label taxonomy JSON for HOSTED_AGENT_LABEL_REGISTRY_JSON (not Kubernetes labels)"
+                }
+              }
+            },
             "jobs": {
               "type": "array",
               "items": {
@@ -222,9 +237,9 @@
         }
       }
     },
-    "o11y": {
+    "observability": {
       "type": "object",
-      "description": "Prometheus discovery annotations, JSON logs, optional ServiceMonitor (Prometheus Operator CRD)",
+      "description": "Kubernetes/Prometheus: scrape annotations, JSON logs, optional ServiceMonitor (Prometheus Operator CRD). Traceability: [DALC-REQ-O11Y-SCRAPE-004] [DALC-REQ-O11Y-SCRAPE-005] [DALC-REQ-O11Y-SCRAPE-006]",
       "properties": {
         "prometheusAnnotations": {
           "type": "object",
@@ -247,6 +262,24 @@
             "extraLabels": { "type": "object" }
           }
         }
+      }
+    },
+    "checkpoints": {
+      "type": "object",
+      "description": "LangGraph checkpoint store; maps to HOSTED_AGENT_POSTGRES_URL (optional) and checkpoint env. Traceability: [DALC-REQ-CHART-RTV-001]",
+      "properties": {
+        "postgresUrl": { "type": "string" },
+        "enabled": { "type": "boolean" },
+        "backend": { "type": "string" }
+      }
+    },
+    "wandb": {
+      "type": "object",
+      "description": "Weights & Biases tracing toggles. Traceability: [DALC-REQ-CHART-RTV-002]",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "project": { "type": "string" },
+        "entity": { "type": "string" }
       }
     },
     "extraEnv": {

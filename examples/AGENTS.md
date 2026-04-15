@@ -15,7 +15,7 @@ Guidance for assistants and maintainers working under **`examples/`**.
 ## Keep `hello-world` minimal
 
 - **hello-world** should stay the smallest copy-paste starting point: image + `systemPrompt` (+ whatever the docs promise as “minimal”).
-- **Do not** add optional feature demos (o11y, RAG, scrapers, etc.) to hello-world’s default `values.yaml` just to show a capability.
+- **Do not** add optional feature demos (Kubernetes observability values, RAG, scrapers, etc.) to hello-world’s default `values.yaml` just to show a capability.
 - For new capabilities, add **`examples/<short-name>/`** with its own `Chart.yaml`, `values.yaml`, and committed **`Chart.lock`**, and document it in [README.md](README.md).
 - **with-scrapers** is the place for RAG + scraper `CronJob` defaults (validated by [`.github/workflows/ci.yml`](../.github/workflows/ci.yml)); keep **hello-world** free of scraper/RAG demos in `values.yaml`.
 

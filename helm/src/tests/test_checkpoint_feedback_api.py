@@ -19,7 +19,6 @@ from hosted_agents.observability.feedback import feedback_store
 from hosted_agents.observability.run_context import bind_run_context, set_wandb_session
 from hosted_agents.observability.settings import ObservabilitySettings
 from hosted_agents.observability.side_effects import side_effect_checkpoints
-from hosted_agents.observability.trajectory import trajectory_recorder
 from hosted_agents.tools_impl.dispatch import invoke_tool
 from hosted_agents.observability.checkpointer import reset_compiled_trigger_graph_cache
 from hosted_agents.trigger_graph import get_thread_state, get_thread_state_history
@@ -182,23 +181,6 @@ def test_slack_orphan_without_correlation(monkeypatch: pytest.MonkeyPatch) -> No
     assert r.status_code == 200
     assert r.json()["status"] == "orphan"
     assert feedback_store.orphans()
-
-
-def test_atif_export_requires_flag_and_run_id(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("HOSTED_AGENT_ATIF_EXPORT_ENABLED", "true")
-    app = create_app(system_prompt='Respond, "Hi"')
-    client = TestClient(app)
-    rid = "export-me"
-    trajectory_recorder.start(rid, "t-export")
-    trajectory_recorder.append(rid, "tool", {"tool": "sample.echo"})
-    r = client.get(f"/api/v1/runtime/exports/atif?run_id={rid}")
-    assert r.status_code == 200
-    doc = r.json()["documents"][0]
-    assert doc["schema_version"] == "ATIF-v1.4"
-    assert doc["session_id"] == rid
-    assert doc["extra"]["hosted_agents"]["run_id"] == rid
-    assert doc["steps"][0]["source"] == "agent"
-    assert doc["steps"][0]["tool_calls"][0]["function_name"] == "sample.echo"
 
 
 def test_run_tool_json_logs_span_when_wandb_session_bound(

@@ -27,11 +27,11 @@ fullnameOverride: ""
 
 # Optional extra environment variables on the agent container (checkpoint store, W&B, etc.).
 # Example: [{ name: HOSTED_AGENT_CHECKPOINT_STORE, value: "none" }]
-# observability.postgresUrl → HOSTED_AGENT_POSTGRES_URL on the agent container.
+# checkpoints.postgresUrl → HOSTED_AGENT_POSTGRES_URL on the agent container.
 extraEnv: []
 
-# Observability: Prometheus scrape hints (off by default) and optional ServiceMonitor
-o11y:
+# Kubernetes / Prometheus: scrape annotations, optional ServiceMonitor, structured JSON logs.
+observability:
   prometheusAnnotations:
     enabled: false
   structuredLogs:
@@ -42,6 +42,18 @@ o11y:
     interval: 30s
     scrapeTimeout: 10s
     extraLabels: {}
+
+# LangGraph checkpoint store (maps to HOSTED_AGENT_CHECKPOINT_* when enabled).
+checkpoints:
+  postgresUrl: ""
+  enabled: false
+  backend: memory
+
+# Weights & Biases tracing (maps to HOSTED_AGENT_WANDB_* and WANDB_* when enabled).
+wandb:
+  enabled: false
+  project: ""
+  entity: ""
 
 # Traceability: [DALC-REQ-RAG-SCRAPERS-003] (RAG tunables under ``scrapers.ragService``).
 # Scheduled scrapers: ``scrapers.jira`` and ``scrapers.slack`` each have ``enabled``, ``jobs[]``.
@@ -70,6 +82,11 @@ scrapers:
       userTokenSecretKey: token
     defaults: {}
     jobs: []
+    # Human feedback from Slack reactions (emoji map + label taxonomy for HOSTED_AGENT_LABEL_REGISTRY_JSON).
+    feedback:
+      enabled: false
+      emojiLabelMap: {}
+      labelRegistry: {}
   ragService:
     replicaCount: 1
     service:
@@ -86,26 +103,3 @@ skills: []
 # MCP-style tool allowlist (JSON array of tool ids → HOSTED_AGENT_ENABLED_MCP_TOOLS_JSON)
 mcp:
   enabledTools: []
-
-# Checkpointing, W&B, Slack feedback, ATIF export, shadow rollouts (runtime env). See docs/runbook-checkpointing-wandb.md.
-observability:
-  # Single DSN → HOSTED_AGENT_POSTGRES_URL (checkpoint + observability Postgres when both use one DB).
-  postgresUrl: ""
-  checkpoints:
-    enabled: false
-    backend: memory
-  wandb:
-    enabled: false
-    project: ""
-    entity: ""
-  slackFeedback:
-    enabled: false
-    emojiLabelMap: {}
-  atifExport:
-    enabled: false
-  shadow:
-    enabled: false
-    sampleRate: 0
-    allowTenants: []
-    variantJson: ""
-  labelRegistry: {}
