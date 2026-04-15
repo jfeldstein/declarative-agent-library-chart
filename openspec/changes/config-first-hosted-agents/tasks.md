@@ -1,7 +1,7 @@
 ## 1. Project scaffold
 
 - [x] 1.1 Create the repository root with `README.md` describing Helm library chart vs examples, kind prerequisite, and the `curl` acceptance command.
-- [x] 1.2 Add `helm/chart/Chart.yaml` (**`type: library`**) and `helm/chart/templates/` with a Service + workload that targets host port **8088** (NodePort or documented `kubectl port-forward` / Skaffold port mapping that yields `127.0.0.1:8088`).
+- [ ] 1.2 Add `helm/chart/Chart.yaml` (**`type: library`**) and `helm/chart/templates/` with a Service + workload that targets host port **8088** (NodePort or documented `kubectl port-forward` / Skaffold port mapping that yields `127.0.0.1:8088`).
 - [x] 1.3 Add `helm/src/` with a minimal HTTP server implementing **`POST /api/v1/trigger`** that reads `system-prompt` from env/ConfigMap and returns a response body matching hello-world behavior (e.g. greeting with **Hello** and wave). *(Runtime source: `helm/src/hosted_agents/`; `helm/src/README.md` documents mapping.)*
 - [x] 1.4 Add container build artifacts (e.g. `helm/Dockerfile`; build from repository root) and wire image repo/tag via Helm values with sensible defaults for local dev.
 

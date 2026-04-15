@@ -5,15 +5,15 @@
 
 ## 2. Configuration and Slack fetch
 
-- [x] 2.1 Implement parsing + validation for **`SLACK_SCRAPER_SEARCHES_JSON`** (and optional file-based path if included) per **`design.md`**; reject invalid lists with actionable stderr messages.
-- [x] 2.2 Implement **`WebClient`**-based executors for **`search.messages`** and **`conversations.history`** (as scoped for v1), including pagination caps and documented per-run limits.
-- [x] 2.3 Normalize selected Slack messages into RAG **`items[]`** entries with deterministic **`entity_id`** / **`metadata`** keys (team, channel, `ts`, thread root, permalink) and optional **`relationships`** when thread parent is known.
+- [ ] 2.1 Implement parsing + validation for **`SLACK_SCRAPER_SEARCHES_JSON`** (and optional file-based path if included) per **`design.md`**; reject invalid lists with actionable stderr messages.
+- [ ] 2.2 Implement **`WebClient`**-based executors for **`search.messages`** and **`conversations.history`** (as scoped for v1), including pagination caps and documented per-run limits.
+- [ ] 2.3 Normalize selected Slack messages into RAG **`items[]`** entries with deterministic **`entity_id`** / **`metadata`** keys (team, channel, `ts`, thread root, permalink) and optional **`relationships`** when thread parent is known.
 
 ## 3. RAG ingest, dedupe, and metrics
 
-- [x] 3.1 Post **`POST {RAG_SERVICE_URL}/v1/embed`** batches (respecting documented payload size limits) and wire **`observe_rag_embed_attempt`** / **`observe_scraper_run`** with bounded **`SCRAPER_INTEGRATION`** (default **`slack`**).
+- [ ] 3.1 Post **`POST {RAG_SERVICE_URL}/v1/embed`** batches (respecting documented payload size limits) and wire **`observe_rag_embed_attempt`** / **`observe_scraper_run`** with bounded **`SCRAPER_INTEGRATION`** (default **`slack`**).
 - [x] 3.2 Implement documented **“new or updated”** selection for v1 (minimum: deterministic ids + documented re-embed/upsert behavior); if cross-run persistence is required after RAG inspection, add the smallest durable watermark store and document operator RBAC needs.
-- [x] 3.3 Ensure **no secrets** in logs or metric labels; add unit tests for redaction / label boundedness where applicable.
+- [ ] 3.3 Ensure **no secrets** in logs or metric labels; add unit tests for redaction / label boundedness where applicable.
 
 ## 4. Helm and operator docs
 

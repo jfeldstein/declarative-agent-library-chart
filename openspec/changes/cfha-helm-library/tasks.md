@@ -1,7 +1,7 @@
 ## 1. Rename layout and chart metadata
 
 - [x] 1.1 Rename `template/` to `helm/` (preserve `chart/`, `src/`, `tests/` structure).
-- [x] 1.2 In `helm/chart/Chart.yaml`, set `type: library` and update `description` so it describes a reusable library chart (not a standalone install).
+- [ ] 1.2 In `helm/chart/Chart.yaml`, set `type: library` and update `description` so it describes a reusable library chart (not a standalone install).
 - [x] 1.3 Regenerate or hand-edit `helm/chart` artifacts if Helm warns (for example `values.schema.json` or comments referencing "application" only where inaccurate).
 
 ## 2. Application example and lockfile

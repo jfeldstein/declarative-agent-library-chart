@@ -10,21 +10,21 @@
 
 ## 2. Configuration schema and documentation
 
-- [x] 2.1 Extend Helm **`values.schema.json`** (or equivalent) with sections for **`rag`**, **`scrapers`**, **`tools`/`mcp`**, **`subagents`**, and **`skills`**, including enable flags and per-type settings.
+- [ ] 2.1 Extend Helm **`values.schema.json`** (or equivalent) with sections for **`rag`**, **`scrapers`**, **`tools`/`mcp`**, **`subagents`**, and **`skills`**, including enable flags and per-type settings.
 - [x] 2.2 Document in README or operator docs how each section maps to the five runtime components and cross-link LangChain [Subagents](https://docs.langchain.com/oss/python/langchain/multi-agent/subagents) and [Skills](https://docs.langchain.com/oss/python/langchain/multi-agent/skills) for behavioral alignment.
 
 ## 3. Scheduled scrapers
 
 - [x] 3.1 Add Kubernetes **`CronJob`** (or equivalent) templates parameterized by values for enabled scrapers, schedules, and credentials references.
 - [x] 3.2 Implement at least one reference scraper type end-to-end (fetch → normalize → **`/embed`**) and stub or feature-flag additional integration types (Slack, Google Docs, JIRA) per design.
-- [x] 3.3 Verify disabled scrapers do not create jobs and enabled scrapers run on schedule in a test cluster.
+- [ ] 3.3 Verify disabled scrapers do not create jobs and enabled scrapers run on schedule in a test cluster.
 - [x] 3.4 Instrument scraper processes with **`agent_runtime_scraper_runs_total`**, **`agent_runtime_scraper_run_duration_seconds`**, and **`agent_runtime_scraper_rag_submissions_total`** per **`runtime-scrapers`**.
 
 ## 4. MCP tools from modules
 
 - [x] 4.1 Establish a module layout and packaging pattern for tool implementations with MCP manifest or code-first registration.
 - [x] 4.2 Wire agent runtime to connect only to MCP servers/tools listed in values for that deployment.
-- [x] 4.3 Add one sample tool module and an automated check that the enabled subset matches values (lint or snapshot test).
+- [ ] 4.3 Add one sample tool module and an automated check that the enabled subset matches values (lint or snapshot test).
 - [x] 4.4 Register **`agent_runtime_mcp_tool_calls_total`** and **`agent_runtime_mcp_tool_duration_seconds`** on the agent (or MCP bridge) per **`runtime-tools-mcp`**.
 
 ## 5. Subagents
@@ -38,11 +38,11 @@
 
 - [x] 6.1 Implement a skill catalog loaded from configuration (name → prompt source, optional tool bindings).
 - [x] 6.2 Expose a **load skill** mechanism to the agent (tool or equivalent) that applies progressive disclosure per **`runtime-skills`** spec.
-- [x] 6.3 If dynamic tool registration is in scope, implement load/unload semantics and test that tools gated by a skill are not advertised until load.
+- [ ] 6.3 If dynamic tool registration is in scope, implement load/unload semantics and test that tools gated by a skill are not advertised until load.
 - [x] 6.4 Register **`agent_runtime_skill_loads_total`** and **`agent_runtime_skill_load_duration_seconds`** per **`runtime-skills`**.
 
 ## 7. Verification
 
 - [x] 7.1 Run **`helm lint`** / **`helm template`** on the affected chart(s) after values schema updates.
-- [x] 7.2 Trace one full path: scraper → **`/embed`** → agent **`/query`** → answer, and one path: MCP tool invocation from an enabled tool module.
-- [x] 7.3 Document **`agent_runtime_*`** metric names and label conventions for operators (cross-link change **`agent-centralized-o11y`** dashboard guidance where applicable).
+- [ ] 7.2 Trace one full path: scraper → **`/embed`** → agent **`/query`** → answer, and one path: MCP tool invocation from an enabled tool module.
+- [ ] 7.3 Document **`agent_runtime_*`** metric names and label conventions for operators (cross-link change **`agent-centralized-o11y`** dashboard guidance where applicable).

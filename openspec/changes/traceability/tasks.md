@@ -8,7 +8,7 @@
 
 - [x] 2.1 Create **`docs/spec-test-traceability.md`** (or path chosen in design) with columns **ID | Spec | Evidence | CI tier**, and populate **one row per** promoted requirement ID.
 - [x] 2.2 Add requirement ID references to **pytest** tests under **`helm/src/tests/`** (docstrings) for rows that claim Python evidence.
-- [x] 2.3 Add requirement ID references to **helm unittest** YAML under **`examples/*/tests/`** where those tests evidence chart **SHALL** clauses.
+- [x] 2.3 Add requirement ID references to **helm unittest** YAML under **`helm/tests/`** where those tests evidence chart **SHALL** clauses.
 
 ## 3. CI traceability gate
 
@@ -29,4 +29,4 @@
 ## 6. Verification
 
 - [x] 6.1 Run **local CI parity** (README: uv + Helm + ADR check) or rely on **`.github/workflows/ci.yml`** on PRs; fix any traceability or test drift until green.
-- [x] 6.2 Run **`openspec validate traceability`** (or project equivalent) if available, and resolve validation issues.
+- [x] 6.2 Run **`python3 scripts/check_spec_traceability.py`** (project equivalent to **`openspec validate traceability`**) and resolve validation issues.

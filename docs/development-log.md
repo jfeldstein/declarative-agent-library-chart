@@ -6,6 +6,10 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ---
 
+## 2026-04-15
+
+**OpenSpec task checkbox audit** — Spawned read-only subagents per active change to compare each **`tasks.md`** line to the tree; ran **`uv run pytest`** (**helm/src**, 101 passed), **`python3 scripts/check_spec_traceability.py`**, **`helm unittest`** for all **`examples/*/`**, and **`ct lint --all`**. Updated checkboxes (and a few stale task paths) in **`openspec/changes/*/tasks.md`**: e.g. **`consolidate-helm-tests`** and **`observability-automatic-enabled-components`** marked complete; **`cfha-helm-library`** / **`config-first-hosted-agents`** **1.2** open (**`Chart.yaml`** still **`type: application`**); **`slack-scraper`** / **`jira-scraper`** partial unchecks where implementation diverges from task text; **`agent-checkpointing-wandb-feedback`** and **`agent-runtime-components`** unchecks where specs overshoot code; **`traceability`** / **`dalc-traceability-migration`** wording aligned to **`helm/tests/`** and **`check_spec_traceability.py`**.
+
 ## 2026-04-14
 
 **Operational-event persistence removed** — Dropped the **`RunOperationalEvent`** / in-memory ops stream, shadow-schedule logging in **`run_trigger_graph`**, and the **“Operational signals storage”** SHALL from **`openspec/changes/postgres-agent-persistence`**. Postgres persistence OpenSpec and tasks now cover correlation, human feedback, side-effects, and span summaries only; **`agent-checkpointing-wandb-feedback`** tasks **7.3–7.4** removed accordingly.
