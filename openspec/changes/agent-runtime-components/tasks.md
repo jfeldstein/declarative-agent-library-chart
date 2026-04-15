@@ -1,8 +1,8 @@
 ## 1. RAG HTTP service
 
-- [x] 1.1 Define request/response schemas for **`POST /embed`** and **`POST /query`** (including error shapes and limits) and document them beside the service.
+- [x] 1.1 Define request/response schemas for **`POST /v1/embed`** and **`POST /v1/query`** (including error shapes and limits) and document them beside the service (**`docs/rag-http-api.md`**; versioned paths, not unversioned **`/embed`** / **`/query`** only).
 - [x] 1.2 Implement the RAG HTTP service with a backing embedding pipeline and vector store, deployable alongside existing agent charts.
-- [x] 1.3 Add health checks and a minimal integration test or smoke script that embeds a fixture document and retrieves it via **`/query`**.
+- [x] 1.3 Add health checks and a minimal integration test or smoke script that embeds a fixture document and retrieves it via **`/v1/query`**.
 - [x] 1.4 Specify **entity id**, **entity type**, and **edge** (source, target, relationship type) in the HTTP API (extensions to **`/embed`** and/or dedicated upsert endpoints) and document scopes/namespaces.
 - [x] 1.5 Implement persistence and **relationship-aware** **`/query`** behavior (neighbor expansion and/or graph constrained retrieval) per **`runtime-rag-http`**.
 - [x] 1.6 Extend the smoke test to ingest two linked entities and assert the query response exposes the **relationship** (ids and type) per spec.
@@ -10,21 +10,21 @@
 
 ## 2. Configuration schema and documentation
 
-- [ ] 2.1 Extend Helm **`values.schema.json`** (or equivalent) with sections for **`rag`**, **`scrapers`**, **`tools`/`mcp`**, **`subagents`**, and **`skills`**, including enable flags and per-type settings.
+- [ ] 2.1 Extend Helm **`values.schema.json`** with tunables for **RAG** (under **`scrapers.ragService`** and related **`scrapers`/`scrapers.jobs`** shapes—**no** separate top-level **`rag:`** key), plus **`scrapers`**, **`tools`/`mcp`**, **`subagents`**, and **`skills`**. *(Checkbox stays open until a maintainer explicitly accepts “RAG under **`scrapers`**” as satisfying this task or promotes a spec rename.)*
 - [x] 2.2 Document in README or operator docs how each section maps to the five runtime components and cross-link LangChain [Subagents](https://docs.langchain.com/oss/python/langchain/multi-agent/subagents) and [Skills](https://docs.langchain.com/oss/python/langchain/multi-agent/skills) for behavioral alignment.
 
 ## 3. Scheduled scrapers
 
 - [x] 3.1 Add Kubernetes **`CronJob`** (or equivalent) templates parameterized by values for enabled scrapers, schedules, and credentials references.
-- [x] 3.2 Implement at least one reference scraper type end-to-end (fetch → normalize → **`/embed`**) and stub or feature-flag additional integration types (Slack, Google Docs, JIRA) per design.
-- [ ] 3.3 Verify disabled scrapers do not create jobs and enabled scrapers run on schedule in a test cluster.
+- [x] 3.2 Implement at least one scraper type end-to-end (fetch → normalize → **`POST /v1/embed`**) and additional integrations (**Jira**, **Slack**) per **`scrapers.jobs`**; there is **no** separate **`reference`** scraper type in the chart anymore.
+- [ ] 3.3 **Helm:** assert disabled scrapers omit CronJobs; enabled scrapers render CronJobs with expected schedules (**`helm unittest`** / CI). **Runtime:** Cron firing on a live cluster remains a manual or opt-in integration check (not default PR CI).
 - [x] 3.4 Instrument scraper processes with **`agent_runtime_scraper_runs_total`**, **`agent_runtime_scraper_run_duration_seconds`**, and **`agent_runtime_scraper_rag_submissions_total`** per **`runtime-scrapers`**.
 
 ## 4. MCP tools from modules
 
 - [x] 4.1 Establish a module layout and packaging pattern for tool implementations with MCP manifest or code-first registration.
 - [x] 4.2 Wire agent runtime to connect only to MCP servers/tools listed in values for that deployment.
-- [ ] 4.3 Add one sample tool module and an automated check that the enabled subset matches values (lint or snapshot test).
+- [ ] 4.3 **`sample.echo`** is the sample tool module. **Still open:** automated lint/snapshot proving Helm **`mcp.enabledTools`** ⊆ registered tool ids in **`dispatch.py`**.
 - [x] 4.4 Register **`agent_runtime_mcp_tool_calls_total`** and **`agent_runtime_mcp_tool_duration_seconds`** on the agent (or MCP bridge) per **`runtime-tools-mcp`**.
 
 ## 5. Subagents
@@ -38,11 +38,11 @@
 
 - [x] 6.1 Implement a skill catalog loaded from configuration (name → prompt source, optional tool bindings).
 - [x] 6.2 Expose a **load skill** mechanism to the agent (tool or equivalent) that applies progressive disclosure per **`runtime-skills`** spec.
-- [ ] 6.3 If dynamic tool registration is in scope, implement load/unload semantics and test that tools gated by a skill are not advertised until load.
+- [ ] 6.3 **Load:** **`load_skill`** unlocks tools per catalog (**`test_skill_load_unlocks_tool`**). **Unload / operator-visible reload cycle** for skill-bound tools is not fully implemented (test-only **`reset_skill_unlocked_tools`**); checkbox open until unload semantics ship.
 - [x] 6.4 Register **`agent_runtime_skill_loads_total`** and **`agent_runtime_skill_load_duration_seconds`** per **`runtime-skills`**.
 
 ## 7. Verification
 
 - [x] 7.1 Run **`helm lint`** / **`helm template`** on the affected chart(s) after values schema updates.
-- [ ] 7.2 Trace one full path: scraper → **`/embed`** → agent **`/query`** → answer, and one path: MCP tool invocation from an enabled tool module.
-- [ ] 7.3 Document **`agent_runtime_*`** metric names and label conventions for operators (cross-link change **`agent-centralized-o11y`** dashboard guidance where applicable).
+- [ ] 7.2 **Today:** separate automated tests cover scraper → **`/v1/embed`**, RAG **`/v1/query`**, **`POST /api/v1/trigger`**, and MCP tool calls—not necessarily one continuous integration test spanning all hops. Checkbox open if you require a single stitched E2E.
+- [ ] 7.3 Document **`agent_runtime_*`** metric names and label conventions in **`docs/observability.md`** and link **`grafana/dalc-agent-overview.json`** / **`grafana/README.md`**. *(Older OpenSpec change **`agent-centralized-o11y`** lives under **`openspec/changes/archive/`**; cite current DALC paths, not that folder name, when updating this task.)*
