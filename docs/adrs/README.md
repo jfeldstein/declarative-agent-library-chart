@@ -9,7 +9,7 @@ Use zero-padded sequence plus a short **kebab-case** slug:
 `NNNN-short-title.md`
 
 - **`0000-topic.md`** is the boilerplate to copy when adding a new ADR (see heading instructions inside that file).
-- Numbered decisions start at **0001** and increase (for example `0001-use-python-for-runtime.md` through `0012-ci-parity-as-merge-gate.md`).
+- Numbered decisions start at **0001** and increase (for example `0001-use-python-for-runtime.md` through `0013-core-architectural-shape-iac-agent-scaffolding.md`).
 
 The number increments for each new decision; do not reuse numbers. Superseded ADRs stay in place; add a **Supersedes** / **Superseded by** note in the affected files.
 
@@ -33,3 +33,4 @@ New ADRs can follow the structure in `0001-use-python-for-runtime.md` (Context, 
 - **0010 — [Trigger contract](0010-trigger-contract-standard.md)** — `POST /api/v1/trigger` and inbound `*-trigger` bridges vs scrapers/tools.
 - **0011 — [Prometheus metrics schema and cardinality](0011-prometheus-metrics-schema-and-cardinality.md)** — naming, labels, scraper registry separation.
 - **0012 — [CI parity as merge gate](0012-ci-parity-as-merge-gate.md)** — local parity with `.github/workflows/ci.yml`.
+- **0013 — [Core architectural shape: IaC, agent, scaffolding](0013-core-architectural-shape-iac-agent-scaffolding.md)** — taxonomy: IaC vs agent vs non-agentic scaffolding; observability first-class; tool layers; trigger vs tool.
