@@ -1,5 +1,12 @@
-{{/* One CronJob per enabled scraper job; secrets via env (Secret refs), config via mounted ConfigMap. Traceability: [DALC-REQ-RAG-SCRAPERS-002] */}}
+{{/* One CronJob per enabled scraper job; secrets via env (Secret refs), config via mounted ConfigMap. Traceability: [DALC-REQ-RAG-SCRAPERS-002] [DALC-REQ-SCRAPER-CURSOR-003] [DALC-REQ-SCRAPER-CURSOR-004] */}}
 {{- $root := . }}
+{{- $cursorBackend := default "file" $root.Values.scrapers.cursorStore.backend }}
+{{- $cursorStoreSecretName := default "" $root.Values.scrapers.cursorStore.postgresUrlSecretName }}
+{{- $cursorStoreSecretKey := default "url" $root.Values.scrapers.cursorStore.postgresUrlSecretKey }}
+{{- $hasScraperJobs := or (and $root.Values.scrapers.jira.enabled $root.Values.scrapers.jira.jobs) (and $root.Values.scrapers.slack.enabled $root.Values.scrapers.slack.jobs) }}
+{{- if and (eq $cursorBackend "postgres") $hasScraperJobs (not $cursorStoreSecretName) (not $root.Values.checkpoints.postgresUrl) }}
+{{- fail "scrapers.cursorStore.backend=postgres requires scrapers.cursorStore.postgresUrlSecretName or checkpoints.postgresUrl (shared DSN for HOSTED_AGENT_POSTGRES_URL)" }}
+{{- end }}
 {{- if and $root.Values.scrapers.jira.enabled $root.Values.scrapers.jira.jobs }}
 {{- range $ji, $job := $root.Values.scrapers.jira.jobs }}
 {{- if or (not (hasKey $job "enabled")) $job.enabled }}
@@ -93,6 +100,20 @@ spec:
                     secretKeyRef:
                       name: {{ .auth.tokenSecretName | quote }}
                       key: {{ .auth.tokenSecretKey | quote }}
+                {{- end }}
+                {{- end }}
+                {{- if eq $cursorBackend "postgres" }}
+                - name: SCRAPER_CURSOR_BACKEND
+                  value: postgres
+                {{- if $cursorStoreSecretName }}
+                - name: SCRAPER_POSTGRES_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ $cursorStoreSecretName | quote }}
+                      key: {{ $cursorStoreSecretKey | quote }}
+                {{- else if $root.Values.checkpoints.postgresUrl }}
+                - name: HOSTED_AGENT_POSTGRES_URL
+                  value: {{ $root.Values.checkpoints.postgresUrl | quote }}
                 {{- end }}
                 {{- end }}
               {{- with $root.Values.scrapers.resources }}
@@ -191,6 +212,20 @@ spec:
                     secretKeyRef:
                       name: {{ .userTokenSecretName | quote }}
                       key: {{ .userTokenSecretKey | quote }}
+                {{- end }}
+                {{- end }}
+                {{- if eq $cursorBackend "postgres" }}
+                - name: SCRAPER_CURSOR_BACKEND
+                  value: postgres
+                {{- if $cursorStoreSecretName }}
+                - name: SCRAPER_POSTGRES_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ $cursorStoreSecretName | quote }}
+                      key: {{ $cursorStoreSecretKey | quote }}
+                {{- else if $root.Values.checkpoints.postgresUrl }}
+                - name: HOSTED_AGENT_POSTGRES_URL
+                  value: {{ $root.Values.checkpoints.postgresUrl | quote }}
                 {{- end }}
                 {{- end }}
               {{- with $root.Values.scrapers.resources }}

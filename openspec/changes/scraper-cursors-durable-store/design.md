@@ -2,7 +2,7 @@
 
 The hosted-agents chart deploys **scraper CronJobs** (`jira_job`, `slack_job`) that need **incremental state**: Jira **JQL watermarks** (`updated >= …`) and Slack **`conversations.history`** **watermark_ts** (and similar keys). Today that state lives on **ephemeral filesystem paths** (`JIRA_WATERMARK_DIR`, `SLACK_STATE_DIR`), which is operationally weak unless every scraper pod mounts a **PVC** and operators manage retention/locking themselves.
 
-The same chart already surfaces **`observability.postgresUrl`** as **`HOSTED_AGENT_POSTGRES_URL`** on the **agent** Deployment for checkpointing and related features. Reusing that DSN for scrapers avoids a second secret distribution path when operators already run a shared Postgres.
+The same chart surfaces **`checkpoints.postgresUrl`** as **`HOSTED_AGENT_POSTGRES_URL`** on the **agent** Deployment (LangGraph checkpoints and related features). Reusing that DSN for scrapers avoids a second secret distribution path when operators already run a shared Postgres. (Older drafts referred to `observability.postgresUrl`; the chart uses **`checkpoints.postgresUrl`** for the shared agent DSN.)
 
 ## Goals / Non-Goals
 
@@ -26,7 +26,7 @@ The same chart already surfaces **`observability.postgresUrl`** as **`HOSTED_AGE
    **Rationale:** DSN and driver patterns already exist in-repo for the agent; RAG-as-cursor-store needs API design (`/v1/query` vs dedicated resource) and rate limits. **Alternative:** only PVC—rejected as harder to operate than SQL for many clusters.
 
 2. **Reuse `HOSTED_AGENT_POSTGRES_URL` on scraper pods when enabled**  
-   **Rationale:** one Secret, one chart knob (`observability.postgresUrl`). **Alternative:** `scrapers.cursorStore.postgresUrl`—allow only if we need scraper-only DB; design leaves room for **override** values key that wins over the shared URL.
+   **Rationale:** one Secret, one chart knob (`checkpoints.postgresUrl` for the shared URL, or `scrapers.cursorStore.postgresUrlSecretName` for a scraper-specific Secret). **Alternative:** dedicated `scrapers.cursorStore.postgresUrl` value—rejected in favor of Secret refs + shared `checkpoints.postgresUrl` to match the agent surface.
 
 3. **Schema: table `scraper_cursor_state`** (name TBD in implementation) with columns roughly `(integration, scope, key_hash or key, value_jsonb, updated_at)` and **primary key** `(integration, scope, key)` with key length cap to avoid oversized PKs—store **hash of key** if raw keys (e.g. JQL) exceed limit.  
    **Rationale:** simple upsert (`INSERT … ON CONFLICT DO UPDATE`). **Alternative:** per-integration tables—rejected as unnecessary churn.

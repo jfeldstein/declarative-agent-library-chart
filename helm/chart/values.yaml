@@ -61,6 +61,15 @@ wandb:
 # Job JSON (minus secrets) is mounted at ``/config/job.json``; tokens come from Secret refs in env.
 scrapers:
   resources: {}
+  # Traceability: [DALC-REQ-SCRAPER-CURSOR-003]
+  # Durable cursor store for Jira/Slack incremental state.
+  # backend=file keeps existing JIRA_WATERMARK_DIR / SLACK_STATE_DIR behavior.
+  # backend=postgres enables SCRAPER_CURSOR_BACKEND=postgres and DSN wiring on scraper CronJobs only.
+  cursorStore:
+    backend: file
+    # Optional scraper-specific DSN Secret override. When set, this wins over checkpoints.postgresUrl.
+    postgresUrlSecretName: ""
+    postgresUrlSecretKey: url
   jira:
     enabled: false
     siteUrl: ""

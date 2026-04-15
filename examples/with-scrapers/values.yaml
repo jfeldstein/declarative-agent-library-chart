@@ -10,6 +10,14 @@ declarative-agent-library:
     tag: local
     pullPolicy: Never
   scrapers:
+    # Optional durable cursor backend for incremental state:
+    # cursorStore:
+    #   backend: postgres
+    #   postgresUrlSecretName: scraper-postgres-url
+    #   postgresUrlSecretKey: url
+    #
+    # If no scraper override Secret is set, scraper jobs reuse declarative-agent-library.checkpoints.postgresUrl
+    # via HOSTED_AGENT_POSTGRES_URL when backend=postgres.
     resources:
       limits:
         cpu: 500m
