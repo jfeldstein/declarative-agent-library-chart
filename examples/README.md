@@ -9,9 +9,9 @@ For the shared library, runtime API, Skaffold/DevSpace, and kind walkthroughs, s
 | Directory | Purpose |
 |-----------|---------|
 | [**hello-world**](hello-world/) | Smallest useful install: image, `systemPrompt`, default service on **8088**. Use this as the template for new apps. |
-| [**with-observability**](with-observability/) | Same baseline plus **`o11y`**: `prometheus.io/*` annotations, optional **ServiceMonitor**, JSON logs via `HOSTED_AGENT_LOG_FORMAT`. See [docs/observability.md](../docs/observability.md). Extra **`values-o11y-no-rag.yaml`** fixture: o11y on without scraper jobs (no RAG) for template tests. |
+| [**with-observability**](with-observability/) | Same baseline plus **`observability`**: `prometheus.io/*` annotations, optional **ServiceMonitor**, JSON logs via `HOSTED_AGENT_LOG_FORMAT`. See [docs/observability.md](../docs/observability.md). Extra **`values-observability-no-rag.yaml`** fixture: scrape hints on without scraper jobs (no RAG) for template tests. |
 | [**with-scrapers**](with-scrapers/) | **reference** scraper `CronJob` (hourly schedule); enabled job deploys **RAG**. Default **`values.yaml`** plus **`values.jira-only.yaml`** / **`values.slack-only.yaml`** for single-parent setups; see [with-scrapers/README.md](with-scrapers/README.md). CI asserts scraper + RAG rendering for each file via `helm/tests/with_scrapers_test.yaml`. |
-| [**checkpointing**](checkpointing/) | **`observability.checkpoints.enabled: true`** with **memory** backend (library default remains checkpoints off). |
+| [**checkpointing**](checkpointing/) | **`checkpoints.enabled: true`** with **memory** backend (library default remains checkpoints off). |
 
 ## Using an example
 

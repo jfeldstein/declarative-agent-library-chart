@@ -2,12 +2,18 @@
 
 from __future__ import annotations
 
+import hashlib
 import time
 from dataclasses import dataclass, field
 from typing import Any
 
-from hosted_agents.observability.atif import hash_tag_value
 from hosted_agents.observability.settings import ObservabilitySettings
+
+
+def _hash_tag_value(value: str, *, prefix: str = "h") -> str:
+    """Stable short hash for high-cardinality or sensitive tag values."""
+    digest = hashlib.sha256(value.encode()).hexdigest()[:12]
+    return f"{prefix}_{digest}"
 
 
 @dataclass
@@ -93,7 +99,6 @@ class WandbTraceSession:
         rollout_arm: str,
         thread_id: str,
         request_correlation_id: str | None = None,
-        shadow_variant_id: str | None = None,
     ) -> dict[str, str]:
         """Return tag dict with cardinality controls (hash long free text)."""
 
@@ -101,7 +106,7 @@ class WandbTraceSession:
             if not val:
                 return None
             if len(val) > 128:
-                return key, hash_tag_value(val)
+                return key, _hash_tag_value(val)
             return key, val
 
         out: dict[str, str] = {}
@@ -115,7 +120,6 @@ class WandbTraceSession:
             ("rollout_arm", rollout_arm),
             tagify("thread_id", thread_id),
             tagify("request_correlation_id", request_correlation_id),
-            tagify("shadow_variant_id", shadow_variant_id),
         ]
         for ent in entries:
             if ent is None:

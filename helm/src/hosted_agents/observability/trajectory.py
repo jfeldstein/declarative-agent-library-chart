@@ -1,4 +1,4 @@
-"""Canonical trajectory builder (ordered steps for W&B and ATIF)."""
+"""Canonical trajectory builder (ordered steps for W&B and operator tooling)."""
 
 from __future__ import annotations
 

@@ -93,7 +93,7 @@ echo "==> helm install agent (${AGENT_RELEASE})"
 helm upgrade --install "${AGENT_RELEASE}" examples/with-observability \
   --namespace "${NAMESPACE}" \
   --create-namespace \
-  --set declarative-agent-library.o11y.serviceMonitor.enabled=false \
+  --set declarative-agent-library.observability.serviceMonitor.enabled=false \
   --wait \
   --timeout "${HELM_WAIT_TIMEOUT}"
 

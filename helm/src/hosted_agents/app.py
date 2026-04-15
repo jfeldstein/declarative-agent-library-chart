@@ -16,12 +16,10 @@ from hosted_agents.agent_tracing import observability_summary
 from hosted_agents.checkpointing import checkpoints_globally_enabled
 from hosted_agents.env import system_prompt_from_env
 from hosted_agents.metrics import observe_http_trigger
-from hosted_agents.observability.atif import export_atif_batch
 from hosted_agents.observability.feedback import feedback_store
 from hosted_agents.observability.settings import ObservabilitySettings
 from hosted_agents.observability.side_effects import side_effect_checkpoints
 from hosted_agents.observability.slack_ingest import handle_slack_reaction_event
-from hosted_agents.observability.trajectory import trajectory_recorder
 from hosted_agents.o11y_logging import configure_request_logging
 from hosted_agents.o11y_middleware import ObservabilityMiddleware
 from hosted_agents.runtime_config import RuntimeConfig
@@ -175,8 +173,6 @@ def create_app(*, system_prompt: str | None = None) -> FastAPI:
                 "checkpoint_backend": obs.checkpoint_backend,
                 "wandb_enabled": obs.wandb_enabled,
                 "slack_feedback_enabled": obs.slack_feedback_enabled,
-                "atif_export_enabled": obs.atif_export_enabled,
-                "shadow_enabled": obs.shadow_enabled,
             },
         )
         return JSONResponse(
@@ -280,19 +276,6 @@ def create_app(*, system_prompt: str | None = None) -> FastAPI:
                 ]
             }
         )
-
-    @app.get("/api/v1/runtime/exports/atif")
-    def export_atif(run_id: str) -> JSONResponse:
-        obs = ObservabilitySettings.from_env()
-        if not obs.atif_export_enabled:
-            raise HTTPException(status_code=503, detail="ATIF export is disabled")
-        if not run_id.strip():
-            raise HTTPException(status_code=400, detail="run_id is required")
-        tr = trajectory_recorder.get(run_id.strip())
-        if tr is None:
-            raise HTTPException(status_code=404, detail="run_id not found")
-        docs = export_atif_batch([tr])
-        return JSONResponse({"documents": docs})
 
     @app.get("/api/v1/trigger/threads/{thread_id}/state")
     def get_trigger_thread_state(thread_id: str) -> JSONResponse:
