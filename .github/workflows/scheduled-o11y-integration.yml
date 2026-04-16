@@ -16,7 +16,7 @@ jobs:
   kind-prometheus:
     name: kind + Prometheus (RUN_KIND_O11Y_INTEGRATION)
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v6
 
