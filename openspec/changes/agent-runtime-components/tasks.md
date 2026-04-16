@@ -45,4 +45,4 @@
 
 - [x] 7.1 Run **`helm lint`** / **`helm template`** on the affected chart(s) after values schema updates.
 - [ ] 7.2 **Today:** separate automated tests cover scraper → **`/v1/embed`**, RAG **`/v1/query`**, **`POST /api/v1/trigger`**, and MCP tool calls—not necessarily one continuous integration test spanning all hops. Checkbox open if you require a single stitched E2E.
-- [ ] 7.3 Document **`agent_runtime_*`** metric names and label conventions in **`docs/observability.md`** and link **`grafana/dalc-agent-overview.json`** / **`grafana/README.md`**. *(Older OpenSpec change **`agent-centralized-o11y`** lives under **`openspec/changes/archive/`**; cite current DALC paths, not that folder name, when updating this task.)*
+- [x] 7.3 Document **`agent_runtime_*`** metric names and label conventions in **`docs/observability.md`** and link **`grafana/dalc-overview.json`**, **`grafana/cfha-token-metrics.json`**, and **`grafana/README.md`**. *(Older OpenSpec change **`agent-centralized-o11y`** lives under **`openspec/changes/archive/`**; cite current DALC paths, not that folder name, when updating this task.)*
