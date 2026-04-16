@@ -21,7 +21,7 @@ class FakeToolChatModel(SimpleChatModel):
     @property
     @override
     def _llm_type(self) -> str:
-        return "cfha-fake-tool-chat"
+        return "dalc-fake-tool-chat"
 
     def bind_tools(self, tools: Any, **kwargs: Any) -> FakeToolChatModel:
         return self

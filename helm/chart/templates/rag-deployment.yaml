@@ -1,20 +1,20 @@
-{{- if include "declarative-agent.ragDeployed" . }}
+{{- if include "declarative-agent-library-chart.ragDeployed" . }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "declarative-agent.fullname" . }}-rag
+  name: {{ include "declarative-agent-library-chart.fullname" . }}-rag
   labels:
-    {{- include "declarative-agent.labels" . | nindent 4 }}
+    {{- include "declarative-agent-library-chart.labels" . | nindent 4 }}
     app.kubernetes.io/component: rag
 spec:
   replicas: {{ .Values.scrapers.ragService.replicaCount }}
   selector:
     matchLabels:
-      {{- include "declarative-agent.ragSelectorLabels" . | nindent 6 }}
+      {{- include "declarative-agent-library-chart.ragSelectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "declarative-agent.ragSelectorLabels" . | nindent 8 }}
+        {{- include "declarative-agent-library-chart.ragSelectorLabels" . | nindent 8 }}
       {{- if .Values.observability.prometheusAnnotations.enabled }}
       annotations:
         prometheus.io/scrape: "true"

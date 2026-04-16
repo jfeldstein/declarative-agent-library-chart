@@ -27,6 +27,9 @@ The table is parsed by `scripts/check_spec_traceability.py`; keep the **Matrix**
 | [DALC-REQ-HELM-UNITTEST-004] | `openspec/specs/dalc-helm-unittest/spec.md` | `helm/tests/with_scrapers_test.yaml`, `examples/with-scrapers/README.md` | default PR | - | - |
 | [DALC-REQ-EXAMPLE-VALUES-FILES-001] | `openspec/specs/dalc-example-values-files/spec.md` | `examples/with-scrapers/README.md`, `helm/tests/with_scrapers_test.yaml` | default PR | - | - |
 | [DALC-REQ-EXAMPLE-VALUES-FILES-002] | `openspec/specs/dalc-example-values-files/spec.md` | `examples/with-scrapers/README.md` | default PR | - | - |
+| [DALC-REQ-DALC-PKG-001] | `openspec/specs/dalc-library-chart-packaging/spec.md` | `helm/chart/Chart.yaml`, `helm/src/tests/test_chart_values_contract.py::test_library_chart_name_is_dalc_packaging` | default PR | - | - |
+| [DALC-REQ-DALC-PKG-002] | `openspec/specs/dalc-library-chart-packaging/spec.md` | `examples/hello-world/Chart.yaml`, `examples/hello-world/values.yaml`, `helm/tests/hello_world_test.yaml` | default PR | - | - |
+| [DALC-REQ-DALC-PKG-003] | `openspec/specs/dalc-library-chart-packaging/spec.md` | `helm/chart/values.yaml`, `helm/src/tests/test_chart_values_contract.py::test_library_image_repository_default_is_dalc_packaging` | default PR | - | - |
 | [DALC-REQ-RAG-SCRAPERS-001] | `openspec/specs/dalc-rag-from-scrapers/spec.md` | `helm/chart/values.schema.json` | default PR | - | - |
 | [DALC-REQ-RAG-SCRAPERS-002] | `openspec/specs/dalc-rag-from-scrapers/spec.md` | `helm/tests/with_scrapers_test.yaml`, `helm/tests/hello_world_test.yaml`, `helm/chart/templates/scraper-job-configmaps.yaml` | default PR | - | - |
 | [DALC-REQ-RAG-SCRAPERS-003] | `openspec/specs/dalc-rag-from-scrapers/spec.md` | `helm/chart/values.yaml`, `helm/chart/values.schema.json` | default PR | - | - |

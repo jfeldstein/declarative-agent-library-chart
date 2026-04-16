@@ -1,3 +1,4 @@
+# Traceability: [DALC-REQ-DALC-PKG-002]
 apiVersion: v2
 name: hello-world
 description: Minimal example application chart (depends on Declarative Agent Library Chart)
@@ -7,4 +8,4 @@ dependencies:
   - name: declarative-agent-library-chart
     version: 0.1.0
     repository: file://../../helm/chart
-    alias: declarative-agent
+    alias: agent

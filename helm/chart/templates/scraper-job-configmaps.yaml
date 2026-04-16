@@ -15,9 +15,9 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "declarative-agent.fullname" $root }}-scraper-job-jira-{{ $ji }}
+  name: {{ include "declarative-agent-library-chart.fullname" $root }}-scraper-job-jira-{{ $ji }}
   labels:
-    {{- include "declarative-agent.labels" $root | nindent 4 }}
+    {{- include "declarative-agent-library-chart.labels" $root | nindent 4 }}
     app.kubernetes.io/component: scraper
     scraper.agentic.dalc/source: jira
     scraper.agentic.dalc/index: {{ $ji | quote }}
@@ -42,9 +42,9 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "declarative-agent.fullname" $root }}-scraper-job-slack-{{ $si }}
+  name: {{ include "declarative-agent-library-chart.fullname" $root }}-scraper-job-slack-{{ $si }}
   labels:
-    {{- include "declarative-agent.labels" $root | nindent 4 }}
+    {{- include "declarative-agent-library-chart.labels" $root | nindent 4 }}
     app.kubernetes.io/component: scraper
     scraper.agentic.dalc/source: slack
     scraper.agentic.dalc/index: {{ $si | quote }}

@@ -1,6 +1,6 @@
 # Examples (application charts)
 
-These are **Helm application** charts. Each one depends on the **Declarative Agent Library** chart at `file://../../helm/chart` (`name: declarative-agent-library-chart`, **`alias: declarative-agent`**) and supplies release-specific `values.yaml` under the subchart key **`declarative-agent`**.
+These are **Helm application** charts. Each one depends on the **Declarative Agent Library** chart at `file://../../helm/chart` (`name: declarative-agent-library-chart`, **`alias: agent`**) and supplies release-specific `values.yaml` under the subchart key **`agent`**.
 
 For the shared library, runtime API, Skaffold/DevSpace, and kind walkthroughs, see the project [README](../README.md).
 
@@ -22,7 +22,7 @@ helm dependency build --skip-refresh   # or helm dependency update when the libr
 helm upgrade --install <release> . -n <namespace> --wait
 ```
 
-Build/load the container image and port-forward as described in the main README (default agent image `declarative-agent:local` on kind).
+Build/load the container image and port-forward as described in the main README (default agent image `declarative-agent-library-chart:local` on kind).
 
 ## Adding a new example
 

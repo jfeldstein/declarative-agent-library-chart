@@ -6,7 +6,7 @@ release:
   name: dalc-ci-checkpointing
 tests:
   - it: agent Deployment sets checkpoint env from checkpoints [DALC-REQ-CHART-RTV-001]
-    template: charts/declarative-agent/templates/deployment.yaml
+    template: charts/agent/templates/deployment.yaml
     asserts:
       - hasDocuments:
           count: 1

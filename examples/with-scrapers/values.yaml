@@ -2,11 +2,11 @@
 #
 # Source semantics, secret wiring, and maintainer checklist (tests, Grafana, templates)
 # are documented in **README.md** in this directory.
-declarative-agent:
+agent:
   systemPrompt: |
     Respond, "Hello :wave:"
   image:
-    repository: declarative-agent
+    repository: declarative-agent-library-chart
     tag: local
     pullPolicy: Never
   scrapers:
@@ -16,7 +16,7 @@ declarative-agent:
     #   postgresUrlSecretName: scraper-postgres-url
     #   postgresUrlSecretKey: url
     #
-    # If no scraper override Secret is set, scraper jobs reuse declarative-agent.checkpoints.postgresUrl
+    # If no scraper override Secret is set, scraper jobs reuse agent.checkpoints.postgresUrl
     # via HOSTED_AGENT_POSTGRES_URL when backend=postgres.
     resources:
       limits:

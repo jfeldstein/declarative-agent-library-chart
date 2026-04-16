@@ -1,9 +1,9 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ include "declarative-agent.fullname" . }}-test-trigger
+  name: {{ include "declarative-agent-library-chart.fullname" . }}-test-trigger
   labels:
-    {{- include "declarative-agent.labels" . | nindent 4 }}
+    {{- include "declarative-agent-library-chart.labels" . | nindent 4 }}
   annotations:
     "helm.sh/hook": test
     "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
@@ -12,7 +12,7 @@ spec:
   template:
     metadata:
       labels:
-        {{- include "declarative-agent.selectorLabels" . | nindent 8 }}
+        {{- include "declarative-agent-library-chart.selectorLabels" . | nindent 8 }}
     spec:
       restartPolicy: Never
       containers:
@@ -23,7 +23,7 @@ spec:
             - -c
             - |
               set -e
-              URL="http://{{ include "declarative-agent.fullname" . }}:{{ .Values.service.port }}/api/v1/trigger"
+              URL="http://{{ include "declarative-agent-library-chart.fullname" . }}:{{ .Values.service.port }}/api/v1/trigger"
               body=$(curl -sf -X POST "$URL")
               printf '%s\n' "$body"
               printf '%s' "$body" | grep -q 'Hello'

@@ -45,7 +45,7 @@ flowchart TB
 
 ## User charts (other repos)
 
-A **user chart** is a normal Helm **application** chart that lists `declarative-agent-library-chart` as a **dependency** (typically with **`alias: declarative-agent`**) and passes nested values under that alias (for example `declarative-agent:` in `examples/hello-world/values.yaml`).
+A **user chart** is a normal Helm **application** chart that lists `declarative-agent-library-chart` as a **dependency** (typically with **`alias: agent`**) and passes nested values under that alias (for example `agent:` in `examples/hello-world/values.yaml`).
 
 Responsibilities of the user chart:
 

@@ -158,7 +158,7 @@
   "refresh": "30s",
   "schemaVersion": 39,
   "style": "dark",
-  "tags": ["dalc", "declarative-agent"],
+  "tags": ["dalc", "declarative-agent-library-chart"],
   "templating": { "list": [] },
   "time": { "from": "now-6h", "to": "now" },
   "timepicker": {},

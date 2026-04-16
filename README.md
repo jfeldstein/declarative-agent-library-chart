@@ -19,13 +19,13 @@ To make an agentic Slack bot, you need:
       - name: declarative-agent-library-chart
         version: 0.1.0
         repository: https://github.com/jfeldstein/declarative-agent-library-chart
-        alias: declarative-agent
+        alias: agent
     ```
 
 2. and a values.yaml:
 
     ```yaml
-    declarative-agent:
+    agent:
       systemPrompt: |
         Respond, "Hello :wave:"
       presence:
@@ -97,7 +97,7 @@ See the [examples](examples) directory for more examples.
 
 ## Configuration (values.yaml)
 
-Values keys under the **`declarative-agent`** subchart (Helm dependency **`alias: declarative-agent`**; chart **`name: declarative-agent-library-chart`**) configure these runtime surfaces:
+Values keys under the **`agent`** subchart (Helm dependency **`alias: agent`**; chart **`name: declarative-agent-library-chart`**) configure these runtime surfaces:
 
 | Values key | Role |
 |------------|------|
