@@ -63,14 +63,18 @@ def _site_base(url: str) -> str:
 
 
 def _watermark_path(scope: str, query: str) -> Path:
-    root = Path(os.environ.get("JIRA_WATERMARK_DIR", "/tmp/jira-scraper-watermark").strip())
+    root = Path(
+        os.environ.get("JIRA_WATERMARK_DIR", "/tmp/jira-scraper-watermark").strip()
+    )
     safe_scope = re.sub(r"[^a-zA-Z0-9._-]+", "_", scope)[:80]
     qhash = hashlib.sha256(query.encode("utf-8")).hexdigest()[:24]
     root.mkdir(parents=True, exist_ok=True)
     return root / f"watermark-{safe_scope}-{qhash}.json"
 
 
-def _jql_watermark_after_overlap(last_updated_iso: str | None, overlap_minutes: int) -> str | None:
+def _jql_watermark_after_overlap(
+    last_updated_iso: str | None, overlap_minutes: int
+) -> str | None:
     """Turn stored Jira ``last_updated`` ISO into the JQL ``updated >=`` string (with overlap)."""
     if not last_updated_iso:
         return None
@@ -204,7 +208,9 @@ def _issue_field_lines(fields: dict[str, Any], key: str) -> list[str]:
     return lines
 
 
-def _issue_comment_lines(comments: list[dict[str, Any]], max_comments: int) -> list[str]:
+def _issue_comment_lines(
+    comments: list[dict[str, Any]], max_comments: int
+) -> list[str]:
     lines: list[str] = ["Comments:"]
     for c in comments[:max_comments]:
         body = c.get("body")
@@ -347,14 +353,18 @@ def run() -> None:
     run_ok = False
     try:
         cfg = _load_job_config()
-        site, email, token, rag_base, scope, base_query = _jira_validate_config_and_env(cfg)
+        site, email, token, rag_base, scope, base_query = _jira_validate_config_and_env(
+            cfg
+        )
         max_issues = int(cfg.get("maxIssuesPerRun", 50))
         max_comments = int(cfg.get("maxCommentsPerIssue", 100))
         overlap = int(cfg.get("overlapMinutes", 5))
         fields = _jira_issue_fields(cfg)
 
         store = cursor_store_from_env()
-        wm = _jql_watermark_after_overlap(store.get_state("jira", scope, base_query), overlap)
+        wm = _jql_watermark_after_overlap(
+            store.get_state("jira", scope, base_query), overlap
+        )
         jql = _build_jql(base_query, wm)
 
         with httpx.Client(

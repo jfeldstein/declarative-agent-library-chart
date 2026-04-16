@@ -31,7 +31,9 @@ def test_search_issues_single_page() -> None:
 
     transport = httpx.MockTransport(handler)
     client = httpx.Client(transport=transport)
-    issues = search_issues(client, "https://x.example.net", 'project = "DEMO"', ["summary"], 10)
+    issues = search_issues(
+        client, "https://x.example.net", 'project = "DEMO"', ["summary"], 10
+    )
     assert len(issues) == 1
     assert issues[0]["key"] == "DEMO-1"
 
@@ -69,12 +71,14 @@ def test_search_issues_next_page_token() -> None:
 
     transport = httpx.MockTransport(handler)
     client = httpx.Client(transport=transport)
-    issues = search_issues(client, "https://x.example.net", "project = DEMO", ["summary"], 10)
+    issues = search_issues(
+        client, "https://x.example.net", "project = DEMO", ["summary"], 10
+    )
     assert [i["key"] for i in issues] == ["DEMO-1", "DEMO-2"]
 
 
 def test_build_jql_with_watermark() -> None:
-    q = jira_job._build_jql('project = DEMO ORDER BY updated ASC', "2024-01-01 00:00")
+    q = jira_job._build_jql("project = DEMO ORDER BY updated ASC", "2024-01-01 00:00")
     assert "project = DEMO" in q
     assert "updated >=" in q
 
@@ -100,9 +104,15 @@ def test_fetch_comments_empty() -> None:
     assert out == []
 
 
-def test_run_jira_end_to_end_mocked(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_run_jira_end_to_end_mocked(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     """Exercise ``jira_job.run()`` with mocked HTTP (search, comments, RAG embed)."""
-    job = {"source": "jira", "query": 'project = DEMO ORDER BY updated ASC', "maxIssuesPerRun": 2}
+    job = {
+        "source": "jira",
+        "query": "project = DEMO ORDER BY updated ASC",
+        "maxIssuesPerRun": 2,
+    }
     cfg = tmp_path / "job.json"
     cfg.write_text(json.dumps(job), encoding="utf-8")
     monkeypatch.setenv("SCRAPER_JOB_CONFIG", str(cfg))
@@ -159,5 +169,3 @@ def test_issue_text_builds() -> None:
     text = jira_job._issue_text(issue, [], 10, False)
     assert "DEMO-2" in text
     assert "Summary: S" in text
-
-

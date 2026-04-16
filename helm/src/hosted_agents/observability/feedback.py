@@ -6,6 +6,7 @@ import threading
 import time
 from dataclasses import dataclass, field
 
+
 @dataclass(frozen=True)
 class HumanFeedbackEvent:
     registry_id: str

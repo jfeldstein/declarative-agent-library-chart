@@ -45,7 +45,8 @@ def test_observe_scraper_run_records_metric() -> None:
     observe_scraper_run("unit-test", True, 0.01)
     text = generate_latest(SCRAPER_REGISTRY).decode()
     assert (
-        'agent_runtime_scraper_runs_total{integration="unit-test",result="success"}' in text
+        'agent_runtime_scraper_runs_total{integration="unit-test",result="success"}'
+        in text
     )
 
 

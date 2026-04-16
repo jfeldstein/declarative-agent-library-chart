@@ -26,7 +26,9 @@ def _paths_to_forbidden_keys(obj: object, *, prefix: str = "") -> list[str]:
     elif isinstance(obj, list):
         for i, item in enumerate(obj):
             found.extend(
-                _paths_to_forbidden_keys(item, prefix=f"{prefix}[{i}]" if prefix else f"[{i}]")
+                _paths_to_forbidden_keys(
+                    item, prefix=f"{prefix}[{i}]" if prefix else f"[{i}]"
+                )
             )
     return found
 

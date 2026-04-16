@@ -55,7 +55,9 @@ def main() -> None:
     rel = body["related"]
     assert rel, "expected relationship expansion"
     assert any(
-        r["entity_id"] == "e1" and r["neighbor_id"] == "e2" and r["relationship_type"] == "belongs_to"
+        r["entity_id"] == "e1"
+        and r["neighbor_id"] == "e2"
+        and r["relationship_type"] == "belongs_to"
         for r in rel
     ), rel
 

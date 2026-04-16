@@ -62,11 +62,7 @@ def load_label_registry_from_env() -> LabelRegistry:
     rid = str(data.get("registry_id") or "custom")
     ver = str(data.get("schema_version") or "1")
     raw_labels = data.get("labels")
-    labels = (
-        _labels_from_env_list(raw_labels)
-        if isinstance(raw_labels, list)
-        else {}
-    )
+    labels = _labels_from_env_list(raw_labels) if isinstance(raw_labels, list) else {}
     return LabelRegistry(registry_id=rid, schema_version=ver, labels=labels)
 
 

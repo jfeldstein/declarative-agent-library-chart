@@ -9,7 +9,9 @@ import pytest
 from hosted_agents.scrapers import cursor_store
 
 
-def test_file_store_jira_compat_roundtrip(tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_file_store_jira_compat_roundtrip(
+    tmp_path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """[DALC-REQ-SCRAPER-CURSOR-001]"""
     monkeypatch.setenv("JIRA_WATERMARK_DIR", str(tmp_path / "jira"))
     store = cursor_store.FileCursorStore()
@@ -19,7 +21,9 @@ def test_file_store_jira_compat_roundtrip(tmp_path, monkeypatch: pytest.MonkeyPa
     assert value == "2024-03-01T00:00:00.000+0000"
 
 
-def test_file_store_slack_compat_roundtrip(tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_file_store_slack_compat_roundtrip(
+    tmp_path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """[DALC-REQ-SCRAPER-CURSOR-001]"""
     monkeypatch.setenv("SLACK_STATE_DIR", str(tmp_path / "slack"))
     store = cursor_store.FileCursorStore()
@@ -29,7 +33,9 @@ def test_file_store_slack_compat_roundtrip(tmp_path, monkeypatch: pytest.MonkeyP
     assert value == "1712509312.123456"
 
 
-def test_postgres_store_issues_idempotent_ddl_and_upsert(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_postgres_store_issues_idempotent_ddl_and_upsert(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """[DALC-REQ-SCRAPER-CURSOR-002]"""
     sql_calls: list[tuple[str, object]] = []
 
@@ -61,16 +67,23 @@ def test_postgres_store_issues_idempotent_ddl_and_upsert(monkeypatch: pytest.Mon
         assert autocommit is True
         return FakeConn()
 
-    monkeypatch.setattr(cursor_store, "psycopg", types.SimpleNamespace(connect=fake_connect))
+    monkeypatch.setattr(
+        cursor_store, "psycopg", types.SimpleNamespace(connect=fake_connect)
+    )
 
     store = cursor_store.PostgresCursorStore("postgres://example")
     store.set_state("jira", "scope-x", "k1", "v1")
     assert store.get_state("jira", "scope-x", "k1") == "stored"
 
-    ddl_calls = [sql for sql, _ in sql_calls if "CREATE TABLE IF NOT EXISTS scraper_cursor_state" in sql]
-    upsert_calls = [sql for sql, _ in sql_calls if "INSERT INTO scraper_cursor_state" in sql]
+    ddl_calls = [
+        sql
+        for sql, _ in sql_calls
+        if "CREATE TABLE IF NOT EXISTS scraper_cursor_state" in sql
+    ]
+    upsert_calls = [
+        sql for sql, _ in sql_calls if "INSERT INTO scraper_cursor_state" in sql
+    ]
     select_calls = [sql for sql, _ in sql_calls if "SELECT value" in sql]
     assert len(ddl_calls) == 1
     assert len(upsert_calls) == 1
     assert len(select_calls) == 1
-

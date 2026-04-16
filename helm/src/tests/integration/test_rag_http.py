@@ -186,9 +186,7 @@ class TestBasetenSemanticRetrieval:
         assert hits
         top_text = hits[0]["text"].lower()
         assert (
-            "physician" in top_text
-            or "patient" in top_text
-            or "medication" in top_text
+            "physician" in top_text or "patient" in top_text or "medication" in top_text
         ), f"Expected medical document at top, got: {hits[0]['text']!r}"
 
 

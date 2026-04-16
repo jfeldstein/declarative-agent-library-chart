@@ -30,18 +30,24 @@ class FileCursorStore(CursorStore):
     """Compatibility adapter for existing Jira/Slack on-disk cursor files."""
 
     def _jira_path(self, scope: str, key: str) -> Path:
-        root = Path(os.environ.get("JIRA_WATERMARK_DIR", "/tmp/jira-scraper-watermark").strip())
+        root = Path(
+            os.environ.get("JIRA_WATERMARK_DIR", "/tmp/jira-scraper-watermark").strip()
+        )
         root.mkdir(parents=True, exist_ok=True)
         qhash = hashlib.sha256(key.encode("utf-8")).hexdigest()[:24]
         return root / f"watermark-{_safe_scope(scope)}-{qhash}.json"
 
     def _slack_path(self, scope: str, key: str) -> Path:
-        root = Path(os.environ.get("SLACK_STATE_DIR", "/tmp/slack-scraper-state").strip())
+        root = Path(
+            os.environ.get("SLACK_STATE_DIR", "/tmp/slack-scraper-state").strip()
+        )
         root.mkdir(parents=True, exist_ok=True)
         return root / f"{_safe_scope(scope)}-{key}.json"
 
     def _generic_path(self, integration: str, scope: str, key: str) -> Path:
-        root = Path(os.environ.get("SCRAPER_CURSOR_DIR", "/tmp/scraper-cursor-state").strip())
+        root = Path(
+            os.environ.get("SCRAPER_CURSOR_DIR", "/tmp/scraper-cursor-state").strip()
+        )
         root.mkdir(parents=True, exist_ok=True)
         khash = hashlib.sha256(key.encode("utf-8")).hexdigest()[:24]
         return root / f"{integration}-{_safe_scope(scope)}-{khash}.json"
@@ -149,9 +155,10 @@ def cursor_store_from_env() -> CursorStore:
     backend = os.environ.get("SCRAPER_CURSOR_BACKEND", "file").strip().lower() or "file"
     if backend != "postgres":
         return FileCursorStore()
-    dsn = os.environ.get("SCRAPER_POSTGRES_URL", "").strip() or os.environ.get(
-        "HOSTED_AGENT_POSTGRES_URL", ""
-    ).strip()
+    dsn = (
+        os.environ.get("SCRAPER_POSTGRES_URL", "").strip()
+        or os.environ.get("HOSTED_AGENT_POSTGRES_URL", "").strip()
+    )
     if not dsn:
         raise RuntimeError(
             "SCRAPER_CURSOR_BACKEND=postgres requires SCRAPER_POSTGRES_URL or HOSTED_AGENT_POSTGRES_URL"

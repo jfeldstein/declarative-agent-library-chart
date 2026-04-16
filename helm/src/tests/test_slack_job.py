@@ -33,7 +33,9 @@ def test_rts_messages_parses_results() -> None:
 
 @patch("hosted_agents.scrapers.slack_job.httpx.Client")
 @patch("hosted_agents.scrapers.slack_job.WebClient")
-def test_run_slack_channel_posts_embed(mock_wc_class, mock_hx_cls, tmp_path, monkeypatch) -> None:
+def test_run_slack_channel_posts_embed(
+    mock_wc_class, mock_hx_cls, tmp_path, monkeypatch
+) -> None:
     cfg = {
         "source": "slack_channel",
         "conversationId": "CXYZ",
@@ -66,7 +68,9 @@ def test_run_slack_channel_posts_embed(mock_wc_class, mock_hx_cls, tmp_path, mon
 
 @patch("hosted_agents.scrapers.slack_job.httpx.Client")
 @patch("hosted_agents.scrapers.slack_job.WebClient")
-def test_run_slack_search_posts_embed(mock_wc_class, mock_hx_cls, tmp_path, monkeypatch) -> None:
+def test_run_slack_search_posts_embed(
+    mock_wc_class, mock_hx_cls, tmp_path, monkeypatch
+) -> None:
     cfg = {
         "source": "slack_search",
         "query": "hello",

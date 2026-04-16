@@ -489,7 +489,9 @@ def _slack_run_job_body(
         user_client = WebClient(token=user_token)
         bot_client = WebClient(token=bot_token) if bot_token else None
         try:
-            _run_slack_search(user_client, bot_client, cfg, scope, rag_base, integration)
+            _run_slack_search(
+                user_client, bot_client, cfg, scope, rag_base, integration
+            )
         except SlackApiError as exc:
             print(f"Slack API error: {exc}", file=sys.stderr)  # noqa: T201
             sys.exit(1)
