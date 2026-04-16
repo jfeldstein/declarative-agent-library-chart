@@ -14,6 +14,7 @@ from hosted_agents.observability.settings import ObservabilitySettings
 def test_build_checkpointer_postgres_requires_url(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """[DALC-REQ-POSTGRES-AGENT-PERSISTENCE-001] Missing DSN fails fast."""
     monkeypatch.setenv("HOSTED_AGENT_CHECKPOINTS_ENABLED", "1")
     monkeypatch.setenv("HOSTED_AGENT_CHECKPOINT_BACKEND", "postgres")
     monkeypatch.delenv("HOSTED_AGENT_POSTGRES_URL", raising=False)
@@ -30,6 +31,7 @@ def test_build_checkpointer_postgres_requires_url(
 def test_build_checkpointer_postgres_validates_scheme(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """[DALC-REQ-POSTGRES-AGENT-PERSISTENCE-001] Non-postgres schemes are rejected."""
     monkeypatch.setenv("HOSTED_AGENT_CHECKPOINTS_ENABLED", "1")
     monkeypatch.setenv("HOSTED_AGENT_CHECKPOINT_BACKEND", "postgres")
     monkeypatch.setenv("HOSTED_AGENT_POSTGRES_URL", "mysql://wrong")
@@ -42,6 +44,7 @@ def test_build_checkpointer_postgres_validates_scheme(
 def test_build_checkpointer_postgres_constructs_saver(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """[DALC-REQ-POSTGRES-AGENT-PERSISTENCE-001] Valid DSN yields a Postgres saver."""
     monkeypatch.setenv("HOSTED_AGENT_CHECKPOINTS_ENABLED", "1")
     monkeypatch.setenv("HOSTED_AGENT_CHECKPOINT_BACKEND", "postgres")
     monkeypatch.setenv(

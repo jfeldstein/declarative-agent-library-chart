@@ -1,4 +1,7 @@
-"""Bundled observability DDL loader."""
+"""Bundled observability DDL loader.
+
+[DALC-REQ-POSTGRES-AGENT-PERSISTENCE-004] Idempotent schema apply for shipped SQL.
+"""
 
 from __future__ import annotations
 

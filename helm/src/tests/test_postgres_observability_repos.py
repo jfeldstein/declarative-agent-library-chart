@@ -68,6 +68,7 @@ class _FakePool:
 
 
 def test_postgres_correlation_put_and_get() -> None:
+    """[DALC-REQ-POSTGRES-AGENT-PERSISTENCE-002] Correlation round-trip via SQL."""
     st = _PoolState(
         fetchone={
             "tool_call_id": "tc1",
@@ -95,6 +96,7 @@ def test_postgres_correlation_put_and_get() -> None:
 
 
 def test_postgres_feedback_human_and_lists() -> None:
+    """[DALC-REQ-POSTGRES-AGENT-PERSISTENCE-002] Human feedback and orphan rows persist."""
     st = _PoolState(
         fetchall_queue=[
             [
@@ -152,6 +154,7 @@ def test_postgres_feedback_human_and_lists() -> None:
 
 
 def test_postgres_side_effect_add_and_list() -> None:
+    """[DALC-REQ-POSTGRES-AGENT-PERSISTENCE-002] Side-effect checkpoints listable by thread."""
     st = _PoolState(
         fetchall_queue=[
             [
@@ -186,6 +189,7 @@ def test_postgres_side_effect_add_and_list() -> None:
 
 
 def test_postgres_span_summary_record() -> None:
+    """[DALC-REQ-POSTGRES-AGENT-PERSISTENCE-003] Tool span summary insert path."""
     st = _PoolState()
     pool = _FakePool(st)
     sp = PostgresSpanSummaryStore(pool)  # type: ignore[arg-type]
@@ -205,6 +209,7 @@ def test_postgres_span_summary_record() -> None:
 def test_build_observability_stores_postgres_requires_url(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """[DALC-REQ-POSTGRES-AGENT-PERSISTENCE-002] Postgres store without DSN fails fast."""
     monkeypatch.setenv("HOSTED_AGENT_OBSERVABILITY_STORE", "postgres")
     monkeypatch.delenv("HOSTED_AGENT_POSTGRES_URL", raising=False)
     monkeypatch.delenv("HOSTED_AGENT_USE_PGLITE", raising=False)

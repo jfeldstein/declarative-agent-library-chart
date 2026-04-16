@@ -23,3 +23,14 @@ def test_settings_checkpoint_postgres_url(monkeypatch: pytest.MonkeyPatch) -> No
     monkeypatch.delenv("HOSTED_AGENT_USE_PGLITE", raising=False)
     s = ObservabilitySettings.from_env()
     assert s.checkpoint_postgres_url == "postgresql://x:y@h:5432/db"
+
+
+def test_observability_defaults_to_memory_when_unset(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """[DALC-REQ-POSTGRES-AGENT-PERSISTENCE-005] Unset observability store implies memory."""
+    monkeypatch.delenv("HOSTED_AGENT_OBSERVABILITY_STORE", raising=False)
+    monkeypatch.delenv("HOSTED_AGENT_POSTGRES_URL", raising=False)
+    monkeypatch.delenv("HOSTED_AGENT_USE_PGLITE", raising=False)
+    s = ObservabilitySettings.from_env()
+    assert s.observability_store == "memory"

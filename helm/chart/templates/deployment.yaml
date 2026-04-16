@@ -29,10 +29,13 @@ spec:
               containerPort: 8088
               protocol: TCP
           env:
+            {{/* HOSTED_AGENT_POSTGRES_URL: plaintext = checkpoints.postgresUrl else observability URL fields; else secretKeyRef from observability postgresUrlSecret / postgres.urlSecret. */}}
             {{- $obsPg := .Values.observability.postgres | default dict }}
             {{- $pgUrlSec := $obsPg.urlSecret | default dict }}
             {{- $topPgUrlSec := .Values.observability.postgresUrlSecret | default dict }}
             {{- $pgUrl := or .Values.observability.postgresUrl $obsPg.url "" }}
+            {{- $checkpointPostgresUrl := .Values.checkpoints.postgresUrl | default "" | trim }}
+            {{- $postgresUrlPlain := or $checkpointPostgresUrl $pgUrl "" }}
             {{- $pgSecName := or $topPgUrlSec.name $pgUrlSec.name "" }}
             {{- $pgSecKey := or $topPgUrlSec.key $pgUrlSec.key "DATABASE_URL" }}
             - name: HOSTED_AGENT_SYSTEM_PROMPT
@@ -65,9 +68,19 @@ spec:
             - name: HOSTED_AGENT_LOG_FORMAT
               value: "json"
             {{- end }}
-            {{- if .Values.checkpoints.postgresUrl }}
+            - name: HOSTED_AGENT_OBSERVABILITY_STORE
+              value: {{ .Values.observability.store | default "memory" | quote }}
+            - name: HOSTED_AGENT_POSTGRES_POOL_MAX
+              value: {{ $obsPg.poolMax | default 5 | toString | quote }}
+            {{- if $postgresUrlPlain }}
             - name: HOSTED_AGENT_POSTGRES_URL
-              value: {{ .Values.checkpoints.postgresUrl | quote }}
+              value: {{ $postgresUrlPlain | quote }}
+            {{- else if $pgSecName }}
+            - name: HOSTED_AGENT_POSTGRES_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $pgSecName }}
+                  key: {{ $pgSecKey }}
             {{- end }}
             {{- if .Values.checkpoints.enabled }}
             - name: HOSTED_AGENT_CHECKPOINTS_ENABLED

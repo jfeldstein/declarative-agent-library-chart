@@ -260,6 +260,45 @@
       "type": "object",
       "description": "Kubernetes/Prometheus: scrape annotations, JSON logs, optional ServiceMonitor (Prometheus Operator CRD). Traceability: [DALC-REQ-O11Y-SCRAPE-004] [DALC-REQ-O11Y-SCRAPE-005] [DALC-REQ-O11Y-SCRAPE-006]",
       "properties": {
+        "store": {
+          "type": "string",
+          "enum": ["memory", "postgres"],
+          "description": "Where correlation/feedback/side-effects/span summaries live (maps to HOSTED_AGENT_OBSERVABILITY_STORE)."
+        },
+        "postgresUrl": {
+          "type": "string",
+          "description": "Plaintext Postgres URL for observability + checkpoint pool when no secret is used."
+        },
+        "postgresUrlSecret": {
+          "type": "object",
+          "description": "Alternative to postgresUrl / postgres.url: mount DSN from a Secret.",
+          "properties": {
+            "name": { "type": "string" },
+            "key": { "type": "string" }
+          }
+        },
+        "postgres": {
+          "type": "object",
+          "description": "Nested Postgres URL/secret and pool cap (see deployment template for precedence with checkpoints.postgresUrl).",
+          "properties": {
+            "url": { "type": "string" },
+            "poolMax": { "type": "integer", "minimum": 1 },
+            "urlSecret": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" },
+                "key": { "type": "string" }
+              }
+            },
+            "migrations": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" },
+                "image": { "type": "string" }
+              }
+            }
+          }
+        },
         "prometheusAnnotations": {
           "type": "object",
           "properties": {

@@ -1,6 +1,8 @@
 -- Application observability tables (correlation, feedback, side-effects, span summaries).
+-- [DALC-REQ-POSTGRES-AGENT-PERSISTENCE-004] Versioned DDL for operator apply (see runbook).
 -- Schema is namespaced for shared Postgres clusters. LangGraph checkpoint tables are
 -- created separately by langgraph-checkpoint-postgres via PostgresSaver.setup().
+-- Mirror: helm/src/hosted_agents/migrations/001_hosted_agents_observability.sql
 
 CREATE SCHEMA IF NOT EXISTS hosted_agents;
 
@@ -47,6 +49,9 @@ CREATE INDEX IF NOT EXISTS ix_human_feedback_run
 
 CREATE INDEX IF NOT EXISTS ix_human_feedback_tool_call
   ON hosted_agents.human_feedback (tool_call_id);
+
+CREATE INDEX IF NOT EXISTS ix_human_feedback_thread
+  ON hosted_agents.human_feedback (thread_id);
 
 CREATE INDEX IF NOT EXISTS ix_human_feedback_created
   ON hosted_agents.human_feedback (created_at DESC);
@@ -97,6 +102,9 @@ CREATE TABLE IF NOT EXISTS hosted_agents.tool_span_summary (
 
 CREATE INDEX IF NOT EXISTS ix_span_run
   ON hosted_agents.tool_span_summary (run_id);
+
+CREATE INDEX IF NOT EXISTS ix_span_thread
+  ON hosted_agents.tool_span_summary (thread_id);
 
 CREATE INDEX IF NOT EXISTS ix_span_tool_call
   ON hosted_agents.tool_span_summary (tool_call_id);

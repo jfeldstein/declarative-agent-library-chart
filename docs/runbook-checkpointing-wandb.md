@@ -1,5 +1,7 @@
 # Runbook: checkpoints, Slack feedback, and W&B
 
+<!-- Evidence: [DALC-REQ-POSTGRES-AGENT-PERSISTENCE-004] migration apply paths and rollback. -->
+
 This runbook covers the **runtime** feature flags for durable LangGraph checkpoints, Slack reaction correlation, and optional Weights & Biases traces (see OpenSpec change `agent-checkpointing-wandb-feedback`). **ATIF export** and **shadow rollout** Helm/runtime surfaces were removed; use `extraEnv` on a fork if you still need those env toggles.
 
 ## Thread and checkpoint identifiers
@@ -35,7 +37,7 @@ Set **`HOSTED_AGENT_USE_PGLITE=1`** to start an embedded [PGlite](https://pglite
 - `GET /api/v1/runtime/threads/{thread_id}/checkpoints` — history (`get_state_history`).
 - `GET /api/v1/runtime/threads/{thread_id}/side-effects` — logical checkpoints around visible side effects (Slack posts).
 - `POST /api/v1/integrations/slack/reactions` — normalized reaction payload (`channel_id`, `message_ts`, `reaction`, `event_id`, `user_id`).
-- `GET /api/v1/runtime/feedback/human` — recorded human feedback events (process-local store in default build).
+- `GET /api/v1/runtime/feedback/human` — recorded human feedback events (`HOSTED_AGENT_OBSERVABILITY_STORE=memory`: in-process; `=postgres`: read from configured Postgres).
 
 ## Secrets, retention, rollback, PII
 
