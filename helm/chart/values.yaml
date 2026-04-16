@@ -29,6 +29,9 @@ fullnameOverride: ""
 # Optional extra environment variables on the agent container (checkpoint store, W&B, etc.).
 # Example: [{ name: HOSTED_AGENT_CHECKPOINT_STORE, value: "none" }]
 # checkpoints.postgresUrl → HOSTED_AGENT_POSTGRES_URL on the agent container.
+# LLM cost **estimates** on /metrics (optional): HOSTED_AGENT_LLM_EST_COST_USD_PER_INPUT_TOKEN,
+# HOSTED_AGENT_LLM_EST_COST_USD_PER_OUTPUT_TOKEN (non-negative floats; both required to increment
+# agent_runtime_llm_estimated_cost_usd_total). See docs/observability.md.
 extraEnv: []
 
 # Kubernetes / Prometheus: scrape annotations, optional ServiceMonitor, structured JSON logs.

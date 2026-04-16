@@ -1,6 +1,19 @@
 # Grafana dashboards (DALC)
 
-<!-- Traceability: [DALC-REQ-O11Y-LOGS-003] [DALC-REQ-O11Y-LOGS-005] -->
+<!-- Traceability: [DALC-REQ-O11Y-LOGS-003] [DALC-REQ-O11Y-LOGS-005] [DALC-REQ-O11Y-LOGS-006] -->
+
+## `cfha-token-metrics.json`
+
+Additional dashboard for **LLM token economics and streaming health** on the agent **`/metrics`** endpoint (same scrape path as `dalc-overview.json`):
+
+- Output token **rate**, **TTFT** quantiles (by `streaming` label), **trigger request/response payload** p95, **estimated cost** rate (panel title marks **estimate**).
+
+### Import
+
+1. Grafana → **Dashboards** → **New** → **Import** → upload `cfha-token-metrics.json`.
+2. Select a **Prometheus** data source (placeholder uid **`prometheus`**, same as `dalc-overview.json`).
+
+Metric names and label semantics: **`docs/observability.md`** (LLM token metrics section).
 
 ## `dalc-overview.json`
 

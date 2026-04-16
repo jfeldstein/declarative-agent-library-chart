@@ -15,7 +15,7 @@ from hosted_agents.agent_models import RagQueryBody, TriggerBody
 from hosted_agents.agent_tracing import observability_summary
 from hosted_agents.checkpointing import checkpoints_globally_enabled
 from hosted_agents.env import system_prompt_from_env
-from hosted_agents.metrics import observe_http_trigger
+from hosted_agents.metrics import observe_http_trigger, observe_trigger_http_payloads
 from hosted_agents.observability.settings import ObservabilitySettings
 from hosted_agents.observability.stores import (
     bind_observability_stores,
@@ -39,10 +39,12 @@ from hosted_agents.trigger_graph import (
 )
 
 
-async def _parse_trigger_json(request: Request) -> dict | None:
+async def _parse_trigger_json(request: Request) -> tuple[dict | None, int]:
+    """Parse JSON object body for ``POST /api/v1/trigger``; returns payload and raw byte length."""
     body = await request.body()
+    n = len(body)
     if not body:
-        return None
+        return None, n
     try:
         data = json.loads(body)
     except json.JSONDecodeError as exc:
@@ -60,7 +62,7 @@ async def _parse_trigger_json(request: Request) -> dict | None:
                 "of that agent (LangChain subagents pattern)."
             ),
         )
-    return data
+    return data, n
 
 
 def _request_id(request: Request) -> str:
@@ -118,7 +120,7 @@ def _register_trigger_route(app: FastAPI, system_prompt: str | None) -> None:
     @app.post("/api/v1/trigger", response_class=PlainTextResponse)
     async def post_trigger(request: Request) -> str:
         start = time.perf_counter()
-        raw = await _parse_trigger_json(request)
+        raw, req_bytes = await _parse_trigger_json(request)
         payload = TriggerBody.model_validate(raw) if raw is not None else None
         prompt = (
             system_prompt if system_prompt is not None else system_prompt_from_env()
@@ -146,17 +148,25 @@ def _register_trigger_route(app: FastAPI, system_prompt: str | None) -> None:
             out = run_trigger_graph(ctx)
         except ValueError as exc:
             observe_http_trigger("client_error", start)
+            observe_trigger_http_payloads(req_bytes, None)
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         except TriggerHttpError as exc:
             observe_http_trigger(
                 "client_error" if exc.status_code < 500 else "server_error",
                 start,
             )
+            observe_trigger_http_payloads(req_bytes, None)
             raise HTTPException(exc.status_code, exc.detail) from exc
         except Exception:
             observe_http_trigger("server_error", start)
+            observe_trigger_http_payloads(req_bytes, None)
             raise
         observe_http_trigger("success", start)
+        # [DALC-REQ-TOKEN-MET-004] serialized trigger JSON / response body sizes
+        observe_trigger_http_payloads(
+            req_bytes,
+            len(out.encode("utf-8", errors="replace")),
+        )
         return out
 
 
