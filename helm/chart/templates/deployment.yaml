@@ -29,9 +29,12 @@ spec:
               containerPort: 8088
               protocol: TCP
           env:
-            {{- $pgUrl := or .Values.observability.postgresUrl .Values.observability.postgres.url "" }}
-            {{- $pgSecName := or .Values.observability.postgresUrlSecret.name .Values.observability.postgres.urlSecret.name "" }}
-            {{- $pgSecKey := or .Values.observability.postgresUrlSecret.key .Values.observability.postgres.urlSecret.key "DATABASE_URL" }}
+            {{- $obsPg := .Values.observability.postgres | default dict }}
+            {{- $pgUrlSec := $obsPg.urlSecret | default dict }}
+            {{- $topPgUrlSec := .Values.observability.postgresUrlSecret | default dict }}
+            {{- $pgUrl := or .Values.observability.postgresUrl $obsPg.url "" }}
+            {{- $pgSecName := or $topPgUrlSec.name $pgUrlSec.name "" }}
+            {{- $pgSecKey := or $topPgUrlSec.key $pgUrlSec.key "DATABASE_URL" }}
             - name: HOSTED_AGENT_SYSTEM_PROMPT
               valueFrom:
                 configMapKeyRef:
