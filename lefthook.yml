@@ -1,0 +1,36 @@
+# Lefthook — https://github.com/evilmartians/lefthook
+# One-time: `lefthook install` from repo root (requires `lefthook` on PATH).
+# Python hooks assume: `uv sync --all-groups --project helm/src` (see docs/local-ci.md).
+
+min_version: 1.6.0
+
+skip_output:
+  - meta
+
+pre-commit:
+  parallel: true
+  commands:
+    ruff:
+      root: helm/src
+      glob: "**/*.py"
+      run: uv run ruff check {staged_files}
+
+pre-push:
+  parallel: true
+  commands:
+    ruff:
+      root: helm/src
+      run: uv run ruff check hosted_agents tests
+    complexipy:
+      root: helm/src
+      run: uv run complexipy
+    pytest:
+      root: helm/src
+      run: uv run pytest tests/ -q --tb=short --no-cov
+    smoke-rag:
+      root: helm/src
+      run: uv run python tests/integration/smoke_rag.py
+    spec-traceability:
+      run: python3 scripts/check_spec_traceability.py
+    adr-numbers:
+      run: ./scripts/check_adr_numbers.sh

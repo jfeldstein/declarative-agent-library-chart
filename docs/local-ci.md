@@ -2,6 +2,19 @@
 
 Canonical automation lives in [`.github/workflows/ci.yml`](../.github/workflows/ci.yml). From a clone of [github.com/jfeldstein/declarative-agent-library-chart](https://github.com/jfeldstein/declarative-agent-library-chart):
 
+## Git hooks ([Lefthook](https://github.com/evilmartians/lefthook))
+
+Optional local gates (not run in CI). Install the `lefthook` binary (e.g. `brew install lefthook`), sync Python deps (`uv sync --all-groups --project helm/src`), then from repo root:
+
+```bash
+lefthook install
+```
+
+- **pre-commit:** `ruff check` on staged `helm/src` Python only.
+- **pre-push:** full `ruff` + `complexipy` + `pytest` (no coverage), RAG smoke, spec traceability, ADR numbering — mirrors most of the Python + docs jobs; **Helm** (`helm unittest`, `ct lint`) is not in hooks (run manually or rely on Actions).
+
+Per-repo overrides: `.lefthook-local.yml` (gitignored).
+
 ## Python (uv)
 
 From repo root:

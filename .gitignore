@@ -18,3 +18,7 @@ artifacts/
 # Parallel agent git worktrees (local only; see parallel-agents-in-local-worktrees skill in .claude/skills, ~/.claude/skills, .cursor/skills, or .cursor/skills)
 wt/**/*
 !wt/.gitkeep
+
+# Lefthook local overrides (https://github.com/evilmartians/lefthook/blob/master/docs/configuration.md#lefthook-local)
+.lefthook-local.yml
+.lefthook-local.yaml
