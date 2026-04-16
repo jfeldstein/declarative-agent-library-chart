@@ -24,7 +24,7 @@
 
 **Targets after this ladder:** McCabe **10** (Ruff default culture), complexipy **15** (upstream default culture). Do **not** raise caps in the same task as a ratchet step.
 
-- [ ] 5.1 **McCabe `max-complexity`**: **25 → 24**; then **`/fix`** until green.
+- [x] 5.1 **McCabe `max-complexity`**: **25 → 24**; then **`/fix`** until green.
 - [ ] 5.2 **complexipy `max-complexity-allowed`**: **40 → 39**; then **`/fix`** until green.
 - [ ] 5.3 **McCabe**: **24 → 23**; then **`/fix`** until green.
 - [ ] 5.4 **complexipy**: **39 → 38**; then **`/fix`** until green.

@@ -97,8 +97,8 @@ target-version = "py311"
 extend-select = ["C901"]
 
 [tool.ruff.lint.mccabe]
-# Current worst McCabe in `hosted_agents` is 24 (`create_app`). Tighten after refactors.
-max-complexity = 25
+# Worst McCabe in `hosted_agents` is 24 (`create_app`, equals cap). Next McCabe step (23) requires refactors.
+max-complexity = 24
 
 [tool.complexipy]
 paths = ["hosted_agents", "tests"]
