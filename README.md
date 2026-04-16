@@ -2,9 +2,7 @@
 
 <!-- Traceability: [DALC-REQ-HELM-UNITTEST-003] [DALC-REQ-CHART-CT-002] [DALC-REQ-O11Y-LOGS-004] -->
 
-This repo is a **Helm library chart** (`helm/chart/`). 
-
-Add it as a dependency in `Chart.yaml`, and build your agent by configuring `values.yaml`.
+This repo is a Helm library chart. Add it as a dependency in `Chart.yaml`, and build your agent by configuring `values.yaml`.
 
 ## Examples
 
