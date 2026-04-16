@@ -1,5 +1,9 @@
-{{- if .Values.observability.postgres.migrations.enabled }}
-{{- $migSec := or .Values.observability.postgresUrlSecret.name .Values.observability.postgres.urlSecret.name "" }}
+{{- $pg := .Values.observability.postgres | default dict }}
+{{- $migrations := $pg.migrations | default dict }}
+{{- if $migrations.enabled }}
+{{- $urlSec := $pg.urlSecret | default dict }}
+{{- $topSec := .Values.observability.postgresUrlSecret | default dict }}
+{{- $migSec := or $topSec.name $urlSec.name "" }}
 {{- if not $migSec }}
 {{- fail "observability.postgres.migrations.enabled requires observability.postgresUrlSecret.name or observability.postgres.urlSecret.name (and key) for DATABASE_URL" }}
 {{- end }}
@@ -31,13 +35,13 @@ spec:
       restartPolicy: Never
       containers:
         - name: psql
-          image: {{ .Values.observability.postgres.migrations.image | default "postgres:16-alpine" | quote }}
+          image: {{ $migrations.image | default "postgres:16-alpine" | quote }}
           env:
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
                   name: {{ $migSec }}
-                  key: {{ or .Values.observability.postgresUrlSecret.key .Values.observability.postgres.urlSecret.key "DATABASE_URL" }}
+                  key: {{ or $topSec.key $urlSec.key "DATABASE_URL" }}
           command:
             - /bin/sh
             - -c
