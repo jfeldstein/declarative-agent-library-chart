@@ -10,6 +10,7 @@ From repo root:
 uv sync --all-groups --project helm/src
 cd helm/src
 uv run ruff check hosted_agents tests
+uv run complexipy
 uv run pytest tests/ -v --tb=short --cov-report=term-missing
 uv run python tests/integration/smoke_rag.py
 ```

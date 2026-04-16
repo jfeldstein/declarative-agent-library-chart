@@ -18,7 +18,7 @@ The merge gate **SHALL** include, in line with `ci.yml`:
 
 - **`./scripts/check_adr_numbers.sh`** — unique ADR numbering (`docs` job).
 - **`python3 scripts/check_spec_traceability.py`** — promoted OpenSpec specs ↔ traceability matrix (`traceability` job).
-- **Python under `helm/src/` via `uv`**: `uv sync --all-groups`, **`ruff check hosted_agents tests`**, **`pytest`** on `tests/` with coverage (including the **85%** floor enforced in CI; CI also uploads `coverage.xml`), and the **in-process RAG smoke** (`uv run python tests/integration/smoke_rag.py`).
+- **Python under `helm/src/` via `uv`**: `uv sync --all-groups`, **`ruff check hosted_agents tests`** (includes McCabe **`C901`** via `helm/src/pyproject.toml`), **`complexipy`** (cognitive complexity; same `pyproject.toml` config), **`pytest`** on `tests/` with coverage (including the **85%** floor enforced in CI; CI also uploads `coverage.xml`), and the **in-process RAG smoke** (`uv run python tests/integration/smoke_rag.py`).
 - **Helm**: for each `examples/*` chart, `helm dependency build --skip-refresh` and **`helm unittest`** using the suite under `helm/tests/`; then **`ct lint --config ct.yaml --all`** (pinned tool versions as documented for parity with CI).
 
 **Optional / non-default PR gate:** scheduled or manually triggered integration (for example kind + Prometheus via `RUN_KIND_O11Y_INTEGRATION=1` and the `@pytest.mark.integration` convention in `pyproject.toml`) **SHALL NOT** be required for every PR unless a future ADR or policy changes that; it remains documented for deeper verification tiers.

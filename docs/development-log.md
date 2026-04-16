@@ -8,6 +8,8 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ## 2026-04-16
 
+**CI parity docs (`complexipy`)** — [docs/local-ci.md](local-ci.md), [docs/AGENTS.md](AGENTS.md), and [ADR 0012](adrs/0012-ci-parity-as-merge-gate.md) now list **`uv run complexipy`** next to Ruff; Python CI job title includes **complexipy**.
+
 **`ci-cyclomatic-complexity` (apply)** — Promoted **`openspec/specs/dalc-python-complexity-ci`**: Ruff **`C901`** + **`mccabe.max-complexity`** (25, tuned to current McCabe worst), **`complexipy`** dev dep with **`[tool.complexipy]`** cognitive cap (40), CI **`uv run complexipy`**, contract tests **`test_python_complexity_ci_contract.py`**, matrix rows **`[DALC-REQ-PYTHON-COMPLEXITY-CI-001]`** / **`[DALC-REQ-PYTHON-COMPLEXITY-CI-002]`**.
 
 **Clean worktree merges (`main`)** — Merged **`fix/implementation-specs-accuracy`** (kept removal of **`docs/implementation-specs/`**; dropped branch log line that referenced it). Merged **`openspec/dalc-traceability-migration-apply`** and **`feature--adrs-arch-patterns`** with **`main`**-preferred conflict resolution where branches were stale. Merged **`openspec/postgres-agent-persistence`**: ported **`hosted_agents.migrations`** under **`helm/src/`** (dropped obsolete **`runtime/`** paths), optional **`[project.optional-dependencies]`** **`postgres`** (`langgraph-checkpoint-postgres`, pinned **`psycopg[binary]`**), Postgres-backed observability repos + **`HOSTED_AGENT_OBSERVABILITY_STORE`**, Helm migration hook + bundled DDL, and tests; **omitted** legacy **`RunOperationalEvent`** / **`run_operational_event`** (already removed from **`main`** feedback model).

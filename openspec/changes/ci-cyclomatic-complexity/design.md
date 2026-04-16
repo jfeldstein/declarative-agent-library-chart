@@ -1,6 +1,6 @@
 ## Context
 
-The repository’s canonical Python package lives under **`helm/src`** (`hosted_agents`, `tests`). **CI** (`.github/workflows/ci.yml`) already runs **`uv run ruff check hosted_agents tests`** with dependencies from **`uv sync --all-groups`**, but **`pyproject.toml`** does not yet pin **McCabe (`C901`)** or run **complexipy**. [complexipy](https://github.com/rohaquinlop/complexipy) measures **cognitive** complexity (human readability); Ruff **`C901`** measures **cyclomatic** (control-flow/decision density). Together they reduce merge of unmaintainable code without duplicating the same signal if thresholds are chosen deliberately.
+The repository’s canonical Python package lives under **`helm/src`** (`hosted_agents`, `tests`). **CI** (`.github/workflows/ci.yml`) runs **`uv run ruff check hosted_agents tests`** and **`uv run complexipy`** with dependencies from **`uv sync --all-groups`**, using committed thresholds in **`helm/src/pyproject.toml`** (**`C901`** / McCabe and **[complexipy](https://github.com/rohaquinlop/complexipy)** cognitive complexity). [complexipy](https://github.com/rohaquinlop/complexipy) measures **cognitive** complexity (human readability); Ruff **`C901`** measures **cyclomatic** (control-flow/decision density). Together they reduce merge of unmaintainable code without duplicating the same signal if thresholds are chosen deliberately.
 
 ## Goals / Non-Goals
 
