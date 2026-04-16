@@ -12,7 +12,7 @@ The table is parsed by `scripts/check_spec_traceability.py`; keep the **Matrix**
 
 | Tier | Meaning | This repository |
 |------|---------|-----------------|
-| **Default PR** | Runs on every PR | `ruff`, `complexipy`, `pytest` (85%+ coverage), `scripts/check_spec_traceability.py`, `tests/integration/smoke_rag.py`, `helm unittest -f helm/tests/*_test.yaml` from each `examples/*` chart, `ct lint` |
+| **Default PR** | Runs on every PR | `ruff format --check`, `ruff check`, `complexipy`, `pytest` (85%+ coverage), `scripts/check_spec_traceability.py`, `tests/integration/smoke_rag.py`, `helm unittest -f helm/tests/*_test.yaml` from each `examples/*` chart, `ct lint` |
 | **Opt-in integration** | Env-gated locally | `RUN_KIND_O11Y_INTEGRATION=1` → `helm/src/tests/integration/test_kind_o11y_prometheus.py` |
 | **Scheduled** | Cron on `main` | `.github/workflows/scheduled-o11y-integration.yml` runs the same integration test |
 | **Manual** | On demand | Full cluster e2e (not wired in-repo) |

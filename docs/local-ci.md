@@ -10,8 +10,8 @@ Optional local gates (not run in CI). Install the `lefthook` binary (e.g. `brew 
 lefthook install
 ```
 
-- **pre-commit:** `ruff check` on staged `helm/src` Python only.
-- **pre-push:** full `ruff` + `complexipy` + `pytest` (no coverage), RAG smoke, spec traceability, ADR numbering — mirrors most of the Python + docs jobs; **Helm** (`helm unittest`, `ct lint`) is not in hooks (run manually or rely on Actions).
+- **pre-commit:** `ruff format` on staged `helm/src` `*.py` (Lefthook `stage_fixed` re-stages), then `ruff check` on those paths — sequential.
+- **pre-push:** `ruff format --check` + full `ruff check` on `hosted_agents`/`tests`, then `complexipy` + `pytest` (no coverage), RAG smoke, spec traceability, ADR numbering — mirrors most of the Python + docs jobs; **Helm** (`helm unittest`, `ct lint`) is not in hooks (run manually or rely on Actions).
 
 Per-repo overrides: `.lefthook-local.yml` (gitignored).
 
@@ -22,6 +22,7 @@ From repo root:
 ```bash
 uv sync --all-groups --project helm/src
 cd helm/src
+uv run ruff format --check hosted_agents tests
 uv run ruff check hosted_agents tests
 uv run complexipy
 uv run pytest tests/ -v --tb=short --cov-report=term-missing

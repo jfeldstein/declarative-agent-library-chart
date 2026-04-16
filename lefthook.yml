@@ -7,10 +7,16 @@ min_version: 1.6.0
 skip_output:
   - meta
 
+# Format must run before lint; stage_fixed re-stages so the commit includes formatter output.
 pre-commit:
-  parallel: true
+  parallel: false
   commands:
-    ruff:
+    ruff-format:
+      root: helm/src
+      glob: "**/*.py"
+      run: uv run ruff format {staged_files}
+      stage_fixed: true
+    ruff-check:
       root: helm/src
       glob: "**/*.py"
       run: uv run ruff check {staged_files}
@@ -18,6 +24,9 @@ pre-commit:
 pre-push:
   parallel: true
   commands:
+    ruff-format-check:
+      root: helm/src
+      run: uv run ruff format --check hosted_agents tests
     ruff:
       root: helm/src
       run: uv run ruff check hosted_agents tests
