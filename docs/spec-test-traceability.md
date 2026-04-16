@@ -12,7 +12,7 @@ The table is parsed by `scripts/check_spec_traceability.py`; keep the **Matrix**
 
 | Tier | Meaning | This repository |
 |------|---------|-----------------|
-| **Default PR** | Runs on every PR | `ruff`, `pytest` (85%+ coverage), `scripts/check_spec_traceability.py`, `tests/integration/smoke_rag.py`, `helm unittest -f helm/tests/*_test.yaml` from each `examples/*` chart, `ct lint` |
+| **Default PR** | Runs on every PR | `ruff`, `complexipy`, `pytest` (85%+ coverage), `scripts/check_spec_traceability.py`, `tests/integration/smoke_rag.py`, `helm unittest -f helm/tests/*_test.yaml` from each `examples/*` chart, `ct lint` |
 | **Opt-in integration** | Env-gated locally | `RUN_KIND_O11Y_INTEGRATION=1` → `helm/src/tests/integration/test_kind_o11y_prometheus.py` |
 | **Scheduled** | Cron on `main` | `.github/workflows/scheduled-o11y-integration.yml` runs the same integration test |
 | **Manual** | On demand | Full cluster e2e (not wired in-repo) |
@@ -53,6 +53,8 @@ The table is parsed by `scripts/check_spec_traceability.py`; keep the **Matrix**
 | [DALC-REQ-O11Y-LOGS-003] | `openspec/specs/dalc-agent-o11y-logs-dashboards/spec.md` | `grafana/dalc-overview.json`, `grafana/README.md` | default PR | - | - |
 | [DALC-REQ-O11Y-LOGS-004] | `openspec/specs/dalc-agent-o11y-logs-dashboards/spec.md` | `docs/observability.md`, `README.md` | default PR | - | - |
 | [DALC-REQ-O11Y-LOGS-005] | `openspec/specs/dalc-agent-o11y-logs-dashboards/spec.md` | `grafana/README.md` | default PR | - | - |
+| [DALC-REQ-PYTHON-COMPLEXITY-CI-001] | `openspec/specs/dalc-python-complexity-ci/spec.md` | `helm/src/pyproject.toml`, `helm/src/tests/test_python_complexity_ci_contract.py::test_ruff_config_enables_c901_with_mccabe_cap`, `.github/workflows/ci.yml` | default PR | - | - |
+| [DALC-REQ-PYTHON-COMPLEXITY-CI-002] | `openspec/specs/dalc-python-complexity-ci/spec.md` | `helm/src/pyproject.toml`, `helm/src/tests/test_python_complexity_ci_contract.py::test_complexipy_config_targets_package_paths`, `.github/workflows/ci.yml` | default PR | - | - |
 | [DALC-REQ-CHART-CT-001] | `openspec/specs/dalc-chart-testing-ct/spec.md` | `.github/workflows/ci.yml`, `ct.yaml` | default PR | - | - |
 | [DALC-REQ-CHART-CT-002] | `openspec/specs/dalc-chart-testing-ct/spec.md` | `.github/workflows/ci.yml`, `README.md` | default PR | - | - |
 | [DALC-VER-001] | `openspec/specs/dalc-requirement-verification/spec.md` | `scripts/check_spec_traceability.py` | default PR | - | - |

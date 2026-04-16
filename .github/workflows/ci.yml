@@ -1,5 +1,5 @@
 # Canonical CI for this repo (replaces the former root ci.sh). Python stages use uv only.
-# Traceability: [DALC-REQ-HELM-UNITTEST-001] [DALC-REQ-HELM-UNITTEST-002] [DALC-REQ-HELM-UNITTEST-003] [DALC-REQ-CHART-CT-001] [DALC-REQ-CHART-CT-002] [DALC-VER-004]
+# Traceability: [DALC-REQ-HELM-UNITTEST-001] [DALC-REQ-HELM-UNITTEST-002] [DALC-REQ-HELM-UNITTEST-003] [DALC-REQ-CHART-CT-001] [DALC-REQ-CHART-CT-002] [DALC-REQ-PYTHON-COMPLEXITY-CI-001] [DALC-REQ-PYTHON-COMPLEXITY-CI-002] [DALC-VER-004]
 #
 # Helm pins (keep in sync with docs/local-ci.md):
 #   - Helm 3.20.2+ (helm-unittest plugin uses platformHooks; Helm <3.18.10 fails to load the plugin)
@@ -36,6 +36,9 @@ jobs:
 
       - name: Ruff lint
         run: uv run ruff check hosted_agents tests
+
+      - name: complexipy (cognitive complexity)
+        run: uv run complexipy
 
       # Default PR path: no real Postgres. Optional: `uv run pytest -m postgres_integration` with Docker Postgres (marker reserved).
       - name: Pytest with coverage (fail under 85%)
