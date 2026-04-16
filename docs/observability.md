@@ -71,6 +71,17 @@ This is separate from Uvicorn’s own access logs; it applies to the structured 
 | ------------------------- | --------------------------- | ---------- |
 | `HOSTED_AGENT_LOG_FORMAT` | `console` (default), `json` | See above. |
 
+<!-- Traceability: [DALC-REQ-TOKEN-MET-005] -->
+
+#### LLM token metrics and estimated cost (optional)
+
+| Variable | Purpose |
+| -------- | ------- |
+| `HOSTED_AGENT_METRICS_TRIGGER_PAYLOAD_MAX_BYTES` | Upper bound (bytes) for histogram clamping of trigger request/response size observations; values above map to the `+Inf` bucket (default **262144**). |
+| `HOSTED_AGENT_LLM_EST_COST_USD_PER_INPUT_TOKEN` | Non-negative float; when **both** this and `HOSTED_AGENT_LLM_EST_COST_USD_PER_OUTPUT_TOKEN` are set, `agent_runtime_llm_estimated_cost_usd_total` increments by `input_tokens * in + output_tokens * out` (estimate only). |
+| `HOSTED_AGENT_LLM_EST_COST_USD_PER_OUTPUT_TOKEN` | See above. |
+
+Helm: add entries under `extraEnv` on the agent workload (see `helm/chart/values.yaml`) to set pricing inputs without committing secrets.
 
 Helm: set `observability.structuredLogs.json: true` under the `agent` subchart (dependency alias) to inject `HOSTED_AGENT_LOG_FORMAT=json`.
 
@@ -81,6 +92,13 @@ Helm: set `observability.structuredLogs.json: true` under the `agent` subchart (
 | --------------------------------------------- | ---------------------------- | ---------------------------------- |
 | `agent_runtime_http_trigger_requests_total`   | `result` = `success`         | `client_error`                     |
 | `agent_runtime_http_trigger_duration_seconds` | `result`                     | Histogram of trigger handling time |
+| `agent_runtime_http_trigger_request_bytes` | (none) | Histogram of `POST /api/v1/trigger` JSON body size (bytes; large values clamped). |
+| `agent_runtime_http_trigger_response_bytes` | (none) | Histogram of successful plain-text response body size (UTF-8 bytes). |
+| `agent_runtime_llm_input_tokens_total` | `agent_id`, `model_id`, `result` | Cumulative provider-reported input tokens (supervisor LLM path). |
+| `agent_runtime_llm_output_tokens_total` | `agent_id`, `model_id`, `result` | Cumulative provider-reported output tokens. |
+| `agent_runtime_llm_usage_missing_total` | `agent_id`, `model_id`, `result` | Completions with incomplete token usage metadata. |
+| `agent_runtime_llm_time_to_first_token_seconds` | `agent_id`, `model_id`, `result`, `streaming` | TTFT (streaming vs non-streaming). |
+| `agent_runtime_llm_estimated_cost_usd_total` | `agent_id`, `model_id`, `result` | Estimated USD (see env table; not billing). |
 | `agent_runtime_mcp_tool_calls_total`          | `tool`, `result` = `success` | `error`                            |
 | `agent_runtime_mcp_tool_duration_seconds`     | `tool`, `result`             | Tool call latency                  |
 | `agent_runtime_subagent_invocations_total`    | `subagent`, `result`         | Subagent delegations               |
@@ -90,6 +108,8 @@ Helm: set `observability.structuredLogs.json: true` under the `agent` subchart (
 
 
 `tool`, `subagent`, and `skill` label values come from **configuration** only (bounded), not user-supplied free text.
+
+For **`agent_id`** and **`model_id`** on LLM metrics, the runtime uses `HOSTED_AGENT_ID` / `HOSTED_AGENT_AGENT_ID` and `HOSTED_AGENT_CHAT_MODEL` / `HOSTED_AGENT_MODEL_ID` when set; long values are shortened via stable hashes (see `hosted_agents.metrics.tagify_metric_label`).
 
 ### Kubernetes scrape discovery (Helm)
 
@@ -119,7 +139,9 @@ Clients may send `**X-Request-Id**`; the server echoes it on responses and inclu
 
 ## Dashboards
 
-Import `**grafana/dalc-overview.json**` (see `**grafana/README.md**`) for agent trigger rate / p95 latency and **RAG** embed + query rate panels (requires both scrape targets in Prometheus).
+<!-- Traceability: [DALC-REQ-O11Y-LOGS-006] -->
+
+Import `**grafana/dalc-overview.json**` (see `**grafana/README.md**`) for agent trigger rate / p95 latency and **RAG** embed + query rate panels (requires both scrape targets in Prometheus). For **LLM token throughput, TTFT, payload sizes, and estimated cost**, import `**grafana/cfha-token-metrics.json**` (same datasource uid convention as `dalc-overview.json`).
 
 ### Metric names (RAG workload)
 

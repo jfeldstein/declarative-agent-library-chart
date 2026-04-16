@@ -12,6 +12,7 @@ from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.tools import tool
 
 from hosted_agents.chat_model import resolve_chat_model
+from hosted_agents.llm_metrics import SupervisorLlmMetricsCallback
 from hosted_agents.subagent_units import compile_subagent_subgraph
 from hosted_agents.trigger_context import TriggerContext
 from hosted_agents.trigger_errors import TriggerHttpError
@@ -197,8 +198,9 @@ def run_supervisor_agent(ctx: TriggerContext, user_message: str) -> str:
     tools = build_supervisor_tools(ctx)
     system_prompt = build_supervisor_system_prompt(ctx)
     agent = create_agent(model, tools, system_prompt=system_prompt)
+    llm_cb = SupervisorLlmMetricsCallback(ctx)
     result = agent.invoke(
         {"messages": [HumanMessage(content=user_message)]},
-        config={"configurable": {"ctx": ctx}},
+        config={"configurable": {"ctx": ctx}, "callbacks": [llm_cb]},
     )
     return extract_final_ai_text(result)

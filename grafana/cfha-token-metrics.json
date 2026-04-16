@@ -1,0 +1,110 @@
+{
+  "annotations": { "list": [] },
+  "description": "Token throughput, TTFT, payload sizes, estimated cost. [DALC-REQ-O11Y-LOGS-006]",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "unit": "ops" },
+        "overrides": []
+      },
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 0 },
+      "id": 1,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" } },
+      "targets": [
+        {
+          "expr": "sum(rate(agent_runtime_llm_output_tokens_total[5m]))",
+          "legendFormat": "output tokens/s",
+          "refId": "A"
+        }
+      ],
+      "title": "LLM — output token rate (aggregate)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "unit": "s" },
+        "overrides": []
+      },
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 0 },
+      "id": 2,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" } },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.5, sum by (le, streaming) (rate(agent_runtime_llm_time_to_first_token_seconds_bucket[5m])))",
+          "legendFormat": "p50 streaming={{streaming}}",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum by (le, streaming) (rate(agent_runtime_llm_time_to_first_token_seconds_bucket[5m])))",
+          "legendFormat": "p95 streaming={{streaming}}",
+          "refId": "B"
+        }
+      ],
+      "title": "LLM — time to first token (p50 / p95)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "unit": "decbytes" },
+        "overrides": []
+      },
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 9 },
+      "id": 3,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" } },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(agent_runtime_http_trigger_request_bytes_bucket[5m])))",
+          "legendFormat": "p95 trigger request bytes",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(agent_runtime_http_trigger_response_bytes_bucket[5m])))",
+          "legendFormat": "p95 trigger response bytes",
+          "refId": "B"
+        }
+      ],
+      "title": "Trigger — request/response payload sizes (p95)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "unit": "currencyUSD" },
+        "overrides": []
+      },
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 9 },
+      "id": 4,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" } },
+      "targets": [
+        {
+          "expr": "sum(rate(agent_runtime_llm_estimated_cost_usd_total[5m]))",
+          "legendFormat": "estimated USD/s (estimate only)",
+          "refId": "A"
+        }
+      ],
+      "title": "LLM — estimated cost rate (USD/s, estimate only)",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["dal", "cfha", "llm", "tokens"],
+  "templating": { "list": [] },
+  "time": { "from": "now-6h", "to": "now" },
+  "timepicker": {},
+  "timezone": "",
+  "title": "CFHA — token metrics",
+  "uid": "cfha-token-metrics",
+  "version": 1,
+  "weekStart": ""
+}

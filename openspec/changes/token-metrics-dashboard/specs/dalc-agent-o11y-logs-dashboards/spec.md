@@ -1,6 +1,6 @@
 ## ADDED Requirements
 
-### Requirement: [DALC-REQ-O11Y-LOGS-005] Grafana dashboard for token and cost metrics
+### Requirement: [DALC-REQ-O11Y-LOGS-006] Grafana dashboard for token and cost metrics
 
 The repository SHALL include at least one **additional** Grafana dashboard JSON file (distinct path from existing starter dashboards or an explicitly versioned replacement documented in **`grafana/README.md`**) whose panels query the **Prometheus** metrics defined under **`cfha-runtime-token-metrics`**, including at minimum: **output token rate**, **time-to-first-token** (p50/p95), **request/response payload size** distribution, and **estimated cost** rate or cumulative panel with clear panel title indicating **estimate**.
 

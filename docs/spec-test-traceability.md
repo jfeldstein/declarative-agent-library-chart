@@ -53,6 +53,13 @@ The table is parsed by `scripts/check_spec_traceability.py`; keep the **Matrix**
 | [DALC-REQ-O11Y-LOGS-003] | `openspec/specs/dalc-agent-o11y-logs-dashboards/spec.md` | `grafana/dalc-overview.json`, `grafana/README.md` | default PR | - | - |
 | [DALC-REQ-O11Y-LOGS-004] | `openspec/specs/dalc-agent-o11y-logs-dashboards/spec.md` | `docs/observability.md`, `README.md` | default PR | - | - |
 | [DALC-REQ-O11Y-LOGS-005] | `openspec/specs/dalc-agent-o11y-logs-dashboards/spec.md` | `grafana/README.md` | default PR | - | - |
+| [DALC-REQ-O11Y-LOGS-006] | `openspec/specs/dalc-agent-o11y-logs-dashboards/spec.md` | `grafana/cfha-token-metrics.json`, `grafana/README.md`, `docs/observability.md` | default PR | - | - |
+| [DALC-REQ-TOKEN-MET-001] | `openspec/specs/dalc-runtime-token-metrics/spec.md` | `helm/src/hosted_agents/metrics.py`, `helm/src/hosted_agents/llm_metrics.py`, `helm/src/tests/test_token_metrics.py` | default PR | - | - |
+| [DALC-REQ-TOKEN-MET-002] | `openspec/specs/dalc-runtime-token-metrics/spec.md` | `helm/src/hosted_agents/metrics.py`, `helm/src/hosted_agents/llm_metrics.py`, `helm/src/tests/test_token_metrics.py` | default PR | - | - |
+| [DALC-REQ-TOKEN-MET-003] | `openspec/specs/dalc-runtime-token-metrics/spec.md` | `helm/src/hosted_agents/metrics.py`, `helm/src/hosted_agents/llm_metrics.py`, `helm/src/tests/test_token_metrics.py` | default PR | - | - |
+| [DALC-REQ-TOKEN-MET-004] | `openspec/specs/dalc-runtime-token-metrics/spec.md` | `helm/src/hosted_agents/metrics.py`, `helm/src/hosted_agents/app.py`, `helm/src/tests/test_token_metrics.py` | default PR | - | - |
+| [DALC-REQ-TOKEN-MET-005] | `openspec/specs/dalc-runtime-token-metrics/spec.md` | `helm/src/hosted_agents/metrics.py`, `helm/src/hosted_agents/llm_metrics.py`, `helm/src/tests/test_token_metrics.py`, `docs/observability.md` | default PR | - | - |
+| [DALC-REQ-TOKEN-MET-006] | `openspec/specs/dalc-runtime-token-metrics/spec.md` | `helm/src/hosted_agents/metrics.py`, `helm/src/tests/test_token_metrics.py` | default PR | - | - |
 | [DALC-REQ-PYTHON-COMPLEXITY-CI-001] | `openspec/specs/dalc-python-complexity-ci/spec.md` | `helm/src/pyproject.toml`, `helm/src/tests/test_python_complexity_ci_contract.py::test_ruff_config_enables_c901_with_mccabe_cap`, `.github/workflows/ci.yml` | default PR | - | - |
 | [DALC-REQ-PYTHON-COMPLEXITY-CI-002] | `openspec/specs/dalc-python-complexity-ci/spec.md` | `helm/src/pyproject.toml`, `helm/src/tests/test_python_complexity_ci_contract.py::test_complexipy_config_targets_package_paths`, `.github/workflows/ci.yml` | default PR | - | - |
 | [DALC-REQ-CHART-CT-001] | `openspec/specs/dalc-chart-testing-ct/spec.md` | `.github/workflows/ci.yml`, `ct.yaml` | default PR | - | - |
