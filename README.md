@@ -107,4 +107,3 @@ Values keys under the **`agent`** subchart (Helm dependency **`alias: agent`**; 
 | `subagents` | JSON list of specialists compiled into **LangGraph subgraphs** and registered as **LangChain tools** on the root agent ([LangChain subagents](https://docs.langchain.com/oss/python/langchain/multi-agent/subagents)). **Recommended:** **`description`** for each entry (tool schema text). 
 | `skills` | JSON catalog `{ "name", "prompt", "extraTools"? }` — load with **`POST /api/v1/trigger`** and `{"load_skill":"<name>"}` (progressive disclosure; aligns with [LangChain Skills](https://docs.langchain.com/oss/python/langchain/multi-agent/skills)). |
 | `chatModel` | LiteLLM-compatible model id to be used for the agent(s). |
-| `subagents` | JSON list of subagents. Each supports the values above. Each subagent is exposed as a LangChain tool on the root agent. |
