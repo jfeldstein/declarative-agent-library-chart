@@ -108,20 +108,13 @@ def _require_checkpoints_enabled() -> None:
         raise HTTPException(status_code=503, detail=_CHECKPOINTS_DISABLED)
 
 
-def create_app(*, system_prompt: str | None = None) -> FastAPI:
-    """Build the ASGI app.
-
-    If ``system_prompt`` is set, it is used for every request (tests).
-    Otherwise the value comes from :func:`system_prompt_from_env`.
-    """
-    configure_request_logging()
-    app = FastAPI(title="declarative-agent-library-chart", version="0.1.0")
-    app.add_middleware(ObservabilityMiddleware)
-
+def _register_metrics_route(app: FastAPI) -> None:
     @app.get("/metrics")
     def get_metrics() -> Response:
         return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
+
+def _register_trigger_route(app: FastAPI, system_prompt: str | None) -> None:
     @app.post("/api/v1/trigger", response_class=PlainTextResponse)
     async def post_trigger(request: Request) -> str:
         start = time.perf_counter()
@@ -166,6 +159,8 @@ def create_app(*, system_prompt: str | None = None) -> FastAPI:
         observe_http_trigger("success", start)
         return out
 
+
+def _register_runtime_summary_route(app: FastAPI) -> None:
     @app.get("/api/v1/runtime/summary")
     def runtime_summary() -> JSONResponse:
         cfg = RuntimeConfig.from_env()
@@ -193,6 +188,8 @@ def create_app(*, system_prompt: str | None = None) -> FastAPI:
             },
         )
 
+
+def _register_runtime_thread_routes(app: FastAPI) -> None:
     @app.get("/api/v1/runtime/threads/{thread_id}/state")
     def thread_state(thread_id: str) -> JSONResponse:
         try:
@@ -248,6 +245,8 @@ def create_app(*, system_prompt: str | None = None) -> FastAPI:
             }
         )
 
+
+def _register_slack_reactions_route(app: FastAPI) -> None:
     @app.post("/api/v1/integrations/slack/reactions")
     async def slack_reactions(request: Request) -> JSONResponse:
         obs = ObservabilitySettings.from_env()
@@ -261,6 +260,8 @@ def create_app(*, system_prompt: str | None = None) -> FastAPI:
             result = handle_slack_reaction_event(raw, settings=obs)
         return JSONResponse(result)
 
+
+def _register_feedback_route(app: FastAPI) -> None:
     @app.get("/api/v1/runtime/feedback/human")
     def list_human_feedback() -> JSONResponse:
         evs = get_feedback_store().human_events()
@@ -283,6 +284,8 @@ def create_app(*, system_prompt: str | None = None) -> FastAPI:
             }
         )
 
+
+def _register_trigger_checkpoint_routes(app: FastAPI) -> None:
     @app.get("/api/v1/trigger/threads/{thread_id}/state")
     def get_trigger_thread_state(thread_id: str) -> JSONResponse:
         _require_checkpoints_enabled()
@@ -301,6 +304,8 @@ def create_app(*, system_prompt: str | None = None) -> FastAPI:
             raise HTTPException(status_code=503, detail=str(exc)) from exc
         return JSONResponse([_snapshot_to_dict(s) for s in hist])
 
+
+def _register_rag_query_route(app: FastAPI) -> None:
     @app.post("/api/v1/rag/query")
     def rag_query(request: Request, body: RagQueryBody) -> JSONResponse:
         cfg = RuntimeConfig.from_env()
@@ -321,4 +326,22 @@ def create_app(*, system_prompt: str | None = None) -> FastAPI:
             ) from exc
         return JSONResponse(resp.json())
 
+
+def create_app(*, system_prompt: str | None = None) -> FastAPI:
+    """Build the ASGI app.
+
+    If ``system_prompt`` is set, it is used for every request (tests).
+    Otherwise the value comes from :func:`system_prompt_from_env`.
+    """
+    configure_request_logging()
+    app = FastAPI(title="declarative-agent-library-chart", version="0.1.0")
+    app.add_middleware(ObservabilityMiddleware)
+    _register_metrics_route(app)
+    _register_trigger_route(app, system_prompt)
+    _register_runtime_summary_route(app)
+    _register_runtime_thread_routes(app)
+    _register_slack_reactions_route(app)
+    _register_feedback_route(app)
+    _register_trigger_checkpoint_routes(app)
+    _register_rag_query_route(app)
     return app
