@@ -6,6 +6,10 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ---
 
+## 2026-04-16
+
+**`docs/openspec-implementation-order.md`** — Synced checklist and DAG with **`openspec list --json`**: ~~struck~~ / `[x]` for **complete** changes (**`dedupe-helm-values-observability`**, **`consolidate-helm-tests`**, **`examples-distinct-values-readmes`**, **`observability-automatic-enabled-components`**, **`scraper-cursors-durable-store`**); refreshed **`jira-scraper` / `slack-scraper`** progress (**9/14**, **8/14**); replaced stale “open PR” caveat with **closed** [**#14**](https://github.com/jfeldstein/declarative-agent-library-chart/pull/14) / [**#15**](https://github.com/jfeldstein/declarative-agent-library-chart/pull/15) note; documented **`presence-slack-jira-ootb`** and **`ci-cyclomatic-complexity`** as in-flight outside the linear list.
+
 ## 2026-04-15
 
 **`ci-cyclomatic-complexity`** — OpenSpec change scaffolded (`openspec/changes/ci-cyclomatic-complexity/`): proposal, design, **`dalc-python-complexity-ci`** spec (Ruff **`C901`** + [complexipy](https://github.com/rohaquinlop/complexipy)), and implementation tasks; not yet applied to **`helm/src`** or **`.github/workflows/ci.yml`**.
