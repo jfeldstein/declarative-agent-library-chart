@@ -1,4 +1,4 @@
-# Traceability: [DALC-REQ-HELM-UNITTEST-001] [DALC-REQ-HELM-UNITTEST-002] [DALC-REQ-RAG-SCRAPERS-002] [DALC-REQ-RAG-SCRAPERS-004] [DALC-REQ-CHART-RTV-001] [DALC-REQ-CHART-RTV-002] [DALC-REQ-CHART-RTV-003] [DALC-VER-002]
+# Traceability: [DALC-REQ-HELM-UNITTEST-001] [DALC-REQ-HELM-UNITTEST-002] [DALC-REQ-RAG-SCRAPERS-002] [DALC-REQ-RAG-SCRAPERS-004] [DALC-REQ-CHART-RTV-001] [DALC-REQ-CHART-RTV-002] [DALC-REQ-CHART-RTV-003] [DALC-REQ-DALC-PKG-002] [DALC-VER-002]
 values:
   - ../../examples/hello-world/values.yaml
 suite: hello-world default values
@@ -6,34 +6,34 @@ release:
   name: dalc-ci
 tests:
   - it: produces no scraper CronJob documents when no jira or slack jobs are enabled
-    template: charts/declarative-agent/templates/scraper-cronjobs.yaml
+    template: charts/agent/templates/scraper-cronjobs.yaml
     asserts:
       - hasDocuments:
           count: 0
   - it: produces no scraper job ConfigMaps when no jira or slack jobs are enabled
-    template: charts/declarative-agent/templates/scraper-job-configmaps.yaml
+    template: charts/agent/templates/scraper-job-configmaps.yaml
     asserts:
       - hasDocuments:
           count: 0
   - it: does not render RAG deployment
-    template: charts/declarative-agent/templates/rag-deployment.yaml
+    template: charts/agent/templates/rag-deployment.yaml
     asserts:
       - hasDocuments:
           count: 0
   - it: does not render RAG service
-    template: charts/declarative-agent/templates/rag-service.yaml
+    template: charts/agent/templates/rag-service.yaml
     asserts:
       - hasDocuments:
           count: 0
   - it: does not render RAG ServiceMonitor
-    template: charts/declarative-agent/templates/rag-servicemonitor.yaml
+    template: charts/agent/templates/rag-servicemonitor.yaml
     asserts:
       - hasDocuments:
           count: 0
   - it: checkpoints postgresUrl maps to HOSTED_AGENT_POSTGRES_URL
     set:
-      declarative-agent.checkpoints.postgresUrl: "postgresql://u:p@h:5432/db"
-    template: charts/declarative-agent/templates/deployment.yaml
+      agent.checkpoints.postgresUrl: "postgresql://u:p@h:5432/db"
+    template: charts/agent/templates/deployment.yaml
     asserts:
       - hasDocuments:
           count: 1
@@ -44,10 +44,10 @@ tests:
             value: "postgresql://u:p@h:5432/db"
   - it: wandb enabled with project sets env
     set:
-      declarative-agent.wandb.enabled: true
-      declarative-agent.wandb.project: myproj
-      declarative-agent.wandb.entity: acme
-    template: charts/declarative-agent/templates/deployment.yaml
+      agent.wandb.enabled: true
+      agent.wandb.project: myproj
+      agent.wandb.entity: acme
+    template: charts/agent/templates/deployment.yaml
     asserts:
       - contains:
           path: spec.template.spec.containers[0].env
@@ -61,8 +61,8 @@ tests:
             value: myproj
   - it: scrapers.slack.feedback.enabled wires Slack feedback env
     set:
-      declarative-agent.scrapers.slack.feedback.enabled: true
-    template: charts/declarative-agent/templates/deployment.yaml
+      agent.scrapers.slack.feedback.enabled: true
+    template: charts/agent/templates/deployment.yaml
     asserts:
       - contains:
           path: spec.template.spec.containers[0].env

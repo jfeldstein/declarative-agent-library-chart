@@ -1,7 +1,8 @@
+# Traceability: [DALC-REQ-DALC-PKG-003]
 replicaCount: 1
 
 image:
-  repository: declarative-agent
+  repository: declarative-agent-library-chart
   tag: local
   pullPolicy: IfNotPresent
 

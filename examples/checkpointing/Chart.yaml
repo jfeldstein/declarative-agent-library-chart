@@ -7,4 +7,4 @@ dependencies:
   - name: declarative-agent-library-chart
     version: 0.1.0
     repository: file://../../helm/chart
-    alias: declarative-agent
+    alias: agent

@@ -9,7 +9,7 @@ from typing import Any
 
 import structlog
 
-SERVICE_NAME = "declarative-agent"
+SERVICE_NAME = "declarative-agent-library-chart"
 LOG_FORMAT_ENV = "HOSTED_AGENT_LOG_FORMAT"
 
 _configured = False
@@ -20,6 +20,13 @@ def _event_to_message(
 ) -> dict[str, Any]:
     if "event" in event_dict:
         event_dict["message"] = event_dict.pop("event")
+    return event_dict
+
+
+def _add_service_field(
+    _logger: Any, _method: str, event_dict: dict[str, Any]
+) -> dict[str, Any]:
+    event_dict.setdefault("service", SERVICE_NAME)
     return event_dict
 
 
@@ -43,6 +50,7 @@ def configure_request_logging() -> None:
             structlog.processors.add_log_level,
             structlog.processors.TimeStamper(fmt="iso"),
             _event_to_message,
+            _add_service_field,
             structlog.processors.JSONRenderer(),
         ]
     else:

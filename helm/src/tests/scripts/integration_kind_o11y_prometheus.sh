@@ -127,12 +127,12 @@ if [[ ${#PROM_PRELOAD_IMAGES[@]} -gt 0 ]]; then
     docker pull "${img}"
   done
   # File on disk + docker cp avoids stdin import deadlines on large images (GitHub Actions).
-  PROM_PRELOAD_TMP="$(mktemp "${TMPDIR:-/tmp}/cfha-prom-preload.XXXXXX")"
+  PROM_PRELOAD_TMP="$(mktemp "${TMPDIR:-/tmp}/dalc-prom-preload.XXXXXX")"
   docker save "${PROM_PRELOAD_IMAGES[@]}" -o "${PROM_PRELOAD_TMP}"
   # Use /var, not /tmp: ctr inside kindest/node did not see files copied to /tmp.
-  docker cp "${PROM_PRELOAD_TMP}" "${KIND_CP}:/var/cfha-prom-preload.tar"
-  docker exec "${KIND_CP}" ctr -n k8s.io images import /var/cfha-prom-preload.tar
-  docker exec "${KIND_CP}" rm -f /var/cfha-prom-preload.tar
+  docker cp "${PROM_PRELOAD_TMP}" "${KIND_CP}:/var/dalc-prom-preload.tar"
+  docker exec "${KIND_CP}" ctr -n k8s.io images import /var/dalc-prom-preload.tar
+  docker exec "${KIND_CP}" rm -f /var/dalc-prom-preload.tar
   rm -f "${PROM_PRELOAD_TMP}"
   PROM_PRELOAD_TMP=""
 fi

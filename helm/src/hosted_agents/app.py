@@ -16,7 +16,6 @@ from hosted_agents.agent_tracing import observability_summary
 from hosted_agents.checkpointing import checkpoints_globally_enabled
 from hosted_agents.env import system_prompt_from_env
 from hosted_agents.metrics import observe_http_trigger
-from hosted_agents.observability.feedback import feedback_store
 from hosted_agents.observability.settings import ObservabilitySettings
 from hosted_agents.observability.stores import (
     bind_observability_stores,
@@ -116,7 +115,7 @@ def create_app(*, system_prompt: str | None = None) -> FastAPI:
     Otherwise the value comes from :func:`system_prompt_from_env`.
     """
     configure_request_logging()
-    app = FastAPI(title="declarative-agent", version="0.1.0")
+    app = FastAPI(title="declarative-agent-library-chart", version="0.1.0")
     app.add_middleware(ObservabilityMiddleware)
 
     @app.get("/metrics")

@@ -207,3 +207,4 @@ get_logger().info("hello_probe", request_id="abc")
     data = json.loads(line)
     assert data["message"] == "hello_probe"
     assert data["request_id"] == "abc"
+    assert data["service"] == "declarative-agent-library-chart"

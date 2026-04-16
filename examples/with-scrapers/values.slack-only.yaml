@@ -1,10 +1,10 @@
 # Slack-only scraper story: Jira disabled; one enabled Real-time Search job. Deploys RAG + one CronJob.
 # See README.md for how this differs from the default and jira-only setups.
-declarative-agent:
+agent:
   systemPrompt: |
     Respond, "Hello :wave:"
   image:
-    repository: declarative-agent
+    repository: declarative-agent-library-chart
     tag: local
     pullPolicy: Never
   scrapers:

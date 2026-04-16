@@ -3,11 +3,11 @@
 #
 # RAG is deployed when ``scrapers.jira`` or ``scrapers.slack`` has at least one enabled
 # job (parent ``enabled: true``); RAG Prometheus annotations follow observability.prometheusAnnotations.
-declarative-agent:
+agent:
   systemPrompt: |
     Respond, "Hello :wave:"
   image:
-    repository: declarative-agent
+    repository: declarative-agent-library-chart
     tag: local
     pullPolicy: Never
   observability:

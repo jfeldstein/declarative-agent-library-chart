@@ -1,8 +1,9 @@
-# Values for subchart alias `declarative-agent` (library chart name: declarative-agent-library-chart)
-declarative-agent:
+# Traceability: [DALC-REQ-DALC-PKG-002]
+# Values for subchart alias `agent` (library chart name: declarative-agent-library-chart)
+agent:
   systemPrompt: |
     Respond, "Hello :wave:"
   image:
-    repository: declarative-agent
+    repository: declarative-agent-library-chart
     tag: local
     pullPolicy: Never

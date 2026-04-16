@@ -21,11 +21,11 @@ deploy:
         chartPath: examples/hello-world
         upgradeOnChange: true
         setValueTemplates:
-          declarative-agent.image.repository: "{{.IMAGE_REPO_declarative_agent}}"
-          declarative-agent.image.tag: "{{.IMAGE_TAG_declarative_agent}}"
-          declarative-agent.image.pullPolicy: "IfNotPresent"
+          agent.image.repository: "{{.IMAGE_REPO_declarative_agent}}"
+          agent.image.tag: "{{.IMAGE_TAG_declarative_agent}}"
+          agent.image.pullPolicy: "IfNotPresent"
 portForward:
   - resourceType: service
-    resourceName: hello-world-declarative-agent
+    resourceName: hello-world-declarative-agent-library-chart
     port: 8088
     localPort: 8088

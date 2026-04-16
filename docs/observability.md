@@ -72,7 +72,7 @@ This is separate from Uvicorn’s own access logs; it applies to the structured 
 | `HOSTED_AGENT_LOG_FORMAT` | `console` (default), `json` | See above. |
 
 
-Helm: set `observability.structuredLogs.json: true` under the `declarative-agent` subchart (dependency alias) to inject `HOSTED_AGENT_LOG_FORMAT=json`.
+Helm: set `observability.structuredLogs.json: true` under the `agent` subchart (dependency alias) to inject `HOSTED_AGENT_LOG_FORMAT=json`.
 
 ### Metric names (agent process)
 
@@ -93,7 +93,7 @@ Helm: set `observability.structuredLogs.json: true` under the `declarative-agent
 
 ### Kubernetes scrape discovery (Helm)
 
-Under `declarative-agent.observability` (Kubernetes scrape and log format only; checkpoints, W&B, and Slack feedback use other top-level keys—see `helm/chart/values.yaml`):
+Under `agent.observability` (Kubernetes scrape and log format only; checkpoints, W&B, and Slack feedback use other top-level keys—see `helm/chart/values.yaml`):
 
 - `**observability.prometheusAnnotations.enabled`**: adds `prometheus.io/scrape`, `prometheus.io/port`, `prometheus.io/path` to the agent **Pod** and **Service** (for scrapers that honor these annotations).
 - `**observability.serviceMonitor.enabled`**: renders a `**monitoring.coreos.com/v1` `ServiceMonitor`** selecting the agent `Service` on port `**http**`, path `**/metrics**`. Requires the **Prometheus Operator** CRDs in the cluster.
@@ -111,7 +111,7 @@ With `**HOSTED_AGENT_LOG_FORMAT=json`**, stdout lines are JSON objects suitable 
 
 Recommended pipeline labels:
 
-- `**service`** from the `service` field (constant `declarative-agent`).
+- `**service`** from the `service` field (constant `declarative-agent-library-chart`).
 - `**level`** from the `level` field.
 - `**request_id**` from the `request_id` field when present.
 
@@ -134,7 +134,7 @@ The **RAG** HTTP server (separate Deployment when an enabled scraper job exists;
 | `agent_runtime_rag_query_duration_seconds` | `result`             | Query latency            |
 
 
-Helm: set `**observability.prometheusAnnotations.enabled: true**` under `declarative-agent` to add `prometheus.io/*` hints on **both** agent and RAG Service/Pod when RAG is deployed (RAG port from `**scrapers.ragService.service.port`**).
+Helm: set `**observability.prometheusAnnotations.enabled: true**` under `agent` to add `prometheus.io/*` hints on **both** agent and RAG Service/Pod when RAG is deployed (RAG port from `**scrapers.ragService.service.port`**).
 
 ### Subagent roles (agent process)
 
@@ -183,8 +183,8 @@ End-to-end check that `**examples/with-observability`** deploys to **kind** (age
 
 - `**agent_runtime_http_trigger_requests_total`** after several `POST /api/v1/trigger` calls, and  
 - `**agent_runtime_rag_embed_requests_total`** / `**agent_runtime_rag_query_requests_total**` after `POST /v1/embed` and `POST /v1/query` on RAG.
-- **Script:** `[helm/src/tests/scripts/integration_kind_o11y_prometheus.sh](../helm/src/tests/scripts/integration_kind_o11y_prometheus.sh)` — installs Prometheus with **two** static scrape jobs (`dalc-agent-metrics`, `dalc-rag-metrics`); disables **ServiceMonitor** on the release (`--set declarative-agent.observability.serviceMonitor.enabled=false`) so **Prometheus Operator CRDs** are not required.
-- **Prometheus values template:** `[helm/src/tests/scripts/prometheus-kind-o11y-values.yaml](../helm/src/tests/scripts/prometheus-kind-o11y-values.yaml)` — placeholders `**@SCRAPE_TARGET_AGENT@`** (`…declarative-agent…:8088`) and `**@SCRAPE_TARGET_RAG@`** (`…declarative-agent-rag…:8090`).
+- **Script:** `[helm/src/tests/scripts/integration_kind_o11y_prometheus.sh](../helm/src/tests/scripts/integration_kind_o11y_prometheus.sh)` — installs Prometheus with **two** static scrape jobs (`dalc-agent-metrics`, `dalc-rag-metrics`); disables **ServiceMonitor** on the release (`--set agent.observability.serviceMonitor.enabled=false`) so **Prometheus Operator CRDs** are not required.
+- **Prometheus values template:** `[helm/src/tests/scripts/prometheus-kind-o11y-values.yaml](../helm/src/tests/scripts/prometheus-kind-o11y-values.yaml)` — placeholders `**@SCRAPE_TARGET_AGENT@`** (agent `Service` cluster DNS on port **8088**) and `**@SCRAPE_TARGET_RAG@`** (managed RAG `Service` on port **8090** by default).
 - **Pytest wrapper (opt-in):** `RUN_KIND_O11Y_INTEGRATION=1 pytest tests/integration/test_kind_o11y_prometheus.py -v --no-cov` from `helm/src/` (avoids coverage floor when only this test runs).
 
 **Prerequisites:** Docker, kind, kubectl, helm, curl, Python 3. Optional: `CLEANUP_KIND=1` to delete the cluster when the script exits; `SKIP_KIND_CREATE=1` to reuse an existing cluster name (`KIND_CLUSTER_NAME`, default `dalc-o11y-it`). Helm installs use `HELM_WAIT_TIMEOUT` (default **15m**) and `ROLLOUT_TIMEOUT` (default **600s**) because Prometheus images can be slow to pull on a fresh kind node.

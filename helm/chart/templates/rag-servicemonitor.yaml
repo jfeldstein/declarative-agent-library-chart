@@ -1,10 +1,10 @@
-{{- if and (include "declarative-agent.ragDeployed" .) .Values.observability.serviceMonitor.enabled }}
+{{- if and (include "declarative-agent-library-chart.ragDeployed" .) .Values.observability.serviceMonitor.enabled }}
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: {{ include "declarative-agent.fullname" . }}-rag
+  name: {{ include "declarative-agent-library-chart.fullname" . }}-rag
   labels:
-    {{- include "declarative-agent.labels" . | nindent 4 }}
+    {{- include "declarative-agent-library-chart.labels" . | nindent 4 }}
     app.kubernetes.io/component: rag
     {{- with .Values.observability.serviceMonitor.extraLabels }}
     {{- toYaml . | nindent 4 }}
@@ -12,7 +12,7 @@ metadata:
 spec:
   selector:
     matchLabels:
-      {{- include "declarative-agent.ragSelectorLabels" . | nindent 6 }}
+      {{- include "declarative-agent-library-chart.ragSelectorLabels" . | nindent 6 }}
   namespaceSelector:
     matchNames:
       - {{ .Release.Namespace }}

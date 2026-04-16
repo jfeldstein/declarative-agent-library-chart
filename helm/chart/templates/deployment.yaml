@@ -1,18 +1,18 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "declarative-agent.fullname" . }}
+  name: {{ include "declarative-agent-library-chart.fullname" . }}
   labels:
-    {{- include "declarative-agent.labels" . | nindent 4 }}
+    {{- include "declarative-agent-library-chart.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      {{- include "declarative-agent.agentSelectorLabels" . | nindent 6 }}
+      {{- include "declarative-agent-library-chart.agentSelectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "declarative-agent.agentSelectorLabels" . | nindent 8 }}
+        {{- include "declarative-agent-library-chart.agentSelectorLabels" . | nindent 8 }}
       {{- if .Values.observability.prometheusAnnotations.enabled }}
       annotations:
         prometheus.io/scrape: "true"
@@ -38,28 +38,28 @@ spec:
             - name: HOSTED_AGENT_SYSTEM_PROMPT
               valueFrom:
                 configMapKeyRef:
-                  name: {{ include "declarative-agent.fullname" . }}-config
+                  name: {{ include "declarative-agent-library-chart.fullname" . }}-config
                   key: system-prompt
             {{- if .Values.chatModel }}
             - name: HOSTED_AGENT_CHAT_MODEL
               value: {{ .Values.chatModel | quote }}
             {{- end }}
             - name: HOSTED_AGENT_RAG_BASE_URL
-              value: {{ include "declarative-agent.ragInternalBaseUrl" . | quote }}
+              value: {{ include "declarative-agent-library-chart.ragInternalBaseUrl" . | quote }}
             - name: HOSTED_AGENT_SUBAGENTS_JSON
               valueFrom:
                 configMapKeyRef:
-                  name: {{ include "declarative-agent.fullname" . }}-config
+                  name: {{ include "declarative-agent-library-chart.fullname" . }}-config
                   key: subagents.json
             - name: HOSTED_AGENT_SKILLS_JSON
               valueFrom:
                 configMapKeyRef:
-                  name: {{ include "declarative-agent.fullname" . }}-config
+                  name: {{ include "declarative-agent-library-chart.fullname" . }}-config
                   key: skills.json
             - name: HOSTED_AGENT_ENABLED_MCP_TOOLS_JSON
               valueFrom:
                 configMapKeyRef:
-                  name: {{ include "declarative-agent.fullname" . }}-config
+                  name: {{ include "declarative-agent-library-chart.fullname" . }}-config
                   key: enabled-mcp-tools.json
             {{- if .Values.observability.structuredLogs.json }}
             - name: HOSTED_AGENT_LOG_FORMAT
@@ -93,14 +93,14 @@ spec:
             - name: HOSTED_AGENT_SLACK_EMOJI_LABEL_MAP_JSON
               valueFrom:
                 configMapKeyRef:
-                  name: {{ include "declarative-agent.fullname" . }}-config
+                  name: {{ include "declarative-agent-library-chart.fullname" . }}-config
                   key: slack-emoji-label-map.json
             {{- end }}
             {{- if .Values.scrapers.slack.feedback.labelRegistry }}
             - name: HOSTED_AGENT_LABEL_REGISTRY_JSON
               valueFrom:
                 configMapKeyRef:
-                  name: {{ include "declarative-agent.fullname" . }}-config
+                  name: {{ include "declarative-agent-library-chart.fullname" . }}-config
                   key: label-registry.json
             {{- end }}
             {{- range .Values.extraEnv }}

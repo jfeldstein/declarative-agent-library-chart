@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "declarative-agent.fullname" . }}-config
+  name: {{ include "declarative-agent-library-chart.fullname" . }}-config
   labels:
-    {{- include "declarative-agent.labels" . | nindent 4 }}
+    {{- include "declarative-agent-library-chart.labels" . | nindent 4 }}
 data:
   system-prompt: |
 {{ .Values.systemPrompt | nindent 4 }}

@@ -1,10 +1,10 @@
-{{- if include "declarative-agent.ragDeployed" . }}
+{{- if include "declarative-agent-library-chart.ragDeployed" . }}
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "declarative-agent.fullname" . }}-rag
+  name: {{ include "declarative-agent-library-chart.fullname" . }}-rag
   labels:
-    {{- include "declarative-agent.labels" . | nindent 4 }}
+    {{- include "declarative-agent-library-chart.labels" . | nindent 4 }}
     app.kubernetes.io/component: rag
   {{- if .Values.observability.prometheusAnnotations.enabled }}
   annotations:
@@ -20,5 +20,5 @@ spec:
       protocol: TCP
       name: http
   selector:
-    {{- include "declarative-agent.ragSelectorLabels" . | nindent 4 }}
+    {{- include "declarative-agent-library-chart.ragSelectorLabels" . | nindent 4 }}
 {{- end }}

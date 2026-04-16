@@ -11,7 +11,7 @@ The agent process SHALL emit **structured logs** to **standard output** in **JSO
 
 ### Requirement: [DALC-REQ-O11Y-LOGS-003] Starter Grafana dashboard artifact
 
-The repository SHALL include **`grafana/dalc-overview.json`** (importable via Grafana UI or provisioning) that visualizes the **metrics** defined in the `cfha-agent-o11y-scrape` capability (for example request rate and latency panels tied to the documented metric names), and documentation SHALL state the **import path** and any **datasource** assumptions (for example a Prometheus datasource named `Prometheus`).
+The repository SHALL include **`grafana/dalc-overview.json`** (importable via Grafana UI or provisioning) that visualizes the **metrics** defined in the `dalc-agent-o11y-scrape` capability (for example request rate and latency panels tied to the documented metric names), and documentation SHALL state the **import path** and any **datasource** assumptions (for example a Prometheus datasource named `Prometheus`).
 
 #### Scenario: Maintainer locates dashboard
 
