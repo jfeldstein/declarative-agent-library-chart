@@ -49,7 +49,7 @@ See the [examples](examples) directory for more examples.
 ```
 +-----------------------------------------------------------------------------+
 |                                        |                                    |
-|      NON-AGENTIC SCAFFOLDING           |              THE AGENT             |
+|              THE HARNESS               |              THE AGENT             |
 |   (HTTP triggers, sources of context)  |  (harness, tools, RLHF / feedback) |
 |                                        |                                    |
 +-----------------------------------------------------------------------------+
@@ -63,7 +63,7 @@ See the [examples](examples) directory for more examples.
 
 ```
 +-------------------------------------------------------------------+
-| NON-AGENTIC SCAFFOLDING         | AGENTIC                         |
+| THE HARNESS                     | AGENTIC                         |
 |  + Sources of context           |  + Agent (system prompt,        |
 |    (scrapers / ETL -> RAG,      |    config, subagents, skills,   |
 |    entities/relationships)      |    chat model, checkpoints,     |
