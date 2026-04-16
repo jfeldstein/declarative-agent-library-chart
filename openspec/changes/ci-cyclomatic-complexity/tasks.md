@@ -28,7 +28,7 @@
 - 5.2 **complexipy `max-complexity-allowed`**: **40 → 39**; then `**/fix`** until green.
 - ~~5.3 **McCabe**: **24 → 23**; then `**/fix`** until green.~~ (split `create_app` into `_register_*` route helpers)
 - ~~5.4 **complexipy**: **39 → 38**; then `**/fix`** until green.~~ (cap only; peak cognitive already under 38)
-- 5.5 **McCabe**: **23 → 22**; then `**/fix`** until green.
+- ~~5.5 **McCabe**: **23 → 22**; then `**/fix`** until green.~~ (cap only; peak McCabe 14)
 - 5.6 **complexipy**: **38 → 37**; then `**/fix`** until green.
 - 5.7 **McCabe**: **22 → 21**; then `**/fix`** until green.
 - 5.8 **complexipy**: **37 → 36**; then `**/fix`** until green.
