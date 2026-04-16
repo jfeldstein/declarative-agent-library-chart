@@ -102,6 +102,6 @@ max-complexity = 24
 
 [tool.complexipy]
 paths = ["hosted_agents", "tests"]
-# Baseline for current tree (worst ~38 cognitive in `create_app`). Prefer lowering over time.
-max-complexity-allowed = 40
+# Worst cognitive complexity in analyzed paths is 38 (`hosted_agents.app.create_app`). Cap 39 (ratchet 5.2).
+max-complexity-allowed = 39
 quiet = true
