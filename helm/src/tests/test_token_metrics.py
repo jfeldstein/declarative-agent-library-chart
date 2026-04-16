@@ -89,7 +89,9 @@ def test_llm_token_counters_and_cost_with_usage_metadata(
         'model_id="fake:unit-model",result="success"}'
     )
     # 10 * 1e-5 + 4 * 2e-5
-    assert _counter_value(after, pfx_c) >= _counter_value(before, pfx_c) + 0.00018 - 1e-12
+    assert (
+        _counter_value(after, pfx_c) >= _counter_value(before, pfx_c) + 0.00018 - 1e-12
+    )
 
 
 def test_llm_usage_missing_when_no_usage_metadata(

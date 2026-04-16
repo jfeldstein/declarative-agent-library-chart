@@ -63,9 +63,12 @@ _PAYLOAD_BUCKETS = (
     float("inf"),
 )
 
+
 def _max_trigger_payload_bytes() -> int:
     """Upper clamp for trigger payload histograms (read per observation, not at import)."""
-    raw = os.environ.get("HOSTED_AGENT_METRICS_TRIGGER_PAYLOAD_MAX_BYTES", "262144").strip()
+    raw = os.environ.get(
+        "HOSTED_AGENT_METRICS_TRIGGER_PAYLOAD_MAX_BYTES", "262144"
+    ).strip()
     try:
         n = int(raw)
     except ValueError:
