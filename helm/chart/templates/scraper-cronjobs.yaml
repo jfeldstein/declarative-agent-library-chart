@@ -14,12 +14,12 @@
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: {{ include "declarative-agent-library.fullname" $root }}-scraper-jira-{{ $ji }}
+  name: {{ include "declarative-agent.fullname" $root }}-scraper-jira-{{ $ji }}
   labels:
-    {{- include "declarative-agent-library.labels" $root | nindent 4 }}
+    {{- include "declarative-agent.labels" $root | nindent 4 }}
     app.kubernetes.io/component: scraper
-    scraper.agentic.cfha/source: jira
-    scraper.agentic.cfha/index: {{ $ji | quote }}
+    scraper.agentic.dalc/source: jira
+    scraper.agentic.dalc/index: {{ $ji | quote }}
 spec:
   schedule: {{ $job.schedule | quote }}
   concurrencyPolicy: Forbid
@@ -37,16 +37,16 @@ spec:
             prometheus.io/path: "/metrics"
           {{- end }}
           labels:
-            {{- include "declarative-agent-library.selectorLabels" $root | nindent 12 }}
+            {{- include "declarative-agent.selectorLabels" $root | nindent 12 }}
             app.kubernetes.io/component: scraper
-            scraper.agentic.cfha/source: jira
-            scraper.agentic.cfha/index: {{ $ji | quote }}
+            scraper.agentic.dalc/source: jira
+            scraper.agentic.dalc/index: {{ $ji | quote }}
         spec:
           restartPolicy: OnFailure
           volumes:
             - name: scraper-job-config
               configMap:
-                name: {{ include "declarative-agent-library.fullname" $root }}-scraper-job-jira-{{ $ji }}
+                name: {{ include "declarative-agent.fullname" $root }}-scraper-job-jira-{{ $ji }}
           containers:
             - name: scraper
               image: "{{ $root.Values.image.repository }}:{{ $root.Values.image.tag }}"
@@ -65,7 +65,7 @@ spec:
                   readOnly: true
               env:
                 - name: RAG_SERVICE_URL
-                  value: {{ include "declarative-agent-library.ragInternalBaseUrl" $root | quote }}
+                  value: {{ include "declarative-agent.ragInternalBaseUrl" $root | quote }}
                 - name: SCRAPER_JOB_CONFIG
                   value: /config/job.json
                 - name: SCRAPER_NAME
@@ -130,12 +130,12 @@ spec:
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: {{ include "declarative-agent-library.fullname" $root }}-scraper-slack-{{ $si }}
+  name: {{ include "declarative-agent.fullname" $root }}-scraper-slack-{{ $si }}
   labels:
-    {{- include "declarative-agent-library.labels" $root | nindent 4 }}
+    {{- include "declarative-agent.labels" $root | nindent 4 }}
     app.kubernetes.io/component: scraper
-    scraper.agentic.cfha/source: slack
-    scraper.agentic.cfha/index: {{ $si | quote }}
+    scraper.agentic.dalc/source: slack
+    scraper.agentic.dalc/index: {{ $si | quote }}
 spec:
   schedule: {{ $job.schedule | quote }}
   concurrencyPolicy: Forbid
@@ -153,16 +153,16 @@ spec:
             prometheus.io/path: "/metrics"
           {{- end }}
           labels:
-            {{- include "declarative-agent-library.selectorLabels" $root | nindent 12 }}
+            {{- include "declarative-agent.selectorLabels" $root | nindent 12 }}
             app.kubernetes.io/component: scraper
-            scraper.agentic.cfha/source: slack
-            scraper.agentic.cfha/index: {{ $si | quote }}
+            scraper.agentic.dalc/source: slack
+            scraper.agentic.dalc/index: {{ $si | quote }}
         spec:
           restartPolicy: OnFailure
           volumes:
             - name: scraper-job-config
               configMap:
-                name: {{ include "declarative-agent-library.fullname" $root }}-scraper-job-slack-{{ $si }}
+                name: {{ include "declarative-agent.fullname" $root }}-scraper-job-slack-{{ $si }}
           containers:
             - name: scraper
               image: "{{ $root.Values.image.repository }}:{{ $root.Values.image.tag }}"
@@ -181,7 +181,7 @@ spec:
                   readOnly: true
               env:
                 - name: RAG_SERVICE_URL
-                  value: {{ include "declarative-agent-library.ragInternalBaseUrl" $root | quote }}
+                  value: {{ include "declarative-agent.ragInternalBaseUrl" $root | quote }}
                 - name: SCRAPER_JOB_CONFIG
                   value: /config/job.json
                 - name: SCRAPER_NAME

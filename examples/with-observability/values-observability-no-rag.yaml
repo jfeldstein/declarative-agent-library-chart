@@ -1,11 +1,11 @@
 # Traceability: [DALC-REQ-HELM-UNITTEST-001] [DALC-REQ-O11Y-SCRAPE-005]
 # Alternate fixture: Kubernetes observability (annotations + ServiceMonitor) but no scraper jobs,
 # so the managed RAG HTTP service is not deployed. Used by helm unittest negative path.
-declarative-agent-library:
+declarative-agent:
   systemPrompt: |
     Respond, "Hello :wave:"
   image:
-    repository: config-first-hosted-agents
+    repository: declarative-agent
     tag: local
     pullPolicy: Never
   observability:

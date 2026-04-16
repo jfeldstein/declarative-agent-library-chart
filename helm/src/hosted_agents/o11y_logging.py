@@ -9,7 +9,7 @@ from typing import Any
 
 import structlog
 
-SERVICE_NAME = "config-first-hosted-agents"
+SERVICE_NAME = "declarative-agent"
 LOG_FORMAT_ENV = "HOSTED_AGENT_LOG_FORMAT"
 
 _configured = False

@@ -5,12 +5,12 @@
 apiVersion: skaffold/v2beta29
 kind: Config
 metadata:
-  name: config-first-hosted-agents-hello
+  name: declarative-agent-hello
 build:
   local:
     push: false
   artifacts:
-    - image: config-first-hosted-agents
+    - image: declarative-agent
       context: .
       docker:
         dockerfile: helm/Dockerfile
@@ -21,11 +21,11 @@ deploy:
         chartPath: examples/hello-world
         upgradeOnChange: true
         setValueTemplates:
-          declarative-agent-library.image.repository: "{{.IMAGE_REPO_config_first_hosted_agents}}"
-          declarative-agent-library.image.tag: "{{.IMAGE_TAG_config_first_hosted_agents}}"
-          declarative-agent-library.image.pullPolicy: "IfNotPresent"
+          declarative-agent.image.repository: "{{.IMAGE_REPO_declarative_agent}}"
+          declarative-agent.image.tag: "{{.IMAGE_TAG_declarative_agent}}"
+          declarative-agent.image.pullPolicy: "IfNotPresent"
 portForward:
   - resourceType: service
-    resourceName: hello-world-declarative-agent-library
+    resourceName: hello-world-declarative-agent
     port: 8088
     localPort: 8088

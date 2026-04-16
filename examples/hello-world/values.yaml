@@ -1,8 +1,8 @@
-# Values for subchart `declarative-agent-library` (see helm/chart/Chart.yaml name)
-declarative-agent-library:
+# Values for subchart alias `declarative-agent` (library chart name: declarative-agent-library-chart)
+declarative-agent:
   systemPrompt: |
     Respond, "Hello :wave:"
   image:
-    repository: config-first-hosted-agents
+    repository: declarative-agent
     tag: local
     pullPolicy: Never

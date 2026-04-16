@@ -1,11 +1,11 @@
 # Traceability: [DALC-REQ-CHART-RTV-001]
 # Library defaults: checkpoints.enabled is false; this example turns on
 # checkpointing with the bundled in-memory saver (no Postgres image required).
-declarative-agent-library:
+declarative-agent:
   systemPrompt: |
     Respond, "Hello :wave:"
   image:
-    repository: config-first-hosted-agents
+    repository: declarative-agent
     tag: local
     pullPolicy: Never
   checkpoints:

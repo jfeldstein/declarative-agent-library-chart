@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: config-first-hosted-agents
+  repository: declarative-agent
   tag: local
   pullPolicy: IfNotPresent
 

@@ -8,7 +8,7 @@ This document describes how **user application charts** (in other repositories o
 flowchart TB
   subgraph user["User chart (application)"]
     UV[values.yaml]
-    DEP[helm dependency: declarative-agent-library]
+    DEP[helm dependency: declarative-agent-library-chart]
   end
   subgraph lib["Library chart (helm/chart)"]
     CM[ConfigMap: prompts + JSON catalogs]
@@ -45,7 +45,7 @@ flowchart TB
 
 ## User charts (other repos)
 
-A **user chart** is a normal Helm **application** chart that lists `declarative-agent-library` as a **dependency** and passes nested values under the dependency name (for example `declarative-agent-library:` in `examples/hello-world/values.yaml`).
+A **user chart** is a normal Helm **application** chart that lists `declarative-agent-library-chart` as a **dependency** (typically with **`alias: declarative-agent`**) and passes nested values under that alias (for example `declarative-agent:` in `examples/hello-world/values.yaml`).
 
 Responsibilities of the user chart:
 

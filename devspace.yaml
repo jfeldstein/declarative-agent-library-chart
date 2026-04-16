@@ -2,10 +2,10 @@
 #   (cd examples/hello-world && helm dependency build --skip-refresh)
 #   devspace dev
 version: v2beta1
-name: config-first-hosted-agents
+name: declarative-agent
 images:
   app:
-    image: config-first-hosted-agents
+    image: declarative-agent
     dockerfile: helm/Dockerfile
     context: .
     tags:
@@ -20,6 +20,6 @@ deployments:
 dev:
   hello-world:
     labelSelector:
-      app.kubernetes.io/name: declarative-agent-library
+      app.kubernetes.io/name: declarative-agent-library-chart
     ports:
       - port: "8088:8088"

@@ -4,6 +4,7 @@ description: Example application chart — reference + stub scraper CronJobs (de
 type: application
 version: 0.1.0
 dependencies:
-  - name: declarative-agent-library
+  - name: declarative-agent-library-chart
     version: 0.1.0
     repository: file://../../helm/chart
+    alias: declarative-agent

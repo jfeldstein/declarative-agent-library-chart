@@ -1,4 +1,4 @@
-# Architecture Decision Records (config-first-hosted-agents)
+# Architecture Decision Records (declarative-agent-library-chart)
 
 Decisions that should not drift without an explicit new ADR are recorded here.
 

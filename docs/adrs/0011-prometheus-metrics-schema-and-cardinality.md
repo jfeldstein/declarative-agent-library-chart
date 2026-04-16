@@ -34,7 +34,7 @@ Implementation today lives in `helm/src/hosted_agents/metrics.py`, `helm/src/hos
 ### Grafana and dashboards (high level)
 
 - Dashboards **SHOULD** use the prefixes above in PromQL to select the right tier (`agent_runtime_*` vs `agent_runtime_rag_*` vs `agent_runtime_scraper_*`).
-- New metrics or labels **SHOULD** be accompanied by panel or row updates in the repository Grafana JSON (for example `grafana/dalc-agent-overview.json`) and brief operator notes where scrape paths differ (agent Deployment vs RAG vs scraper metrics listener).
+- New metrics or labels **SHOULD** be accompanied by panel or row updates in the repository Grafana JSON (for example `grafana/dalc-overview.json`) and brief operator notes where scrape paths differ (agent Deployment vs RAG vs scraper metrics listener).
 - Authors **SHOULD** assume alerting and SLO panels aggregate by **result** and **integration** / **role**, not by high-cardinality dimensions; drill-down belongs in logs or traces, not in every panel’s `group by`.
 
 ## Consequences

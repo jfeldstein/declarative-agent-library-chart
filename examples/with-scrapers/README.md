@@ -20,7 +20,7 @@ Application chart demonstrating **`scrapers.jira`** and **`scrapers.slack`** wit
 - Unknown `source` values cause the scraper process to exit non-zero (CrashLoop).
 - At least one **enabled** job under an **enabled** parent deploys the managed **RAG** Deployment and Service.
 
-When adding a scraper source, update: the values files here, `helm/tests/with_scrapers_test.yaml`, `grafana/dalc-agent-overview.json`, and `helm/chart/templates/scraper-*.yaml`.
+When adding a scraper source, update: the values files here, `helm/tests/with_scrapers_test.yaml`, `grafana/dalc-overview.json`, and `helm/chart/templates/scraper-*.yaml`.
 
 ## Install
 
@@ -43,4 +43,4 @@ helm upgrade --install with-scrapers . -n default --wait -f values.jira-only.yam
 helm upgrade --install with-scrapers . -n default --wait -f values.slack-only.yaml
 ```
 
-Build or load the agent image as described in the repository root [README](../../README.md) (for example `config-first-hosted-agents:local` on kind).
+Build or load the agent image as described in the repository root [README](../../README.md) (for example `declarative-agent:local` on kind).

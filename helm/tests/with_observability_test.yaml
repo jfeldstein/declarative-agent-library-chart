@@ -3,10 +3,10 @@ values:
   - ../../examples/with-observability/values.yaml
 suite: with-observability prometheus and ServiceMonitors
 release:
-  name: cfha-ci-o11y
+  name: dalc-ci-o11y
 tests:
   - it: agent Deployment pod template has prometheus scrape annotations
-    template: charts/declarative-agent-library/templates/deployment.yaml
+    template: charts/declarative-agent/templates/deployment.yaml
     asserts:
       - hasDocuments:
           count: 1
@@ -19,7 +19,7 @@ tests:
             name: HOSTED_AGENT_LOG_FORMAT
             value: json
   - it: agent Service has prometheus scrape annotations
-    template: charts/declarative-agent-library/templates/service.yaml
+    template: charts/declarative-agent/templates/service.yaml
     asserts:
       - hasDocuments:
           count: 1
@@ -27,7 +27,7 @@ tests:
           path: metadata.annotations["prometheus.io/scrape"]
           value: "true"
   - it: optional managed RAG Deployment has prometheus scrape annotations when deployed
-    template: charts/declarative-agent-library/templates/rag-deployment.yaml
+    template: charts/declarative-agent/templates/rag-deployment.yaml
     asserts:
       - hasDocuments:
           count: 1
@@ -35,7 +35,7 @@ tests:
           path: spec.template.metadata.annotations["prometheus.io/scrape"]
           value: "true"
   - it: optional managed RAG Service has prometheus scrape annotations when deployed
-    template: charts/declarative-agent-library/templates/rag-service.yaml
+    template: charts/declarative-agent/templates/rag-service.yaml
     asserts:
       - hasDocuments:
           count: 1
@@ -43,7 +43,7 @@ tests:
           path: metadata.annotations["prometheus.io/scrape"]
           value: "true"
   - it: renders agent ServiceMonitor
-    template: charts/declarative-agent-library/templates/servicemonitor.yaml
+    template: charts/declarative-agent/templates/servicemonitor.yaml
     asserts:
       - hasDocuments:
           count: 1
@@ -53,7 +53,7 @@ tests:
           path: metadata.name
           pattern: -agent$
   - it: renders ServiceMonitor for optional managed RAG when that Service is deployed
-    template: charts/declarative-agent-library/templates/rag-servicemonitor.yaml
+    template: charts/declarative-agent/templates/rag-servicemonitor.yaml
     asserts:
       - hasDocuments:
           count: 1
@@ -65,14 +65,14 @@ tests:
   - it: with ServiceMonitor enabled but RAG not deployed, rag ServiceMonitor template renders nothing
     values:
       - ../../examples/with-observability/values-observability-no-rag.yaml
-    template: charts/declarative-agent-library/templates/rag-servicemonitor.yaml
+    template: charts/declarative-agent/templates/rag-servicemonitor.yaml
     asserts:
       - hasDocuments:
           count: 0
   - it: with ServiceMonitor enabled but RAG not deployed, agent ServiceMonitor still renders
     values:
       - ../../examples/with-observability/values-observability-no-rag.yaml
-    template: charts/declarative-agent-library/templates/servicemonitor.yaml
+    template: charts/declarative-agent/templates/servicemonitor.yaml
     asserts:
       - hasDocuments:
           count: 1

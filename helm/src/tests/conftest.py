@@ -46,7 +46,7 @@ def tool_then_text_responses(
                     {
                         "name": tool_name,
                         "args": tool_args,
-                        "id": "cfha-1",
+                        "id": "dalc-1",
                         "type": "tool_call",
                     },
                 ],

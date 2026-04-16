@@ -25,7 +25,7 @@ import pytest
 pytestmark = pytest.mark.integration
 
 
-def _cfha_root() -> Path:
+def _repo_root() -> Path:
     # .../helm/src/tests/integration/<this file> -> project root
     return Path(__file__).resolve().parents[4]
 
@@ -35,7 +35,7 @@ def _cfha_root() -> Path:
     reason="Set RUN_KIND_O11Y_INTEGRATION=1 to run kind + Prometheus integration",
 )
 def test_kind_o11y_prometheus_integration() -> None:
-    root = _cfha_root()
+    root = _repo_root()
     script = (
         Path(__file__).resolve().parent.parent
         / "scripts"

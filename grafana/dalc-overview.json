@@ -158,13 +158,13 @@
   "refresh": "30s",
   "schemaVersion": 39,
   "style": "dark",
-  "tags": ["dalc", "declarative-agent-library-chart"],
+  "tags": ["dalc", "declarative-agent"],
   "templating": { "list": [] },
   "time": { "from": "now-6h", "to": "now" },
   "timepicker": {},
   "timezone": "browser",
   "title": "DALC agent — overview [DALC-REQ-O11Y-LOGS-003]",
-  "uid": "dalc-agent-overview",
+  "uid": "dalc-overview",
   "version": 1,
   "weekStart": ""
 }

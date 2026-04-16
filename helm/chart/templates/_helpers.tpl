@@ -1,8 +1,8 @@
-{{- define "declarative-agent-library.name" -}}
+{{- define "declarative-agent.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
-{{- define "declarative-agent-library.fullname" -}}
+{{- define "declarative-agent.fullname" -}}
 {{- if .Values.fullnameOverride }}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
@@ -15,42 +15,42 @@
 {{- end }}
 {{- end }}
 
-{{- define "declarative-agent-library.chart" -}}
+{{- define "declarative-agent.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
-{{- define "declarative-agent-library.labels" -}}
-helm.sh/chart: {{ include "declarative-agent-library.chart" . }}
-{{ include "declarative-agent-library.selectorLabels" . }}
+{{- define "declarative-agent.labels" -}}
+helm.sh/chart: {{ include "declarative-agent.chart" . }}
+{{ include "declarative-agent.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 
-{{- define "declarative-agent-library.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "declarative-agent-library.name" . }}
+{{- define "declarative-agent.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "declarative-agent.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
-{{- define "declarative-agent-library.agentComponentLabel" -}}
+{{- define "declarative-agent.agentComponentLabel" -}}
 app.kubernetes.io/component: agent
 {{- end }}
 
-{{- define "declarative-agent-library.agentSelectorLabels" -}}
-{{ include "declarative-agent-library.selectorLabels" . }}
-{{ include "declarative-agent-library.agentComponentLabel" . }}
+{{- define "declarative-agent.agentSelectorLabels" -}}
+{{ include "declarative-agent.selectorLabels" . }}
+{{ include "declarative-agent.agentComponentLabel" . }}
 {{- end }}
 
-{{- define "declarative-agent-library.ragSelectorLabels" -}}
-{{ include "declarative-agent-library.selectorLabels" . }}
+{{- define "declarative-agent.ragSelectorLabels" -}}
+{{ include "declarative-agent.selectorLabels" . }}
 app.kubernetes.io/component: rag
 {{- end }}
 
 {{/*
 True when scrapers.jira or scrapers.slack has at least one enabled job (RAG workload is deployed).
 */}}
-{{- define "declarative-agent-library.ragDeployed" -}}
+{{- define "declarative-agent.ragDeployed" -}}
 {{- if and $.Values.scrapers.jira.enabled $.Values.scrapers.jira.jobs }}
 {{- range $.Values.scrapers.jira.jobs }}
 {{- if or (not (hasKey . "enabled")) .enabled }}1{{- end }}
@@ -66,8 +66,8 @@ True when scrapers.jira or scrapers.slack has at least one enabled job (RAG work
 {{/*
 Cluster-internal base URL for the RAG HTTP service (empty when no enabled scraper jobs).
 */}}
-{{- define "declarative-agent-library.ragInternalBaseUrl" -}}
-{{- if include "declarative-agent-library.ragDeployed" . -}}
-http://{{ include "declarative-agent-library.fullname" . }}-rag:{{ .Values.scrapers.ragService.service.port }}
+{{- define "declarative-agent.ragInternalBaseUrl" -}}
+{{- if include "declarative-agent.ragDeployed" . -}}
+http://{{ include "declarative-agent.fullname" . }}-rag:{{ .Values.scrapers.ragService.service.port }}
 {{- end -}}
 {{- end }}

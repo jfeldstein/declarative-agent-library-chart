@@ -4,8 +4,8 @@ Guidance for assistants and maintainers working under **`examples/`**.
 
 ## Scope
 
-- Each subdirectory is a **standalone Helm application chart** (type `application`) that vendors **`declarative-agent-library`** from `../../helm/chart`.
-- Values for the library live under the key **`declarative-agent-library:`** in each example’s `values.yaml` (matches the dependency `name` in `Chart.yaml`).
+- Each subdirectory is a **standalone Helm application chart** (type `application`) that vendors **`declarative-agent-library-chart`** from `../../helm/chart`.
+- Values for the library live under the key **`declarative-agent:`** in each example’s `values.yaml` (matches the dependency **`alias`** in `Chart.yaml`).
 
 ## Helm unittest suites
 

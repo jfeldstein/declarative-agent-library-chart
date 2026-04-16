@@ -1,5 +1,5 @@
 apiVersion: v2
-name: declarative-agent-library
+name: declarative-agent-library-chart
 description: Declarative Agent Library Chart — reusable Helm templates and values for a YAML-configured hosted agent runtime (HTTP trigger, optional RAG, scrapers). Consumed as a dependency from an application chart (e.g. examples/hello-world); may also be installed directly for advanced use.
 type: application
 version: 0.1.0

@@ -3,10 +3,10 @@ values:
   - ../../examples/checkpointing/values.yaml
 suite: checkpointing example enables LangGraph checkpoints (memory)
 release:
-  name: cfha-ci-checkpointing
+  name: dalc-ci-checkpointing
 tests:
   - it: agent Deployment sets checkpoint env from checkpoints [DALC-REQ-CHART-RTV-001]
-    template: charts/declarative-agent-library/templates/deployment.yaml
+    template: charts/declarative-agent/templates/deployment.yaml
     asserts:
       - hasDocuments:
           count: 1

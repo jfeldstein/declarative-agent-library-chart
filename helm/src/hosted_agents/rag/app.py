@@ -23,7 +23,7 @@ from hosted_agents.rag.store import RAGStore, get_store
 def create_app(*, store: RAGStore | None = None) -> FastAPI:
     """Build the RAG ASGI app. Tests may inject ``store``."""
     app = FastAPI(
-        title="cfha-rag",
+        title="dalc-rag",
         version="0.1.0",
         description="Managed RAG HTTP service (POC). See docs/rag-http-api.md in repo root.",
     )

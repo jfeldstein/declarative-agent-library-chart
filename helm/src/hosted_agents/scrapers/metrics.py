@@ -8,7 +8,7 @@ New integration checklist (keep in sync when adding a scraper implementation):
 - **Example:** update ``examples/with-scrapers/values.yaml`` and
   ``helm/tests/with_scrapers_test.yaml`` so operators see every value key
   and CI asserts rendering for each built-in kind.
-- **Dashboard:** add or adjust panels in ``grafana/dalc-agent-overview.json`` for new metric
+- **Dashboard:** add or adjust panels in ``grafana/dalc-overview.json`` for new metric
   labels or series; document scrape in ``grafana/README.md`` / ``docs/observability.md``.
 - **Runtime:** register counters/histograms on :data:`SCRAPER_REGISTRY` here so CronJob pods do
   not mix scraper series with the agent/RAG default registry.

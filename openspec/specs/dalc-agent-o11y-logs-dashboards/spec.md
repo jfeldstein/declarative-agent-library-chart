@@ -2,7 +2,7 @@
 
 ### Requirement: [DALC-REQ-O11Y-LOGS-001] Structured application logs to stdout
 
-The agent process SHALL emit **structured logs** to **standard output** in **JSON** format (one JSON object per line) when running in the container image default configuration, including at minimum the fields: **`level`** (severity), **`message`** (human-readable summary), and **`service`** (static application identifier, e.g. `config-first-hosted-agents` or documented constant).
+The agent process SHALL emit **structured logs** to **standard output** in **JSON** format (one JSON object per line) when running in the container image default configuration, including at minimum the fields: **`level`** (severity), **`message`** (human-readable summary), and **`service`** (static application identifier, e.g. `declarative-agent` or documented constant).
 
 #### Scenario: Log line is machine-parseable
 

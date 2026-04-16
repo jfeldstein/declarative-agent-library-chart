@@ -1,10 +1,10 @@
 # Jira-only scraper story: one enabled Jira job, Slack disabled. Deploys RAG + one CronJob.
 # See README.md for how this differs from the default and slack-only setups.
-declarative-agent-library:
+declarative-agent:
   systemPrompt: |
     Respond, "Hello :wave:"
   image:
-    repository: config-first-hosted-agents
+    repository: declarative-agent
     tag: local
     pullPolicy: Never
   scrapers:

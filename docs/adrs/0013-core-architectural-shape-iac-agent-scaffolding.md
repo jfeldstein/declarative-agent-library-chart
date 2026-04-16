@@ -33,7 +33,7 @@ Forces:
 
 ### 2. Agent internals (summary)
 
-1. **Agent core** — Declarative definition under the library chart values (in a **parent** chart: nested under the dependency key, e.g. `declarative-agent-library:` per chart naming conventions; see `examples/*/values.yaml` and [`openspec/changes/declarative-agent-library-chart/specs/declarative-agent-library-chart/spec.md`](../../openspec/changes/declarative-agent-library-chart/specs/declarative-agent-library-chart/spec.md)). Maps to env/ConfigMap: system prompt, chat model, `subagents`, `skills`, checkpoints, W&B, etc.
+1. **Agent core** — Declarative definition under the library chart values (in a **parent** chart: nested under the dependency alias, e.g. `declarative-agent:` per chart naming conventions; see `examples/*/values.yaml` and [`openspec/changes/declarative-agent-library-chart/specs/declarative-agent-library-chart/spec.md`](../../openspec/changes/declarative-agent-library-chart/specs/declarative-agent-library-chart/spec.md)). Maps to env/ConfigMap: system prompt, chat model, `subagents`, `skills`, checkpoints, W&B, etc.
 2. **Tools** — Structured into:
    - **RAG** — Retrieval against chart-managed (or configured) vector / RAG HTTP surface when **sources of context** are enabled.
    - **Built-in** — Curated integrations shipped with the library/runtime (e.g. Jira, Slack patterns where promoted).
@@ -98,7 +98,7 @@ Proportions: **upper ~2/3** = product surface (agentic | non-agentic); **lower ~
 
 - Some components **touch two pillars** (e.g. scraper **metrics** are IaC/observability; scraper **logic** is non-agentic). Readers must use **“primary ownership”** for classification.
 - **Documentation and tests** must repeatedly state which pillar they evidence, or drift returns.
-- **Parent vs library values** naming (`declarative-agent-library:` nesting) adds indirection for newcomers ([ADR 0006](0006-config-surface-alpha-breaking-changes.md) alpha posture).
+- **Parent vs library values** naming (`declarative-agent:` nesting) adds indirection for newcomers ([ADR 0006](0006-config-surface-alpha-breaking-changes.md) alpha posture).
 
 **What becomes harder**
 
@@ -148,9 +148,9 @@ This ADR does **not** mandate a particular folder layout in the repo beyond what
 - **Non-agentic: sources of context** — `scrapers.*` (per-source jobs, auth secret refs, `scrapers.ragService`, shared scraper `resources`).
 - **IaC: observability** — `observability.prometheusAnnotations`, `observability.serviceMonitor`, `observability.structuredLogs`, plus RAG/scraper ServiceMonitor templates tied to scrape registry ([ADR 0011](0011-prometheus-metrics-schema-and-cardinality.md)).
 
-**Parent application charts** — Values typically nest under the dependency name (e.g. `declarative-agent-library:`). Triggers may appear as sibling OpenSpec-driven templates or future `triggers.*` blocks; they remain **architecturally non-agentic** even when keys sit beside agent values for ergonomics.
+**Parent application charts** — Values typically nest under the dependency alias (e.g. `declarative-agent:`). Triggers may appear as sibling OpenSpec-driven templates or future `triggers.*` blocks; they remain **architecturally non-agentic** even when keys sit beside agent values for ergonomics.
 
-**Mental map:** `declarative-agent-library` subtree ≈ agent + shared chart resources; `scrapers` ≈ context sources + RAG service; `observability` ≈ IaC operator surface; trigger wiring ≈ ingress/bridge charts + runtime route `POST /api/v1/trigger`.
+**Mental map:** `declarative-agent` subtree ≈ agent + shared chart resources; `scrapers` ≈ context sources + RAG service; `observability` ≈ IaC operator surface; trigger wiring ≈ ingress/bridge charts + runtime route `POST /api/v1/trigger`.
 
 ## Glossary
 

@@ -7,7 +7,7 @@
 #   ./helm/src/tests/scripts/integration_kind_o11y_prometheus.sh
 #
 # Env:
-#   KIND_CLUSTER_NAME   (default: cfha-o11y-it)
+#   KIND_CLUSTER_NAME   (default: dalc-o11y-it)
 #   SKIP_KIND_CREATE=1  reuse existing cluster if present
 #   CLEANUP_KIND=1      delete cluster on exit (success or failure)
 #   NAMESPACE           (default: default)
@@ -23,10 +23,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "${SCRIPT_DIR}/../../../.." && pwd)"
 cd "$ROOT"
 
-KIND_CLUSTER_NAME="${KIND_CLUSTER_NAME:-cfha-o11y-it}"
+KIND_CLUSTER_NAME="${KIND_CLUSTER_NAME:-dalc-o11y-it}"
 NAMESPACE="${NAMESPACE:-default}"
 AGENT_RELEASE="${AGENT_RELEASE:-o11y-kind-it}"
-PROM_RELEASE="${PROM_RELEASE:-cfha-prom-it}"
+PROM_RELEASE="${PROM_RELEASE:-dalc-prom-it}"
 PROM_CHART_VERSION="${PROM_CHART_VERSION:-29.2.0}"
 TRIGGER_COUNT="${TRIGGER_COUNT:-5}"
 HELM_WAIT_TIMEOUT="${HELM_WAIT_TIMEOUT:-20m}"
@@ -138,10 +138,10 @@ if [[ ${#PROM_PRELOAD_IMAGES[@]} -gt 0 ]]; then
 fi
 
 echo "==> docker build"
-docker build -f helm/Dockerfile -t config-first-hosted-agents:local .
+docker build -f helm/Dockerfile -t declarative-agent:local .
 
 echo "==> kind load image"
-kind load docker-image config-first-hosted-agents:local --name "${KIND_CLUSTER_NAME}"
+kind load docker-image declarative-agent:local --name "${KIND_CLUSTER_NAME}"
 
 echo "==> helm dependency (with-observability)"
 (cd examples/with-observability && helm dependency build --skip-refresh)
@@ -150,15 +150,15 @@ echo "==> helm install agent (${AGENT_RELEASE})"
 helm upgrade --install "${AGENT_RELEASE}" examples/with-observability \
   --namespace "${NAMESPACE}" \
   --create-namespace \
-  --set declarative-agent-library.observability.serviceMonitor.enabled=false \
+  --set declarative-agent.observability.serviceMonitor.enabled=false \
   --wait \
   --timeout "${HELM_WAIT_TIMEOUT}"
 
-kubectl rollout status deployment/"${AGENT_RELEASE}-declarative-agent-library" -n "${NAMESPACE}" --timeout="${ROLLOUT_TIMEOUT}"
-kubectl rollout status deployment/"${AGENT_RELEASE}-declarative-agent-library-rag" -n "${NAMESPACE}" --timeout="${ROLLOUT_TIMEOUT}"
+kubectl rollout status deployment/"${AGENT_RELEASE}-declarative-agent" -n "${NAMESPACE}" --timeout="${ROLLOUT_TIMEOUT}"
+kubectl rollout status deployment/"${AGENT_RELEASE}-declarative-agent-rag" -n "${NAMESPACE}" --timeout="${ROLLOUT_TIMEOUT}"
 
-SCRAPE_TARGET_AGENT="${AGENT_RELEASE}-declarative-agent-library.${NAMESPACE}.svc.cluster.local:8088"
-SCRAPE_TARGET_RAG="${AGENT_RELEASE}-declarative-agent-library-rag.${NAMESPACE}.svc.cluster.local:8090"
+SCRAPE_TARGET_AGENT="${AGENT_RELEASE}-declarative-agent.${NAMESPACE}.svc.cluster.local:8088"
+SCRAPE_TARGET_RAG="${AGENT_RELEASE}-declarative-agent-rag.${NAMESPACE}.svc.cluster.local:8090"
 TMP_VALUES="$(mktemp)"
 sed \
   -e "s|@SCRAPE_TARGET_AGENT@|${SCRAPE_TARGET_AGENT}|g" \
@@ -189,9 +189,9 @@ if ! kubectl rollout status deployment/"${PROM_RELEASE}-prometheus-server" -n "$
 fi
 
 echo "==> port-forward agent + rag + prometheus"
-kubectl port-forward -n "${NAMESPACE}" "svc/${AGENT_RELEASE}-declarative-agent-library" 18088:8088 &
+kubectl port-forward -n "${NAMESPACE}" "svc/${AGENT_RELEASE}-declarative-agent" 18088:8088 &
 PF_AGENT_PID=$!
-kubectl port-forward -n "${NAMESPACE}" "svc/${AGENT_RELEASE}-declarative-agent-library-rag" 18189:8090 &
+kubectl port-forward -n "${NAMESPACE}" "svc/${AGENT_RELEASE}-declarative-agent-rag" 18189:8090 &
 PF_RAG_PID=$!
 kubectl port-forward -n "${NAMESPACE}" "svc/${PROM_RELEASE}-prometheus-server" 19090:80 &
 PF_PROM_PID=$!
@@ -264,7 +264,7 @@ def need_sum(name: str, resp_json: str, minimum: float) -> float:
         sys.exit(f"{name}: unexpected response: {resp!r}")
     results = resp.get("data", {}).get("result", [])
     if not results:
-        sys.exit(f"{name}: no series — check cfha-rag-metrics scrape and RAG /metrics")
+        sys.exit(f"{name}: no series — check dalc-rag-metrics scrape and RAG /metrics")
     val = float(results[0]["value"][1])
     if val < minimum:
         sys.exit(f"{name}: expected >= {minimum}, got {val}")

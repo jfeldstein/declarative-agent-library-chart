@@ -116,7 +116,7 @@ def create_app(*, system_prompt: str | None = None) -> FastAPI:
     Otherwise the value comes from :func:`system_prompt_from_env`.
     """
     configure_request_logging()
-    app = FastAPI(title="config-first-hosted-agents", version="0.1.0")
+    app = FastAPI(title="declarative-agent", version="0.1.0")
     app.add_middleware(ObservabilityMiddleware)
 
     @app.get("/metrics")
