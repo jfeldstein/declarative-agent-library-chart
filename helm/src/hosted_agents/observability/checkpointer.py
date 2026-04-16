@@ -45,6 +45,74 @@ def reset_checkpoint_postgres_pool() -> None:
     _cp_pool_url = None
 
 
+def _build_postgres_checkpointer(settings: ObservabilitySettings) -> Any:
+    url = settings.checkpoint_postgres_url
+    if not url:
+        msg = (
+            "HOSTED_AGENT_CHECKPOINT_BACKEND=postgres requires "
+            "HOSTED_AGENT_POSTGRES_URL"
+        )
+        raise RuntimeError(msg)
+    _validate_postgres_url(url)
+    try:
+        from psycopg.rows import dict_row
+    except ImportError as exc:
+        msg = (
+            "Postgres checkpointing requires optional dependencies. "
+            "Install with `uv sync --extra postgres` (or pip install "
+            "`declarative-agent-library-chart[postgres]`). "
+            f"Import error: {exc}"
+        )
+        raise RuntimeError(msg) from exc
+
+    global _cp_pool, _cp_pool_url
+    max_size = max(1, min(50, settings.postgres_pool_max))
+    Pool = _checkpoint_connection_pool_cls()
+    Saver = _checkpoint_postgres_saver_cls()
+    if _cp_pool is None or _cp_pool_url != url:
+        if _cp_pool is not None:
+            try:
+                _cp_pool.close()
+            except Exception:
+                pass
+        try:
+            _cp_pool = Pool(
+                conninfo=url,
+                min_size=1,
+                max_size=max_size,
+                kwargs={
+                    "autocommit": True,
+                    "prepare_threshold": 0,
+                    "row_factory": dict_row,
+                },
+            )
+            _cp_pool_url = url
+        except Exception as exc:
+            _cp_pool = None
+            _cp_pool_url = None
+            msg = (
+                "Could not open Postgres connection pool for LangGraph checkpoints. "
+                "Verify HOSTED_AGENT_POSTGRES_URL (host, port, credentials, "
+                "TLS/sslmode) and that the database is reachable from this pod. "
+                f"Underlying error: {exc!s}"
+            )
+            raise RuntimeError(msg) from exc
+
+    assert _cp_pool is not None
+    saver = Saver(_cp_pool)
+    try:
+        saver.setup()
+    except Exception as exc:
+        msg = (
+            "Connected to Postgres but LangGraph checkpoint setup/migrations failed. "
+            "Ensure the DB role can CREATE TABLE and run migrations from "
+            "langgraph-checkpoint-postgres. "
+            f"Underlying error: {exc!s}"
+        )
+        raise RuntimeError(msg) from exc
+    return saver
+
+
 def build_checkpointer(settings: ObservabilitySettings) -> Any | None:
     """Return a LangGraph checkpointer or ``None`` when checkpointing is disabled.
 
@@ -62,71 +130,7 @@ def build_checkpointer(settings: ObservabilitySettings) -> Any | None:
 
         return MemorySaver()
     if backend == "postgres":
-        url = settings.checkpoint_postgres_url
-        if not url:
-            msg = (
-                "HOSTED_AGENT_CHECKPOINT_BACKEND=postgres requires "
-                "HOSTED_AGENT_POSTGRES_URL"
-            )
-            raise RuntimeError(msg)
-        _validate_postgres_url(url)
-        try:
-            from psycopg.rows import dict_row
-        except ImportError as exc:
-            msg = (
-                "Postgres checkpointing requires optional dependencies. "
-                "Install with `uv sync --extra postgres` (or pip install "
-                "`declarative-agent-library-chart[postgres]`). "
-                f"Import error: {exc}"
-            )
-            raise RuntimeError(msg) from exc
-
-        global _cp_pool, _cp_pool_url
-        max_size = max(1, min(50, settings.postgres_pool_max))
-        Pool = _checkpoint_connection_pool_cls()
-        Saver = _checkpoint_postgres_saver_cls()
-        if _cp_pool is None or _cp_pool_url != url:
-            if _cp_pool is not None:
-                try:
-                    _cp_pool.close()
-                except Exception:
-                    pass
-            try:
-                _cp_pool = Pool(
-                    conninfo=url,
-                    min_size=1,
-                    max_size=max_size,
-                    kwargs={
-                        "autocommit": True,
-                        "prepare_threshold": 0,
-                        "row_factory": dict_row,
-                    },
-                )
-                _cp_pool_url = url
-            except Exception as exc:
-                _cp_pool = None
-                _cp_pool_url = None
-                msg = (
-                    "Could not open Postgres connection pool for LangGraph checkpoints. "
-                    "Verify HOSTED_AGENT_POSTGRES_URL (host, port, credentials, "
-                    "TLS/sslmode) and that the database is reachable from this pod. "
-                    f"Underlying error: {exc!s}"
-                )
-                raise RuntimeError(msg) from exc
-
-        assert _cp_pool is not None
-        saver = Saver(_cp_pool)
-        try:
-            saver.setup()
-        except Exception as exc:
-            msg = (
-                "Connected to Postgres but LangGraph checkpoint setup/migrations failed. "
-                "Ensure the DB role can CREATE TABLE and run migrations from "
-                "langgraph-checkpoint-postgres. "
-                f"Underlying error: {exc!s}"
-            )
-            raise RuntimeError(msg) from exc
-        return saver
+        return _build_postgres_checkpointer(settings)
     if backend == "redis":
         msg = (
             "HOSTED_AGENT_CHECKPOINT_BACKEND=redis is reserved until a Redis checkpointer "

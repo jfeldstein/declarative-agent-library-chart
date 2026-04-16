@@ -21,6 +21,7 @@ import os
 import re
 import sys
 import time
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -118,6 +119,21 @@ def _norm_channel_ts(m: dict[str, Any]) -> tuple[str, str] | None:
     return str(ch), str(ts)
 
 
+def _conversations_history_page(
+    client: WebClient,
+    kwargs: dict[str, Any],
+) -> tuple[list[dict[str, Any]], str | None]:
+    raw = client.conversations_history(**kwargs)
+    page = _response_dict(raw)
+    if not page.get("ok", True):
+        err = page.get("error", "unknown")
+        raise SlackApiError(err, raw)
+    msgs = page.get("messages", []) or []
+    meta = page.get("response_metadata") or {}
+    slack_cursor = meta.get("next_cursor") if isinstance(meta, dict) else None
+    return list(msgs), slack_cursor
+
+
 def _collect_history_pages(
     client: WebClient,
     channel: str,
@@ -140,18 +156,26 @@ def _collect_history_pages(
             kwargs["latest"] = latest
         if slack_cursor:
             kwargs["cursor"] = slack_cursor
-        raw = client.conversations_history(**kwargs)
-        page = _response_dict(raw)
-        if not page.get("ok", True):
-            err = page.get("error", "unknown")
-            raise SlackApiError(err, raw)
-        msgs = page.get("messages", []) or []
+        msgs, slack_cursor = _conversations_history_page(client, kwargs)
         out.extend(msgs)
-        meta = page.get("response_metadata") or {}
-        slack_cursor = meta.get("next_cursor") if isinstance(meta, dict) else None
         if not slack_cursor or not msgs:
             break
     return out
+
+
+def _conversations_replies_page(
+    client: WebClient,
+    kwargs: dict[str, Any],
+) -> tuple[list[dict[str, Any]], str | None]:
+    raw = client.conversations_replies(**kwargs)
+    page = _response_dict(raw)
+    if not page.get("ok", True):
+        err = page.get("error", "unknown")
+        raise SlackApiError(err, raw)
+    msgs = page.get("messages", []) or []
+    meta = page.get("response_metadata") or {}
+    slack_cursor = meta.get("next_cursor") if isinstance(meta, dict) else None
+    return list(msgs), slack_cursor
 
 
 def _collect_replies_pages(
@@ -169,15 +193,8 @@ def _collect_replies_pages(
         }
         if slack_cursor:
             kwargs["cursor"] = slack_cursor
-        raw = client.conversations_replies(**kwargs)
-        page = _response_dict(raw)
-        if not page.get("ok", True):
-            err = page.get("error", "unknown")
-            raise SlackApiError(err, raw)
-        msgs = page.get("messages", []) or []
+        msgs, slack_cursor = _conversations_replies_page(client, kwargs)
         out.extend(msgs)
-        meta = page.get("response_metadata") or {}
-        slack_cursor = meta.get("next_cursor") if isinstance(meta, dict) else None
         if not slack_cursor or not msgs:
             break
     return out
@@ -251,6 +268,61 @@ def _rts_messages(page: dict[str, Any]) -> list[dict[str, Any]]:
     return []
 
 
+def _slack_search_add_message(
+    m: dict[str, Any],
+    seen: set[tuple[str, str]],
+    collected: list[dict[str, Any]],
+) -> None:
+    ch = m.get("channel") or m.get("channel_id")
+    if isinstance(ch, dict):
+        ch = ch.get("id")
+    ts = m.get("ts") or m.get("message_ts")
+    if not ch or not ts:
+        return
+    key = (str(ch), str(ts))
+    if key in seen:
+        return
+    seen.add(key)
+    collected.append(m)
+
+
+def _slack_search_expand_hit(
+    hist_client: WebClient,
+    hit: dict[str, Any],
+    before_m: float,
+    after_m: float,
+    add_msg: Callable[[dict[str, Any]], None],
+) -> None:
+    pair = _norm_channel_ts(hit)
+    if not pair:
+        return
+    channel_id, message_ts = pair
+    thread_root = str(hit.get("thread_ts") or message_ts)
+
+    try:
+        thread_msgs = _collect_replies_pages(hist_client, channel_id, thread_root)
+        for m in thread_msgs:
+            add_msg(m)
+    except SlackApiError as exc:
+        print(f"conversations.replies: {exc}", file=sys.stderr)  # noqa: T201
+        sys.exit(1)
+
+    try:
+        lo, hi = _ts_window(message_ts, before_m, after_m)
+        win_msgs = _collect_history_pages(
+            hist_client,
+            channel_id,
+            oldest=lo,
+            latest=hi,
+            inclusive=True,
+        )
+        for m in win_msgs:
+            add_msg(m)
+    except SlackApiError as exc:
+        print(f"conversations.history: {exc}", file=sys.stderr)  # noqa: T201
+        sys.exit(1)
+
+
 def _run_slack_search(
     user_client: WebClient,
     bot_client: WebClient | None,
@@ -284,53 +356,13 @@ def _run_slack_search(
     hits = _rts_messages(page)
     collected: list[dict[str, Any]] = []
     seen: set[tuple[str, str]] = set()
-
-    def _add_msg(m: dict[str, Any]) -> None:
-        ch = m.get("channel") or m.get("channel_id")
-        if isinstance(ch, dict):
-            ch = ch.get("id")
-        ts = m.get("ts") or m.get("message_ts")
-        if not ch or not ts:
-            return
-        key = (str(ch), str(ts))
-        if key in seen:
-            return
-        seen.add(key)
-        collected.append(m)
-
     hist_client = bot_client or user_client
 
+    def add_msg(m: dict[str, Any]) -> None:
+        _slack_search_add_message(m, seen, collected)
+
     for hit in hits:
-        pair = _norm_channel_ts(hit)
-        if not pair:
-            continue
-        channel_id, message_ts = pair
-        thread_root = str(hit.get("thread_ts") or message_ts)
-
-        try:
-            thread_msgs = _collect_replies_pages(
-                hist_client, channel_id, thread_root
-            )
-            for m in thread_msgs:
-                _add_msg(m)
-        except SlackApiError as exc:
-            print(f"conversations.replies: {exc}", file=sys.stderr)  # noqa: T201
-            sys.exit(1)
-
-        try:
-            lo, hi = _ts_window(message_ts, before_m, after_m)
-            win_msgs = _collect_history_pages(
-                hist_client,
-                channel_id,
-                oldest=lo,
-                latest=hi,
-                inclusive=True,
-            )
-            for m in win_msgs:
-                _add_msg(m)
-        except SlackApiError as exc:
-            print(f"conversations.history: {exc}", file=sys.stderr)  # noqa: T201
-            sys.exit(1)
+        _slack_search_expand_hit(hist_client, hit, before_m, after_m, add_msg)
 
     items = _build_items_from_messages(collected)
     if not items:
@@ -350,6 +382,59 @@ def _safe_scope(scope: str) -> str:
     return re.sub(r"[^a-zA-Z0-9._-]+", "_", scope)[:80]
 
 
+def _merge_max_slack_ts(
+    msgs: list[dict[str, Any]],
+    max_seen: float | None,
+) -> float | None:
+    for m in msgs:
+        ts = m.get("ts")
+        if not ts:
+            continue
+        tf = _slack_ts_to_float(str(ts))
+        max_seen = tf if max_seen is None else max(max_seen, tf)
+    return max_seen
+
+
+def _channel_history_page(
+    bot: WebClient,
+    cid: str,
+    watermark: str | None,
+    slack_cursor: str | None,
+) -> tuple[list[dict[str, Any]], str | None]:
+    kwargs: dict[str, Any] = {"channel": cid, "limit": 200}
+    if watermark:
+        kwargs["oldest"] = str(watermark)
+        kwargs["inclusive"] = False
+    if slack_cursor:
+        kwargs["cursor"] = slack_cursor
+    raw = bot.conversations_history(**kwargs)
+    page = _response_dict(raw)
+    if not page.get("ok", True):
+        err = page.get("error", "unknown")
+        raise SlackApiError(err, raw)
+    msgs = page.get("messages", []) or []
+    meta = page.get("response_metadata") or {}
+    next_cursor = meta.get("next_cursor") if isinstance(meta, dict) else None
+    return list(msgs), next_cursor
+
+
+def _channel_history_drain(
+    bot: WebClient,
+    cid: str,
+    watermark: str | None,
+) -> tuple[list[dict[str, Any]], float | None]:
+    collected: list[dict[str, Any]] = []
+    slack_cursor: str | None = None
+    max_seen: float | None = None
+    while True:
+        msgs, slack_cursor = _channel_history_page(bot, cid, watermark, slack_cursor)
+        max_seen = _merge_max_slack_ts(msgs, max_seen)
+        collected.extend(msgs)
+        if not slack_cursor or not msgs:
+            break
+    return collected, max_seen
+
+
 def _run_slack_channel(
     bot: WebClient,
     job: dict[str, Any],
@@ -363,33 +448,7 @@ def _run_slack_channel(
         print("slack_channel job requires conversationId", file=sys.stderr)  # noqa: T201
         sys.exit(1)
     watermark = store.get_state("slack", scope, cid)
-
-    collected: list[dict[str, Any]] = []
-    slack_cursor: str | None = None
-    max_seen: float | None = None
-    while True:
-        kwargs: dict[str, Any] = {"channel": cid, "limit": 200}
-        if watermark:
-            kwargs["oldest"] = str(watermark)
-            kwargs["inclusive"] = False
-        if slack_cursor:
-            kwargs["cursor"] = slack_cursor
-        raw = bot.conversations_history(**kwargs)
-        page = _response_dict(raw)
-        if not page.get("ok", True):
-            err = page.get("error", "unknown")
-            raise SlackApiError(err, raw)
-        msgs = page.get("messages", []) or []
-        for m in msgs:
-            ts = m.get("ts")
-            if ts:
-                tf = _slack_ts_to_float(str(ts))
-                max_seen = tf if max_seen is None else max(max_seen, tf)
-        collected.extend(msgs)
-        meta = page.get("response_metadata") or {}
-        slack_cursor = meta.get("next_cursor") if isinstance(meta, dict) else None
-        if not slack_cursor or not msgs:
-            break
+    collected, max_seen = _channel_history_drain(bot, cid, watermark)
 
     if max_seen is not None:
         store.set_state("slack", scope, cid, _float_to_slack_ts(max_seen))
@@ -402,6 +461,51 @@ def _run_slack_channel(
         _post_embed(hx, rag_base, payload, integration)
 
 
+def _slack_run_job_body(
+    cfg: dict[str, Any],
+    store: CursorStore,
+    scope: str,
+    rag_base: str,
+    integration: str,
+) -> None:
+    source = str(cfg.get("source", "")).strip().lower()
+    if source not in ("slack_search", "slack_channel"):
+        print(
+            f"Unknown slack job source {source!r}; expected slack_search or slack_channel",
+            file=sys.stderr,
+        )  # noqa: T201
+        sys.exit(1)
+
+    user_token = os.environ.get("SLACK_USER_TOKEN", "").strip()
+    bot_token = os.environ.get("SLACK_BOT_TOKEN", "").strip()
+
+    if source == "slack_search":
+        if not user_token:
+            print(
+                "SLACK_USER_TOKEN is required for slack_search (Real-time Search API)",
+                file=sys.stderr,
+            )  # noqa: T201
+            sys.exit(1)
+        user_client = WebClient(token=user_token)
+        bot_client = WebClient(token=bot_token) if bot_token else None
+        try:
+            _run_slack_search(user_client, bot_client, cfg, scope, rag_base, integration)
+        except SlackApiError as exc:
+            print(f"Slack API error: {exc}", file=sys.stderr)  # noqa: T201
+            sys.exit(1)
+        return
+
+    if not bot_token:
+        print("SLACK_BOT_TOKEN is required for slack_channel", file=sys.stderr)  # noqa: T201
+        sys.exit(1)
+    bot = WebClient(token=bot_token)
+    try:
+        _run_slack_channel(bot, cfg, scope, rag_base, integration, store)
+    except SlackApiError as exc:
+        print(f"Slack API error: {exc}", file=sys.stderr)  # noqa: T201
+        sys.exit(1)
+
+
 def run() -> None:
     t0 = time.perf_counter()
     integration = _integration_label()
@@ -409,50 +513,14 @@ def run() -> None:
     run_ok = False
     try:
         cfg = _load_job_config()
-        source = str(cfg.get("source", "")).strip().lower()
-        if source not in ("slack_search", "slack_channel"):
-            print(
-                f"Unknown slack job source {source!r}; expected slack_search or slack_channel",
-                file=sys.stderr,
-            )  # noqa: T201
-            sys.exit(1)
-
         rag_base = os.environ.get("RAG_SERVICE_URL", "").strip().rstrip("/")
         if not rag_base:
             print("RAG_SERVICE_URL is required", file=sys.stderr)  # noqa: T201
             sys.exit(1)
         scope = os.environ.get("SCRAPER_SCOPE", "slack").strip() or "slack"
         store = cursor_store_from_env()
-
-        user_token = os.environ.get("SLACK_USER_TOKEN", "").strip()
-        bot_token = os.environ.get("SLACK_BOT_TOKEN", "").strip()
-
-        if source == "slack_search":
-            if not user_token:
-                print(
-                    "SLACK_USER_TOKEN is required for slack_search (Real-time Search API)",
-                    file=sys.stderr,
-                )  # noqa: T201
-                sys.exit(1)
-            user_client = WebClient(token=user_token)
-            bot_client = WebClient(token=bot_token) if bot_token else None
-            try:
-                _run_slack_search(user_client, bot_client, cfg, scope, rag_base, integration)
-            except SlackApiError as exc:
-                print(f"Slack API error: {exc}", file=sys.stderr)  # noqa: T201
-                sys.exit(1)
-            run_ok = True
-        else:
-            if not bot_token:
-                print("SLACK_BOT_TOKEN is required for slack_channel", file=sys.stderr)  # noqa: T201
-                sys.exit(1)
-            bot = WebClient(token=bot_token)
-            try:
-                _run_slack_channel(bot, cfg, scope, rag_base, integration, store)
-            except SlackApiError as exc:
-                print(f"Slack API error: {exc}", file=sys.stderr)  # noqa: T201
-                sys.exit(1)
-            run_ok = True
+        _slack_run_job_body(cfg, store, scope, rag_base, integration)
+        run_ok = True
     finally:
         elapsed = time.perf_counter() - t0
         observe_scraper_run(integration, run_ok, elapsed)

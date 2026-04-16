@@ -92,16 +92,9 @@ class RAGStore:
                 ids.append(cid)
         return ids
 
-    def query(
-        self,
-        scope: str,
-        query: str,
-        *,
-        top_k: int,
-        expand_relationships: bool,
-        relationship_types: list[str] | None,
-        max_hops: int,
-    ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    def _vector_search_top(
+        self, scope: str, query: str, top_k: int
+    ) -> tuple[list[dict[str, Any]], list[tuple[float, StoredChunk]], list[GraphEdge]]:
         qv = embed_text(query)
         with self._lock:
             scoped = [c for c in self._chunks if c.scope == scope]
@@ -111,7 +104,6 @@ class RAGStore:
             scored.append((cosine_similarity(qv, ch.vector), ch))
         scored.sort(key=lambda t: t[0], reverse=True)
         top = scored[: max(1, top_k)]
-
         hits: list[dict[str, Any]] = []
         for score, ch in top:
             hits.append(
@@ -123,23 +115,81 @@ class RAGStore:
                     "entity_id": ch.entity_id,
                 }
             )
+        return hits, top, edges_snapshot
 
+    def query(
+        self,
+        scope: str,
+        query: str,
+        *,
+        top_k: int,
+        expand_relationships: bool,
+        relationship_types: list[str] | None,
+        max_hops: int,
+    ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+        hits, top, edges_snapshot = self._vector_search_top(scope, query, top_k)
         related: list[dict[str, Any]] = []
-        if expand_relationships and max_hops >= 1:
-            seeds: set[str] = set()
-            for _, ch in top:
-                if ch.entity_id:
-                    seeds.add(ch.entity_id)
-            allowed_types = None
-            if relationship_types:
-                allowed_types = set(relationship_types)
-            for seed in seeds:
-                related.extend(
-                    self._neighbors(
-                        scope, seed, allowed_types, hops=max_hops, edges=edges_snapshot
-                    ),
-                )
+        if not expand_relationships or max_hops < 1:
+            return hits, related
+        seeds: set[str] = set()
+        for _, ch in top:
+            if ch.entity_id:
+                seeds.add(ch.entity_id)
+        allowed_types = set(relationship_types) if relationship_types else None
+        for seed in seeds:
+            related.extend(
+                self._neighbors(
+                    scope, seed, allowed_types, hops=max_hops, edges=edges_snapshot
+                ),
+            )
         return hits, related
+
+    @staticmethod
+    def _append_neighbor_edge(
+        entity_id: str,
+        neighbor_id: str,
+        relationship_type: str,
+        seen_edges: set[tuple[str, str, str]],
+        out: list[dict[str, Any]],
+    ) -> None:
+        key = (entity_id, neighbor_id, relationship_type)
+        if key in seen_edges:
+            return
+        seen_edges.add(key)
+        out.append(
+            {
+                "entity_id": entity_id,
+                "neighbor_id": neighbor_id,
+                "relationship_type": relationship_type,
+            },
+        )
+
+    @staticmethod
+    def _neighbor_frontier_step(
+        edges: list[GraphEdge],
+        scope: str,
+        frontier: set[str],
+        allowed_types: set[str] | None,
+        seen_edges: set[tuple[str, str, str]],
+        out: list[dict[str, Any]],
+    ) -> set[str]:
+        next_frontier: set[str] = set()
+        for e in edges:
+            if e.scope != scope:
+                continue
+            if allowed_types is not None and e.relationship_type not in allowed_types:
+                continue
+            if e.source in frontier:
+                RAGStore._append_neighbor_edge(
+                    e.source, e.target, e.relationship_type, seen_edges, out
+                )
+                next_frontier.add(e.target)
+            if e.target in frontier:
+                RAGStore._append_neighbor_edge(
+                    e.target, e.source, e.relationship_type, seen_edges, out
+                )
+                next_frontier.add(e.source)
+        return next_frontier
 
     def _neighbors(
         self,
@@ -156,40 +206,9 @@ class RAGStore:
         frontier = {entity_id}
         seen_edges: set[tuple[str, str, str]] = set()
         for _ in range(hops):
-            next_frontier: set[str] = set()
-            for e in edges:
-                if e.scope != scope:
-                    continue
-                if (
-                    allowed_types is not None
-                    and e.relationship_type not in allowed_types
-                ):
-                    continue
-                if e.source in frontier:
-                    key = (e.source, e.target, e.relationship_type)
-                    if key not in seen_edges:
-                        seen_edges.add(key)
-                        out.append(
-                            {
-                                "entity_id": e.source,
-                                "neighbor_id": e.target,
-                                "relationship_type": e.relationship_type,
-                            },
-                        )
-                    next_frontier.add(e.target)
-                if e.target in frontier:
-                    key = (e.target, e.source, e.relationship_type)
-                    if key not in seen_edges:
-                        seen_edges.add(key)
-                        out.append(
-                            {
-                                "entity_id": e.target,
-                                "neighbor_id": e.source,
-                                "relationship_type": e.relationship_type,
-                            },
-                        )
-                    next_frontier.add(e.source)
-            frontier = next_frontier
+            frontier = self._neighbor_frontier_step(
+                edges, scope, frontier, allowed_types, seen_edges, out
+            )
             if not frontier:
                 break
         return out

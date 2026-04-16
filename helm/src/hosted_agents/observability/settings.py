@@ -25,6 +25,34 @@ def _json_obj(key: str) -> dict | None:
     return data
 
 
+def _slack_emoji_map() -> dict[str, str]:
+    emoji_raw = _json_obj("HOSTED_AGENT_SLACK_EMOJI_LABEL_MAP_JSON")
+    emoji_map: dict[str, str] = {}
+    if not emoji_raw:
+        return emoji_map
+    for k, v in emoji_raw.items():
+        if isinstance(k, str) and isinstance(v, str):
+            emoji_map[k] = v
+    return emoji_map
+
+
+def _operational_mapper_flags() -> dict[str, bool]:
+    mapper_raw = _json_obj("HOSTED_AGENT_OPERATIONAL_MAPPER_FLAGS_JSON") or {}
+    mappers: dict[str, bool] = {}
+    for k, v in mapper_raw.items():
+        if isinstance(k, str) and isinstance(v, bool):
+            mappers[k] = v
+    return mappers
+
+
+def _postgres_pool_max() -> int:
+    pool_raw = os.environ.get("HOSTED_AGENT_POSTGRES_POOL_MAX", "5").strip()
+    try:
+        return max(1, min(50, int(pool_raw or "5")))
+    except ValueError:
+        return 5
+
+
 @dataclass(frozen=True)
 class ObservabilitySettings:
     """Runtime integration flags (checkpoints, W&B, Slack feedback); env-driven."""
@@ -47,22 +75,6 @@ class ObservabilitySettings:
         from hosted_agents.observability.postgres_env import postgres_url
 
         ensure_pglite_embedded()
-        emoji_raw = _json_obj("HOSTED_AGENT_SLACK_EMOJI_LABEL_MAP_JSON")
-        emoji_map: dict[str, str] = {}
-        if emoji_raw:
-            for k, v in emoji_raw.items():
-                if isinstance(k, str) and isinstance(v, str):
-                    emoji_map[k] = v
-        mapper_raw = _json_obj("HOSTED_AGENT_OPERATIONAL_MAPPER_FLAGS_JSON") or {}
-        mappers: dict[str, bool] = {}
-        for k, v in mapper_raw.items():
-            if isinstance(k, str) and isinstance(v, bool):
-                mappers[k] = v
-        pool_raw = os.environ.get("HOSTED_AGENT_POSTGRES_POOL_MAX", "5").strip()
-        try:
-            pg_pool = max(1, min(50, int(pool_raw or "5")))
-        except ValueError:
-            pg_pool = 5
         obs_store = (
             os.environ.get("HOSTED_AGENT_OBSERVABILITY_STORE", "memory").strip().lower()
             or "memory"
@@ -77,14 +89,14 @@ class ObservabilitySettings:
             ).strip()
             or "memory",
             checkpoint_postgres_url=postgres_url() or None,
-            postgres_pool_max=pg_pool,
+            postgres_pool_max=_postgres_pool_max(),
             observability_store=obs_store,
             wandb_enabled=_truthy("HOSTED_AGENT_WANDB_ENABLED"),
             slack_feedback_enabled=_truthy("HOSTED_AGENT_SLACK_FEEDBACK_ENABLED"),
             wandb_project=os.environ.get("WANDB_PROJECT", "").strip() or None,
             wandb_entity=os.environ.get("WANDB_ENTITY", "").strip() or None,
-            slack_emoji_map=emoji_map,
-            operational_mapper_flags=mappers,
+            slack_emoji_map=_slack_emoji_map(),
+            operational_mapper_flags=_operational_mapper_flags(),
         )
 
     def effective_observability_postgres_url(self) -> str | None:

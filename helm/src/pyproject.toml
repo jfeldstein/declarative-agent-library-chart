@@ -97,11 +97,11 @@ target-version = "py311"
 extend-select = ["C901"]
 
 [tool.ruff.lint.mccabe]
-# Tree peak McCabe is 14 (`_run_slack_search`); ratchet 5.5 cap 22.
-max-complexity = 22
+# Ladder complete: McCabe cap 10 (Ruff default culture). Refactors in scrapers, RAG, checkpointer, etc.
+max-complexity = 10
 
 [tool.complexipy]
 paths = ["hosted_agents", "tests"]
-# Tree peak cognitive ~35 (`jira_job`); ratchet through 5.4 sets cap 38.
-max-complexity-allowed = 38
+# Ladder complete: cognitive cap 15 (complexipy default culture).
+max-complexity-allowed = 15
 quiet = true

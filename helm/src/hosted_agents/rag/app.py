@@ -20,16 +20,7 @@ from hosted_agents.rag.o11y_middleware import RAGMetricsMiddleware
 from hosted_agents.rag.store import RAGStore, get_store
 
 
-def create_app(*, store: RAGStore | None = None) -> FastAPI:
-    """Build the RAG ASGI app. Tests may inject ``store``."""
-    app = FastAPI(
-        title="dalc-rag",
-        version="0.1.0",
-        description="Managed RAG HTTP service (POC). See docs/rag-http-api.md in repo root.",
-    )
-    app.add_middleware(RAGMetricsMiddleware)
-    rag_store = store if store is not None else get_store()
-
+def _register_rag_metrics_and_health(app: FastAPI) -> None:
     @app.get("/metrics")
     def get_metrics() -> Response:
         return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
@@ -38,6 +29,8 @@ def create_app(*, store: RAGStore | None = None) -> FastAPI:
     def health() -> dict[str, str]:
         return {"status": "ok"}
 
+
+def _register_rag_embed(app: FastAPI, rag_store: RAGStore) -> None:
     @app.post("/v1/embed", response_model=EmbedResponse)
     def embed(req: EmbedRequest) -> EmbedResponse:
         if not req.items and not req.entities and not req.relationships:
@@ -64,6 +57,8 @@ def create_app(*, store: RAGStore | None = None) -> FastAPI:
             relationships_recorded=len(req.relationships),
         )
 
+
+def _register_rag_relate(app: FastAPI, rag_store: RAGStore) -> None:
     @app.post("/v1/relate", response_model=RelateResponse)
     def relate(req: RelateRequest) -> RelateResponse:
         rag_store.add_relationships(
@@ -72,6 +67,8 @@ def create_app(*, store: RAGStore | None = None) -> FastAPI:
         )
         return RelateResponse(relationships_recorded=len(req.relationships))
 
+
+def _register_rag_query(app: FastAPI, rag_store: RAGStore) -> None:
     @app.post("/v1/query", response_model=QueryResponse)
     def query(req: QueryRequest) -> QueryResponse:
         hits_raw, related_raw = rag_store.query(
@@ -86,4 +83,22 @@ def create_app(*, store: RAGStore | None = None) -> FastAPI:
         related = [RelatedEdge(**r) for r in related_raw]
         return QueryResponse(hits=hits, related=related)
 
+
+def _register_rag_routes(app: FastAPI, rag_store: RAGStore) -> None:
+    _register_rag_metrics_and_health(app)
+    _register_rag_embed(app, rag_store)
+    _register_rag_relate(app, rag_store)
+    _register_rag_query(app, rag_store)
+
+
+def create_app(*, store: RAGStore | None = None) -> FastAPI:
+    """Build the RAG ASGI app. Tests may inject ``store``."""
+    app = FastAPI(
+        title="dalc-rag",
+        version="0.1.0",
+        description="Managed RAG HTTP service (POC). See docs/rag-http-api.md in repo root.",
+    )
+    app.add_middleware(RAGMetricsMiddleware)
+    rag_store = store if store is not None else get_store()
+    _register_rag_routes(app, rag_store)
     return app

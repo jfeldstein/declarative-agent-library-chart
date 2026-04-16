@@ -181,14 +181,7 @@ def _fetch_comments(
     return out[:cap]
 
 
-def _issue_text(
-    issue: dict[str, Any],
-    comments: list[dict[str, Any]],
-    max_comments: int,
-    truncated: bool,
-) -> str:
-    fields = issue.get("fields", {}) or {}
-    key = issue.get("key", "")
+def _issue_field_lines(fields: dict[str, Any], key: str) -> list[str]:
     lines = [f"Issue {key}", f"Summary: {fields.get('summary', '')}"]
     desc = fields.get("description")
     if isinstance(desc, dict):
@@ -208,7 +201,11 @@ def _issue_text(
         lines.append("Links:")
         for ln in links[:50]:
             lines.append(json.dumps(ln)[:500])
-    lines.append("Comments:")
+    return lines
+
+
+def _issue_comment_lines(comments: list[dict[str, Any]], max_comments: int) -> list[str]:
+    lines: list[str] = ["Comments:"]
     for c in comments[:max_comments]:
         body = c.get("body")
         if isinstance(body, dict):
@@ -218,6 +215,19 @@ def _issue_text(
         author = (c.get("author") or {}).get("displayName", "")
         created = c.get("created", "")
         lines.append(f"- {created} {author}: {body_s}")
+    return lines
+
+
+def _issue_text(
+    issue: dict[str, Any],
+    comments: list[dict[str, Any]],
+    max_comments: int,
+    truncated: bool,
+) -> str:
+    fields = issue.get("fields", {}) or {}
+    key = issue.get("key", "")
+    lines = _issue_field_lines(fields, str(key))
+    lines.extend(_issue_comment_lines(comments, max_comments))
     if truncated:
         lines.append("(comments truncated by maxCommentsPerIssue cap)")
     return "\n".join(lines)
@@ -256,6 +266,80 @@ def _build_jql(base_query: str, watermark_iso: str | None) -> str:
     return q
 
 
+def _jira_issue_fields(cfg: dict[str, Any]) -> list[str]:
+    fields = _default_fields()
+    extra = cfg.get("extraFields")
+    if isinstance(extra, list):
+        fields = list(dict.fromkeys(fields + [str(x) for x in extra]))
+    return fields
+
+
+def _jira_build_embed_payloads(
+    client: httpx.Client,
+    site: str,
+    jql: str,
+    fields: list[str],
+    scope: str,
+    max_issues: int,
+    max_comments: int,
+) -> tuple[list[dict[str, Any]], str | None]:
+    issues = search_issues(client, site, jql, fields, max_issues)
+    max_upd: str | None = None
+    all_payloads: list[dict[str, Any]] = []
+    for issue in issues:
+        issue_key = str(issue.get("key", ""))
+        raw_comments = _fetch_comments(client, site, issue_key, max_comments + 1)
+        truncated = len(raw_comments) > max_comments
+        comments = raw_comments[:max_comments]
+        text = _issue_text(issue, comments, max_comments, truncated)
+        all_payloads.append(_embed_for_issue(scope, issue, text))
+        upd = (issue.get("fields") or {}).get("updated")
+        if isinstance(upd, str):
+            max_upd = max(max_upd, upd) if max_upd else upd
+    return all_payloads, max_upd
+
+
+def _jira_post_embed_payloads(
+    rag_base: str, integration: str, payloads: list[dict[str, Any]]
+) -> None:
+    with httpx.Client(timeout=120.0) as hx:
+        for payload in payloads:
+            try:
+                r = hx.post(f"{rag_base}/v1/embed", json=payload)
+                r.raise_for_status()
+            except httpx.HTTPError as exc:
+                observe_rag_embed_attempt(
+                    integration, classify_rag_submission_result(exc)
+                )
+                raise
+            observe_rag_embed_attempt(integration, "success")
+
+
+def _jira_validate_config_and_env(
+    cfg: dict[str, Any],
+) -> tuple[str, str, str, str, str, str]:
+    if str(cfg.get("source", "")).strip().lower() != "jira":
+        print("Job config source must be jira", file=sys.stderr)  # noqa: T201
+        sys.exit(1)
+    base_query = str(cfg.get("query", "")).strip()
+    if not base_query:
+        print("Job config query (JQL) is required", file=sys.stderr)  # noqa: T201
+        sys.exit(1)
+
+    site = _site_base(os.environ.get("JIRA_SITE_URL", ""))
+    email = os.environ.get("JIRA_EMAIL", "").strip()
+    token = os.environ.get("JIRA_API_TOKEN", "").strip()
+    if not email or not token:
+        print("JIRA_EMAIL and JIRA_API_TOKEN are required", file=sys.stderr)  # noqa: T201
+        sys.exit(1)
+    rag_base = os.environ.get("RAG_SERVICE_URL", "").strip().rstrip("/")
+    if not rag_base:
+        print("RAG_SERVICE_URL is required", file=sys.stderr)  # noqa: T201
+        sys.exit(1)
+    scope = os.environ.get("SCRAPER_SCOPE", "jira").strip() or "jira"
+    return site, email, token, rag_base, scope, base_query
+
+
 def run() -> None:
     t0 = time.perf_counter()
     integration = _integration_label()
@@ -263,72 +347,31 @@ def run() -> None:
     run_ok = False
     try:
         cfg = _load_job_config()
-        if str(cfg.get("source", "")).strip().lower() != "jira":
-            print("Job config source must be jira", file=sys.stderr)  # noqa: T201
-            sys.exit(1)
-        base_query = str(cfg.get("query", "")).strip()
-        if not base_query:
-            print("Job config query (JQL) is required", file=sys.stderr)  # noqa: T201
-            sys.exit(1)
-
-        site = _site_base(os.environ.get("JIRA_SITE_URL", ""))
-        email = os.environ.get("JIRA_EMAIL", "").strip()
-        token = os.environ.get("JIRA_API_TOKEN", "").strip()
-        if not email or not token:
-            print("JIRA_EMAIL and JIRA_API_TOKEN are required", file=sys.stderr)  # noqa: T201
-            sys.exit(1)
-        rag_base = os.environ.get("RAG_SERVICE_URL", "").strip().rstrip("/")
-        if not rag_base:
-            print("RAG_SERVICE_URL is required", file=sys.stderr)  # noqa: T201
-            sys.exit(1)
-        scope = os.environ.get("SCRAPER_SCOPE", "jira").strip() or "jira"
+        site, email, token, rag_base, scope, base_query = _jira_validate_config_and_env(cfg)
         max_issues = int(cfg.get("maxIssuesPerRun", 50))
         max_comments = int(cfg.get("maxCommentsPerIssue", 100))
         overlap = int(cfg.get("overlapMinutes", 5))
-        fields = _default_fields()
-        extra = cfg.get("extraFields")
-        if isinstance(extra, list):
-            fields = list(dict.fromkeys(fields + [str(x) for x in extra]))
+        fields = _jira_issue_fields(cfg)
 
         store = cursor_store_from_env()
         wm = _jql_watermark_after_overlap(store.get_state("jira", scope, base_query), overlap)
         jql = _build_jql(base_query, wm)
 
-        all_payloads: list[dict[str, Any]] = []
         with httpx.Client(
             timeout=120.0,
             auth=(email, token),
             headers={"Accept": "application/json"},
         ) as client:
-            issues = search_issues(client, site, jql, fields, max_issues)
-            max_upd: str | None = None
-            for issue in issues:
-                key = issue.get("key", "")
-                raw_comments = _fetch_comments(client, site, key, max_comments + 1)
-                truncated = len(raw_comments) > max_comments
-                comments = raw_comments[:max_comments]
-                text = _issue_text(issue, comments, max_comments, truncated)
-                all_payloads.append(_embed_for_issue(scope, issue, text))
-                upd = (issue.get("fields") or {}).get("updated")
-                if isinstance(upd, str):
-                    max_upd = max(max_upd, upd) if max_upd else upd
+            all_payloads, max_upd = _jira_build_embed_payloads(
+                client, site, jql, fields, scope, max_issues, max_comments
+            )
             if max_upd:
                 store.set_state("jira", scope, base_query, max_upd)
 
         if not all_payloads:
             run_ok = True
         else:
-            with httpx.Client(timeout=120.0) as hx:
-                for payload in all_payloads:
-                    try:
-                        r = hx.post(f"{rag_base}/v1/embed", json=payload)
-                        r.raise_for_status()
-                    except httpx.HTTPError as exc:
-                        observe_rag_embed_attempt(
-                            integration, classify_rag_submission_result(exc)
-                        )
-                        raise
-                    observe_rag_embed_attempt(integration, "success")
+            _jira_post_embed_payloads(rag_base, integration, all_payloads)
             run_ok = True
     finally:
         elapsed = time.perf_counter() - t0
