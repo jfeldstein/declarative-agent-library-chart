@@ -121,6 +121,41 @@ def test_llm_usage_missing_when_no_usage_metadata(
     assert _counter_value(after, pfx_m) == _counter_value(before, pfx_m) + 1.0
 
 
+def test_orphan_on_llm_end_skips_ttft_observe(monkeypatch: pytest.MonkeyPatch) -> None:
+    """[DALC-REQ-TOKEN-MET-003] No paired start → no TTFT sample (avoids bogus near-zero)."""
+    import hosted_agents.llm_metrics as lm
+
+    from hosted_agents.trigger_graph import trigger_context_for_admin_reads
+
+    calls: list[tuple[float, str]] = []
+
+    def _spy_ttft(
+        ctx: object,
+        seconds: float,
+        *,
+        streaming_label: str,
+        result: str,
+    ) -> None:
+        calls.append((seconds, streaming_label))
+
+    monkeypatch.setattr(lm, "observe_llm_time_to_first_token", _spy_ttft)
+    ctx = trigger_context_for_admin_reads()
+    cb = SupervisorLlmMetricsCallback(ctx)
+    rid = uuid4()
+    gen = ChatGeneration(
+        message=AIMessage(
+            content="orphan",
+            usage_metadata={
+                "input_tokens": 2,
+                "output_tokens": 1,
+                "total_tokens": 3,
+            },
+        ),
+    )
+    cb.on_llm_end(LLMResult(generations=[[gen]]), run_id=rid)
+    assert calls == []
+
+
 def test_ttft_histogram_on_streaming_first_token() -> None:
     """[DALC-REQ-TOKEN-MET-003]"""
     import hosted_agents.llm_metrics as lm

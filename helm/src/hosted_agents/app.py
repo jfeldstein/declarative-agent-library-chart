@@ -163,7 +163,10 @@ def _register_trigger_route(app: FastAPI, system_prompt: str | None) -> None:
             raise
         observe_http_trigger("success", start)
         # [DALC-REQ-TOKEN-MET-004] serialized trigger JSON / response body sizes
-        observe_trigger_http_payloads(req_bytes, len(out.encode("utf-8")))
+        observe_trigger_http_payloads(
+            req_bytes,
+            len(out.encode("utf-8", errors="replace")),
+        )
         return out
 
 

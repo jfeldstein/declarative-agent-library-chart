@@ -11,7 +11,7 @@
     {
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": {
-        "defaults": { "color": { "mode": "palette-classic" }, "unit": "ops" },
+        "defaults": { "color": { "mode": "palette-classic" }, "unit": "none" },
         "overrides": []
       },
       "gridPos": { "h": 9, "w": 12, "x": 0, "y": 0 },

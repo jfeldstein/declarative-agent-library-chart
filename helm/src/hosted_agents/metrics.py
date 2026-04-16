@@ -63,9 +63,15 @@ _PAYLOAD_BUCKETS = (
     float("inf"),
 )
 
-_MAX_TRIGGER_PAYLOAD_BYTES = int(
-    os.environ.get("HOSTED_AGENT_METRICS_TRIGGER_PAYLOAD_MAX_BYTES", "262144"),
-)
+def _max_trigger_payload_bytes() -> int:
+    """Upper clamp for trigger payload histograms (read per observation, not at import)."""
+    raw = os.environ.get("HOSTED_AGENT_METRICS_TRIGGER_PAYLOAD_MAX_BYTES", "262144").strip()
+    try:
+        n = int(raw)
+    except ValueError:
+        return 262_144
+    return max(n, 1)
+
 
 TriggerResult = Literal["success", "client_error", "server_error"]
 BinaryResult = Literal["success", "error"]
@@ -166,7 +172,7 @@ def _elapsed(start: float) -> float:
 def _clamp_payload_observation(n: int) -> float:
     if n < 0:
         n = 0
-    if n > _MAX_TRIGGER_PAYLOAD_BYTES:
+    if n > _max_trigger_payload_bytes():
         return float("inf")
     return float(n)
 

@@ -122,16 +122,18 @@ class SupervisorLlmMetricsCallback(BaseCallbackHandler):
         **kwargs: Any,
     ) -> Any:
         st = self._runs.pop(run_id, None)
-        t0 = st["t0"] if st else time.perf_counter()
-        ttft_done = bool(st and st.get("ttft_done"))
-        if not ttft_done:
-            elapsed = max(time.perf_counter() - t0, 0.0)
-            observe_llm_time_to_first_token(
-                self._ctx,
-                elapsed,
-                streaming_label="false",
-                result="success",
-            )
+        if st is not None:
+            ttft_done = bool(st.get("ttft_done"))
+            if not ttft_done:
+                elapsed = max(time.perf_counter() - st["t0"], 0.0)
+                observe_llm_time_to_first_token(
+                    self._ctx,
+                    elapsed,
+                    streaming_label="false",
+                    result="success",
+                )
+        # If ``st`` is missing (no paired ``on_chat_model_start`` for this ``run_id``),
+        # skip TTFT — using ``perf_counter()`` as t0 would emit bogus near-zero samples.
 
         it: int | None = None
         ot: int | None = None
