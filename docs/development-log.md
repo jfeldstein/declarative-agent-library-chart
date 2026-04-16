@@ -8,6 +8,8 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ## 2026-04-16
 
+**Clean worktree merges (`main`)** — Merged **`fix/implementation-specs-accuracy`** (kept removal of **`docs/implementation-specs/`**; dropped branch log line that referenced it). Merged **`openspec/dalc-traceability-migration-apply`** and **`feature--adrs-arch-patterns`** with **`main`**-preferred conflict resolution where branches were stale. Merged **`openspec/postgres-agent-persistence`**: ported **`hosted_agents.migrations`** under **`helm/src/`** (dropped obsolete **`runtime/`** paths), optional **`[project.optional-dependencies]`** **`postgres`** (`langgraph-checkpoint-postgres`, pinned **`psycopg[binary]`**), Postgres-backed observability repos + **`HOSTED_AGENT_OBSERVABILITY_STORE`**, Helm migration hook + bundled DDL, and tests; **omitted** legacy **`RunOperationalEvent`** / **`run_operational_event`** (already removed from **`main`** feedback model).
+
 **`docs/openspec-implementation-order.md`** — Synced checklist and DAG with **`openspec list --json`**: ~~struck~~ / `[x]` for **complete** changes (**`dedupe-helm-values-observability`**, **`consolidate-helm-tests`**, **`examples-distinct-values-readmes`**, **`observability-automatic-enabled-components`**, **`scraper-cursors-durable-store`**); refreshed **`jira-scraper` / `slack-scraper`** progress (**9/14**, **8/14**); replaced stale “open PR” caveat with **closed** [**#14**](https://github.com/jfeldstein/declarative-agent-library-chart/pull/14) / [**#15**](https://github.com/jfeldstein/declarative-agent-library-chart/pull/15) note; documented **`presence-slack-jira-ootb`** and **`ci-cyclomatic-complexity`** as in-flight outside the linear list.
 
 ## 2026-04-15

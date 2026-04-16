@@ -37,6 +37,7 @@ jobs:
       - name: Ruff lint
         run: uv run ruff check hosted_agents tests
 
+      # Default PR path: no real Postgres. Optional: `uv run pytest -m postgres_integration` with Docker Postgres (marker reserved).
       - name: Pytest with coverage (fail under 85%)
         run: uv run pytest tests/ -v --tb=short --cov-report=term-missing --cov-report=xml
 

@@ -13,7 +13,7 @@ This runbook covers the **runtime** feature flags for durable LangGraph checkpoi
 | `HOSTED_AGENT_CHECKPOINT_BACKEND` | Behavior |
 |-----------------------------------|----------|
 | `memory` (default) | In-process `MemorySaver`; suitable for dev / single replica. |
-| `postgres` | **Not bundled** in the default image. Set `HOSTED_AGENT_POSTGRES_URL` and add a LangGraph Postgres checkpointer dependency, then extend `build_checkpointer` in `hosted_agents/observability/checkpointer.py`. |
+| `postgres` | **Bundled** in the published image (`langgraph-checkpoint-postgres` + `psycopg` v3). Set `HOSTED_AGENT_POSTGRES_URL` (`postgres://` or `postgresql://`). On first use the runtime runs LangGraph’s checkpoint `setup()` (creates checkpoint tables). Size the shared pool with `HOSTED_AGENT_POSTGRES_POOL_MAX` (default `5` per process). Prefer a session pooler (PgBouncer) in front of Postgres for multi-worker deployments. |
 | `redis` | Reserved until a Redis saver is pinned for this chart. |
 
 When `HOSTED_AGENT_CHECKPOINTS_ENABLED` is **false** (Helm default), the runtime uses the original single-node graph without persistence.
@@ -43,6 +43,17 @@ Set **`HOSTED_AGENT_USE_PGLITE=1`** to start an embedded [PGlite](https://pglite
 - **Retention:** checkpoint and trajectory retention are deployment-specific; the default in-memory stores reset on restart.
 - **Rollback:** disable feature flags (`HOSTED_AGENT_CHECKPOINTS_ENABLED`, `HOSTED_AGENT_WANDB_ENABLED`, `HOSTED_AGENT_SLACK_FEEDBACK_ENABLED`, etc.) via Helm values; the runtime remains compatible with older clients.
 - **PII:** scrub prompts, tokens, and user identifiers before sending data to W&B or external stores; keep W&B tags low-cardinality per `docs/observability.md`.
+
+## Application observability store (correlation, feedback, side-effects, span summaries)
+
+| `HOSTED_AGENT_OBSERVABILITY_STORE` | Behavior |
+|------------------------------------|----------|
+| `memory` (default) | In-process stores (same as pre-Postgres behavior). |
+| `postgres` | Persist Slack correlation, human feedback, operational events, orphan reactions, side-effect checkpoints, and per-tool span summaries under the `hosted_agents` schema. Requires `HOSTED_AGENT_POSTGRES_URL` (same DSN as checkpoint Postgres when both are enabled). |
+
+The runtime applies bundled DDL from `hosted_agents/migrations/001_hosted_agents_observability.sql` on first pool use (idempotent `CREATE … IF NOT EXISTS`). For GitOps-only clusters, operators may instead apply the same file with `psql` or enable the optional Helm hook Job (`observability.postgres.migrations.enabled`), which requires `observability.postgresUrlSecret` (or legacy `observability.postgres.urlSecret`) so the Job can read `DATABASE_URL`.
+
+**Rollback:** take a logical or physical snapshot before upgrades; to roll back behavior flip `HOSTED_AGENT_OBSERVABILITY_STORE` to `memory` and `HOSTED_AGENT_CHECKPOINT_BACKEND` to `memory`, then redeploy (data remains in Postgres until explicitly removed).
 
 ## Helm values (short)
 

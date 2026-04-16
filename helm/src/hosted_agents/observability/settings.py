@@ -32,6 +32,8 @@ class ObservabilitySettings:
     checkpoints_enabled: bool
     checkpoint_backend: str
     checkpoint_postgres_url: str | None
+    postgres_pool_max: int
+    observability_store: str
     wandb_enabled: bool
     slack_feedback_enabled: bool
     wandb_project: str | None
@@ -56,6 +58,18 @@ class ObservabilitySettings:
         for k, v in mapper_raw.items():
             if isinstance(k, str) and isinstance(v, bool):
                 mappers[k] = v
+        pool_raw = os.environ.get("HOSTED_AGENT_POSTGRES_POOL_MAX", "5").strip()
+        try:
+            pg_pool = max(1, min(50, int(pool_raw or "5")))
+        except ValueError:
+            pg_pool = 5
+        obs_store = (
+            os.environ.get("HOSTED_AGENT_OBSERVABILITY_STORE", "memory").strip().lower()
+            or "memory"
+        )
+        if obs_store not in {"memory", "postgres"}:
+            msg = f"unknown HOSTED_AGENT_OBSERVABILITY_STORE={obs_store!r}"
+            raise ValueError(msg)
         return cls(
             checkpoints_enabled=_truthy("HOSTED_AGENT_CHECKPOINTS_ENABLED"),
             checkpoint_backend=os.environ.get(
@@ -63,6 +77,8 @@ class ObservabilitySettings:
             ).strip()
             or "memory",
             checkpoint_postgres_url=postgres_url() or None,
+            postgres_pool_max=pg_pool,
+            observability_store=obs_store,
             wandb_enabled=_truthy("HOSTED_AGENT_WANDB_ENABLED"),
             slack_feedback_enabled=_truthy("HOSTED_AGENT_SLACK_FEEDBACK_ENABLED"),
             wandb_project=os.environ.get("WANDB_PROJECT", "").strip() or None,
@@ -70,3 +86,10 @@ class ObservabilitySettings:
             slack_emoji_map=emoji_map,
             operational_mapper_flags=mappers,
         )
+
+    def effective_observability_postgres_url(self) -> str | None:
+        """URL for observability DDL when ``observability_store`` is ``postgres``."""
+
+        if self.observability_store != "postgres":
+            return None
+        return self.checkpoint_postgres_url

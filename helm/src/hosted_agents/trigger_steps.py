@@ -8,7 +8,16 @@ from typing import Any
 
 from hosted_agents.metrics import observe_mcp_tool, observe_skill_load
 from hosted_agents.o11y_logging import get_logger
-from hosted_agents.observability.run_context import get_run_id, get_wandb_session
+from hosted_agents.observability.run_context import (
+    get_run_id,
+    get_thread_id,
+    get_wandb_session,
+)
+from hosted_agents.observability.span_summaries import (
+    ToolSpanSummary,
+    redacted_args_hash,
+)
+from hosted_agents.observability.stores import get_span_summary_store
 from hosted_agents.observability.trajectory import trajectory_recorder
 from hosted_agents.run_context import next_tool_call_id
 from hosted_agents.runtime_config import RuntimeConfig
@@ -61,6 +70,17 @@ def run_tool_json(cfg: RuntimeConfig, tool: str, arguments: dict[str, Any]) -> s
                 "arguments": arguments,
                 "result": result,
             },
+        )
+        get_span_summary_store().record(
+            ToolSpanSummary(
+                tool_call_id=tool_call_id,
+                run_id=run_id,
+                thread_id=get_thread_id() or "",
+                tool_name=tool,
+                duration_ms=max(0, int(duration * 1000)),
+                outcome="success",
+                args_hash=redacted_args_hash(arguments),
+            )
         )
     wandb_sess = get_wandb_session()
     if wandb_sess is not None:

@@ -67,5 +67,7 @@ def record_side_effect_checkpoint(
         external_ref=dict(external_ref),
         created_at=time.time(),
     )
-    side_effect_checkpoints.add(rec)
+    from hosted_agents.observability.stores import get_side_effect_store
+
+    get_side_effect_store().add(rec)
     return rec

@@ -20,17 +20,17 @@
 
 ## 4. Integration with HTTP and graph paths
 
-- [ ] 4.1 Wire FastAPI routes and Slack ingest to use injected repository factory (no global hidden state in tests)
-- [ ] 4.2 Ensure `run_trigger_graph` / tool paths write through repositories when Postgres enabled
-- [ ] 4.3 Extend operator read APIs to read from Postgres when configured (or document that list endpoints query DB)
+- [x] 4.1 Wire FastAPI routes and Slack ingest to use injected repository factory (no global hidden state in tests)
+- [x] 4.2 Ensure `run_trigger_graph` / tool paths write through repositories when Postgres enabled
+- [x] 4.3 Extend operator read APIs to read from Postgres when configured (or document that list endpoints query DB)
 
 ## 5. Helm and ops
 
-- [ ] 5.1 Add Helm values for Postgres URL secretKeyRef, observability store mode, migration toggle
-- [ ] 5.2 Optional: Helm hook Job to apply SQL migrations on upgrade (behind `observability.postgres.migrations.enabled`)
+- [x] 5.1 Add Helm values for Postgres URL secretKeyRef, observability store mode, migration toggle
+- [x] 5.2 Optional: Helm hook Job to apply SQL migrations on upgrade (behind `observability.postgres.migrations.enabled`)
 
 ## 6. Verification
 
-- [ ] 6.1 CI: default PR path uses mocks or sqlite-free unit tests; optional integration job with Postgres
-- [ ] 6.2 `./ci.sh` green; coverage policy per repo rules (include new modules appropriately)
-- [ ] 6.3 Manual smoke: enable postgres backend in kind/example values and verify checkpoint + feedback survive pod delete
+- [x] 6.1 CI: default PR path uses mocks or sqlite-free unit tests; optional integration job with Postgres
+- [x] 6.2 `./ci.sh` green; coverage policy per repo rules (include new modules appropriately)
+- [x] 6.3 Manual smoke: enable postgres backend in kind/example values and verify checkpoint + feedback survive pod delete

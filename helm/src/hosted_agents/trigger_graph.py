@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 from typing import Any, TypedDict
 
 from langchain_core.runnables import RunnableConfig
@@ -159,12 +160,20 @@ _compiled_graph: Any | None = None
 _compiled_graph_key: tuple[Any, ...] | None = None
 
 
+def _checkpoint_url_fingerprint(obs: ObservabilitySettings) -> str:
+    url = (obs.checkpoint_postgres_url or "").strip()
+    if not url:
+        return "-"
+    return hashlib.sha256(url.encode()).hexdigest()[:12]
+
+
 def _graph_key(ctx: TriggerContext) -> tuple[Any, ...]:
     obs = _obs(ctx)
     use_cp = checkpoints_globally_enabled() and not ctx.ephemeral
     store_kind = effective_checkpoint_store()
     backend = obs.checkpoint_backend if obs.checkpoints_enabled else store_kind
-    return (use_cp, obs.checkpoints_enabled, backend, ctx.ephemeral)
+    url_fp = _checkpoint_url_fingerprint(obs) if backend == "postgres" else "-"
+    return (use_cp, obs.checkpoints_enabled, backend, url_fp, ctx.ephemeral)
 
 
 def _resolve_checkpointer(

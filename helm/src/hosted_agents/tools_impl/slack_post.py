@@ -5,11 +5,8 @@ from __future__ import annotations
 import time
 from typing import Any
 
-from hosted_agents.observability.correlation import (
-    SlackMessageRef,
-    ToolCorrelation,
-    correlation_store,
-)
+from hosted_agents.observability.correlation import SlackMessageRef, ToolCorrelation
+from hosted_agents.observability.stores import get_correlation_store
 from hosted_agents.observability.run_context import (
     get_run_id,
     get_thread_id,
@@ -35,7 +32,7 @@ def run(arguments: dict[str, Any]) -> dict[str, Any]:
         external_ref={"channel_id": channel_id, "message_ts": message_ts},
         tool_call_id=tool_call_id,
     )
-    correlation_store.put_slack_message(
+    get_correlation_store().put_slack_message(
         SlackMessageRef(channel_id=channel_id, message_ts=message_ts),
         ToolCorrelation(
             tool_call_id=tool_call_id,
