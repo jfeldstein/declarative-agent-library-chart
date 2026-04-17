@@ -1,3 +1,4 @@
+{{- define "declarative-agent-library-chart.manifest.testTrigger" -}}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -27,3 +28,4 @@ spec:
               body=$(curl -sf -X POST "$URL")
               printf '%s\n' "$body"
               printf '%s' "$body" | grep -q 'Hello'
+{{- end -}}

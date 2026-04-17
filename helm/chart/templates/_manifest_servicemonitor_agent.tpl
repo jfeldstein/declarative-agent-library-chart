@@ -1,3 +1,4 @@
+{{- define "declarative-agent-library-chart.manifest.servicemonitorAgent" -}}
 {{- if .Values.observability.serviceMonitor.enabled }}
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
@@ -21,3 +22,4 @@ spec:
       interval: {{ .Values.observability.serviceMonitor.interval | quote }}
       scrapeTimeout: {{ .Values.observability.serviceMonitor.scrapeTimeout | quote }}
 {{- end }}
+{{- end -}}

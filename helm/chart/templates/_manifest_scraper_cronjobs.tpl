@@ -1,3 +1,4 @@
+{{- define "declarative-agent-library-chart.manifest.scraperCronjobs" -}}
 {{/* One CronJob per enabled scraper job; secrets via env (Secret refs), config via mounted ConfigMap. Traceability: [DALC-REQ-RAG-SCRAPERS-002] [DALC-REQ-SCRAPER-CURSOR-003] [DALC-REQ-SCRAPER-CURSOR-004] */}}
 {{- $root := . }}
 {{- $cursorBackend := default "file" $root.Values.scrapers.cursorStore.backend }}
@@ -235,3 +236,4 @@ spec:
 {{- end }}
 {{- end }}
 {{- end }}
+{{- end -}}

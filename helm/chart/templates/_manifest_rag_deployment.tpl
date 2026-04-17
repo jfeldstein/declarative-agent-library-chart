@@ -1,3 +1,4 @@
+{{- define "declarative-agent-library-chart.manifest.ragDeployment" -}}
 {{- if include "declarative-agent-library-chart.ragDeployed" . }}
 apiVersion: apps/v1
 kind: Deployment
@@ -56,3 +57,4 @@ spec:
             {{- toYaml . | nindent 12 }}
           {{- end }}
 {{- end }}
+{{- end -}}

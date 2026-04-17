@@ -1,7 +1,7 @@
 ## 1. Project scaffold
 
 - [x] 1.1 Create the repository root with `README.md` describing Helm library chart vs examples, kind prerequisite, and the `curl` acceptance command.
-- [ ] 1.2 Add `helm/chart/Chart.yaml` and `helm/chart/templates/` with a Service + workload on port **8088**. *(**Intentional drift:** shipped chart uses **`type: application`**—library consumption is via **`examples/*/Chart.yaml`** dependencies; **`type: library`** in this task is the target state from the original CFHA proposal, not current **`Chart.yaml`**.)*
+- [ ] 1.2 Add `helm/chart/Chart.yaml` and `helm/chart/templates/` with a Service + workload on port **8088**. *(**Shipped:** templates + Service + workload on **8088**. **`Chart.yaml` `type`:** cannot be Helm **`library`** without breaking manifest rendering when used as a dependency — see comment in **`helm/chart/Chart.yaml`** and **`cfha-helm-library`** task **1.2**.)*
 - [x] 1.3 Add `helm/src/` with a minimal HTTP server implementing **`POST /api/v1/trigger`** that reads `system-prompt` from env/ConfigMap and returns a response body matching hello-world behavior (e.g. greeting with **Hello** and wave). *(Runtime source: `helm/src/hosted_agents/`; `helm/src/README.md` documents mapping.)*
 - [x] 1.4 Add container build artifacts (e.g. `helm/Dockerfile`; build from repository root) and wire image repo/tag via Helm values with sensible defaults for local dev.
 

@@ -1,3 +1,4 @@
+{{- define "declarative-agent-library-chart.manifest.observabilityMigration" -}}
 {{- $pg := .Values.observability.postgres | default dict }}
 {{- $migrations := $pg.migrations | default dict }}
 {{- if $migrations.enabled }}
@@ -15,7 +16,7 @@ metadata:
     {{- include "declarative-agent-library-chart.labels" . | nindent 4 }}
 data:
   001_hosted_agents_observability.sql: |-
-{{ .Files.Get "files/observability/001_hosted_agents_observability.sql" | nindent 4 }}
+{{ include "declarative-agent-library-chart.embedded.observabilitySql" . | nindent 4 }}
 ---
 apiVersion: batch/v1
 kind: Job
@@ -55,4 +56,5 @@ spec:
         - name: sql
           configMap:
             name: {{ include "declarative-agent-library-chart.fullname" . }}-observability-sql
+{{- end }}
 {{- end }}

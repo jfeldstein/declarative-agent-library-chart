@@ -6,18 +6,49 @@ release:
   name: dalc-ci-scrapers
 tests:
   - it: renders one ConfigMap per enabled jira and slack job
-    template: charts/agent/templates/scraper-job-configmaps.yaml
+    template: templates/agent.yaml
     asserts:
-      - hasDocuments:
-          count: 3
+      - equal:
+          path: kind
+          value: ConfigMap
+        documentSelector:
+          path: metadata.name
+          value: dalc-ci-scrapers-declarative-agent-library-chart-scraper-job-jira-0
+      - equal:
+          path: kind
+          value: ConfigMap
+        documentSelector:
+          path: metadata.name
+          value: dalc-ci-scrapers-declarative-agent-library-chart-scraper-job-slack-0
+      - equal:
+          path: kind
+          value: ConfigMap
+        documentSelector:
+          path: metadata.name
+          value: dalc-ci-scrapers-declarative-agent-library-chart-scraper-job-slack-1
   - it: renders one CronJob per enabled jira and slack job
-    template: charts/agent/templates/scraper-cronjobs.yaml
+    template: templates/agent.yaml
     asserts:
-      - hasDocuments:
-          count: 3
+      - isKind:
+          of: CronJob
+        documentSelector:
+          path: metadata.name
+          value: dalc-ci-scrapers-declarative-agent-library-chart-scraper-jira-0
+      - isKind:
+          of: CronJob
+        documentSelector:
+          path: metadata.name
+          value: dalc-ci-scrapers-declarative-agent-library-chart-scraper-slack-0
+      - isKind:
+          of: CronJob
+        documentSelector:
+          path: metadata.name
+          value: dalc-ci-scrapers-declarative-agent-library-chart-scraper-slack-1
   - it: jira CronJob runs jira_job module with mounted job config
-    template: charts/agent/templates/scraper-cronjobs.yaml
-    documentIndex: 0
+    template: templates/agent.yaml
+    documentSelector:
+      path: metadata.name
+      value: dalc-ci-scrapers-declarative-agent-library-chart-scraper-jira-0
     asserts:
       - isKind:
           of: CronJob
@@ -30,81 +61,104 @@ tests:
             name: SCRAPER_JOB_CONFIG
             value: /config/job.json
   - it: slack_search CronJob runs slack_job module
-    template: charts/agent/templates/scraper-cronjobs.yaml
-    documentIndex: 1
+    template: templates/agent.yaml
+    documentSelector:
+      path: metadata.name
+      value: dalc-ci-scrapers-declarative-agent-library-chart-scraper-slack-0
     asserts:
       - equal:
           path: spec.jobTemplate.spec.template.spec.containers[0].command[2]
           value: hosted_agents.scrapers.slack_job
   - it: renders RAG deployment when a scraper job is enabled
-    template: charts/agent/templates/rag-deployment.yaml
+    template: templates/agent.yaml
+    documentSelector:
+      path: spec.template.metadata.labels["app.kubernetes.io/component"]
+      value: rag
     asserts:
-      - hasDocuments:
-          count: 1
       - isKind:
           of: Deployment
       - equal:
           path: metadata.labels["app.kubernetes.io/component"]
           value: rag
-  # Per-test values: below repeat the same paths (jira-only / slack-only); helm-unittest
-  # has no shared values anchor for multiple it: blocks, so duplication is intentional.
   - it: jira-only values render one scraper ConfigMap # [DALC-REQ-HELM-UNITTEST-004]
     values:
       - ../../examples/with-scrapers/values.jira-only.yaml
-    template: charts/agent/templates/scraper-job-configmaps.yaml
+    template: templates/agent.yaml
     asserts:
-      - hasDocuments:
-          count: 1
+      - equal:
+          path: kind
+          value: ConfigMap
+        documentSelector:
+          path: metadata.name
+          value: dalc-ci-scrapers-declarative-agent-library-chart-scraper-job-jira-0
   - it: jira-only single CronJob runs jira_job module
     values:
       - ../../examples/with-scrapers/values.jira-only.yaml
-    template: charts/agent/templates/scraper-cronjobs.yaml
-    documentIndex: 0
+    template: templates/agent.yaml
+    documentSelector:
+      path: metadata.name
+      value: dalc-ci-scrapers-declarative-agent-library-chart-scraper-jira-0
     asserts:
       - hasDocuments:
           count: 1
+          filterAware: true
       - equal:
           path: spec.jobTemplate.spec.template.spec.containers[0].command[2]
           value: hosted_agents.scrapers.jira_job
   - it: jira-only values render RAG deployment
     values:
       - ../../examples/with-scrapers/values.jira-only.yaml
-    template: charts/agent/templates/rag-deployment.yaml
+    template: templates/agent.yaml
+    documentSelector:
+      path: spec.template.metadata.labels["app.kubernetes.io/component"]
+      value: rag
     asserts:
       - hasDocuments:
           count: 1
+          filterAware: true
   - it: slack-only values render one scraper ConfigMap # [DALC-REQ-HELM-UNITTEST-004]
     values:
       - ../../examples/with-scrapers/values.slack-only.yaml
-    template: charts/agent/templates/scraper-job-configmaps.yaml
+    template: templates/agent.yaml
     asserts:
-      - hasDocuments:
-          count: 1
+      - equal:
+          path: kind
+          value: ConfigMap
+        documentSelector:
+          path: metadata.name
+          value: dalc-ci-scrapers-declarative-agent-library-chart-scraper-job-slack-0
   - it: slack-only single CronJob runs slack_job module
     values:
       - ../../examples/with-scrapers/values.slack-only.yaml
-    template: charts/agent/templates/scraper-cronjobs.yaml
-    documentIndex: 0
+    template: templates/agent.yaml
+    documentSelector:
+      path: metadata.name
+      value: dalc-ci-scrapers-declarative-agent-library-chart-scraper-slack-0
     asserts:
       - hasDocuments:
           count: 1
+          filterAware: true
       - equal:
           path: spec.jobTemplate.spec.template.spec.containers[0].command[2]
           value: hosted_agents.scrapers.slack_job
   - it: slack-only values render RAG deployment
     values:
       - ../../examples/with-scrapers/values.slack-only.yaml
-    template: charts/agent/templates/rag-deployment.yaml
+    template: templates/agent.yaml
+    documentSelector:
+      path: spec.template.metadata.labels["app.kubernetes.io/component"]
+      value: rag
     asserts:
       - hasDocuments:
           count: 1
+          filterAware: true
   - it: scraper jobs do not inherit postgres DSN when cursor backend is file [DALC-REQ-SCRAPER-CURSOR-003]
-    template: charts/agent/templates/scraper-cronjobs.yaml
+    template: templates/agent.yaml
+    documentSelector:
+      path: metadata.name
+      value: dalc-ci-scrapers-declarative-agent-library-chart-scraper-jira-0
     set:
-      agent:
-        checkpoints:
-          postgresUrl: postgres://shared.example/db
-    documentIndex: 0
+      agent.checkpoints.postgresUrl: postgres://shared.example/db
     asserts:
       - notContains:
           path: spec.jobTemplate.spec.template.spec.containers[0].env
@@ -115,15 +169,13 @@ tests:
           content:
             name: SCRAPER_CURSOR_BACKEND
   - it: scraper jobs wire shared postgres DSN when cursor backend is postgres [DALC-REQ-SCRAPER-CURSOR-003]
-    template: charts/agent/templates/scraper-cronjobs.yaml
+    template: templates/agent.yaml
+    documentSelector:
+      path: metadata.name
+      value: dalc-ci-scrapers-declarative-agent-library-chart-scraper-jira-0
     set:
-      agent:
-        checkpoints:
-          postgresUrl: postgres://shared.example/db
-        scrapers:
-          cursorStore:
-            backend: postgres
-    documentIndex: 0
+      agent.checkpoints.postgresUrl: postgres://shared.example/db
+      agent.scrapers.cursorStore.backend: postgres
     asserts:
       - contains:
           path: spec.jobTemplate.spec.template.spec.containers[0].env
@@ -136,17 +188,15 @@ tests:
             name: HOSTED_AGENT_POSTGRES_URL
             value: postgres://shared.example/db
   - it: scraper jobs prefer DSN Secret override for postgres backend [DALC-REQ-SCRAPER-CURSOR-004]
-    template: charts/agent/templates/scraper-cronjobs.yaml
+    template: templates/agent.yaml
+    documentSelector:
+      path: metadata.name
+      value: dalc-ci-scrapers-declarative-agent-library-chart-scraper-jira-0
     set:
-      agent:
-        checkpoints:
-          postgresUrl: postgres://shared.example/db
-        scrapers:
-          cursorStore:
-            backend: postgres
-            postgresUrlSecretName: scraper-dsn
-            postgresUrlSecretKey: url
-    documentIndex: 0
+      agent.checkpoints.postgresUrl: postgres://shared.example/db
+      agent.scrapers.cursorStore.backend: postgres
+      agent.scrapers.cursorStore.postgresUrlSecretName: scraper-dsn
+      agent.scrapers.cursorStore.postgresUrlSecretKey: url
     asserts:
       - contains:
           path: spec.jobTemplate.spec.template.spec.containers[0].env

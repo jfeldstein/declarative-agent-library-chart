@@ -1,3 +1,4 @@
+{{- define "declarative-agent-library-chart.manifest.ragService" -}}
 {{- if include "declarative-agent-library-chart.ragDeployed" . }}
 apiVersion: v1
 kind: Service
@@ -22,3 +23,4 @@ spec:
   selector:
     {{- include "declarative-agent-library-chart.ragSelectorLabels" . | nindent 4 }}
 {{- end }}
+{{- end -}}

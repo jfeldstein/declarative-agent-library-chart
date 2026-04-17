@@ -1,3 +1,4 @@
+{{- define "declarative-agent-library-chart.manifest.scraperJobConfigmaps" -}}
 {{/* One ConfigMap per enabled scraper job (non-secret JSON at job.json). Traceability: [DALC-REQ-RAG-SCRAPERS-002] */}}
 {{- $root := . }}
 {{- if and $root.Values.scrapers.jira.enabled $root.Values.scrapers.jira.jobs }}
@@ -54,3 +55,4 @@ data:
 {{- end }}
 {{- end }}
 {{- end }}
+{{- end -}}

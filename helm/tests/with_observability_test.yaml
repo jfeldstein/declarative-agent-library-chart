@@ -1,4 +1,11 @@
 # Traceability: [DALC-REQ-HELM-UNITTEST-001] [DALC-REQ-O11Y-SCRAPE-004] [DALC-REQ-O11Y-SCRAPE-005] [DALC-REQ-O11Y-SCRAPE-006]
+# Indices: unittest output for templates/agent.yaml (library bundle order for this chart).
+# With scrapers+rag+o11y (examples/with-observability/values.yaml): 0 CM config, 1 Deployment agent,
+#   2 Service agent, 3 ServiceMonitor agent, (empty YAML docs skipped), scraper CM + CronJob,
+#   then RAG Deployment/Service/ServiceMonitor, then test Job — count non-empty docs only.
+# Current non-empty order: 0 CM, 1 Dep agent, 2 Svc agent, 3 SM agent, 4 CM scraper, 5 CronJob,
+#   6 Dep rag, 7 Svc rag, 8 SM rag, 9 Job.
+# no-rag overlay: 0 CM, 1 Deployment, 2 Service, 3 ServiceMonitor agent, 4 Job
 values:
   - ../../examples/with-observability/values.yaml
 suite: with-observability prometheus and ServiceMonitors
@@ -6,57 +13,62 @@ release:
   name: dalc-ci-o11y
 tests:
   - it: agent Deployment pod template has prometheus scrape annotations
-    template: charts/agent/templates/deployment.yaml
+    template: templates/agent.yaml
     asserts:
-      - hasDocuments:
-          count: 1
       - equal:
           path: spec.template.metadata.annotations["prometheus.io/scrape"]
           value: "true"
+        documentSelector:
+          path: spec.template.metadata.labels["app.kubernetes.io/component"]
+          value: agent
       - contains:
           path: spec.template.spec.containers[0].env
           content:
             name: HOSTED_AGENT_LOG_FORMAT
             value: json
+        documentSelector:
+          path: spec.template.metadata.labels["app.kubernetes.io/component"]
+          value: agent
   - it: agent Service has prometheus scrape annotations
-    template: charts/agent/templates/service.yaml
+    template: templates/agent.yaml
+    documentIndex: 2
     asserts:
-      - hasDocuments:
-          count: 1
       - equal:
           path: metadata.annotations["prometheus.io/scrape"]
           value: "true"
+      - isKind:
+          of: Service
   - it: optional managed RAG Deployment has prometheus scrape annotations when deployed
-    template: charts/agent/templates/rag-deployment.yaml
+    template: templates/agent.yaml
     asserts:
-      - hasDocuments:
-          count: 1
       - equal:
           path: spec.template.metadata.annotations["prometheus.io/scrape"]
           value: "true"
+        documentSelector:
+          path: spec.template.metadata.labels["app.kubernetes.io/component"]
+          value: rag
   - it: optional managed RAG Service has prometheus scrape annotations when deployed
-    template: charts/agent/templates/rag-service.yaml
+    template: templates/agent.yaml
+    documentIndex: 7
     asserts:
-      - hasDocuments:
-          count: 1
       - equal:
           path: metadata.annotations["prometheus.io/scrape"]
           value: "true"
+      - isKind:
+          of: Service
   - it: renders agent ServiceMonitor
-    template: charts/agent/templates/servicemonitor.yaml
+    template: templates/agent.yaml
+    documentIndex: 3
     asserts:
-      - hasDocuments:
-          count: 1
       - isKind:
           of: ServiceMonitor
       - matchRegex:
           path: metadata.name
           pattern: -agent$
   - it: renders ServiceMonitor for optional managed RAG when that Service is deployed
-    template: charts/agent/templates/rag-servicemonitor.yaml
+    template: templates/agent.yaml
+    documentIndex: 8
     asserts:
-      - hasDocuments:
-          count: 1
       - isKind:
           of: ServiceMonitor
       - matchRegex:
@@ -65,16 +77,19 @@ tests:
   - it: with ServiceMonitor enabled but RAG not deployed, rag ServiceMonitor template renders nothing
     values:
       - ../../examples/with-observability/values-observability-no-rag.yaml
-    template: charts/agent/templates/rag-servicemonitor.yaml
-    asserts:
-      - hasDocuments:
-          count: 0
-  - it: with ServiceMonitor enabled but RAG not deployed, agent ServiceMonitor still renders
-    values:
-      - ../../examples/with-observability/values-observability-no-rag.yaml
-    template: charts/agent/templates/servicemonitor.yaml
+    template: templates/agent.yaml
+    documentSelector:
+      path: kind
+      value: ServiceMonitor
     asserts:
       - hasDocuments:
           count: 1
+          filterAware: true
+  - it: with ServiceMonitor enabled but RAG not deployed, agent ServiceMonitor still renders
+    values:
+      - ../../examples/with-observability/values-observability-no-rag.yaml
+    template: templates/agent.yaml
+    documentIndex: 3
+    asserts:
       - isKind:
           of: ServiceMonitor

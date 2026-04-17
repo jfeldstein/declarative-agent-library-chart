@@ -1,7 +1,9 @@
 # Traceability: [DALC-REQ-DALC-PKG-001]
+# Library chart: Kubernetes manifests are emitted only via named template `declarative-agent.system`
+# (included from parent `templates/agent.yaml`). Do not `helm install` this chart alone.
 apiVersion: v2
 name: declarative-agent-library-chart
-description: Declarative Agent Library Chart — reusable Helm templates and values for a YAML-configured hosted agent runtime (HTTP trigger, optional RAG, scrapers). Consumed as a dependency from an application chart (e.g. examples/hello-world); may also be installed directly for advanced use.
-type: application
+description: Declarative Agent Library — Helm library chart (named templates + values schema). Application charts include `{{- include "declarative-agent.system" . }}` in templates/agent.yaml and pass tunables under .Values.agent.
+type: library
 version: 0.1.0
 appVersion: "0.1.0"

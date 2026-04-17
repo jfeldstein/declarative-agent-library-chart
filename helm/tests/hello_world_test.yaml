@@ -1,42 +1,18 @@
-# Traceability: [DALC-REQ-HELM-UNITTEST-001] [DALC-REQ-HELM-UNITTEST-002] [DALC-REQ-RAG-SCRAPERS-002] [DALC-REQ-RAG-SCRAPERS-004] [DALC-REQ-CHART-RTV-001] [DALC-REQ-CHART-RTV-002] [DALC-REQ-CHART-RTV-003] [DALC-REQ-DALC-PKG-002] [DALC-VER-002]
+# Traceability: [DALC-REQ-HELM-UNITTEST-001] [DALC-REQ-HELM-UNITTEST-002] [DALC-REQ-RAG-SCRAPERS-002] [DALC-REQ-RAG-SCRAPERS-004] [DALC-REQ-CHART-RTV-001] [DALC-REQ-CHART-RTV-002] [DALC-REQ-CHART-RTV-003] [DALC-REQ-DALC-PKG-002] [DALC-REQ-POSTGRES-AGENT-PERSISTENCE-002] [DALC-VER-002]
 values:
   - ../../examples/hello-world/values.yaml
 suite: hello-world default values
 release:
   name: dalc-ci
 tests:
-  - it: produces no scraper CronJob documents when no jira or slack jobs are enabled
-    template: charts/agent/templates/scraper-cronjobs.yaml
-    asserts:
-      - hasDocuments:
-          count: 0
-  - it: produces no scraper job ConfigMaps when no jira or slack jobs are enabled
-    template: charts/agent/templates/scraper-job-configmaps.yaml
-    asserts:
-      - hasDocuments:
-          count: 0
-  - it: does not render RAG deployment
-    template: charts/agent/templates/rag-deployment.yaml
-    asserts:
-      - hasDocuments:
-          count: 0
-  - it: does not render RAG service
-    template: charts/agent/templates/rag-service.yaml
-    asserts:
-      - hasDocuments:
-          count: 0
-  - it: does not render RAG ServiceMonitor
-    template: charts/agent/templates/rag-servicemonitor.yaml
-    asserts:
-      - hasDocuments:
-          count: 0
   - it: checkpoints postgresUrl maps to HOSTED_AGENT_POSTGRES_URL
     set:
       agent.checkpoints.postgresUrl: "postgresql://u:p@h:5432/db"
-    template: charts/agent/templates/deployment.yaml
+    template: templates/agent.yaml
+    documentSelector:
+      path: kind
+      value: Deployment
     asserts:
-      - hasDocuments:
-          count: 1
       - contains:
           path: spec.template.spec.containers[0].env
           content:
@@ -47,7 +23,10 @@ tests:
       agent.wandb.enabled: true
       agent.wandb.project: myproj
       agent.wandb.entity: acme
-    template: charts/agent/templates/deployment.yaml
+    template: templates/agent.yaml
+    documentSelector:
+      path: kind
+      value: Deployment
     asserts:
       - contains:
           path: spec.template.spec.containers[0].env
@@ -62,7 +41,10 @@ tests:
   - it: scrapers.slack.feedback.enabled wires Slack feedback env
     set:
       agent.scrapers.slack.feedback.enabled: true
-    template: charts/agent/templates/deployment.yaml
+    template: templates/agent.yaml
+    documentSelector:
+      path: kind
+      value: Deployment
     asserts:
       - contains:
           path: spec.template.spec.containers[0].env

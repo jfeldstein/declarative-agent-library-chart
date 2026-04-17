@@ -1,3 +1,4 @@
+{{- define "declarative-agent-library-chart.manifest.deployment" -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -124,3 +125,4 @@ spec:
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+{{- end -}}

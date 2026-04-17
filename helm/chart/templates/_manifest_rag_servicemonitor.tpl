@@ -1,3 +1,4 @@
+{{- define "declarative-agent-library-chart.manifest.ragServiceMonitor" -}}
 {{- if and (include "declarative-agent-library-chart.ragDeployed" .) .Values.observability.serviceMonitor.enabled }}
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
@@ -22,3 +23,4 @@ spec:
       interval: {{ .Values.observability.serviceMonitor.interval | quote }}
       scrapeTimeout: {{ .Values.observability.serviceMonitor.scrapeTimeout | quote }}
 {{- end }}
+{{- end -}}

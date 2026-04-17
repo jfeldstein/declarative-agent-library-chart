@@ -1,3 +1,4 @@
+{{- define "declarative-agent-library-chart.manifest.service" -}}
 apiVersion: v1
 kind: Service
 metadata:
@@ -22,3 +23,4 @@ spec:
       {{- end }}
   selector:
     {{- include "declarative-agent-library-chart.agentSelectorLabels" . | nindent 4 }}
+{{- end -}}
