@@ -340,6 +340,38 @@
         "entity": { "type": "string" }
       }
     },
+    "presence": {
+      "type": "object",
+      "description": "Slack/Jira bot identity for the hosted agent (Secret refs). Traceability: [DALC-REQ-CHART-PRESENCE-001]",
+      "properties": {
+        "slack": {
+          "type": "object",
+          "properties": {
+            "botUserId": {
+              "type": "object",
+              "description": "Slack bot user id (e.g. U…); maps to HOSTED_AGENT_SLACK_BOT_USER_ID when secretName is non-empty",
+              "properties": {
+                "secretName": { "type": "string" },
+                "secretKey": { "type": "string" }
+              }
+            }
+          }
+        },
+        "jira": {
+          "type": "object",
+          "properties": {
+            "botAccountId": {
+              "type": "object",
+              "description": "Jira Cloud accountId for the automation user; maps to HOSTED_AGENT_JIRA_BOT_ACCOUNT_ID when secretName is non-empty",
+              "properties": {
+                "secretName": { "type": "string" },
+                "secretKey": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
     "extraEnv": {
       "type": "array",
       "description": "Optional name/value env pairs on the agent container (e.g. HOSTED_AGENT_CHECKPOINT_STORE, WANDB_*)",

@@ -10,16 +10,20 @@ from hosted_agents.runtime_config import RuntimeConfig, subagent_system_prompt
 
 
 def test_from_env_empty(monkeypatch: pytest.MonkeyPatch) -> None:
-    """[DALC-REQ-RAG-SCRAPERS-004]"""
+    """[DALC-REQ-RAG-SCRAPERS-004] [DALC-REQ-CHART-PRESENCE-002]"""
     monkeypatch.delenv("HOSTED_AGENT_RAG_BASE_URL", raising=False)
     monkeypatch.delenv("HOSTED_AGENT_SUBAGENTS_JSON", raising=False)
     monkeypatch.delenv("HOSTED_AGENT_SKILLS_JSON", raising=False)
     monkeypatch.delenv("HOSTED_AGENT_ENABLED_MCP_TOOLS_JSON", raising=False)
+    monkeypatch.delenv("HOSTED_AGENT_SLACK_BOT_USER_ID", raising=False)
+    monkeypatch.delenv("HOSTED_AGENT_JIRA_BOT_ACCOUNT_ID", raising=False)
     cfg = RuntimeConfig.from_env()
     assert cfg.rag_base_url == ""
     assert cfg.subagents == []
     assert cfg.skills == []
     assert cfg.enabled_mcp_tools == []
+    assert cfg.slack_bot_user_id == ""
+    assert cfg.jira_bot_account_id == ""
 
 
 def test_from_env_lists(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -40,6 +44,18 @@ def test_from_env_lists(monkeypatch: pytest.MonkeyPatch) -> None:
     assert cfg.subagents[0]["name"] == "a"
     assert cfg.skills[0]["name"] == "sk"
     assert cfg.enabled_mcp_tools == ["sample.echo"]
+
+
+def test_from_env_presence_ids(monkeypatch: pytest.MonkeyPatch) -> None:
+    """[DALC-REQ-CHART-PRESENCE-002]"""
+    monkeypatch.setenv("HOSTED_AGENT_SLACK_BOT_USER_ID", "U01234567")
+    monkeypatch.setenv("HOSTED_AGENT_JIRA_BOT_ACCOUNT_ID", "712020:abc-def")
+    monkeypatch.delenv("HOSTED_AGENT_SUBAGENTS_JSON", raising=False)
+    monkeypatch.delenv("HOSTED_AGENT_SKILLS_JSON", raising=False)
+    monkeypatch.delenv("HOSTED_AGENT_ENABLED_MCP_TOOLS_JSON", raising=False)
+    cfg = RuntimeConfig.from_env()
+    assert cfg.slack_bot_user_id == "U01234567"
+    assert cfg.jira_bot_account_id == "712020:abc-def"
 
 
 def test_subagent_system_prompt_variants() -> None:

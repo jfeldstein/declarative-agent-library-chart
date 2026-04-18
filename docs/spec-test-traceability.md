@@ -48,6 +48,9 @@ The table is parsed by `scripts/check_spec_traceability.py`; keep the **Matrix**
 | [DALC-REQ-CHART-RTV-002] | `openspec/specs/dalc-chart-runtime-values/spec.md` | `helm/tests/hello_world_test.yaml` | default PR | - | - |
 | [DALC-REQ-CHART-RTV-003] | `openspec/specs/dalc-chart-runtime-values/spec.md` | `helm/tests/hello_world_test.yaml` | default PR | - | - |
 | [DALC-REQ-CHART-RTV-004] | `openspec/specs/dalc-chart-runtime-values/spec.md` | `helm/src/tests/test_chart_values_contract.py::test_library_values_yaml_excludes_atif_and_shadow`, `helm/src/tests/test_chart_values_contract.py::test_library_values_schema_excludes_atif_and_shadow` | default PR | - | - |
+| [DALC-REQ-CHART-PRESENCE-001] | `openspec/specs/dalc-chart-presence/spec.md` | `helm/chart/values.yaml`, `helm/chart/values.schema.json`, `helm/tests/hello_world_test.yaml` | default PR | - | - |
+| [DALC-REQ-CHART-PRESENCE-002] | `openspec/specs/dalc-chart-presence/spec.md` | `helm/chart/templates/_manifest_deployment.tpl`, `helm/tests/hello_world_test.yaml`, `helm/src/tests/test_runtime_config.py::test_from_env_empty`, `helm/src/tests/test_runtime_config.py::test_from_env_presence_ids` | default PR | - | - |
+| [DALC-REQ-CHART-PRESENCE-003] | `openspec/specs/dalc-chart-presence/spec.md` | `README.md` | default PR | - | - |
 | [DALC-REQ-O11Y-LOGS-001] | `openspec/specs/dalc-agent-o11y-logs-dashboards/spec.md` | `helm/src/tests/test_o11y_metrics.py::test_json_log_format_emits_message_key` | default PR | - | - |
 | [DALC-REQ-O11Y-LOGS-002] | `openspec/specs/dalc-agent-o11y-logs-dashboards/spec.md` | `helm/src/tests/test_o11y_metrics.py::test_x_request_id_echo_and_generation` | default PR | - | - |
 | [DALC-REQ-O11Y-LOGS-003] | `openspec/specs/dalc-agent-o11y-logs-dashboards/spec.md` | `grafana/dalc-overview.json`, `grafana/README.md` | default PR | - | - |

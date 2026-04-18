@@ -46,5 +46,5 @@ The root **README** shows **`presence.slackBotId`** with **`secretName` / `secre
 
 ## Open Questions
 
-- Exact **env var names** (if product already standardizes on different names, align in implementation).
-- Whether **Python** should load these into **`RuntimeConfig`** immediately or defer to a later tools change.
+- **Resolved:** Environment variable names are **`HOSTED_AGENT_SLACK_BOT_USER_ID`** and **`HOSTED_AGENT_JIRA_BOT_ACCOUNT_ID`** (see **`_manifest_deployment.tpl`** and README).
+- **Resolved:** **`helm/src/hosted_agents/runtime_config.RuntimeConfig`** loads both from the environment when set (chart-injected **`secretKeyRef`**); downstream tools may consume the dataclass fields later without further chart changes.

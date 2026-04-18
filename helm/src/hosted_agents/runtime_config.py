@@ -38,6 +38,8 @@ class RuntimeConfig:
     subagents: list[dict[str, Any]]
     skills: list[dict[str, Any]]
     enabled_mcp_tools: list[str]
+    slack_bot_user_id: str = ""
+    jira_bot_account_id: str = ""
 
     @classmethod
     def from_env(cls) -> RuntimeConfig:
@@ -49,6 +51,12 @@ class RuntimeConfig:
             enabled_mcp_tools=_load_json_str_list(
                 "HOSTED_AGENT_ENABLED_MCP_TOOLS_JSON"
             ),
+            slack_bot_user_id=os.environ.get(
+                "HOSTED_AGENT_SLACK_BOT_USER_ID", ""
+            ).strip(),
+            jira_bot_account_id=os.environ.get(
+                "HOSTED_AGENT_JIRA_BOT_ACCOUNT_ID", ""
+            ).strip(),
         )
 
 
