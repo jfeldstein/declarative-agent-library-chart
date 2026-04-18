@@ -7,7 +7,7 @@ import hmac
 import json
 import time
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -209,3 +209,50 @@ def test_slack_trigger_event_dedupe_skips_second_delivery(
                 )
                 assert r.status_code == 200
     assert len(calls) == 1
+
+
+def test_slack_trigger_posts_graph_output_to_slack_when_client_available(
+    monkeypatch: pytest.MonkeyPatch,
+    signing_secret: str,
+) -> None:
+    """Trigger output is posted back to the Slack thread when a Web API client can be built."""
+    monkeypatch.setenv("HOSTED_AGENT_SLACK_TRIGGER_ENABLED", "true")
+    monkeypatch.setenv("HOSTED_AGENT_SLACK_TRIGGER_SIGNING_SECRET", signing_secret)
+    mock_client = MagicMock()
+
+    event = {
+        "type": "app_mention",
+        "channel": "C01234567",
+        "user": "U01",
+        "ts": "1234.5678",
+        "text": "<@U012> hello there",
+    }
+    envelope = {
+        "type": "event_callback",
+        "event_id": "EvPOST",
+        "event": event,
+    }
+    body = json.dumps(envelope).encode()
+    hdrs = _sign_slack_body(signing_secret, body)
+
+    app = create_app(system_prompt='Respond, "Hello :wave:"')
+    with patch(
+        "hosted_agents.slack_trigger.dispatch.run_trigger_graph",
+        return_value="Hello :wave:",
+    ):
+        with patch(
+            "hosted_agents.slack_trigger.dispatch._slack_client_for_trigger_reply",
+            return_value=mock_client,
+        ):
+            with TestClient(app) as client:
+                r = client.post(
+                    "/api/v1/integrations/slack/events",
+                    content=body,
+                    headers=hdrs,
+                )
+    assert r.status_code == 200
+    mock_client.chat_postMessage.assert_called_once_with(
+        channel="C01234567",
+        text="Hello :wave:",
+        thread_ts="1234.5678",
+    )

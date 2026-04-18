@@ -2,21 +2,69 @@
 
 from __future__ import annotations
 
+import os
 import uuid
 from typing import Any, Literal
+
+from slack_sdk import WebClient
 
 from hosted_agents.agent_models import TriggerBody
 from hosted_agents.env import system_prompt_from_env
 from hosted_agents.metrics import observe_slack_trigger_inbound
 from hosted_agents.observability.settings import ObservabilitySettings
 from hosted_agents.runtime_config import RuntimeConfig
+from hosted_agents.o11y_logging import get_logger
 from hosted_agents.slack_trigger.mention import (
     extract_app_mention,
     slack_thread_id_for_event,
 )
+from hosted_agents.tools_impl.slack_support import optional_tools_client, timeout_seconds
 from hosted_agents.trigger_graph import TriggerContext, run_trigger_graph
 
 Transport = Literal["http", "socket"]
+
+
+def _slack_client_for_trigger_reply() -> WebClient | None:
+    """Prefer Slack tools token; otherwise use trigger bot token (same app, ``chat:write``)."""
+
+    client = optional_tools_client()
+    if client is not None:
+        return client
+    tok = os.environ.get("HOSTED_AGENT_SLACK_TRIGGER_BOT_TOKEN", "").strip()
+    if tok:
+        return WebClient(token=tok, timeout=timeout_seconds())
+    return None
+
+
+def _post_slack_trigger_reply(ctx: TriggerContext, text: str) -> None:
+    """Deliver plain-text trigger output back to Slack for ``app_mention`` runs."""
+
+    body = str(text or "").strip()
+    channel = str(ctx.slack_channel_id or "").strip()
+    if not body or not channel:
+        return
+
+    client = _slack_client_for_trigger_reply()
+    if client is None:
+        get_logger().warning(
+            "slack_trigger_reply_skipped_no_token",
+            channel_id=channel,
+            reason="no_slack_tools_or_trigger_bot_token",
+        )
+        return
+
+    thread_ts = str(ctx.slack_thread_ts or "").strip()
+    kwargs: dict[str, Any] = {"channel": channel, "text": body}
+    if thread_ts:
+        kwargs["thread_ts"] = thread_ts
+
+    try:
+        client.chat_postMessage(**kwargs)
+    except Exception:
+        get_logger().exception(
+            "slack_trigger_reply_post_failed",
+            channel_id=channel,
+        )
 
 
 def dispatch_app_mention(
@@ -76,7 +124,8 @@ def dispatch_app_mention(
         slack_message_ts=message_ts,
     )
     try:
-        run_trigger_graph(ctx)
+        out = run_trigger_graph(ctx)
+        _post_slack_trigger_reply(ctx, out)
         observe_slack_trigger_inbound(transport, "ok")
     except Exception:
         observe_slack_trigger_inbound(transport, "error")
