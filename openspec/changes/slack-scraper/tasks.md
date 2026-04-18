@@ -5,15 +5,15 @@
 
 ## 2. Configuration and Slack fetch
 
-- [ ] 2.1 Implement parsing + validation for scraper job config: chart mounts **`job.json`**; runtime reads **`SCRAPER_JOB_CONFIG`** (default **`/config/job.json`**). *(Original design text mentioned **`SLACK_SCRAPER_SEARCHES_JSON`**; the shipped integration uses the shared ConfigMap **`job.json`** pattern like Jira.)* Reject invalid config with actionable stderr.
-- [ ] 2.2 Implement **`WebClient`**-based Slack fetches per job shape: **`slack_search`** uses Real-time Search **`assistant.search.context`** plus **`conversations.replies`** / **`conversations.history`** for context (not legacy **`search.messages`**). **`slack_channel`** uses incremental **`conversations.history`** with caps and cursor paging. Document per-run limits (**`rtsLimit`**, history page size).
-- [ ] 2.3 Normalize selected Slack messages into RAG **`items[]`** with deterministic **`entity_id`** and **`metadata`** (`source`, `slack_channel`, `slack_ts`, etc.). **`relationships`** may remain **`[]`** until thread/permalink fields are modeled explicitly; add **permalink** / thread-root metadata when spec requires it.
+- [x] 2.1 Implement parsing + validation for scraper job config: chart mounts **`job.json`**; runtime reads **`SCRAPER_JOB_CONFIG`** (default **`/config/job.json`**). *(Original design text mentioned **`SLACK_SCRAPER_SEARCHES_JSON`**; the shipped integration uses the shared ConfigMap **`job.json`** pattern like Jira.)* Reject invalid config with actionable stderr.
+- [x] 2.2 Implement **`WebClient`**-based Slack fetches per job shape: **`slack_search`** uses Real-time Search **`assistant.search.context`** plus **`conversations.replies`** / **`conversations.history`** for context (not legacy **`search.messages`**). **`slack_channel`** uses incremental **`conversations.history`** with caps and cursor paging. Document per-run limits (**`rtsLimit`**, history page size).
+- [x] 2.3 Normalize selected Slack messages into RAG **`items[]`** with deterministic **`entity_id`** and **`metadata`** (`source`, `slack_channel`, `slack_ts`, etc.). **`relationships`** may remain **`[]`** until thread/permalink fields are modeled explicitly; add **permalink** / thread-root metadata when spec requires it.
 
 ## 3. RAG ingest, dedupe, and metrics
 
-- [ ] 3.1 Post **`POST {RAG_SERVICE_URL}/v1/embed`** with the run’s **`items`** (single request per scraper run today; **chunked** multi-POST batching deferred if payload limits require it). Wire **`observe_rag_embed_attempt`** / **`observe_scraper_run`** with bounded **`SCRAPER_INTEGRATION`** (default **`slack`**).
+- [x] 3.1 Post **`POST {RAG_SERVICE_URL}/v1/embed`** with the run’s **`items`** (single request per scraper run today; **chunked** multi-POST batching deferred if payload limits require it). Wire **`observe_rag_embed_attempt`** / **`observe_scraper_run`** with bounded **`SCRAPER_INTEGRATION`** (default **`slack`**).
 - [x] 3.2 Implement documented **“new or updated”** selection for v1 (minimum: deterministic ids + documented re-embed/upsert behavior); if cross-run persistence is required after RAG inspection, add the smallest durable watermark store and document operator RBAC needs.
-- [ ] 3.3 Ensure **no secrets** in logs or metric labels; add unit tests for redaction / label boundedness where applicable.
+- [x] 3.3 Ensure **no secrets** in logs or metric labels; add unit tests for redaction / label boundedness where applicable.
 
 ## 4. Helm and operator docs
 
@@ -25,4 +25,4 @@
 
 - [x] 5.1 Add unit tests for JSON parsing, message normalization, and embed payload construction (mock **`WebClient`** / HTTP).
 - [x] 5.2 Run **`uv run pytest`** for the runtime test suite and fix failures.
-- [ ] 5.3 If new normative **`SHALL`** rows are promoted into **`openspec/specs/`**, update **`docs/spec-test-traceability.md`** and test docstrings per **[DALC-VER-005]**; run **`python3 scripts/check_spec_traceability.py`**.
+- [x] 5.3 If new normative **`SHALL`** rows are promoted into **`openspec/specs/`**, update **`docs/spec-test-traceability.md`** and test docstrings per **[DALC-VER-005]**; run **`python3 scripts/check_spec_traceability.py`**.

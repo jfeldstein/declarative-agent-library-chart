@@ -10,6 +10,7 @@ from prometheus_client import generate_latest
 
 from hosted_agents.scrapers.metrics import (
     SCRAPER_REGISTRY,
+    bounded_integration_label,
     observe_scraper_run,
     parse_scraper_metrics_addr,
     start_scraper_metrics_http,
@@ -48,6 +49,19 @@ def test_observe_scraper_run_records_metric() -> None:
         'agent_runtime_scraper_runs_total{integration="unit-test",result="success"}'
         in text
     )
+
+
+def test_bounded_integration_label_empty_uses_fallback() -> None:
+    assert bounded_integration_label("", fallback="slack") == "slack"
+    assert bounded_integration_label(None, fallback="slack") == "slack"
+
+
+def test_bounded_integration_label_sanitizes_and_truncates() -> None:
+    assert bounded_integration_label("My Slack!!", fallback="slack") == "my_slack"
+    long_name = "slack-" + ("a" * 80)
+    out = bounded_integration_label(long_name, fallback="slack")
+    assert len(out) <= 32
+    assert out.startswith("slack")
 
 
 def test_scraper_metrics_http_server_exposes_registry() -> None:

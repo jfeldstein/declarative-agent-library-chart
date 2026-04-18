@@ -23,6 +23,7 @@ from typing import Any
 import httpx
 
 from hosted_agents.scrapers.metrics import (
+    bounded_integration_label,
     classify_rag_submission_result,
     maybe_start_scraper_metrics_http,
     observe_rag_embed_attempt,
@@ -33,8 +34,10 @@ from hosted_agents.scrapers.cursor_store import cursor_store_from_env
 
 
 def _integration_label() -> str:
-    v = os.environ.get("SCRAPER_INTEGRATION", "jira").strip()
-    return v or "jira"
+    return bounded_integration_label(
+        os.environ.get("SCRAPER_INTEGRATION", ""),
+        fallback="jira",
+    )
 
 
 def _load_job_config() -> dict[str, Any]:
