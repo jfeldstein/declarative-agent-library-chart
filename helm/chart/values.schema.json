@@ -398,6 +398,42 @@
         }
       }
     },
+    "jiraTools": {
+      "type": "object",
+      "description": "Jira REST tools for active agent runs (HOSTED_AGENT_JIRA_TOOLS_*). Disjoint from scrapers.jira and jira-trigger. Traceability: [DALC-REQ-JIRA-TOOLS-002]",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "simulated": { "type": "boolean" },
+        "siteUrl": { "type": "string" },
+        "timeoutSeconds": { "type": "integer", "minimum": 1 },
+        "scopes": {
+          "type": "object",
+          "properties": {
+            "search": { "type": "boolean" },
+            "read": { "type": "boolean" },
+            "comment": { "type": "boolean" },
+            "transition": { "type": "boolean" },
+            "create": { "type": "boolean" },
+            "update": { "type": "boolean" }
+          }
+        },
+        "allowedProjectKeys": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "maxSearchResults": { "type": "integer", "minimum": 1 },
+        "maxJqlLength": { "type": "integer", "minimum": 16 },
+        "auth": {
+          "type": "object",
+          "properties": {
+            "emailSecretName": { "type": "string" },
+            "emailSecretKey": { "type": "string" },
+            "tokenSecretName": { "type": "string" },
+            "tokenSecretKey": { "type": "string" }
+          }
+        }
+      }
+    },
     "extraEnv": {
       "type": "array",
       "description": "Optional name/value env pairs on the agent container (e.g. HOSTED_AGENT_CHECKPOINT_STORE, WANDB_*)",

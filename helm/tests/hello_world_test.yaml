@@ -116,6 +116,47 @@ tests:
               secretKeyRef:
                 name: jira-id
                 key: account-id
+  # [DALC-REQ-JIRA-TOOLS-002]
+  - it: jiraTools enabled wires HOSTED_AGENT_JIRA_TOOLS_* on Deployment
+    set:
+      agent.jiraTools.enabled: true
+      agent.jiraTools.simulated: false
+      agent.jiraTools.siteUrl: "https://acme.atlassian.net"
+      agent.jiraTools.auth.emailSecretName: jt-mail
+      agent.jiraTools.auth.emailSecretKey: email
+      agent.jiraTools.auth.tokenSecretName: jt-token
+      agent.jiraTools.auth.tokenSecretKey: token
+    template: templates/agent.yaml
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HOSTED_AGENT_JIRA_TOOLS_ENABLED
+            value: "true"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HOSTED_AGENT_JIRA_TOOLS_SITE_URL
+            value: "https://acme.atlassian.net"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HOSTED_AGENT_JIRA_TOOLS_EMAIL
+            valueFrom:
+              secretKeyRef:
+                name: jt-mail
+                key: email
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HOSTED_AGENT_JIRA_TOOLS_API_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: jt-token
+                key: token
   - it: default values omit presence identity env vars
     template: templates/agent.yaml
     documentSelector:

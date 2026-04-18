@@ -2,6 +2,8 @@
 
 Tools are dispatched from `hosted_agents.tools_impl.dispatch.invoke_tool` when the tool id is allow-listed (`HOSTED_AGENT_ENABLED_MCP_TOOLS_JSON`) and invoked via `POST /api/v1/trigger` (`tool` + `tool_arguments`) or the supervisor runtime.
 
+<!-- Traceability: [DALC-REQ-JIRA-TOOLS-001] [DALC-REQ-JIRA-TOOLS-002] -->
+
 ## Slack tools
 
 Runtime integration uses **`slack_sdk.WebClient`** with credentials from **`HOSTED_AGENT_SLACK_TOOLS_BOT_TOKEN`** only (Helm: `slackTools.botTokenSecretName` / `botTokenSecretKey`). This is **separate** from:
@@ -48,3 +50,20 @@ End-to-end validation needs **`openspec/changes/slack-trigger`** applied so `@me
 4. Mention the bot; confirm threaded reply and reaction via real API (check Slack UI); verify agent logs/metrics show `agent_runtime_slack_tool_web_api_calls_total` without token material in stdout.
 
 There is **no** requirement that the tools path call `/v1/embed`.
+
+## Jira tools
+
+| Tool id | Module | Notes |
+|---------|--------|-------|
+| `jira.search_issues` | `jira/` | Bounded JQL search (`jql`, optional `max_results`) |
+| `jira.get_issue` | `jira/` | Fetch issue (`issue_key`, optional `fields[]`) |
+| `jira.add_comment` | `jira/` | Add comment (`issue_key`, `body`) |
+| `jira.transition_issue` | `jira/` | Transition (`issue_key`, `transition_id` or `transition_name`) |
+| `jira.create_issue` | `jira/` | Create (`project_key`, `summary`, `issue_type`, optional `description`) |
+| `jira.update_issue` | `jira/` | Update (`issue_key`, `fields` object) |
+
+**Jira tools configuration** uses chart values `jiraTools` → environment prefix `HOSTED_AGENT_JIRA_TOOLS_*`. That is **separate** from scheduled scraper auth (`scrapers.jira.auth`) and from future Jira webhook trigger verification keys (`jira-trigger`). When `jiraTools.simulated` is true (default), or credentials are missing, implementations return structured **simulated** payloads and still emit side-effect checkpoints for mutations.
+
+**Atlassian Cloud API tokens (recommended for tools)** map to Jira account email + API token using Basic HTTP auth (handled by `httpx`). Required Atlassian OAuth scopes for equivalent OAuth clients align with tool scopes: **read Jira** work items (search/read), **write Jira** work items (comment/create/update), and **transition** requires workflow transition permissions on the issues touched. Exact OAuth scope strings follow Atlassian’s product documentation for your OAuth app type; prefer API tokens for server-style agents unless OAuth is mandated.
+
+These tools **do not** call `POST /v1/embed` or ingest tool I/O into the managed RAG index by default.

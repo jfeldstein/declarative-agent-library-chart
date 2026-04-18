@@ -136,6 +136,30 @@ scrapers:
       port: 8090
     resources: {}
 
+# LLM-time Jira REST tools on the agent Deployment (distinct ``HOSTED_AGENT_JIRA_TOOLS_*`` keys;
+# not ``scrapers.jira.*`` auth and not jira-trigger webhook verification keys).
+# Traceability: [DALC-REQ-JIRA-TOOLS-002]
+jiraTools:
+  enabled: false
+  simulated: true
+  siteUrl: ""
+  timeoutSeconds: 30
+  scopes:
+    search: false
+    read: false
+    comment: false
+    transition: false
+    create: false
+    update: false
+  allowedProjectKeys: []
+  maxSearchResults: 50
+  maxJqlLength: 4000
+  auth:
+    emailSecretName: ""
+    emailSecretKey: email
+    tokenSecretName: ""
+    tokenSecretKey: token
+
 # Declarative subagents (JSON → HOSTED_AGENT_SUBAGENTS_JSON). See README (LangChain subagents pattern).
 subagents: []
 

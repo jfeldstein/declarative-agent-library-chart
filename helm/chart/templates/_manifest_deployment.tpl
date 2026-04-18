@@ -152,6 +152,47 @@ spec:
                   name: {{ $jiraSecName }}
                   key: {{ $jiraSecKey | quote }}
             {{- end }}
+            {{- $jt := .Values.jiraTools | default dict }}
+            {{- if $jt.enabled }}
+            - name: HOSTED_AGENT_JIRA_TOOLS_ENABLED
+              value: "true"
+            - name: HOSTED_AGENT_JIRA_TOOLS_SIMULATED
+              value: {{ $jt.simulated | default true | quote }}
+            {{- $jtu := $jt.siteUrl | default "" | trim }}
+            {{- if $jtu }}
+            - name: HOSTED_AGENT_JIRA_TOOLS_SITE_URL
+              value: {{ $jtu | quote }}
+            {{- end }}
+            - name: HOSTED_AGENT_JIRA_TOOLS_TIMEOUT_SECONDS
+              value: {{ $jt.timeoutSeconds | default 30 | toString | quote }}
+            - name: HOSTED_AGENT_JIRA_TOOLS_SCOPES_JSON
+              value: {{ ($jt.scopes | default dict) | toJson | quote }}
+            - name: HOSTED_AGENT_JIRA_TOOLS_ALLOWED_PROJECT_KEYS_JSON
+              value: {{ ($jt.allowedProjectKeys | default list) | toJson | quote }}
+            - name: HOSTED_AGENT_JIRA_TOOLS_MAX_SEARCH_RESULTS
+              value: {{ $jt.maxSearchResults | default 50 | toString | quote }}
+            - name: HOSTED_AGENT_JIRA_TOOLS_MAX_JQL_LENGTH
+              value: {{ $jt.maxJqlLength | default 4000 | toString | quote }}
+            {{- $jauth := $jt.auth | default dict }}
+            {{- $jem := $jauth.emailSecretName | default "" | trim }}
+            {{- $jek := $jauth.emailSecretKey | default "" | trim }}
+            {{- if and $jem $jek }}
+            - name: HOSTED_AGENT_JIRA_TOOLS_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $jem }}
+                  key: {{ $jek | quote }}
+            {{- end }}
+            {{- $jtm := $jauth.tokenSecretName | default "" | trim }}
+            {{- $jtk := $jauth.tokenSecretKey | default "" | trim }}
+            {{- if and $jtm $jtk }}
+            - name: HOSTED_AGENT_JIRA_TOOLS_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $jtm }}
+                  key: {{ $jtk | quote }}
+            {{- end }}
+            {{- end }}
             {{- range .Values.extraEnv }}
             - name: {{ .name }}
               value: {{ .value | quote }}

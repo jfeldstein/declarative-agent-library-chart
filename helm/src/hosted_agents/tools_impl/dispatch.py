@@ -10,6 +10,8 @@ from hosted_agents.tools_impl import (
     slack_post,
     slack_reactions,
 )
+from hosted_agents.tools_impl.jira import TOOL_IDS as JIRA_TOOL_IDS
+from hosted_agents.tools_impl.jira import invoke as invoke_jira_tool
 
 
 def invoke_tool(tool: str, arguments: dict[str, Any]) -> dict[str, Any]:
@@ -27,5 +29,7 @@ def invoke_tool(tool: str, arguments: dict[str, Any]) -> dict[str, Any]:
         return slack_chat_and_history.conversations_history(arguments)
     if tool == "slack.conversations_replies":
         return slack_chat_and_history.conversations_replies(arguments)
+    if tool in JIRA_TOOL_IDS:
+        return invoke_jira_tool(tool, arguments)
     msg = f"unknown tool: {tool}"
     raise KeyError(msg)

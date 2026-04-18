@@ -5,7 +5,7 @@ description = "YAML-configured hosted agent runtime (FastAPI / LangGraph) for th
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.115.0",
-    "httpx>=0.28.1",
+    "httpx>=0.28.1",  # [DALC-REQ-JIRA-TOOLS-005] Jira tools REST client
     "langchain>=1.2.15",
     "langchain-core>=1.2.28",
     "langgraph>=1.1.6",
@@ -13,7 +13,7 @@ dependencies = [
     "psycopg[binary]>=3.2.0",
     # [DALC-REQ-SLACK-SCRAPER-002]
     "slack-bolt>=1.21.0",
-    "slack-sdk>=3.33.0",
+    "slack-sdk>=3.33.0",  # [DALC-REQ-SLACK-TOOLS-005] Slack tools WebClient
     "structlog>=24.4.0",
     "uvicorn[standard]>=0.44.0",
 ]
