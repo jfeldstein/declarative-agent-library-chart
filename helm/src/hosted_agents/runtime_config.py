@@ -8,6 +8,10 @@ from dataclasses import dataclass
 from typing import Any
 
 
+def _env_trim(key: str) -> str:
+    return os.environ.get(key, "").strip()
+
+
 def _load_json_list(key: str) -> list[dict[str, Any]]:
     raw = os.environ.get(key, "").strip()
     if not raw:
@@ -43,20 +47,15 @@ class RuntimeConfig:
 
     @classmethod
     def from_env(cls) -> RuntimeConfig:
-        rag = os.environ.get("HOSTED_AGENT_RAG_BASE_URL", "").strip()
         return cls(
-            rag_base_url=rag,
+            rag_base_url=_env_trim("HOSTED_AGENT_RAG_BASE_URL"),
             subagents=_load_json_list("HOSTED_AGENT_SUBAGENTS_JSON"),
             skills=_load_json_list("HOSTED_AGENT_SKILLS_JSON"),
             enabled_mcp_tools=_load_json_str_list(
                 "HOSTED_AGENT_ENABLED_MCP_TOOLS_JSON"
             ),
-            slack_bot_user_id=os.environ.get(
-                "HOSTED_AGENT_SLACK_BOT_USER_ID", ""
-            ).strip(),
-            jira_bot_account_id=os.environ.get(
-                "HOSTED_AGENT_JIRA_BOT_ACCOUNT_ID", ""
-            ).strip(),
+            slack_bot_user_id=_env_trim("HOSTED_AGENT_SLACK_BOT_USER_ID"),
+            jira_bot_account_id=_env_trim("HOSTED_AGENT_JIRA_BOT_ACCOUNT_ID"),
         )
 
 

@@ -11,12 +11,15 @@ from hosted_agents.runtime_config import RuntimeConfig, subagent_system_prompt
 
 def test_from_env_empty(monkeypatch: pytest.MonkeyPatch) -> None:
     """[DALC-REQ-RAG-SCRAPERS-004] [DALC-REQ-CHART-PRESENCE-002]"""
-    monkeypatch.delenv("HOSTED_AGENT_RAG_BASE_URL", raising=False)
-    monkeypatch.delenv("HOSTED_AGENT_SUBAGENTS_JSON", raising=False)
-    monkeypatch.delenv("HOSTED_AGENT_SKILLS_JSON", raising=False)
-    monkeypatch.delenv("HOSTED_AGENT_ENABLED_MCP_TOOLS_JSON", raising=False)
-    monkeypatch.delenv("HOSTED_AGENT_SLACK_BOT_USER_ID", raising=False)
-    monkeypatch.delenv("HOSTED_AGENT_JIRA_BOT_ACCOUNT_ID", raising=False)
+    for key in (
+        "HOSTED_AGENT_RAG_BASE_URL",
+        "HOSTED_AGENT_SUBAGENTS_JSON",
+        "HOSTED_AGENT_SKILLS_JSON",
+        "HOSTED_AGENT_ENABLED_MCP_TOOLS_JSON",
+        "HOSTED_AGENT_SLACK_BOT_USER_ID",
+        "HOSTED_AGENT_JIRA_BOT_ACCOUNT_ID",
+    ):
+        monkeypatch.delenv(key, raising=False)
     cfg = RuntimeConfig.from_env()
     assert cfg.rag_base_url == ""
     assert cfg.subagents == []
@@ -50,9 +53,12 @@ def test_from_env_presence_ids(monkeypatch: pytest.MonkeyPatch) -> None:
     """[DALC-REQ-CHART-PRESENCE-002]"""
     monkeypatch.setenv("HOSTED_AGENT_SLACK_BOT_USER_ID", "U01234567")
     monkeypatch.setenv("HOSTED_AGENT_JIRA_BOT_ACCOUNT_ID", "712020:abc-def")
-    monkeypatch.delenv("HOSTED_AGENT_SUBAGENTS_JSON", raising=False)
-    monkeypatch.delenv("HOSTED_AGENT_SKILLS_JSON", raising=False)
-    monkeypatch.delenv("HOSTED_AGENT_ENABLED_MCP_TOOLS_JSON", raising=False)
+    for key in (
+        "HOSTED_AGENT_SUBAGENTS_JSON",
+        "HOSTED_AGENT_SKILLS_JSON",
+        "HOSTED_AGENT_ENABLED_MCP_TOOLS_JSON",
+    ):
+        monkeypatch.delenv(key, raising=False)
     cfg = RuntimeConfig.from_env()
     assert cfg.slack_bot_user_id == "U01234567"
     assert cfg.jira_bot_account_id == "712020:abc-def"
