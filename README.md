@@ -2,7 +2,13 @@
 
 <!-- Traceability: [DALC-REQ-HELM-UNITTEST-003] [DALC-REQ-CHART-CT-002] [DALC-REQ-O11Y-LOGS-004] -->
 
-This repo is a Helm library chart. Add it as a dependency in `Chart.yaml`, and build your agent by configuring `values.yaml`.
+This repo is a Helm **library** chart (`helm/chart`: **`type: library`**). Add it as a dependency in your application chart’s `Chart.yaml`, then **render it from a template file** by including the library’s entry named template — typically create **`templates/agent.yaml`** with:
+
+```yaml
+{{- include "declarative-agent.system" . }}
+```
+
+Tunables live under **`.Values.agent`** (use dependency **`alias: agent`** so Helm merges that key into the subchart). Configure behavior in **`values.yaml`** under **`agent:`**.
 
 ## Examples
 
@@ -20,7 +26,13 @@ To make an agentic Slack bot, you need:
         alias: agent
     ```
 
-2. and a values.yaml:
+2. **`templates/agent.yaml`** in your application chart — include the library named template (this emits all chart-managed resources):
+
+    ```yaml
+    {{- include "declarative-agent.system" . }}
+    ```
+
+3. **`values.yaml`**:
 
     ```yaml
     agent:
@@ -32,7 +44,7 @@ To make an agentic Slack bot, you need:
           secretKey: token
     ```
 
-3. Register your bot on Slack
+4. Register your bot on Slack
 
 You can now deploy the chart, and @-tag your bot on slack. That's it.
 
