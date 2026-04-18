@@ -100,3 +100,17 @@ tests:
           path: spec.template.spec.containers[0].env
           content:
             name: HOSTED_AGENT_JIRA_BOT_ACCOUNT_ID
+  # [DALC-REQ-CHART-PRESENCE-002] incomplete Secret ref (secretName without secretKey)
+  - it: presence slack botUserId without secretKey omits HOSTED_AGENT_SLACK_BOT_USER_ID
+    set:
+      agent.presence.slack.botUserId.secretName: slack-id-only
+      agent.presence.slack.botUserId.secretKey: ""
+    template: templates/agent.yaml
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HOSTED_AGENT_SLACK_BOT_USER_ID

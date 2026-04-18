@@ -21,11 +21,11 @@ The chart’s **`values.schema.json`** SHALL describe this shape, and the defaul
 
 ### Requirement: [DALC-REQ-CHART-PRESENCE-002] Agent workload receives presence from Secrets
 
-When **`presence.slack.botUserId.secretName`** is non-empty, the agent **`Deployment`** (or equivalent workload template) SHALL expose the Slack bot user id to the container via an environment variable (name chosen and documented in implementation; design suggests **`HOSTED_AGENT_SLACK_BOT_USER_ID`**) sourced with **`valueFrom.secretKeyRef`** using the provided **`secretName`** and **`secretKey`**.
+When **`presence.slack.botUserId.secretName`** and **`presence.slack.botUserId.secretKey`** are both non-empty (after trimming whitespace), the agent **`Deployment`** (or equivalent workload template) SHALL expose the Slack bot user id to the container via an environment variable (implementation: **`HOSTED_AGENT_SLACK_BOT_USER_ID`**) sourced with **`valueFrom.secretKeyRef`** using those strings.
 
-When **`presence.jira.botAccountId.secretName`** is non-empty, the same SHALL apply for the Jira account id (design suggests **`HOSTED_AGENT_JIRA_BOT_ACCOUNT_ID`**).
+When **`presence.jira.botAccountId.secretName`** and **`presence.jira.botAccountId.secretKey`** are both non-empty, the same SHALL apply for the Jira account id (implementation: **`HOSTED_AGENT_JIRA_BOT_ACCOUNT_ID`**).
 
-When a given presence field is unset or **`secretName`** is empty, the chart SHALL NOT inject the corresponding environment variable.
+When a given presence field is unset, **`secretName`** is empty, **`secretKey`** is empty, or only one of **`secretName`** / **`secretKey`** is set, the chart SHALL NOT inject the corresponding environment variable.
 
 #### Scenario: Slack presence wired
 
@@ -36,6 +36,11 @@ When a given presence field is unset or **`secretName`** is empty, the chart SHA
 
 - **WHEN** **`presence.jira.botAccountId`** specifies a non-empty **`secretName`** and **`secretKey`**
 - **THEN** rendered manifests SHALL include the Jira presence **`env`** entry with **`secretKeyRef`** pointing at that Secret
+
+#### Scenario: Incomplete Secret reference omits env
+
+- **WHEN** **`presence.slack.botUserId.secretName`** is non-empty but **`secretKey`** is empty (or the reverse)
+- **THEN** rendered agent manifests SHALL NOT include **`HOSTED_AGENT_SLACK_BOT_USER_ID`**
 
 #### Scenario: Omitted presence omits env
 

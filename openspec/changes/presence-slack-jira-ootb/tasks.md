@@ -2,7 +2,7 @@
 
 - [x] 1.1 Add **`presence`** to **`helm/chart/values.yaml`** with **`slack.botUserId`** and **`jira.botAccountId`** objects defaulting to empty **`secretName`** / **`secretKey`** (or omit inner keys per chart conventions).
 - [x] 1.2 Extend **`helm/chart/values.schema.json`** with the **`presence`** object and Secret-reference shape for both platforms per **[DALC-REQ-CHART-PRESENCE-001]**.
-- [x] 1.3 Update **`helm/chart/templates/deployment.yaml`** to inject **`env`** entries via **`secretKeyRef`** when **`secretName`** is non-empty for Slack and Jira per **[DALC-REQ-CHART-PRESENCE-002]**; document final env var names in **`README`** or inline chart comments.
+- [x] 1.3 Update **`helm/chart/templates/_manifest_deployment.tpl`** to inject **`env`** entries via **`secretKeyRef`** when **`secretName`** and **`secretKey`** are non-empty for Slack and Jira per **[DALC-REQ-CHART-PRESENCE-002]**; document final env var names in **`README`** or inline chart comments.
 
 ## 2. Tests and documentation
 

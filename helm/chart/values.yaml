@@ -35,7 +35,7 @@ fullnameOverride: ""
 extraEnv: []
 
 # Slack / Jira agent identity (Kubernetes Secret → HOSTED_AGENT_SLACK_BOT_USER_ID /
-# HOSTED_AGENT_JIRA_BOT_ACCOUNT_ID on the agent Deployment when secretName is set).
+# HOSTED_AGENT_JIRA_BOT_ACCOUNT_ID when both secretName and secretKey are non-empty).
 # Traceability: [DALC-REQ-CHART-PRESENCE-001]
 presence:
   slack:
