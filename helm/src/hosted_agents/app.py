@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import time
 import uuid
+from contextlib import asynccontextmanager
 
 import httpx
 from fastapi import FastAPI, HTTPException, Request
@@ -28,6 +29,8 @@ from hosted_agents.o11y_logging import configure_request_logging
 from hosted_agents.o11y_middleware import ObservabilityMiddleware
 from hosted_agents.runtime_config import RuntimeConfig
 from hosted_agents.skills_state import unlocked_tools
+from hosted_agents.slack_trigger.config import SlackTriggerSettings
+from hosted_agents.slack_trigger.http_events import register_slack_trigger_http_route
 from hosted_agents.trigger_graph import (
     TriggerContext,
     TriggerHttpError,
@@ -315,6 +318,11 @@ def _register_trigger_checkpoint_routes(app: FastAPI) -> None:
         return JSONResponse([_snapshot_to_dict(s) for s in hist])
 
 
+def _register_slack_trigger_routes(app: FastAPI) -> None:
+    st = SlackTriggerSettings.from_env()
+    register_slack_trigger_http_route(app, st)
+
+
 def _register_rag_query_route(app: FastAPI) -> None:
     @app.post("/api/v1/rag/query")
     def rag_query(request: Request, body: RagQueryBody) -> JSONResponse:
@@ -337,6 +345,19 @@ def _register_rag_query_route(app: FastAPI) -> None:
         return JSONResponse(resp.json())
 
 
+@asynccontextmanager
+async def _slack_trigger_lifespan(app: FastAPI):
+    from hosted_agents.slack_trigger.dedupe import EventDeduper
+    from hosted_agents.slack_trigger.socket_mode import start_socket_mode_listener
+
+    st = SlackTriggerSettings.from_env()
+    if st.enabled:
+        app.state.slack_trigger_deduper = EventDeduper()
+        if st.socket_mode_configured():
+            start_socket_mode_listener(st, app.state.slack_trigger_deduper)
+    yield
+
+
 def create_app(*, system_prompt: str | None = None) -> FastAPI:
     """Build the ASGI app.
 
@@ -344,7 +365,11 @@ def create_app(*, system_prompt: str | None = None) -> FastAPI:
     Otherwise the value comes from :func:`system_prompt_from_env`.
     """
     configure_request_logging()
-    app = FastAPI(title="declarative-agent-library-chart", version="0.1.0")
+    app = FastAPI(
+        title="declarative-agent-library-chart",
+        version="0.1.0",
+        lifespan=_slack_trigger_lifespan,
+    )
     app.add_middleware(ObservabilityMiddleware)
     _register_metrics_route(app)
     _register_trigger_route(app, system_prompt)
@@ -354,4 +379,5 @@ def create_app(*, system_prompt: str | None = None) -> FastAPI:
     _register_feedback_route(app)
     _register_trigger_checkpoint_routes(app)
     _register_rag_query_route(app)
+    _register_slack_trigger_routes(app)
     return app

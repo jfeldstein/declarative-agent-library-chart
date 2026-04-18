@@ -9,7 +9,7 @@ Tools are dispatched from `hosted_agents.tools_impl.dispatch.invoke_tool` when t
 Runtime integration uses **`slack_sdk.WebClient`** with credentials from **`HOSTED_AGENT_SLACK_TOOLS_BOT_TOKEN`** only (Helm: `slackTools.botTokenSecretName` / `botTokenSecretKey`). This is **separate** from:
 
 - **Scraper** tokens on CronJobs: `SLACK_BOT_TOKEN` / `SLACK_USER_TOKEN` (`scrapers.slack.auth`).
-- **Slack trigger** (Events API / Socket Mode) verification secrets when that feature lands.
+- **Slack trigger** verification material: **`HOSTED_AGENT_SLACK_TRIGGER_*`** / Helm `slackTrigger` (not `slackTools` or scraper `SLACK_*`).
 
 When the bot token env is **unset**, Slack tool calls use a **simulated** path (no network) so CI and local runs stay hermetic.
 

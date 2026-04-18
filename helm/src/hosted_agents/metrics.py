@@ -237,6 +237,19 @@ def observe_slack_tool_api(
         SLACK_TOOL_WEB_API_DURATION.labels(method=method, result=result).observe(dt)
 
 
+# [DALC-REQ-SLACK-TRIGGER-005] labels must never carry signing secrets, tokens, or raw bodies.
+SLACK_TRIGGER_INBOUND = Counter(
+    "agent_runtime_slack_trigger_inbound_total",
+    "Inbound Slack trigger bridge (HTTP Events API / Socket Mode); labels exclude secrets.",
+    ("transport", "result"),
+)
+
+
+def observe_slack_trigger_inbound(transport: str, result: str) -> None:
+    """Count Slack trigger inbound handling (transport + outcome, never secrets)."""
+    SLACK_TRIGGER_INBOUND.labels(transport=transport, result=result).inc()
+
+
 def _first_env(*keys: str) -> str | None:
     for k in keys:
         v = os.environ.get(k, "").strip()

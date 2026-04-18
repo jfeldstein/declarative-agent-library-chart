@@ -193,6 +193,46 @@ spec:
                   key: {{ $jtk | quote }}
             {{- end }}
             {{- end }}
+            {{- $slackTrig := .Values.slackTrigger | default dict }}
+            {{- if $slackTrig.enabled | default false }}
+            - name: HOSTED_AGENT_SLACK_TRIGGER_ENABLED
+              value: "true"
+            {{- if $slackTrig.socketMode | default false }}
+            - name: HOSTED_AGENT_SLACK_TRIGGER_SOCKET_MODE
+              value: "true"
+            {{- end }}
+            {{- if $slackTrig.eventDedupe | default false }}
+            - name: HOSTED_AGENT_SLACK_TRIGGER_EVENT_DEDUPE
+              value: "true"
+            {{- end }}
+            {{- $trSign := $slackTrig.signingSecretSecretName | default "" | trim }}
+            {{- $trSignKey := $slackTrig.signingSecretSecretKey | default "signing-secret" | trim }}
+            {{- if and $trSign $trSignKey }}
+            - name: HOSTED_AGENT_SLACK_TRIGGER_SIGNING_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $trSign | quote }}
+                  key: {{ $trSignKey | quote }}
+            {{- end }}
+            {{- $trApp := $slackTrig.appTokenSecretName | default "" | trim }}
+            {{- $trAppKey := $slackTrig.appTokenSecretKey | default "app-token" | trim }}
+            {{- if and $trApp $trAppKey }}
+            - name: HOSTED_AGENT_SLACK_TRIGGER_APP_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $trApp | quote }}
+                  key: {{ $trAppKey | quote }}
+            {{- end }}
+            {{- $trBot := $slackTrig.botTokenSecretName | default "" | trim }}
+            {{- $trBotKey := $slackTrig.botTokenSecretKey | default "token" | trim }}
+            {{- if and $trBot $trBotKey }}
+            - name: HOSTED_AGENT_SLACK_TRIGGER_BOT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $trBot | quote }}
+                  key: {{ $trBotKey | quote }}
+            {{- end }}
+            {{- end }}
             {{- range .Values.extraEnv }}
             - name: {{ .name }}
               value: {{ .value | quote }}

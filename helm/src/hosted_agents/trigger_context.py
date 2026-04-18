@@ -20,3 +20,7 @@ class TriggerContext:
     ephemeral: bool = False
     tenant_id: str | None = None
     observability: ObservabilitySettings | None = None
+    # Populated when the trigger originates from Slack app_mention (slack-trigger bridge).
+    slack_channel_id: str | None = None
+    slack_thread_ts: str | None = None
+    slack_message_ts: str | None = None

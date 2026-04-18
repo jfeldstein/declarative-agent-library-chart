@@ -178,3 +178,17 @@ slackTools:
   botTokenSecretKey: token
   historyLimit: 50
   timeoutSeconds: 30
+
+# Inbound Slack app_mention → hosted trigger. Uses HOSTED_AGENT_SLACK_TRIGGER_*;
+# not scrapers.* or slackTools.*.
+# [DALC-REQ-SLACK-TRIGGER-004]
+slackTrigger:
+  enabled: false
+  socketMode: false
+  eventDedupe: false
+  signingSecretSecretName: ""
+  signingSecretSecretKey: signing-secret
+  appTokenSecretName: ""
+  appTokenSecretKey: app-token
+  botTokenSecretName: ""
+  botTokenSecretKey: token

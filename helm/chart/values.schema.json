@@ -282,6 +282,21 @@
         }
       }
     },
+    "slackTrigger": {
+      "type": "object",
+      "description": "Inbound Slack app_mention bridge (HOSTED_AGENT_SLACK_TRIGGER_*). Not scrapers.slack or slackTools. Traceability: [DALC-REQ-SLACK-TRIGGER-004]",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "socketMode": { "type": "boolean" },
+        "eventDedupe": { "type": "boolean" },
+        "signingSecretSecretName": { "type": "string" },
+        "signingSecretSecretKey": { "type": "string" },
+        "appTokenSecretName": { "type": "string" },
+        "appTokenSecretKey": { "type": "string" },
+        "botTokenSecretName": { "type": "string" },
+        "botTokenSecretKey": { "type": "string" }
+      }
+    },
     "observability": {
       "type": "object",
       "description": "Kubernetes/Prometheus: scrape annotations, JSON logs, optional ServiceMonitor (Prometheus Operator CRD). Traceability: [DALC-REQ-O11Y-SCRAPE-004] [DALC-REQ-O11Y-SCRAPE-005] [DALC-REQ-O11Y-SCRAPE-006]",
