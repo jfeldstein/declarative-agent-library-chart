@@ -1,6 +1,6 @@
 # Declarative Agent Library Chart
 
-<!-- Traceability: [DALC-REQ-HELM-UNITTEST-003] [DALC-REQ-CHART-CT-002] [DALC-REQ-O11Y-LOGS-004] -->
+<!-- Traceability: [DALC-REQ-HELM-UNITTEST-003] [DALC-REQ-CHART-CT-002] [DALC-REQ-CHART-PRESENCE-003] [DALC-REQ-O11Y-LOGS-004] -->
 
 This repo is a Helm **library** chart (`helm/chart`: **`type: library`**). Add it as a dependency in your application chart’s `Chart.yaml`, then **render it from a template file** by including the library’s entry named template — typically create **`templates/agent.yaml`** with:
 
@@ -38,10 +38,16 @@ To make an agentic Slack bot, you need:
     agent:
       systemPrompt: |
         Respond, "Hello :wave:"
+      # Optional: stable Slack/Jira bot ids (Secret refs → HOSTED_AGENT_* on the agent pod).
       presence:
-        slackBotId:
-          secretName: slack-bot-token
-          secretKey: token
+        slack:
+          botUserId:
+            secretName: slack-bot-identity
+            secretKey: bot-user-id
+        jira:
+          botAccountId:
+            secretName: jira-bot-identity
+            secretKey: account-id
     ```
 
 4. Register your bot on Slack

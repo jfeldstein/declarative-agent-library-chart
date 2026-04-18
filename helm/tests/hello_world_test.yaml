@@ -1,4 +1,4 @@
-# Traceability: [DALC-REQ-HELM-UNITTEST-001] [DALC-REQ-HELM-UNITTEST-002] [DALC-REQ-RAG-SCRAPERS-002] [DALC-REQ-RAG-SCRAPERS-004] [DALC-REQ-CHART-RTV-001] [DALC-REQ-CHART-RTV-002] [DALC-REQ-CHART-RTV-003] [DALC-REQ-DALC-PKG-002] [DALC-REQ-POSTGRES-AGENT-PERSISTENCE-002] [DALC-VER-002]
+# Traceability: [DALC-REQ-HELM-UNITTEST-001] [DALC-REQ-HELM-UNITTEST-002] [DALC-REQ-RAG-SCRAPERS-002] [DALC-REQ-RAG-SCRAPERS-004] [DALC-REQ-CHART-RTV-001] [DALC-REQ-CHART-RTV-002] [DALC-REQ-CHART-RTV-003] [DALC-REQ-CHART-PRESENCE-001] [DALC-REQ-CHART-PRESENCE-002] [DALC-REQ-CHART-PRESENCE-003] [DALC-REQ-DALC-PKG-002] [DALC-REQ-POSTGRES-AGENT-PERSISTENCE-002] [DALC-VER-002]
 values:
   - ../../examples/hello-world/values.yaml
 suite: hello-world default values
@@ -51,3 +51,66 @@ tests:
           content:
             name: HOSTED_AGENT_SLACK_FEEDBACK_ENABLED
             value: "true"
+  # [DALC-REQ-CHART-PRESENCE-002]
+  - it: presence slack botUserId wires HOSTED_AGENT_SLACK_BOT_USER_ID from Secret
+    set:
+      agent.presence.slack.botUserId.secretName: slack-id
+      agent.presence.slack.botUserId.secretKey: bot-user-id
+    template: templates/agent.yaml
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HOSTED_AGENT_SLACK_BOT_USER_ID
+            valueFrom:
+              secretKeyRef:
+                name: slack-id
+                key: bot-user-id
+  - it: presence jira botAccountId wires HOSTED_AGENT_JIRA_BOT_ACCOUNT_ID from Secret
+    set:
+      agent.presence.jira.botAccountId.secretName: jira-id
+      agent.presence.jira.botAccountId.secretKey: account-id
+    template: templates/agent.yaml
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HOSTED_AGENT_JIRA_BOT_ACCOUNT_ID
+            valueFrom:
+              secretKeyRef:
+                name: jira-id
+                key: account-id
+  - it: default values omit presence identity env vars
+    template: templates/agent.yaml
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HOSTED_AGENT_SLACK_BOT_USER_ID
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HOSTED_AGENT_JIRA_BOT_ACCOUNT_ID
+  # [DALC-REQ-CHART-PRESENCE-002] incomplete Secret ref (secretName without secretKey)
+  - it: presence slack botUserId without secretKey omits HOSTED_AGENT_SLACK_BOT_USER_ID
+    set:
+      agent.presence.slack.botUserId.secretName: slack-id-only
+      agent.presence.slack.botUserId.secretKey: ""
+    template: templates/agent.yaml
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HOSTED_AGENT_SLACK_BOT_USER_ID

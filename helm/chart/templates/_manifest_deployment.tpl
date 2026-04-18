@@ -117,6 +117,29 @@ spec:
                   name: {{ include "declarative-agent-library-chart.fullname" . }}-config
                   key: label-registry.json
             {{- end }}
+            {{- $presence := .Values.presence | default dict }}
+            {{- $slackPU := $presence.slack | default dict }}
+            {{- $slackBot := $slackPU.botUserId | default dict }}
+            {{- $slackSecName := $slackBot.secretName | default "" | trim }}
+            {{- $slackSecKey := $slackBot.secretKey | default "" | trim }}
+            {{- if and $slackSecName $slackSecKey }}
+            - name: HOSTED_AGENT_SLACK_BOT_USER_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $slackSecName }}
+                  key: {{ $slackSecKey | quote }}
+            {{- end }}
+            {{- $jiraPU := $presence.jira | default dict }}
+            {{- $jiraAcct := $jiraPU.botAccountId | default dict }}
+            {{- $jiraSecName := $jiraAcct.secretName | default "" | trim }}
+            {{- $jiraSecKey := $jiraAcct.secretKey | default "" | trim }}
+            {{- if and $jiraSecName $jiraSecKey }}
+            - name: HOSTED_AGENT_JIRA_BOT_ACCOUNT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $jiraSecName }}
+                  key: {{ $jiraSecKey | quote }}
+            {{- end }}
             {{- range .Values.extraEnv }}
             - name: {{ .name }}
               value: {{ .value | quote }}
