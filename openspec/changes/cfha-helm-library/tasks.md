@@ -1,7 +1,7 @@
 ## 1. Rename layout and chart metadata
 
 - [x] 1.1 Rename `template/` to `helm/` (preserve `chart/`, `src/`, `tests/` structure).
-- [ ] 1.2 In `helm/chart/Chart.yaml`, set `type: library` and update `description` so it describes a reusable library chart (not a standalone install). *(**Blocked by Helm semantics:** upstream [Library charts](https://helm.sh/docs/topics/library_charts/) state library charts **do not render** templates that emit cluster manifests; this repo’s chart is designed as a **dependency-packaged application subchart** (full `templates/*.yaml`). **`Chart.yaml`** documents that constraint and keeps **`type: application`** so `helm template` / installs through **`examples/*`** keep working. Resolving this task requires either an upstream Helm behavior change or a large refactor to named-template-only library style.)*
+- [x] 1.2 In `helm/chart/Chart.yaml`, set `type: library` and update `description` so it describes a reusable library chart (not a standalone install). *(**Done:** **`type: library`**; parent charts render the bundle via `templates/agent.yaml` using `include "declarative-agent.system"` (tunables under `.Values.agent`). Kubernetes YAML comes only from named `define` templates (e.g. `declarative-agent-library-chart.manifest.*`) wired by `declarative-agent-library-chart.systemBundled` / `declarative-agent.system`, matching [library chart](https://helm.sh/docs/topics/library_charts/) semantics—do not `helm install` `helm/chart` alone.)*
 - [x] 1.3 Regenerate or hand-edit `helm/chart` artifacts if Helm warns (for example `values.schema.json` or comments referencing "application" only where inaccurate).
 
 ## 2. Application example and lockfile
