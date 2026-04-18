@@ -11,6 +11,7 @@ dependencies = [
     "langgraph>=1.1.6",
     "prometheus-client>=0.21.0",
     "psycopg[binary]>=3.2.0",
+    # [DALC-REQ-SLACK-SCRAPER-002]
     "slack-bolt>=1.21.0",
     "slack-sdk>=3.33.0",
     "structlog>=24.4.0",

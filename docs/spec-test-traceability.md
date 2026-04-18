@@ -34,6 +34,11 @@ The table is parsed by `scripts/check_spec_traceability.py`; keep the **Matrix**
 | [DALC-REQ-RAG-SCRAPERS-002] | `openspec/specs/dalc-rag-from-scrapers/spec.md` | `helm/tests/with_scrapers_test.yaml`, `helm/tests/hello_world_test.yaml`, `helm/chart/templates/_manifest_scraper_job_configmaps.tpl` | default PR | - | - |
 | [DALC-REQ-RAG-SCRAPERS-003] | `openspec/specs/dalc-rag-from-scrapers/spec.md` | `helm/chart/values.yaml`, `helm/chart/values.schema.json` | default PR | - | - |
 | [DALC-REQ-RAG-SCRAPERS-004] | `openspec/specs/dalc-rag-from-scrapers/spec.md` | `helm/src/tests/test_runtime_config.py::test_from_env_empty`, `helm/tests/hello_world_test.yaml` | default PR | - | - |
+| [DALC-REQ-SLACK-SCRAPER-001] | `openspec/specs/dalc-rag-from-scrapers/spec.md` | `helm/tests/with_scrapers_test.yaml` | default PR | - | - |
+| [DALC-REQ-SLACK-SCRAPER-002] | `openspec/specs/dalc-rag-from-scrapers/spec.md` | `helm/src/pyproject.toml` | default PR | - | - |
+| [DALC-REQ-SLACK-SCRAPER-003] | `openspec/specs/dalc-rag-from-scrapers/spec.md` | `helm/src/tests/test_slack_job.py::test_run_slack_search_posts_embed` | default PR | - | - |
+| [DALC-REQ-SLACK-SCRAPER-004] | `openspec/specs/dalc-rag-from-scrapers/spec.md` | `helm/src/tests/test_scraper_metrics.py::test_bounded_integration_label_sanitizes_and_truncates` | default PR | - | - |
+| [DALC-REQ-SLACK-SCRAPER-005] | `openspec/specs/dalc-rag-from-scrapers/spec.md` | `helm/src/tests/test_slack_job.py::test_redact_token_like_strips_slack_token_patterns` | default PR | - | - |
 | [DALC-REQ-SCRAPER-CURSOR-001] | `openspec/specs/dalc-scraper-cursor-store/spec.md` | `helm/src/tests/test_cursor_store.py::test_file_store_jira_compat_roundtrip`, `helm/src/tests/test_cursor_store.py::test_file_store_slack_compat_roundtrip`, `helm/src/hosted_agents/scrapers/cursor_store.py` | default PR | - | - |
 | [DALC-REQ-SCRAPER-CURSOR-002] | `openspec/specs/dalc-scraper-cursor-store/spec.md` | `helm/src/tests/test_cursor_store.py::test_postgres_store_issues_idempotent_ddl_and_upsert`, `helm/src/hosted_agents/scrapers/cursor_store.py` | default PR | - | - |
 | [DALC-REQ-SCRAPER-CURSOR-003] | `openspec/specs/dalc-scraper-cursor-store/spec.md` | `helm/tests/with_scrapers_test.yaml`, `helm/chart/templates/_manifest_scraper_cronjobs.tpl`, `helm/chart/values.yaml`, `helm/chart/values.schema.json` | default PR | - | - |

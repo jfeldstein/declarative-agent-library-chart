@@ -8,10 +8,16 @@
   https://docs.slack.dev/reference/methods/conversations.history
 
 * ``slack_channel`` — `conversations.history` for ``conversationId`` with cursor
-  draining and incremental ``watermark_ts`` under ``SLACK_STATE_DIR``.
+  draining and incremental ``watermark_ts`` (via ``CursorStore`` / ``SLACK_STATE_DIR``).
   Requires ``SLACK_BOT_TOKEN``.
 
-Unknown ``source`` → exit code 1.
+Per-run limits (defaults in parentheses):
+
+- ``rtsLimit`` — Real-time Search ``assistant.search.context`` max hits (``20``, capped at ``50``).
+- ``historyLimit`` — ``conversations.history`` / ``conversations.replies`` page size (``200``, max ``200``).
+- ``maxMessagesPerRun`` — stop collecting after this many messages for the job (``10000``).
+
+Unknown ``source`` or invalid job JSON fields → exit code 1 with actionable stderr.
 """
 
 from __future__ import annotations
@@ -30,6 +36,7 @@ from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 
 from hosted_agents.scrapers.metrics import (
+    bounded_integration_label,
     classify_rag_submission_result,
     maybe_start_scraper_metrics_http,
     observe_rag_embed_attempt,
@@ -40,25 +47,143 @@ from hosted_agents.scrapers.cursor_store import CursorStore, cursor_store_from_e
 
 
 def _integration_label() -> str:
-    v = os.environ.get("SCRAPER_INTEGRATION", "slack").strip()
-    return v or "slack"
+    return bounded_integration_label(
+        os.environ.get("SCRAPER_INTEGRATION", ""),
+        fallback="slack",
+    )
+
+
+_TOKEN_LIKE = re.compile(r"xox[bpa]-[A-Za-z0-9+/=-]+")
+
+
+def _redact_token_like(text: str) -> str:
+    """Avoid echoing Slack tokens if an API error message ever contains one."""
+    return _TOKEN_LIKE.sub("<redacted>", text)
+
+
+def _die(msg: str) -> None:
+    print(_redact_token_like(msg), file=sys.stderr)  # noqa: T201
+    sys.exit(1)
+
+
+_DEFAULT_RTS_LIMIT = 20
+_MAX_RTS_LIMIT = 50
+_DEFAULT_HISTORY_LIMIT = 200
+_MAX_HISTORY_LIMIT = 200
+_DEFAULT_MAX_MESSAGES_PER_RUN = 10_000
+_MAX_CONTEXT_MINUTES = 24 * 60
 
 
 def _load_job_config() -> dict[str, Any]:
     raw_path = os.environ.get("SCRAPER_JOB_CONFIG", "/config/job.json").strip()
     p = Path(raw_path)
     if not p.is_file():
-        print(f"SCRAPER_JOB_CONFIG file not found: {p}", file=sys.stderr)  # noqa: T201
-        sys.exit(1)
+        _die(f"SCRAPER_JOB_CONFIG file not found: {p}")
     try:
         data = json.loads(p.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
-        print(f"Invalid job config JSON: {exc}", file=sys.stderr)  # noqa: T201
-        sys.exit(1)
+        _die(f"Invalid job config JSON: {exc}")
     if not isinstance(data, dict):
-        print("Job config must be a JSON object", file=sys.stderr)  # noqa: T201
-        sys.exit(1)
+        _die("Job config must be a JSON object at the top level.")
     return data
+
+
+def _parse_int_field(
+    cfg: dict[str, Any],
+    key: str,
+    *,
+    default: int,
+    min_v: int,
+    max_v: int,
+) -> int:
+    raw = cfg.get(key)
+    if raw is None:
+        return default
+    try:
+        v = int(raw)
+    except (TypeError, ValueError):
+        _die(f"Job config field {key!r} must be an integer (got {raw!r}).")
+    if v < min_v or v > max_v:
+        _die(f"Job config field {key!r} must be between {min_v} and {max_v} (got {v}).")
+    return v
+
+
+def _parse_float_minutes(cfg: dict[str, Any], key: str, *, default: float) -> float:
+    raw = cfg.get(key)
+    if raw is None:
+        return default
+    try:
+        v = float(raw)
+    except (TypeError, ValueError):
+        _die(f"Job config field {key!r} must be a number (got {raw!r}).")
+    if v < 0 or v > _MAX_CONTEXT_MINUTES:
+        _die(
+            "Job config field "
+            f"{key!r} must be between 0 and {_MAX_CONTEXT_MINUTES} minutes (got {v})."
+        )
+    return v
+
+
+def _normalize_slack_job(cfg: dict[str, Any]) -> tuple[str, dict[str, Any]]:
+    """Validate ``job.json`` fields and return ``(source, normalized)`` for runners."""
+    src = str(cfg.get("source", "")).strip().lower()
+    if src not in ("slack_search", "slack_channel"):
+        _die(
+            "Job config field 'source' must be 'slack_search' or 'slack_channel' "
+            f"(got {cfg.get('source')!r})."
+        )
+
+    hist_limit = _parse_int_field(
+        cfg,
+        "historyLimit",
+        default=_DEFAULT_HISTORY_LIMIT,
+        min_v=1,
+        max_v=_MAX_HISTORY_LIMIT,
+    )
+    max_msgs = _parse_int_field(
+        cfg,
+        "maxMessagesPerRun",
+        default=_DEFAULT_MAX_MESSAGES_PER_RUN,
+        min_v=1,
+        max_v=1_000_000,
+    )
+
+    if src == "slack_search":
+        query = str(cfg.get("query", "")).strip()
+        if not query:
+            _die("slack_search jobs require non-empty job config field 'query'.")
+        norm: dict[str, Any] = {
+            "query": query,
+            "contextBeforeMinutes": _parse_float_minutes(
+                cfg,
+                "contextBeforeMinutes",
+                default=0.0,
+            ),
+            "contextAfterMinutes": _parse_float_minutes(
+                cfg,
+                "contextAfterMinutes",
+                default=0.0,
+            ),
+            "rtsLimit": _parse_int_field(
+                cfg,
+                "rtsLimit",
+                default=_DEFAULT_RTS_LIMIT,
+                min_v=1,
+                max_v=_MAX_RTS_LIMIT,
+            ),
+            "historyLimit": hist_limit,
+            "maxMessagesPerRun": max_msgs,
+        }
+        return src, norm
+
+    cid = str(cfg.get("conversationId", "")).strip()
+    if not cid:
+        _die("slack_channel jobs require non-empty job config field 'conversationId'.")
+    return src, {
+        "conversationId": cid,
+        "historyLimit": hist_limit,
+        "maxMessagesPerRun": max_msgs,
+    }
 
 
 def _response_dict(resp: object) -> dict[str, Any]:
@@ -71,6 +196,29 @@ def _response_dict(resp: object) -> dict[str, Any]:
         return dict(resp)
     except Exception:
         return {}
+
+
+def _messages_page_from_slack_response(
+    raw: object,
+) -> tuple[list[dict[str, Any]], str | None]:
+    """Parse ``conversations.*`` responses: messages list + pagination cursor."""
+    page = _response_dict(raw)
+    if not page.get("ok", True):
+        err = page.get("error", "unknown")
+        raise SlackApiError(err, raw)
+    msgs = page.get("messages", []) or []
+    meta = page.get("response_metadata") or {}
+    slack_cursor = meta.get("next_cursor") if isinstance(meta, dict) else None
+    return list(msgs), slack_cursor
+
+
+def _message_channel_id(m: dict[str, Any]) -> str | None:
+    raw = m.get("channel") or m.get("channel_id")
+    if isinstance(raw, dict):
+        raw = raw.get("id")
+    if raw is None or raw == "":
+        return None
+    return str(raw)
 
 
 def _slack_ts_to_float(ts: str) -> float:
@@ -124,14 +272,45 @@ def _conversations_history_page(
     kwargs: dict[str, Any],
 ) -> tuple[list[dict[str, Any]], str | None]:
     raw = client.conversations_history(**kwargs)
-    page = _response_dict(raw)
-    if not page.get("ok", True):
-        err = page.get("error", "unknown")
-        raise SlackApiError(err, raw)
-    msgs = page.get("messages", []) or []
-    meta = page.get("response_metadata") or {}
-    slack_cursor = meta.get("next_cursor") if isinstance(meta, dict) else None
-    return list(msgs), slack_cursor
+    return _messages_page_from_slack_response(raw)
+
+
+def _history_page_kwargs(
+    channel: str,
+    cap: int,
+    inclusive: bool,
+    oldest: str | None,
+    latest: str | None,
+    slack_cursor: str | None,
+) -> dict[str, Any]:
+    kwargs: dict[str, Any] = {
+        "channel": channel,
+        "limit": cap,
+        "inclusive": inclusive,
+    }
+    if oldest is not None:
+        kwargs["oldest"] = oldest
+    if latest is not None:
+        kwargs["latest"] = latest
+    if slack_cursor:
+        kwargs["cursor"] = slack_cursor
+    return kwargs
+
+
+def _trim_page_to_remaining_budget(
+    msgs: list[dict[str, Any]],
+    max_messages: int | None,
+    already_collected: int,
+) -> tuple[list[dict[str, Any]], bool]:
+    """Return messages to append and whether ``max_messages`` is now reached."""
+    if max_messages is None:
+        return msgs, False
+    room = max_messages - already_collected
+    if room <= 0:
+        return [], True
+    trimmed = msgs[:room]
+    budget_full = already_collected + len(trimmed) >= max_messages
+    return trimmed, budget_full
 
 
 def _collect_history_pages(
@@ -141,23 +320,23 @@ def _collect_history_pages(
     oldest: str | None,
     latest: str | None,
     inclusive: bool,
+    limit: int,
+    max_messages: int | None = None,
 ) -> list[dict[str, Any]]:
     out: list[dict[str, Any]] = []
     slack_cursor: str | None = None
+    cap = max(1, min(limit, _MAX_HISTORY_LIMIT))
     while True:
-        kwargs: dict[str, Any] = {
-            "channel": channel,
-            "limit": 200,
-            "inclusive": inclusive,
-        }
-        if oldest is not None:
-            kwargs["oldest"] = oldest
-        if latest is not None:
-            kwargs["latest"] = latest
-        if slack_cursor:
-            kwargs["cursor"] = slack_cursor
+        if max_messages is not None and len(out) >= max_messages:
+            break
+        kwargs = _history_page_kwargs(
+            channel, cap, inclusive, oldest, latest, slack_cursor
+        )
         msgs, slack_cursor = _conversations_history_page(client, kwargs)
+        msgs, budget_done = _trim_page_to_remaining_budget(msgs, max_messages, len(out))
         out.extend(msgs)
+        if budget_done:
+            break
         if not slack_cursor or not msgs:
             break
     return out
@@ -168,36 +347,65 @@ def _conversations_replies_page(
     kwargs: dict[str, Any],
 ) -> tuple[list[dict[str, Any]], str | None]:
     raw = client.conversations_replies(**kwargs)
-    page = _response_dict(raw)
-    if not page.get("ok", True):
-        err = page.get("error", "unknown")
-        raise SlackApiError(err, raw)
-    msgs = page.get("messages", []) or []
-    meta = page.get("response_metadata") or {}
-    slack_cursor = meta.get("next_cursor") if isinstance(meta, dict) else None
-    return list(msgs), slack_cursor
+    return _messages_page_from_slack_response(raw)
 
 
 def _collect_replies_pages(
     client: WebClient,
     channel: str,
     thread_ts: str,
+    *,
+    limit: int,
+    max_messages: int | None = None,
 ) -> list[dict[str, Any]]:
     out: list[dict[str, Any]] = []
     slack_cursor: str | None = None
+    cap = max(1, min(limit, _MAX_HISTORY_LIMIT))
     while True:
+        if max_messages is not None and len(out) >= max_messages:
+            break
         kwargs: dict[str, Any] = {
             "channel": channel,
             "ts": thread_ts,
-            "limit": 200,
+            "limit": cap,
         }
         if slack_cursor:
             kwargs["cursor"] = slack_cursor
         msgs, slack_cursor = _conversations_replies_page(client, kwargs)
+        msgs, budget_done = _trim_page_to_remaining_budget(msgs, max_messages, len(out))
         out.extend(msgs)
+        if budget_done:
+            break
         if not slack_cursor or not msgs:
             break
     return out
+
+
+def _slack_rag_item(ch: str, ts_s: str, m: dict[str, Any]) -> dict[str, Any]:
+    team = m.get("team")
+    if isinstance(team, dict):
+        team = team.get("id")
+    team_s = str(team) if team else None
+    entity_id = _entity_id(ch, ts_s, team_s)
+    thr = m.get("thread_ts")
+    thr_s = str(thr).strip() if thr not in (None, "") else ""
+    meta: dict[str, Any] = {
+        "source": "slack-scraper",
+        "slack_channel": ch,
+        "slack_ts": ts_s,
+    }
+    if team_s:
+        meta["slack_team_id"] = team_s
+    if thr_s and thr_s != ts_s:
+        meta["slack_thread_ts"] = thr_s
+    compact = ts_s.replace(".", "")
+    if compact:
+        meta["slack_ts_compact"] = compact
+    return {
+        "text": _message_text(m),
+        "metadata": meta,
+        "entity_id": entity_id,
+    }
 
 
 def _build_items_from_messages(
@@ -206,35 +414,16 @@ def _build_items_from_messages(
     items: list[dict[str, Any]] = []
     seen: set[tuple[str, str]] = set()
     for m in messages:
-        ch_raw = m.get("channel") or m.get("channel_id")
-        if isinstance(ch_raw, dict):
-            channel = ch_raw.get("id")
-        else:
-            channel = ch_raw
+        ch = _message_channel_id(m)
         ts = m.get("ts")
-        if not channel or not ts:
+        if not ch or not ts:
             continue
-        ch = str(channel)
         ts_s = str(ts)
         key = (ch, ts_s)
         if key in seen:
             continue
         seen.add(key)
-        team = m.get("team")
-        if isinstance(team, dict):
-            team = team.get("id")
-        entity_id = _entity_id(ch, ts_s, str(team) if team else None)
-        items.append(
-            {
-                "text": _message_text(m),
-                "metadata": {
-                    "source": "slack-scraper",
-                    "slack_channel": ch,
-                    "slack_ts": ts_s,
-                },
-                "entity_id": entity_id,
-            },
-        )
+        items.append(_slack_rag_item(ch, ts_s, m))
     return items
 
 
@@ -273,13 +462,11 @@ def _slack_search_add_message(
     seen: set[tuple[str, str]],
     collected: list[dict[str, Any]],
 ) -> None:
-    ch = m.get("channel") or m.get("channel_id")
-    if isinstance(ch, dict):
-        ch = ch.get("id")
+    ch = _message_channel_id(m)
     ts = m.get("ts") or m.get("message_ts")
     if not ch or not ts:
         return
-    key = (str(ch), str(ts))
+    key = (ch, str(ts))
     if key in seen:
         return
     seen.add(key)
@@ -292,7 +479,12 @@ def _slack_search_expand_hit(
     before_m: float,
     after_m: float,
     add_msg: Callable[[dict[str, Any]], None],
+    *,
+    history_limit: int,
+    rem: list[int],
 ) -> None:
+    if rem[0] <= 0:
+        return
     pair = _norm_channel_ts(hit)
     if not pair:
         return
@@ -300,12 +492,17 @@ def _slack_search_expand_hit(
     thread_root = str(hit.get("thread_ts") or message_ts)
 
     try:
-        thread_msgs = _collect_replies_pages(hist_client, channel_id, thread_root)
+        thread_msgs = _collect_replies_pages(
+            hist_client,
+            channel_id,
+            thread_root,
+            limit=history_limit,
+            max_messages=rem[0],
+        )
         for m in thread_msgs:
             add_msg(m)
     except SlackApiError as exc:
-        print(f"conversations.replies: {exc}", file=sys.stderr)  # noqa: T201
-        sys.exit(1)
+        _die(f"conversations.replies failed: {_redact_token_like(str(exc))}")
 
     try:
         lo, hi = _ts_window(message_ts, before_m, after_m)
@@ -315,54 +512,66 @@ def _slack_search_expand_hit(
             oldest=lo,
             latest=hi,
             inclusive=True,
+            limit=history_limit,
+            max_messages=rem[0],
         )
         for m in win_msgs:
             add_msg(m)
     except SlackApiError as exc:
-        print(f"conversations.history: {exc}", file=sys.stderr)  # noqa: T201
-        sys.exit(1)
+        _die(f"conversations.history failed: {_redact_token_like(str(exc))}")
 
 
 def _run_slack_search(
     user_client: WebClient,
     bot_client: WebClient | None,
-    job: dict[str, Any],
+    norm: dict[str, Any],
     scope: str,
     rag_base: str,
     integration: str,
 ) -> None:
-    query = str(job.get("query", "")).strip()
-    if not query:
-        print("slack_search job requires query", file=sys.stderr)  # noqa: T201
-        sys.exit(1)
-    before_m = float(job.get("contextBeforeMinutes", 0))
-    after_m = float(job.get("contextAfterMinutes", 0))
+    query = str(norm["query"])
+    before_m = float(norm["contextBeforeMinutes"])
+    after_m = float(norm["contextAfterMinutes"])
+    hist_limit = int(norm["historyLimit"])
 
     body: dict[str, Any] = {
         "query": query,
         "content_types": ["messages"],
         "channel_types": ["public_channel", "private_channel", "im", "mpim"],
-        "limit": min(int(job.get("rtsLimit", 20)), 50),
+        "limit": int(norm["rtsLimit"]),
     }
     raw = user_client.api_call("assistant.search.context", json=body)
     page = _response_dict(raw)
     if not page.get("ok", True):
-        print(
-            f"assistant.search.context failed: {page.get('error', page)}",
-            file=sys.stderr,
-        )  # noqa: T201
-        sys.exit(1)
+        err = page.get("error", "unknown")
+        _die(f"assistant.search.context failed: {_redact_token_like(str(err))}")
 
     hits = _rts_messages(page)
     collected: list[dict[str, Any]] = []
     seen: set[tuple[str, str]] = set()
     hist_client = bot_client or user_client
+    rem = [int(norm["maxMessagesPerRun"])]
 
     def add_msg(m: dict[str, Any]) -> None:
+        if rem[0] <= 0:
+            return
+        before_n = len(collected)
         _slack_search_add_message(m, seen, collected)
+        if len(collected) > before_n:
+            rem[0] -= 1
 
     for hit in hits:
-        _slack_search_expand_hit(hist_client, hit, before_m, after_m, add_msg)
+        if rem[0] <= 0:
+            break
+        _slack_search_expand_hit(
+            hist_client,
+            hit,
+            before_m,
+            after_m,
+            add_msg,
+            history_limit=hist_limit,
+            rem=rem,
+        )
 
     items = _build_items_from_messages(collected)
     if not items:
@@ -370,16 +579,6 @@ def _run_slack_search(
     payload = _embed_payload(scope, items)
     with httpx.Client(timeout=120.0) as hx:
         _post_embed(hx, rag_base, payload, integration)
-
-
-def _state_dir() -> Path:
-    root = Path(os.environ.get("SLACK_STATE_DIR", "/tmp/slack-scraper-state").strip())
-    root.mkdir(parents=True, exist_ok=True)
-    return root
-
-
-def _safe_scope(scope: str) -> str:
-    return re.sub(r"[^a-zA-Z0-9._-]+", "_", scope)[:80]
 
 
 def _merge_max_slack_ts(
@@ -400,34 +599,45 @@ def _channel_history_page(
     cid: str,
     watermark: str | None,
     slack_cursor: str | None,
+    *,
+    limit: int,
 ) -> tuple[list[dict[str, Any]], str | None]:
-    kwargs: dict[str, Any] = {"channel": cid, "limit": 200}
+    cap = max(1, min(int(limit), _MAX_HISTORY_LIMIT))
+    kwargs: dict[str, Any] = {"channel": cid, "limit": cap}
     if watermark:
         kwargs["oldest"] = str(watermark)
         kwargs["inclusive"] = False
     if slack_cursor:
         kwargs["cursor"] = slack_cursor
     raw = bot.conversations_history(**kwargs)
-    page = _response_dict(raw)
-    if not page.get("ok", True):
-        err = page.get("error", "unknown")
-        raise SlackApiError(err, raw)
-    msgs = page.get("messages", []) or []
-    meta = page.get("response_metadata") or {}
-    next_cursor = meta.get("next_cursor") if isinstance(meta, dict) else None
-    return list(msgs), next_cursor
+    return _messages_page_from_slack_response(raw)
 
 
 def _channel_history_drain(
     bot: WebClient,
     cid: str,
     watermark: str | None,
+    *,
+    hist_limit: int,
+    max_messages: int,
 ) -> tuple[list[dict[str, Any]], float | None]:
     collected: list[dict[str, Any]] = []
     slack_cursor: str | None = None
     max_seen: float | None = None
     while True:
-        msgs, slack_cursor = _channel_history_page(bot, cid, watermark, slack_cursor)
+        if len(collected) >= max_messages:
+            break
+        msgs, slack_cursor = _channel_history_page(
+            bot,
+            cid,
+            watermark,
+            slack_cursor,
+            limit=hist_limit,
+        )
+        room = max_messages - len(collected)
+        if room <= 0:
+            break
+        msgs = msgs[:room]
         max_seen = _merge_max_slack_ts(msgs, max_seen)
         collected.extend(msgs)
         if not slack_cursor or not msgs:
@@ -437,21 +647,23 @@ def _channel_history_drain(
 
 def _run_slack_channel(
     bot: WebClient,
-    job: dict[str, Any],
+    norm: dict[str, Any],
     scope: str,
     rag_base: str,
     integration: str,
     store: CursorStore,
 ) -> None:
-    cid = str(job.get("conversationId", "")).strip()
-    if not cid:
-        print("slack_channel job requires conversationId", file=sys.stderr)  # noqa: T201
-        sys.exit(1)
+    cid = str(norm["conversationId"])
+    hist_limit = int(norm["historyLimit"])
+    max_msgs = int(norm["maxMessagesPerRun"])
     watermark = store.get_state("slack", scope, cid)
-    collected, max_seen = _channel_history_drain(bot, cid, watermark)
-
-    if max_seen is not None:
-        store.set_state("slack", scope, cid, _float_to_slack_ts(max_seen))
+    collected, max_seen = _channel_history_drain(
+        bot,
+        cid,
+        watermark,
+        hist_limit=hist_limit,
+        max_messages=max_msgs,
+    )
 
     items = _build_items_from_messages(collected)
     if not items:
@@ -459,53 +671,48 @@ def _run_slack_channel(
     payload = _embed_payload(scope, items)
     with httpx.Client(timeout=120.0) as hx:
         _post_embed(hx, rag_base, payload, integration)
+    if max_seen is not None:
+        store.set_state("slack", scope, cid, _float_to_slack_ts(max_seen))
 
 
 def _slack_run_job_body(
-    cfg: dict[str, Any],
+    source: str,
+    norm: dict[str, Any],
     store: CursorStore,
     scope: str,
     rag_base: str,
     integration: str,
 ) -> None:
-    source = str(cfg.get("source", "")).strip().lower()
-    if source not in ("slack_search", "slack_channel"):
-        print(
-            f"Unknown slack job source {source!r}; expected slack_search or slack_channel",
-            file=sys.stderr,
-        )  # noqa: T201
-        sys.exit(1)
-
     user_token = os.environ.get("SLACK_USER_TOKEN", "").strip()
     bot_token = os.environ.get("SLACK_BOT_TOKEN", "").strip()
 
     if source == "slack_search":
         if not user_token:
-            print(
-                "SLACK_USER_TOKEN is required for slack_search (Real-time Search API)",
-                file=sys.stderr,
-            )  # noqa: T201
-            sys.exit(1)
+            _die(
+                "SLACK_USER_TOKEN is required for slack_search (assistant.search.context / RTS)."
+            )
         user_client = WebClient(token=user_token)
         bot_client = WebClient(token=bot_token) if bot_token else None
         try:
             _run_slack_search(
-                user_client, bot_client, cfg, scope, rag_base, integration
+                user_client,
+                bot_client,
+                norm,
+                scope,
+                rag_base,
+                integration,
             )
         except SlackApiError as exc:
-            print(f"Slack API error: {exc}", file=sys.stderr)  # noqa: T201
-            sys.exit(1)
+            _die(f"Slack API error: {_redact_token_like(str(exc))}")
         return
 
     if not bot_token:
-        print("SLACK_BOT_TOKEN is required for slack_channel", file=sys.stderr)  # noqa: T201
-        sys.exit(1)
+        _die("SLACK_BOT_TOKEN is required for slack_channel (conversations.history).")
     bot = WebClient(token=bot_token)
     try:
-        _run_slack_channel(bot, cfg, scope, rag_base, integration, store)
+        _run_slack_channel(bot, norm, scope, rag_base, integration, store)
     except SlackApiError as exc:
-        print(f"Slack API error: {exc}", file=sys.stderr)  # noqa: T201
-        sys.exit(1)
+        _die(f"Slack API error: {_redact_token_like(str(exc))}")
 
 
 def run() -> None:
@@ -515,13 +722,13 @@ def run() -> None:
     run_ok = False
     try:
         cfg = _load_job_config()
+        source, norm = _normalize_slack_job(cfg)
         rag_base = os.environ.get("RAG_SERVICE_URL", "").strip().rstrip("/")
         if not rag_base:
-            print("RAG_SERVICE_URL is required", file=sys.stderr)  # noqa: T201
-            sys.exit(1)
+            _die("RAG_SERVICE_URL is required.")
         scope = os.environ.get("SCRAPER_SCOPE", "slack").strip() or "slack"
         store = cursor_store_from_env()
-        _slack_run_job_body(cfg, store, scope, rag_base, integration)
+        _slack_run_job_body(source, norm, store, scope, rag_base, integration)
         run_ok = True
     finally:
         elapsed = time.perf_counter() - t0

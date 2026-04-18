@@ -17,6 +17,7 @@ New integration checklist (keep in sync when adding a scraper implementation):
 from __future__ import annotations
 
 import os
+import re
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -33,6 +34,37 @@ from prometheus_client import (
 
 # Dedicated registry so scraper CronJob pods do not expose agent/RAG metrics from the global REGISTRY.
 SCRAPER_REGISTRY = CollectorRegistry()
+
+# Prometheus label value bound (integration scrapers; single low-cardinality axis).
+_INTEGRATION_LABEL_MAX_LEN = 32
+_INTEGRATION_LABEL_RE = re.compile(r"^[a-z0-9][a-z0-9_-]{0,31}$")
+
+
+def bounded_integration_label(raw: str | None, *, fallback: str) -> str:
+    """Sanitize ``SCRAPER_INTEGRATION`` for Prometheus ``integration`` labels.
+
+    Maps arbitrary operator input to a bounded ``[a-z0-9][a-z0-9_-]{0,31}`` token so
+    metric cardinality stays predictable (no channel ids, query strings, etc.).
+    """
+    fb = fallback.strip().lower()
+    if not _INTEGRATION_LABEL_RE.match(fb):
+        msg = f"integration fallback must match {_INTEGRATION_LABEL_RE.pattern}, got {fb!r}"
+        raise ValueError(msg)
+    s = (raw or "").strip().lower()
+    if not s:
+        return fb
+    cleaned = re.sub(r"[^a-z0-9_-]+", "_", s).strip("_")
+    if not cleaned:
+        return fb
+    if len(cleaned) > _INTEGRATION_LABEL_MAX_LEN:
+        cleaned = cleaned[:_INTEGRATION_LABEL_MAX_LEN]
+    if _INTEGRATION_LABEL_RE.match(cleaned):
+        return cleaned
+    alnum = re.sub(r"[^a-z0-9]+", "", cleaned)[:_INTEGRATION_LABEL_MAX_LEN]
+    if alnum and _INTEGRATION_LABEL_RE.match(alnum):
+        return alnum
+    return fb
+
 
 RagSubmitResult = Literal["success", "client_error", "server_error"]
 
