@@ -1,11 +1,8 @@
 # Traceability: [DALC-REQ-HELM-UNITTEST-001] [DALC-REQ-O11Y-SCRAPE-004] [DALC-REQ-O11Y-SCRAPE-005] [DALC-REQ-O11Y-SCRAPE-006]
-# Indices: unittest output for templates/agent.yaml (library bundle order for this chart).
-# With scrapers+rag+o11y (examples/with-observability/values.yaml): 0 CM config, 1 Deployment agent,
-#   2 Service agent, 3 ServiceMonitor agent, (empty YAML docs skipped), scraper CM + CronJob,
-#   then RAG Deployment/Service/ServiceMonitor, then test Job — count non-empty docs only.
-# Current non-empty order: 0 CM, 1 Dep agent, 2 Svc agent, 3 SM agent, 4 CM scraper, 5 CronJob,
-#   6 Dep rag, 7 Svc rag, 8 SM rag, 9 Job.
-# no-rag overlay: 0 CM, 1 Deployment, 2 Service, 3 ServiceMonitor agent, 4 Job
+# Agent vs RAG Services share metadata.name patterns with Deployments; select Services by spec.ports[0].port
+# (chart default agent 8088 vs examples ragService 8090). Agent ServiceMonitor: metadata.name …-agent (unique).
+# RAG Deployment/Service/ServiceMonitor share metadata.name …-rag; RAG ServiceMonitor alone matches metadata.labels
+# (component rag + release from serviceMonitor.extraLabels).
 values:
   - ../../examples/with-observability/values.yaml
 suite: with-observability prometheus and ServiceMonitors
@@ -31,13 +28,18 @@ tests:
           value: agent
   - it: agent Service has prometheus scrape annotations
     template: templates/agent.yaml
-    documentIndex: 2
     asserts:
       - equal:
           path: metadata.annotations["prometheus.io/scrape"]
           value: "true"
+        documentSelector:
+          path: spec.ports[0].port
+          value: 8088
       - isKind:
           of: Service
+        documentSelector:
+          path: spec.ports[0].port
+          value: 8088
   - it: optional managed RAG Deployment has prometheus scrape annotations when deployed
     template: templates/agent.yaml
     asserts:
@@ -49,31 +51,60 @@ tests:
           value: rag
   - it: optional managed RAG Service has prometheus scrape annotations when deployed
     template: templates/agent.yaml
-    documentIndex: 7
     asserts:
       - equal:
           path: metadata.annotations["prometheus.io/scrape"]
           value: "true"
+        documentSelector:
+          path: spec.ports[0].port
+          value: 8090
       - isKind:
           of: Service
+        documentSelector:
+          path: spec.ports[0].port
+          value: 8090
   - it: renders agent ServiceMonitor
     template: templates/agent.yaml
-    documentIndex: 3
     asserts:
       - isKind:
           of: ServiceMonitor
+        documentSelector:
+          path: metadata.name
+          value: dalc-ci-o11y-declarative-agent-library-chart-agent
       - matchRegex:
           path: metadata.name
           pattern: -agent$
+        documentSelector:
+          path: metadata.name
+          value: dalc-ci-o11y-declarative-agent-library-chart-agent
   - it: renders ServiceMonitor for optional managed RAG when that Service is deployed
     template: templates/agent.yaml
-    documentIndex: 8
     asserts:
       - isKind:
           of: ServiceMonitor
+        documentSelector:
+          path: metadata.labels
+          value:
+            helm.sh/chart: declarative-agent-library-chart-0.1.0
+            app.kubernetes.io/name: declarative-agent-library-chart
+            app.kubernetes.io/instance: dalc-ci-o11y
+            app.kubernetes.io/version: "0.1.0"
+            app.kubernetes.io/managed-by: Helm
+            app.kubernetes.io/component: rag
+            release: prometheus
       - matchRegex:
           path: metadata.name
           pattern: -rag$
+        documentSelector:
+          path: metadata.labels
+          value:
+            helm.sh/chart: declarative-agent-library-chart-0.1.0
+            app.kubernetes.io/name: declarative-agent-library-chart
+            app.kubernetes.io/instance: dalc-ci-o11y
+            app.kubernetes.io/version: "0.1.0"
+            app.kubernetes.io/managed-by: Helm
+            app.kubernetes.io/component: rag
+            release: prometheus
   - it: with ServiceMonitor enabled but RAG not deployed, rag ServiceMonitor template renders nothing
     values:
       - ../../examples/with-observability/values-observability-no-rag.yaml
@@ -89,7 +120,9 @@ tests:
     values:
       - ../../examples/with-observability/values-observability-no-rag.yaml
     template: templates/agent.yaml
-    documentIndex: 3
     asserts:
       - isKind:
           of: ServiceMonitor
+        documentSelector:
+          path: metadata.name
+          value: dalc-ci-o11y-declarative-agent-library-chart-agent
