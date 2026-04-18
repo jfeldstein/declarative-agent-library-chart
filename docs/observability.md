@@ -22,6 +22,9 @@ This section aligns with **`openspec/changes/agent-checkpointing-wandb-feedback`
 | `WANDB_PROJECT` or `HOSTED_AGENT_WANDB_PROJECT` | W&B project name. |
 | `WANDB_ENTITY` | Optional team/entity. |
 | `HOSTED_AGENT_SLACK_FEEDBACK_ENABLED` | Reserved flag for Slack reaction ingestion (off until wired). |
+| `HOSTED_AGENT_SLACK_TOOLS_BOT_TOKEN` | Bot token (`xoxb-`) for **LLM-time** Slack Web API tools only; disjoint from CronJob **`SLACK_BOT_TOKEN`** / **`SLACK_USER_TOKEN`**. Usually from **`slackTools.botTokenSecretName`** (Helm). |
+| `HOSTED_AGENT_SLACK_TOOLS_HISTORY_LIMIT` | Default cap (1–200) for `conversations.history` / `conversations.replies` tool calls. |
+| `HOSTED_AGENT_SLACK_TOOLS_TIMEOUT_SECONDS` | HTTP timeout for Slack **`WebClient`** on the tools path (clamped in runtime). |
 
 **`GET /api/v1/runtime/summary`** → **`observability`**: `checkpoint_store`, **`feature_flags`** (`checkpoints_enabled`, `slack_feedback_enabled`), **`wandb.tracing_ready`**, and **`wandb.mandatory_run_tag_keys`**.
 
@@ -30,6 +33,7 @@ This section aligns with **`openspec/changes/agent-checkpointing-wandb-feedback`
 - **`checkpoints.*`**: `postgresUrl` → `HOSTED_AGENT_POSTGRES_URL`; `enabled` / `backend` → LangGraph checkpoint env vars.
 - **`wandb.*`**: maps to `HOSTED_AGENT_WANDB_ENABLED`, `WANDB_PROJECT`, and `WANDB_ENTITY` when enabled.
 - **`scrapers.slack.feedback.*`**: `enabled` and `emojiLabelMap` configure reaction ingestion (`HOSTED_AGENT_SLACK_FEEDBACK_ENABLED`, `HOSTED_AGENT_SLACK_EMOJI_LABEL_MAP_JSON`). **`labelRegistry`** is the **human feedback label taxonomy** (ConfigMap `label-registry.json` → **`HOSTED_AGENT_LABEL_REGISTRY_JSON`**); it is **not** Kubernetes or Prometheus label metadata.
+- **`slackTools.*`**: optional Secret ref + tunables for **in-process** Slack tools (`HOSTED_AGENT_SLACK_TOOLS_*` on the agent Deployment only; not used by scraper CronJobs).
 - **`observability.*`**: cluster scrape hints only—`prometheus.io/*` annotations, optional **`ServiceMonitor`**, and **`structuredLogs.json`** → `HOSTED_AGENT_LOG_FORMAT=json`.
 
 **Thread APIs** (when `HOSTED_AGENT_CHECKPOINT_STORE` ≠ `none`):
@@ -105,9 +109,11 @@ Helm: set `observability.structuredLogs.json: true` under the `agent` subchart (
 | `agent_runtime_subagent_duration_seconds`     | `subagent`, `result`         | Subagent latency                   |
 | `agent_runtime_skill_loads_total`             | `skill`, `result`            | Skill load operations              |
 | `agent_runtime_skill_load_duration_seconds`   | `skill`, `result`            | Skill load latency                 |
+| `agent_runtime_slack_tool_web_api_calls_total` | `method`, `result` (`success` / `error`) | Slack Web API calls from **`tools_impl`** (not scraper CronJobs). |
+| `agent_runtime_slack_tool_web_api_duration_seconds` | `method`, `result` | Latency for those Slack Web API calls. |
 
 
-`tool`, `subagent`, and `skill` label values come from **configuration** only (bounded), not user-supplied free text.
+`tool`, `subagent`, and `skill` label values come from **configuration** only (bounded), not user-supplied free text. For Slack tools metrics, **`method`** is a fixed Slack Web API surface name from the runtime (for example `chat.postMessage`), not channel ids or message text.
 
 For **`agent_id`** and **`model_id`** on LLM metrics, the runtime uses `HOSTED_AGENT_ID` / `HOSTED_AGENT_AGENT_ID` and `HOSTED_AGENT_CHAT_MODEL` / `HOSTED_AGENT_MODEL_ID` when set; long values are shortened via stable hashes (see `hosted_agents.metrics.tagify_metric_label`).
 

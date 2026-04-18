@@ -51,6 +51,36 @@ tests:
           content:
             name: HOSTED_AGENT_SLACK_FEEDBACK_ENABLED
             value: "true"
+  # Slack LLM-time tools ([DALC-REQ-SLACK-TOOLS-002]): HOSTED_AGENT_SLACK_TOOLS_* on agent only
+  - it: slackTools wires bot token secret and tuning env on agent Deployment
+    set:
+      agent.slackTools.botTokenSecretName: slack-tools-bot
+      agent.slackTools.botTokenSecretKey: bot-token-key
+      agent.slackTools.historyLimit: 25
+      agent.slackTools.timeoutSeconds: 45
+    template: templates/agent.yaml
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HOSTED_AGENT_SLACK_TOOLS_BOT_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: slack-tools-bot
+                key: bot-token-key
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HOSTED_AGENT_SLACK_TOOLS_HISTORY_LIMIT
+            value: "25"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HOSTED_AGENT_SLACK_TOOLS_TIMEOUT_SECONDS
+            value: "45"
   # [DALC-REQ-CHART-PRESENCE-002]
   - it: presence slack botUserId wires HOSTED_AGENT_SLACK_BOT_USER_ID from Secret
     set:

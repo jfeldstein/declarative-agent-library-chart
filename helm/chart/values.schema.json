@@ -256,6 +256,32 @@
         }
       }
     },
+    "slackTools": {
+      "type": "object",
+      "description": "LLM-time Slack Web API bot token and tunables (HOSTED_AGENT_SLACK_TOOLS_*). Not used by scrapers (SLACK_* on CronJobs) or slack-trigger.",
+      "properties": {
+        "botTokenSecretName": {
+          "type": "string",
+          "description": "Kubernetes Secret name for xoxb token; maps to HOSTED_AGENT_SLACK_TOOLS_BOT_TOKEN"
+        },
+        "botTokenSecretKey": {
+          "type": "string",
+          "description": "Secret key containing the bot token (default: token)"
+        },
+        "historyLimit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 200,
+          "description": "Default cap for conversations.history / conversations.replies (HOSTED_AGENT_SLACK_TOOLS_HISTORY_LIMIT)"
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "minimum": 5,
+          "maximum": 120,
+          "description": "Slack WebClient HTTP timeout (HOSTED_AGENT_SLACK_TOOLS_TIMEOUT_SECONDS)"
+        }
+      }
+    },
     "observability": {
       "type": "object",
       "description": "Kubernetes/Prometheus: scrape annotations, JSON logs, optional ServiceMonitor (Prometheus Operator CRD). Traceability: [DALC-REQ-O11Y-SCRAPE-004] [DALC-REQ-O11Y-SCRAPE-005] [DALC-REQ-O11Y-SCRAPE-006]",

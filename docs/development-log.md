@@ -6,6 +6,12 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ---
 
+## 2026-04-18
+
+**OpenSpec `slack-tools` (apply)** — Agent Deployment **`slackTools`** values wire **`HOSTED_AGENT_SLACK_TOOLS_BOT_TOKEN`** (Kubernetes Secret ref, disjoint from CronJob **`SLACK_BOT_TOKEN`**) plus **`HOSTED_AGENT_SLACK_TOOLS_HISTORY_LIMIT`** / **`HOSTED_AGENT_SLACK_TOOLS_TIMEOUT_SECONDS`**. Runtime: **`slack_sdk.WebClient`** via **`hosted_agents.tools_impl.slack_support`**, simulated tool path when token unset; tools **`slack.post_message`**, **`slack.reactions_add`** / **`slack.reactions_remove`**, **`slack.chat_update`**, **`slack.conversations_history`**, **`slack.conversations_replies`**; Prometheus **`agent_runtime_slack_tool_web_api_*`**. Helm unittest + **`helm/src/tests/test_slack_tools_impl.py`**; **`tools_impl/README.md`** documents OAuth scopes and manual smoke with **`slack-trigger`**.
+
+**OpenSpec archive `slack-tools`** — **`openspec/changes/slack-tools`** moved to **`openspec/changes/archive/2026-04-17-slack-tools/`** (`spec-driven` workflow); promoted **`DALC-REQ-SLACK-TOOLS-*`** live in **`openspec/specs/dalc-slack-tools/spec.md`** with **`docs/spec-test-traceability.md`** rows. Squash-merge **`feature--slack-tools`** → **`main`**.
+
 ## 2026-04-17
 
 **Slack scraper runtime (`slack-scraper` OpenSpec apply)** — Tightened **`SCRAPER_JOB_CONFIG`** validation (**`slack_search`** / **`slack_channel`** fields, **`rtsLimit`**, **`historyLimit`**, **`maxMessagesPerRun`**), documented per-run caps in **`slack_job`**, bounded **`SCRAPER_INTEGRATION`** Prometheus labels via **`bounded_integration_label`**, Slack token-shaped substrings redacted from stderr, richer RAG **`metadata`** (**`slack_team_id`**, **`slack_thread_ts`**, **`slack_ts_compact`**). **`jira_job`** uses the same integration label helper. Tests: **`test_slack_job`**, **`test_scraper_metrics`**; **`python3 scripts/check_spec_traceability.py`** clean (no new promoted **`SHALL`** rows).

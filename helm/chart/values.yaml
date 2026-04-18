@@ -145,3 +145,12 @@ skills: []
 # MCP-style tool allowlist (JSON array of tool ids → HOSTED_AGENT_ENABLED_MCP_TOOLS_JSON)
 mcp:
   enabledTools: []
+
+# LLM-time Slack Web API tools → HOSTED_AGENT_SLACK_TOOLS_* on the agent Deployment only.
+# Disjoint from scrapers.slack.auth (CronJob SLACK_BOT_TOKEN / SLACK_USER_TOKEN) and from slack-trigger.
+# Traceability: [DALC-REQ-SLACK-TOOLS-002]
+slackTools:
+  botTokenSecretName: ""
+  botTokenSecretKey: token
+  historyLimit: 50
+  timeoutSeconds: 30

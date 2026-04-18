@@ -65,6 +65,18 @@ spec:
                 configMapKeyRef:
                   name: {{ include "declarative-agent-library-chart.fullname" . }}-config
                   key: enabled-mcp-tools.json
+            {{- $st := .Values.slackTools | default dict }}
+            {{- if $st.botTokenSecretName }}
+            - name: HOSTED_AGENT_SLACK_TOOLS_BOT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $st.botTokenSecretName | quote }}
+                  key: {{ default "token" $st.botTokenSecretKey | quote }}
+            {{- end }}
+            - name: HOSTED_AGENT_SLACK_TOOLS_HISTORY_LIMIT
+              value: {{ default 50 $st.historyLimit | toString | quote }}
+            - name: HOSTED_AGENT_SLACK_TOOLS_TIMEOUT_SECONDS
+              value: {{ default 30 $st.timeoutSeconds | toString | quote }}
             {{- if .Values.observability.structuredLogs.json }}
             - name: HOSTED_AGENT_LOG_FORMAT
               value: "json"

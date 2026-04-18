@@ -167,6 +167,19 @@ SKILL_LOAD_DURATION = Histogram(
     buckets=_DURATION_BUCKETS,
 )
 
+# Traceability: [DALC-REQ-SLACK-TOOLS-006] (method/result labels only; never secrets)
+SLACK_TOOL_WEB_API_CALLS = Counter(
+    "agent_runtime_slack_tool_web_api_calls_total",
+    "Slack Web API calls issued from LLM-time tools (not scrapers)",
+    ("method", "result"),
+)
+SLACK_TOOL_WEB_API_DURATION = Histogram(
+    "agent_runtime_slack_tool_web_api_duration_seconds",
+    "Latency of Slack Web API calls from LLM-time tools",
+    ("method", "result"),
+    buckets=_DURATION_BUCKETS,
+)
+
 
 def _elapsed(start: float) -> float:
     return max(time.perf_counter() - start, 0.0)
@@ -212,6 +225,16 @@ def observe_skill_load(skill: str, result: BinaryResult, start: float) -> None:
     dt = _elapsed(start)
     SKILL_LOADS.labels(skill=skill, result=result).inc()
     SKILL_LOAD_DURATION.labels(skill=skill, result=result).observe(dt)
+
+
+def observe_slack_tool_api(
+    method: str, result: BinaryResult, start: float | None = None
+) -> None:
+    """Count Slack Web API usage from ``tools_impl`` (labels: method name, never secrets)."""
+    dt = _elapsed(start) if start is not None else 0.0
+    SLACK_TOOL_WEB_API_CALLS.labels(method=method, result=result).inc()
+    if start is not None:
+        SLACK_TOOL_WEB_API_DURATION.labels(method=method, result=result).observe(dt)
 
 
 def _first_env(*keys: str) -> str | None:
