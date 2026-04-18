@@ -29,6 +29,8 @@ from hosted_agents.o11y_logging import configure_request_logging
 from hosted_agents.o11y_middleware import ObservabilityMiddleware
 from hosted_agents.runtime_config import RuntimeConfig
 from hosted_agents.skills_state import unlocked_tools
+from hosted_agents.jira_trigger.config import JiraTriggerSettings
+from hosted_agents.jira_trigger.webhook_route import register_jira_trigger_http_route
 from hosted_agents.slack_trigger.config import SlackTriggerSettings
 from hosted_agents.slack_trigger.http_events import register_slack_trigger_http_route
 from hosted_agents.trigger_graph import (
@@ -323,6 +325,11 @@ def _register_slack_trigger_routes(app: FastAPI) -> None:
     register_slack_trigger_http_route(app, st)
 
 
+def _register_jira_trigger_routes(app: FastAPI) -> None:
+    jt = JiraTriggerSettings.from_env()
+    register_jira_trigger_http_route(app, jt)
+
+
 def _register_rag_query_route(app: FastAPI) -> None:
     @app.post("/api/v1/rag/query")
     def rag_query(request: Request, body: RagQueryBody) -> JSONResponse:
@@ -355,6 +362,9 @@ async def _slack_trigger_lifespan(app: FastAPI):
         app.state.slack_trigger_deduper = EventDeduper()
         if st.socket_mode_configured():
             start_socket_mode_listener(st, app.state.slack_trigger_deduper)
+    jt = JiraTriggerSettings.from_env()
+    if jt.enabled and jt.event_dedupe:
+        app.state.jira_trigger_deduper = EventDeduper()
     yield
 
 
@@ -380,4 +390,5 @@ def create_app(*, system_prompt: str | None = None) -> FastAPI:
     _register_trigger_checkpoint_routes(app)
     _register_rag_query_route(app)
     _register_slack_trigger_routes(app)
+    _register_jira_trigger_routes(app)
     return app

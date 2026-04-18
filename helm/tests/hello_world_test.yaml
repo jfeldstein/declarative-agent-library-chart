@@ -137,6 +137,42 @@ tests:
               secretKeyRef:
                 name: slack-trig-bot
                 key: bot-key
+  # [DALC-REQ-JIRA-TRIGGER-004] distinct HOSTED_AGENT_JIRA_TRIGGER_* from Secrets (not jiraTools/scrapers)
+  - it: jiraTrigger wires trigger env toggles and webhook secret ref on agent Deployment
+    set:
+      agent.jiraTrigger.enabled: true
+      agent.jiraTrigger.eventDedupe: true
+      agent.jiraTrigger.webhookSecretSecretName: jira-trig-wh
+      agent.jiraTrigger.webhookSecretSecretKey: webhook-secret
+      agent.jiraTrigger.httpPath: /hooks/jira/inbound
+    template: templates/agent.yaml
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HOSTED_AGENT_JIRA_TRIGGER_ENABLED
+            value: "true"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HOSTED_AGENT_JIRA_TRIGGER_EVENT_DEDUPE
+            value: "true"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HOSTED_AGENT_JIRA_TRIGGER_HTTP_PATH
+            value: "/hooks/jira/inbound"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HOSTED_AGENT_JIRA_TRIGGER_WEBHOOK_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: jira-trig-wh
+                key: webhook-secret
   # [DALC-REQ-CHART-PRESENCE-002]
   - it: presence slack botUserId wires HOSTED_AGENT_SLACK_BOT_USER_ID from Secret
     set:

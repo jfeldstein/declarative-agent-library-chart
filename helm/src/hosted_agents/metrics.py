@@ -250,6 +250,19 @@ def observe_slack_trigger_inbound(transport: str, result: str) -> None:
     SLACK_TRIGGER_INBOUND.labels(transport=transport, result=result).inc()
 
 
+# [DALC-REQ-JIRA-TRIGGER-005] labels must never carry webhook secrets or raw bodies.
+JIRA_TRIGGER_INBOUND = Counter(
+    "agent_runtime_jira_trigger_inbound_total",
+    "Inbound Jira webhook trigger bridge; labels exclude secrets.",
+    ("transport", "result"),
+)
+
+
+def observe_jira_trigger_inbound(transport: str, result: str) -> None:
+    """Count Jira trigger inbound handling (transport + outcome, never secrets)."""
+    JIRA_TRIGGER_INBOUND.labels(transport=transport, result=result).inc()
+
+
 def _first_env(*keys: str) -> str | None:
     for k in keys:
         v = os.environ.get(k, "").strip()

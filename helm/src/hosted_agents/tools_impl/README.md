@@ -62,8 +62,15 @@ There is **no** requirement that the tools path call `/v1/embed`.
 | `jira.create_issue` | `jira/` | Create (`project_key`, `summary`, `issue_type`, optional `description`) |
 | `jira.update_issue` | `jira/` | Update (`issue_key`, `fields` object) |
 
-**Jira tools configuration** uses chart values `jiraTools` → environment prefix `HOSTED_AGENT_JIRA_TOOLS_*`. That is **separate** from scheduled scraper auth (`scrapers.jira.auth`) and from future Jira webhook trigger verification keys (`jira-trigger`). When `jiraTools.simulated` is true (default), or credentials are missing, implementations return structured **simulated** payloads and still emit side-effect checkpoints for mutations.
+**Jira tools configuration** uses chart values `jiraTools` → environment prefix `HOSTED_AGENT_JIRA_TOOLS_*`. That is **separate** from scheduled scraper auth (`scrapers.jira.auth`) and from **Jira trigger** webhook verification (`HOSTED_AGENT_JIRA_TRIGGER_*` / Helm `jiraTrigger`). When `jiraTools.simulated` is true (default), or credentials are missing, implementations return structured **simulated** payloads and still emit side-effect checkpoints for mutations.
 
 **Atlassian Cloud API tokens (recommended for tools)** map to Jira account email + API token using Basic HTTP auth (handled by `httpx`). Required Atlassian OAuth scopes for equivalent OAuth clients align with tool scopes: **read Jira** work items (search/read), **write Jira** work items (comment/create/update), and **transition** requires workflow transition permissions on the issues touched. Exact OAuth scope strings follow Atlassian’s product documentation for your OAuth app type; prefer API tokens for server-style agents unless OAuth is mandated.
 
 These tools **do not** call `POST /v1/embed` or ingest tool I/O into the managed RAG index by default.
+
+### Smoke with `jira-trigger` (manual)
+
+1. Create a Secret with the webhook shared secret; set `jiraTrigger.webhookSecretSecretName` / `webhookSecretSecretKey` and `jiraTrigger.enabled: true`.
+2. Configure Jira to POST to your ingress URL (include the same secret as the `secret` query parameter or inject `X-Jira-Webhook-Secret`).
+3. Allow-list Jira tool ids in `mcp.enabledTools` as needed.
+4. Fire a webhook; confirm a trigger run starts (`agent_runtime_jira_trigger_inbound_total`) and the agent can invoke Jira tools during the run; the **trigger handler** never calls `/v1/embed`.

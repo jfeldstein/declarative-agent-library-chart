@@ -24,3 +24,8 @@ class TriggerContext:
     slack_channel_id: str | None = None
     slack_thread_ts: str | None = None
     slack_message_ts: str | None = None
+    # Populated when the trigger originates from Jira webhooks (jira-trigger bridge).
+    jira_issue_key: str | None = None
+    jira_project_key: str | None = None
+    jira_webhook_event: str | None = None
+    jira_webhook_delivery_id: str | None = None

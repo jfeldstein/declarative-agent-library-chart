@@ -297,6 +297,20 @@
         "botTokenSecretKey": { "type": "string" }
       }
     },
+    "jiraTrigger": {
+      "type": "object",
+      "description": "Inbound Jira webhook bridge (HOSTED_AGENT_JIRA_TRIGGER_*). Not scrapers.jira or jiraTools. Traceability: [DALC-REQ-JIRA-TRIGGER-004]",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "eventDedupe": { "type": "boolean" },
+        "webhookSecretSecretName": { "type": "string" },
+        "webhookSecretSecretKey": { "type": "string" },
+        "httpPath": {
+          "type": "string",
+          "description": "Optional POST path override (HOSTED_AGENT_JIRA_TRIGGER_HTTP_PATH)"
+        }
+      }
+    },
     "observability": {
       "type": "object",
       "description": "Kubernetes/Prometheus: scrape annotations, JSON logs, optional ServiceMonitor (Prometheus Operator CRD). Traceability: [DALC-REQ-O11Y-SCRAPE-004] [DALC-REQ-O11Y-SCRAPE-005] [DALC-REQ-O11Y-SCRAPE-006]",

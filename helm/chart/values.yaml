@@ -192,3 +192,13 @@ slackTrigger:
   appTokenSecretKey: app-token
   botTokenSecretName: ""
   botTokenSecretKey: token
+
+# Inbound Jira webhooks → hosted trigger. Uses HOSTED_AGENT_JIRA_TRIGGER_*;
+# not scrapers.jira or jiraTools.*.
+# [DALC-REQ-JIRA-TRIGGER-004]
+jiraTrigger:
+  enabled: false
+  eventDedupe: false
+  webhookSecretSecretName: ""
+  webhookSecretSecretKey: webhook-secret
+  httpPath: ""

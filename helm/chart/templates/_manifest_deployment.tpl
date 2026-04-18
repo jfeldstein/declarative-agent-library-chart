@@ -233,6 +233,29 @@ spec:
                   key: {{ $trBotKey | quote }}
             {{- end }}
             {{- end }}
+            {{- $jiraTrig := .Values.jiraTrigger | default dict }}
+            {{- if $jiraTrig.enabled | default false }}
+            - name: HOSTED_AGENT_JIRA_TRIGGER_ENABLED
+              value: "true"
+            {{- if $jiraTrig.eventDedupe | default false }}
+            - name: HOSTED_AGENT_JIRA_TRIGGER_EVENT_DEDUPE
+              value: "true"
+            {{- end }}
+            {{- $jhp := $jiraTrig.httpPath | default "" | trim }}
+            {{- if $jhp }}
+            - name: HOSTED_AGENT_JIRA_TRIGGER_HTTP_PATH
+              value: {{ $jhp | quote }}
+            {{- end }}
+            {{- $jwsec := $jiraTrig.webhookSecretSecretName | default "" | trim }}
+            {{- $jwkey := $jiraTrig.webhookSecretSecretKey | default "webhook-secret" | trim }}
+            {{- if and $jwsec $jwkey }}
+            - name: HOSTED_AGENT_JIRA_TRIGGER_WEBHOOK_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $jwsec | quote }}
+                  key: {{ $jwkey | quote }}
+            {{- end }}
+            {{- end }}
             {{- range .Values.extraEnv }}
             - name: {{ .name }}
               value: {{ .value | quote }}
