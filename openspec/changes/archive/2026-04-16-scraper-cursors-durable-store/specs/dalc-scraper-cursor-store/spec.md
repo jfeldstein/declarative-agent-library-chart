@@ -25,11 +25,11 @@ When the Postgres backend is enabled, the implementation SHALL persist state in 
 
 ### Requirement: [DALC-REQ-SCRAPER-CURSOR-003] Helm SHALL wire Postgres URL to scraper workloads only when the durable backend is enabled
 
-The Helm chart SHALL NOT inject Postgres credentials into scraper pods solely because the agent uses Postgres. When (and only when) the chart’s documented **cursor store** settings select the Postgres backend, the chart SHALL set the scraper container environment to include a **non-empty** Postgres DSN sourced from the same documented precedence as other chart surfaces (shared `observability.postgresUrl` / `HOSTED_AGENT_POSTGRES_URL`, with an optional scraper-specific override if documented).
+The Helm chart SHALL NOT inject Postgres credentials into scraper pods solely because the agent uses Postgres. When (and only when) the chart's documented **cursor store** settings select the Postgres backend, the chart SHALL set the scraper container environment to include a **non-empty** Postgres DSN sourced from the same documented precedence as other chart surfaces (shared `checkpoints.postgresUrl` / `HOSTED_AGENT_POSTGRES_URL`, with an optional scraper-specific override if documented).
 
 #### Scenario: Agent Postgres without scraper cursor backend
 
-- **WHEN** `observability.postgresUrl` is set for the agent and the scraper cursor backend remains **file** (default)
+- **WHEN** `checkpoints.postgresUrl` is set for the agent and the scraper cursor backend remains **file** (default)
 - **THEN** the chart SHALL NOT require scraper CronJob pods to receive `HOSTED_AGENT_POSTGRES_URL` solely for cursor persistence
 
 #### Scenario: Scraper Postgres cursor backend enabled
