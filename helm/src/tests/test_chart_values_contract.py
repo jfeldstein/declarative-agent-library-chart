@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any
 
@@ -94,6 +95,17 @@ def test_library_image_repository_default_is_dalc_packaging() -> None:
     values_path = Path(__file__).resolve().parents[2] / "chart" / "values.yaml"
     data = yaml.safe_load(values_path.read_text(encoding="utf-8"))
     assert data.get("image", {}).get("repository") == "declarative-agent-library-chart"
+
+
+def test_observability_plugins_log_shipping_schema_documents_enabled_key() -> None:
+    """[DALC-REQ-PLUGIN-LOG-SHIPPING-002]"""
+    schema_path = Path(__file__).resolve().parents[2] / "chart" / "values.schema.json"
+    schema = json.loads(schema_path.read_text(encoding="utf-8"))
+    plugins = schema["properties"]["observability"]["properties"]["plugins"]["properties"]
+    assert "logShipping" in plugins
+    ls = plugins["logShipping"]
+    assert ls.get("type") == "object"
+    assert ls["properties"]["enabled"]["type"] == "boolean"
 
 
 def test_hello_world_example_uses_agent_alias_and_values_key() -> None:

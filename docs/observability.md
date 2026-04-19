@@ -34,7 +34,7 @@ This section aligns with **`openspec/changes/agent-checkpointing-wandb-feedback`
 - **`wandb.*`**: maps to `HOSTED_AGENT_WANDB_ENABLED`, `WANDB_PROJECT`, and `WANDB_ENTITY` when enabled.
 - **`scrapers.slack.feedback.*`**: `enabled` and `emojiLabelMap` configure reaction ingestion (`HOSTED_AGENT_SLACK_FEEDBACK_ENABLED`, `HOSTED_AGENT_SLACK_EMOJI_LABEL_MAP_JSON`). **`labelRegistry`** is the **human feedback label taxonomy** (ConfigMap `label-registry.json` → **`HOSTED_AGENT_LABEL_REGISTRY_JSON`**); it is **not** Kubernetes or Prometheus label metadata.
 - **`slackTools.*`**: optional Secret ref + tunables for **in-process** Slack tools (`HOSTED_AGENT_SLACK_TOOLS_*` on the agent Deployment only; not used by scraper CronJobs).
-- **`observability.*`**: cluster scrape hints only—`prometheus.io/*` annotations, optional **`ServiceMonitor`**, and **`structuredLogs.json`** → `HOSTED_AGENT_LOG_FORMAT=json`.
+- **`observability.*`**: cluster scrape hints only—`prometheus.io/*` annotations, optional **`ServiceMonitor`**, **`structuredLogs.json`** or **`plugins.logShipping.enabled`** → `HOSTED_AGENT_LOG_FORMAT=json` (see **[DALC-REQ-PLUGIN-LOG-SHIPPING-001]** / `dalc-plugin-log-shipping`).
 
 **Thread APIs** (when `HOSTED_AGENT_CHECKPOINT_STORE` ≠ `none`):
 
@@ -87,7 +87,7 @@ This is separate from Uvicorn’s own access logs; it applies to the structured 
 
 Helm: add entries under `extraEnv` on the agent workload (see `helm/chart/values.yaml`) to set pricing inputs without committing secrets.
 
-Helm: set `observability.structuredLogs.json: true` under the `agent` subchart (dependency alias) to inject `HOSTED_AGENT_LOG_FORMAT=json`.
+Helm: set `observability.structuredLogs.json: true` **or** `observability.plugins.logShipping.enabled: true` under the `agent` subchart (dependency alias) to inject `HOSTED_AGENT_LOG_FORMAT=json`. The **`logShipping`** toggle is for operators who model log export as a named plugin alongside other `observability.plugins.*` flags.
 
 ### Metric names (agent process)
 
@@ -134,6 +134,8 @@ Worked example chart: `**examples/with-observability/`** (enables an enabled scr
 
 ## Logs (Loki / ELK / etc.)
 
+<!-- Traceability: [DALC-REQ-PLUGIN-LOG-SHIPPING-003] extends [DALC-REQ-O11Y-LOGS-004] -->
+
 With `**HOSTED_AGENT_LOG_FORMAT=json`**, stdout lines are JSON objects suitable for **Fluent Bit**, **Promtail**, **Vector**, or the OpenTelemetry Collector (file/stdout receiver).
 
 Recommended pipeline labels:
@@ -143,6 +145,58 @@ Recommended pipeline labels:
 - `**request_id**` from the `request_id` field when present.
 
 Clients may send `**X-Request-Id**`; the server echoes it on responses and includes it in structured logs for the request. Outbound HTTP from the agent to RAG (`**rag**` specialist tool execution inside `**POST /api/v1/trigger**` and `**POST /api/v1/rag/query**`) sends the same `**X-Request-Id**` on the upstream request.
+
+### Example: Fluent Bit → Loki (Kubernetes container logs)
+
+Kubernetes typically presents container stdout as files under `/var/log/containers/`. Parse each log line as JSON so `level`, `message`, `service`, and `request_id` become extracted fields before you attach Loki labels (keep cardinality bounded—prefer static metadata plus `service` / `level`):
+
+```ini
+[PARSER]
+    Name        dalc_agent_json
+    Format      json
+
+[FILTER]
+    Name                kubernetes
+    Match               kube.*
+    Merge_Log           On
+    Keep_Log            Off
+```
+
+### Example: Promtail / Grafana Agent (`pipeline_stages`)
+
+```yaml
+pipeline_stages:
+  - json:
+      expressions:
+        level: level
+        service: service
+        request_id: request_id
+        message: message
+  - labels:
+      level:
+      service:
+```
+
+Use **`labelallow`** / **`labeldrop`** so high-cardinality fields such as `request_id` remain LogQL filters unless your retention policy intentionally permits that cardinality as a label.
+
+### Example: Vector (parse JSON line)
+
+When the raw line is JSON text (for example from `file` or `kubernetes_logs` source):
+
+```toml
+[transforms.parse_dalc_json]
+type = "remap"
+inputs = ["raw_kube_logs"]
+source = '''
+  parsed, err = parse_json(.message)
+  if err == null {
+    .level = parsed.level
+    .service = parsed.service
+    .request_id = parsed.request_id
+    .msg = parsed.message
+  }
+'''
+```
 
 ## Dashboards
 
