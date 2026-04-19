@@ -6,6 +6,12 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ---
 
+## 2026-04-19
+
+**OpenSpec drift (`dalc-chart-testing-ct`)** — Reconciled **`openspec/changes/archive/2026-04-16-dalc-traceability-migration/specs/dalc-chart-testing-ct/spec.md`** with promoted **`openspec/specs/dalc-chart-testing-ct/spec.md`** (archive used **`## MODIFIED Requirements`** only; normative **`[DALC-REQ-CHART-CT-001]`** / **`002`** text already matched root). **`docs/openspec-sync-remediation-checklist.md`** § **B** item checked; **`python3 scripts/check_spec_traceability.py`** ok.
+
+**OpenSpec `dalc-helm-unittest` (§B drift)** — Replaced the traceability-migration archive copy of **`openspec/changes/archive/2026-04-16-dalc-traceability-migration/specs/dalc-helm-unittest/spec.md`** with the promoted root spec (**`openspec/specs/dalc-helm-unittest/spec.md`**, byte-identical) so archive text matches shipped **`[DALC-REQ-HELM-UNITTEST-*]`** intent (ServiceMonitor per enabled metrics **`Service`**, no RAG **`ServiceMonitor`** when RAG not deployed, **`[DALC-REQ-HELM-UNITTEST-004]`** multi-values coverage, install-path scenario with **`-f`** / example **values** paths). Checklist §B item for **`dalc-helm-unittest`** marked done. Gate: **`python3 scripts/check_spec_traceability.py`** ok.
+
 ## 2026-04-18
 
 **OpenSpec remediation checklist** — Added **[`docs/openspec-sync-remediation-checklist.md`](openspec-sync-remediation-checklist.md)** for follow-up on spec drift vs archives, promotion gaps, and housekeeping after merges (pairs with **`openspec/AGENTS.md`**).
