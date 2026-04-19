@@ -6,7 +6,7 @@
 {{- if or (not (hasKey $job "enabled")) $job.enabled }}
 {{- $clean := dict }}
 {{- range $k, $v := $job }}
-{{- if and (ne $k "enabled") (ne $k "schedule") }}
+{{- if and (ne $k "enabled") (ne $k "schedule") (ne $k "siteUrl") (ne $k "watermarkDir") }}
 {{- $_ := set $clean $k $v }}
 {{- end }}
 {{- end }}
