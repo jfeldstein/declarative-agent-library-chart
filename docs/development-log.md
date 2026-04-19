@@ -8,6 +8,8 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ## 2026-04-19
 
+**`dalc-typed-langchain-tool-bindings` promoted** — **`openspec/specs/dalc-typed-langchain-tool-bindings/spec.md`** (**`[DALC-REQ-TYPED-LANGCHAIN-TOOL-BINDINGS-001]`**–**`003`**) with matrix + pytest docstring evidence; change archived to **`openspec/changes/archive/2026-04-19-typed-mcp-langchain-tools/`**. **`python3 scripts/check_spec_traceability.py`**, **`uv run pytest tests/`** ok.
+
 **Typed LangChain MCP tools (`typed-mcp-langchain-tools`)** — Added **`hosted_agents/mcp_langchain_tools.py`**: one **`@tool`** per **`REGISTERED_MCP_TOOL_IDS`** with named parameters mapped to **`invoke_tool`** dicts (via **`run_tool_json`**); **`invoke_tool`** uses **`_NON_JIRA_DISPATCH`** map to shared Slack/sample handlers; **`supervisor`** delegates **`_make_mcp_tool`** to **`make_mcp_langchain_tool`**; generic **`arguments_json`** retained only for skill-unlocked ids outside the registry. Tests **`test_mcp_langchain_tools`** (guard + invoke smoke). **`uv run pytest tests/`** (**helm/src**) ok (**86.6%** cov).
 
 **`ScraperIntegration` + `ingest_from_integration()`** — Typed **`Protocol`** in **`base.py`**; integrations **`_JiraIntegration`** / **`_SlackIntegration`** implement **`build_batch()` → `ScrapedEmbeds`** only (**`ingest_from_integration`** performs all **`POST /v1/embed`**). OpenSpec **`scrapers-basescraper-concurrency`** tasks **1.1–1.4** complete (Helm **`concurrencyPolicy`** deferred). Implemented in worktree **`wt/scrapers-basescraper`**, merged **`feature--scrapers-basescraper-concurrency`** → **`main`** (**`6f6c3d8`**). **`uv run pytest tests/`**, **`scripts/check_spec_traceability.py`** ok.

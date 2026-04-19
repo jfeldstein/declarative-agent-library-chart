@@ -1,5 +1,7 @@
 """Guardrails for MCP LangChain tool registration vs Helm allowlist."""
 
+# Traceability: see per-test docstrings for [DALC-REQ-TYPED-LANGCHAIN-TOOL-BINDINGS-*].
+
 from __future__ import annotations
 
 import json
@@ -76,13 +78,13 @@ INVOCATION_PAYLOADS: dict[str, dict[str, object]] = {
 
 
 def test_registered_mcp_tool_ids_match_langchain_builders() -> None:
-    """Every Helm-contract tool id must have a typed LangChain factory (module import asserts too)."""
+    """[DALC-REQ-TYPED-LANGCHAIN-TOOL-BINDINGS-003] Registry parity: no silent generic wrapper for Helm ids."""
     assert REGISTERED_MCP_TOOL_IDS == MCP_LANGCHAIN_TYPED_TOOL_IDS
 
 
 @pytest.mark.parametrize("tool_id", sorted(REGISTERED_MCP_TOOL_IDS))
 def test_each_typed_tool_invokes_run_tool_json(tool_id: str, monkeypatch: pytest.MonkeyPatch) -> None:
-    """Smoke: each `@tool` wrapper delegates to ``run_tool_json`` with structured args."""
+    """[DALC-REQ-TYPED-LANGCHAIN-TOOL-BINDINGS-001] Structured LangChain invoke → ``run_tool_json`` (no opaque JSON-only path)."""
     calls: list[tuple[str, dict[str, object]]] = []
 
     def fake_run(cfg: RuntimeConfig, tid: str, args: dict[str, object]) -> str:
@@ -108,6 +110,7 @@ def test_each_typed_tool_invokes_run_tool_json(tool_id: str, monkeypatch: pytest
 
 
 def test_unknown_tool_id_falls_back_to_generic_json(monkeypatch: pytest.MonkeyPatch) -> None:
+    """[DALC-REQ-TYPED-LANGCHAIN-TOOL-BINDINGS-003] Generic ``arguments_json`` exists only for non-registry tool ids."""
     calls: list[tuple[str, dict[str, object]]] = []
 
     def fake_run(cfg: RuntimeConfig, tid: str, args: dict[str, object]) -> str:

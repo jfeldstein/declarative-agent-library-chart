@@ -1,4 +1,7 @@
-"""Dispatch ``tool`` id to implementation."""
+"""Dispatch ``tool`` id to implementation.
+
+[DALC-REQ-TYPED-LANGCHAIN-TOOL-BINDINGS-002] Non-Jira ids share module entrypoints with LangChain wrappers.
+"""
 
 from __future__ import annotations
 

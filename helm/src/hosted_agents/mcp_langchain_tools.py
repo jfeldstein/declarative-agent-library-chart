@@ -1,4 +1,7 @@
-"""Typed LangChain ``@tool`` factories for in-process MCP tool ids (supervisor runtime)."""
+"""Typed LangChain ``@tool`` factories for in-process MCP tool ids (supervisor runtime).
+
+[DALC-REQ-TYPED-LANGCHAIN-TOOL-BINDINGS-002] Wrappers call ``run_tool_json`` → ``invoke_tool`` (same dicts as dispatch).
+"""
 
 from __future__ import annotations
 
@@ -292,6 +295,7 @@ def make_mcp_langchain_tool(tool_id: str, safe_name: str, ctx: TriggerContext) -
     return _json_fail(tool_id, safe_name, ctx)
 
 
+# [DALC-REQ-TYPED-LANGCHAIN-TOOL-BINDINGS-003] Every registered id is typed; generic JSON wrapper only via _json_fail for unknown ids.
 assert REGISTERED_MCP_TOOL_IDS == MCP_LANGCHAIN_TYPED_TOOL_IDS, (
     "REGISTERED_MCP_TOOL_IDS must match typed LangChain builders; update mcp_langchain_tools."
 )
