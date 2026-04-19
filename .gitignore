@@ -22,3 +22,5 @@ wt/**/*
 # Lefthook local overrides (https://github.com/evilmartians/lefthook/blob/master/docs/configuration.md#lefthook-local)
 .lefthook-local.yml
 .lefthook-local.yaml
+
+.env*
