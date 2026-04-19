@@ -18,3 +18,5 @@ When you add or materially change a normative **SHALL** under `openspec/specs/*/
 4. Run **`python3 scripts/check_spec_traceability.py`** before merge (also runs in CI per **`.github/workflows/ci.yml`**).
 
 **Conventions and cross-linking (spec ↔ test):** read **[ADR 0003](docs/adrs/0003-spec-test-traceability.md)**. **CI tier semantics** and the **matrix table** live in **`docs/spec-test-traceability.md`**.
+
+**Helm unittest locally:** **`helm/tests/*_test.yaml`** is exercised from each chart under **`examples/`** after **`helm dependency build`** (same shell loop as the **Helm** job in **`.github/workflows/ci.yml`**), not by running **`helm unittest`** against **`helm/chart`** alone — see **`docs/AGENTS.md`** (Commands).

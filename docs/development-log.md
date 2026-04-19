@@ -10,10 +10,6 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 **Package `agent` + `triggers/{slack,jira}`** — Rename **`helm/src/hosted_agents/`** → **`helm/src/agent/`** (imports **`agent`**). Inbound Slack/Jira bridges live under **`agent/triggers/slack/`** and **`agent/triggers/jira/`** with shared **`agent/triggers/dedupe.py`**. Container **`uvicorn agent.app:create_app`**; CronJobs **`python -m agent.scrapers.*`**; RAG **`agent.rag.app`**. PostgreSQL schema **`hosted_agents`** unchanged in SQL and **`postgres_repos`** query text. Updates: Hatch/coverage/complexipy/ruff paths (**`agent`**), Helm templates, **`docs/spec-test-traceability.md`**, **`openspec/specs/`** module strings. Gates: **`uv run pytest tests/`**, **`python3 scripts/check_spec_traceability.py`**.
 
-
-
-## 2026-04-19
-
 **`tools_impl` → `agent.tools`** — In-process MCP implementations live under **`helm/src/agent/tools/`**: **`dispatch.py`**, **`sample_echo.py`**, **`slack/`** (**`post`**, **`reactions`**, **`history`**, **`support`**), **`jira/`** unchanged logically; public **`from agent.tools import jira`** and **`from agent.tools.slack import send_message`**. Traceability matrix paths and docs updated.
 
 **Promoted `dalc-scraper-base-runtime` + `[DALC-REQ-RAG-SCRAPERS-005]`** — Canonical **`openspec/specs/dalc-scraper-base-runtime/spec.md`** (**`[DALC-REQ-SCRAPER-BASE-001]`–`003`**); **`dalc-rag-from-scrapers`** gains per-job **`concurrencyPolicy`** (**Helm-only**, default **`Forbid`**). Matrix + **`ADR 0009`**; **`examples/with-scrapers/values.scraper-jira-concurrency-*.yaml`** for Helm unittest. **`python3 scripts/check_spec_traceability.py`**, **`uv run pytest tests/`**, **`helm unittest`** (`with-scrapers`) ok.
