@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import re
 from typing import Any
 
@@ -13,10 +12,10 @@ from langchain_core.tools import tool
 
 from hosted_agents.chat_model import resolve_chat_model
 from hosted_agents.llm_metrics import SupervisorLlmMetricsCallback
+from hosted_agents.mcp_langchain_tools import make_mcp_langchain_tool
 from hosted_agents.subagent_units import compile_subagent_subgraph
 from hosted_agents.trigger_context import TriggerContext
 from hosted_agents.trigger_errors import TriggerHttpError
-from hosted_agents.trigger_steps import run_tool_json
 from hosted_agents.skills_state import unlocked_tools
 
 
@@ -134,33 +133,8 @@ def _build_mcp_langchain_tools(ctx: TriggerContext) -> list[Any]:
 
 
 def _make_mcp_tool(tool_id: str, safe_name: str, ctx: TriggerContext) -> Any:
-    if tool_id == "sample.echo":
-
-        @tool(safe_name)
-        def sample_echo(runtime: ToolRuntime, message: str) -> str:  # noqa: ARG001
-            """Echo back a string (bundled sample MCP tool)."""
-            return run_tool_json(ctx.cfg, "sample.echo", {"message": message})
-
-        return sample_echo
-
-    desc = (
-        f"In-process MCP tool `{tool_id}`. "
-        f"Pass arguments as a JSON object string (e.g. '{{}}' or '{{\"key\": \"v\"}}')."
-    )
-
-    @tool(safe_name, description=desc)
-    def generic_mcp_tool(
-        runtime: ToolRuntime,  # noqa: ARG001
-        arguments_json: str = "{}",
-    ) -> str:
-        try:
-            args = json.loads(arguments_json) if arguments_json.strip() else {}
-        except json.JSONDecodeError as exc:
-            msg = f"invalid JSON arguments: {exc}"
-            raise ValueError(msg) from exc
-        return run_tool_json(ctx.cfg, tool_id, args)
-
-    return generic_mcp_tool
+    """LangChain binding for one MCP tool id (typed params for registered ids)."""
+    return make_mcp_langchain_tool(tool_id, safe_name, ctx)
 
 
 def build_supervisor_tools(ctx: TriggerContext) -> list[Any]:
