@@ -4,7 +4,27 @@
 
 <!-- Traceability: [DALC-REQ-O11Y-LOGS-004] -->
 
+## Runtime architecture: lifecycle events and plugins (Phase 1)
+
+**Phase 1** ships under OpenSpec change **`openspec/changes/observability-lifecycle-events/`** (chart/runtime alignment and follow-on OpenSpec promotion may track in parallel using branch prefix **`feature--observability-plugins-parallel*`** until a change directory is promoted). It introduces a **synchronous lifecycle event bus** (`SyncEventBus`, `EventName`) and **`agent.observability.middleware`** helpers so trigger handling, tools, LLM callbacks, RAG HTTP, scrapers, and Slack/Jira inbound paths emit **structured events**. **Existing subscribers** keep **`agent_runtime_*` Prometheus series** aligned with prior behavior while decoupling future sinks.
+
+**Helm** declares optional integrations under a **single tree**: **`agent.observability.plugins`** with boolean **`enabled`** defaults (**false**) for **`prometheus`**, **`langfuse`**, **`wandb`**, **`grafana`**, and **`logShipping`**. Phase 1 **scaffolds** these keys; template wiring and env injection land in later phases. **Operational configuration today** still uses **`observability.*`** (scrape annotations, JSON logs, Postgres pools for correlation), **`wandb.*`** (Weights & Biases tracing), and the checkpoint/cursor tables documented below—do not assume **`observability.plugins.*`** toggles behavior until the release notes say so.
+
+Per-plugin operator guides are **stubbed** here until each integration’s Helm/env contract is finalized; shared metrics, scrape, logs, and checkpoint content remain authoritative in the sections that follow.
+
+| Plugin key (`observability.plugins.<key>`) | Stub — read next |
+| --- | --- |
+| **`prometheus`** | Default **`GET /metrics`** on the agent/RAG workloads and scraper listeners is unchanged; see [Metrics (Prometheus)](#metrics-prometheus). The plugin flag is **reserved** for future gating ([ADR 0014](adrs/0014-observability-plugin-architecture.md)). |
+| **`langfuse`** | *Planned* export of redacted LLM spans to Langfuse; not wired in Phase 1. |
+| **`wandb`** | Runtime tracing uses top-level **`wandb.*`** + env vars in the **Checkpoints, W&B traces, and Slack correlation** section below; **`observability.plugins.wandb`** is reserved for chart alignment—follow **`docs/release-notes/`** when migration switches. |
+| **`grafana`** | In-repo dashboards remain **`grafana/*.json`**; remote_write/stack automation is future work. |
+| **`logShipping`** | Stdout **`HOSTED_AGENT_LOG_FORMAT=json`** via **`observability.structuredLogs`** today; sidecar/collector templates TBD. |
+
+Design record: **[ADR 0014 — Observability plugin architecture](adrs/0014-observability-plugin-architecture.md)** (terminology alongside **[ADR 0005](adrs/0005-observability-vs-execution-persistence.md)**, schema rules in **[ADR 0011](adrs/0011-prometheus-metrics-schema-and-cardinality.md)**).
+
 ## Checkpoints, W&B traces, and Slack correlation (OpenSpec)
+
+This section covers **execution persistence**, correlation, and W&B tracing — see [ADR 0005](adrs/0005-observability-vs-execution-persistence.md) for how that differs from **Prometheus observability metrics** and optional **plugins**.
 
 This section aligns with **`openspec/changes/agent-checkpointing-wandb-feedback`** (`runtime-langgraph-checkpoints`, `wandb-agent-traces`, `tool-feedback-slack`). Deep dive: **[checkpointing-and-traces.md](checkpointing-and-traces.md)** and **[runbooks/checkpoints-wandb.md](runbooks/checkpoints-wandb.md)**.
 
@@ -34,7 +54,8 @@ This section aligns with **`openspec/changes/agent-checkpointing-wandb-feedback`
 - **`wandb.*`**: maps to `HOSTED_AGENT_WANDB_ENABLED`, `WANDB_PROJECT`, and `WANDB_ENTITY` when enabled.
 - **`scrapers.slack.feedback.*`**: `enabled` and `emojiLabelMap` configure reaction ingestion (`HOSTED_AGENT_SLACK_FEEDBACK_ENABLED`, `HOSTED_AGENT_SLACK_EMOJI_LABEL_MAP_JSON`). **`labelRegistry`** is the **human feedback label taxonomy** (ConfigMap `label-registry.json` → **`HOSTED_AGENT_LABEL_REGISTRY_JSON`**); it is **not** Kubernetes or Prometheus label metadata.
 - **`slackTools.*`**: optional Secret ref + tunables for **in-process** Slack tools (`HOSTED_AGENT_SLACK_TOOLS_*` on the agent Deployment only; not used by scraper CronJobs).
-- **`observability.*`**: cluster scrape hints only—`prometheus.io/*` annotations, optional **`ServiceMonitor`**, **`structuredLogs.json`** or **`plugins.logShipping.enabled`** → `HOSTED_AGENT_LOG_FORMAT=json` (see **[DALC-REQ-PLUGIN-LOG-SHIPPING-001]** / `dalc-plugin-log-shipping`).
+- **`observability.*`**: cluster scrape hints—`prometheus.io/*` annotations, optional **`ServiceMonitor`**, **`structuredLogs.json`** or **`plugins.logShipping.enabled`** → `HOSTED_AGENT_LOG_FORMAT=json` (see **[DALC-REQ-PLUGIN-LOG-SHIPPING-001]** / `dalc-plugin-log-shipping`), Postgres pool caps for observability tables when configured, etc.
+- **`observability.plugins.*`**: toggle tree for optional integrations (`prometheus`, `langfuse`, `wandb`, `grafana`, `logShipping`; defaults vary by key). See [Runtime architecture](#runtime-architecture-lifecycle-events-and-plugins-phase-1) and per-plugin sections below.
 
 **Thread APIs** (when `HOSTED_AGENT_CHECKPOINT_STORE` ≠ `none`):
 
