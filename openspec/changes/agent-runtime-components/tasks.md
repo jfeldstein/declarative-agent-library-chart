@@ -10,7 +10,7 @@
 
 ## 2. Configuration schema and documentation
 
-- [ ] 2.1 Extend Helm **`values.schema.json`** with tunables for **RAG** (under **`scrapers.ragService`** and related **`scrapers`/`scrapers.jobs`** shapes—**no** separate top-level **`rag:`** key), plus **`scrapers`**, **`tools`/`mcp`**, **`subagents`**, and **`skills`**. *(Checkbox stays open until a maintainer explicitly accepts “RAG under **`scrapers`**” as satisfying this task or promotes a spec rename.)*
+- [x] 2.1 Extend Helm **`values.schema.json`** with tunables for **RAG** (under **`scrapers.ragService`** and related **`scrapers`/`scrapers.jobs`** shapes—**no** separate top-level **`rag:`** key), plus **`scrapers`**, **`tools`/`mcp`**, **`subagents`**, and **`skills`**. *(Maintainers accept **`scrapers.ragService`** as the RAG placement; schema documents **`scrapers`**, **`mcp`**, **`subagents`**, **`skills`**.)*
 - [x] 2.2 Document in README or operator docs how each section maps to the five runtime components and cross-link LangChain [Subagents](https://docs.langchain.com/oss/python/langchain/multi-agent/subagents) and [Skills](https://docs.langchain.com/oss/python/langchain/multi-agent/skills) for behavioral alignment.
 
 ## 3. Scheduled scrapers
@@ -24,7 +24,7 @@
 
 - [x] 4.1 Establish a module layout and packaging pattern for tool implementations with MCP manifest or code-first registration.
 - [x] 4.2 Wire agent runtime to connect only to MCP servers/tools listed in values for that deployment.
-- [ ] 4.3 **`sample.echo`** is the sample tool module. **Still open:** automated lint/snapshot proving Helm **`mcp.enabledTools`** ⊆ registered tool ids in **`dispatch.py`**.
+- [x] 4.3 **`sample.echo`** is the sample tool module. **`REGISTERED_MCP_TOOL_IDS`** in **`helm/src/hosted_agents/tools_impl/dispatch.py`** + **`tests/test_chart_values_contract.py::test_mcp_enabled_tools_are_subset_of_dispatch_registry`** enforce Helm **`mcp.enabledTools`** ⊆ dispatch.
 - [x] 4.4 Register **`agent_runtime_mcp_tool_calls_total`** and **`agent_runtime_mcp_tool_duration_seconds`** on the agent (or MCP bridge) per **`runtime-tools-mcp`**.
 
 ## 5. Subagents

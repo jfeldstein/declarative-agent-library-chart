@@ -13,6 +13,19 @@ from hosted_agents.tools_impl import (
 from hosted_agents.tools_impl.jira import TOOL_IDS as JIRA_TOOL_IDS
 from hosted_agents.tools_impl.jira import invoke as invoke_jira_tool
 
+# Authoritative allowlist for Helm `mcp.enabledTools` contract tests (`tests/test_chart_values_contract.py`).
+REGISTERED_MCP_TOOL_IDS: frozenset[str] = frozenset(
+    {
+        "sample.echo",
+        "slack.post_message",
+        "slack.reactions_add",
+        "slack.reactions_remove",
+        "slack.chat_update",
+        "slack.conversations_history",
+        "slack.conversations_replies",
+    }
+) | JIRA_TOOL_IDS
+
 
 def invoke_tool(tool: str, arguments: dict[str, Any]) -> dict[str, Any]:
     if tool == "sample.echo":
