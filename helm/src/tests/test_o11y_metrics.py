@@ -33,7 +33,7 @@ def test_metrics_endpoint_exposes_registry() -> None:
     client = TestClient(app)
     text = _metrics_text(client)
     assert "# TYPE " in text
-    assert "agent_runtime_http_trigger" in text
+    assert "dalc_http_trigger" in text
 
 
 def test_trigger_success_increments_counter() -> None:
@@ -43,10 +43,10 @@ def test_trigger_success_increments_counter() -> None:
     before = _metrics_text(client)
     client.post("/api/v1/trigger")
     after = _metrics_text(client)
-    assert 'agent_runtime_http_trigger_requests_total{result="success"}' in after
+    assert 'dalc_http_trigger_requests_total{result="success"}' in after
     # Counter should have increased vs initial scrape (may be same line with higher value)
-    assert after.count("agent_runtime_http_trigger_requests_total") >= before.count(
-        "agent_runtime_http_trigger_requests_total",
+    assert after.count("dalc_http_trigger_requests_total") >= before.count(
+        "dalc_http_trigger_requests_total",
     )
 
 
@@ -63,7 +63,7 @@ def test_trigger_client_error_increments_client_error(
     assert r.status_code == 400
 
     text = _metrics_text(client)
-    assert 'agent_runtime_http_trigger_requests_total{result="client_error"}' in text
+    assert 'dalc_http_trigger_requests_total{result="client_error"}' in text
 
 
 def test_x_request_id_echo_and_generation() -> None:
@@ -167,17 +167,17 @@ def test_subagent_and_skill_and_mcp_metrics(monkeypatch: pytest.MonkeyPatch) -> 
 
     text = _metrics_text(client)
     assert (
-        'agent_runtime_subagent_invocations_total{result="success",subagent="s1"}'
+        'dalc_subagent_invocations_total{result="success",subagent="s1"}'
         in text
     )
     assert (
-        'agent_runtime_subagent_invocations_total{result="error",subagent="missing"}'
+        'dalc_subagent_invocations_total{result="error",subagent="missing"}'
         in text
     )
-    assert 'agent_runtime_skill_loads_total{result="success",skill="sk"}' in text
-    assert 'agent_runtime_skill_loads_total{result="error",skill="nope"}' in text
+    assert 'dalc_skill_loads_total{result="success",skill="sk"}' in text
+    assert 'dalc_skill_loads_total{result="error",skill="nope"}' in text
     assert (
-        'agent_runtime_mcp_tool_calls_total{result="success",tool="sample.echo"}'
+        'dalc_mcp_tool_calls_total{result="success",tool="sample.echo"}'
         in text
     )
 
@@ -246,9 +246,9 @@ def test_trigger_unhandled_exception_increments_server_error(
     r = client.post("/api/v1/trigger", json={"message": "hi"})
     assert r.status_code == 500
     after = _metrics_text(client)
-    assert 'agent_runtime_http_trigger_requests_total{result="server_error"}' in after
-    assert after.count("agent_runtime_http_trigger_requests_total") >= before.count(
-        "agent_runtime_http_trigger_requests_total",
+    assert 'dalc_http_trigger_requests_total{result="server_error"}' in after
+    assert after.count("dalc_http_trigger_requests_total") >= before.count(
+        "dalc_http_trigger_requests_total",
     )
 
 
@@ -266,9 +266,9 @@ def test_trigger_http_error_5xx_increments_server_error(
     r = client.post("/api/v1/trigger", json={"message": "hi"})
     assert r.status_code == 503
     after = _metrics_text(client)
-    assert 'agent_runtime_http_trigger_requests_total{result="server_error"}' in after
-    assert after.count("agent_runtime_http_trigger_requests_total") >= before.count(
-        "agent_runtime_http_trigger_requests_total",
+    assert 'dalc_http_trigger_requests_total{result="server_error"}' in after
+    assert after.count("dalc_http_trigger_requests_total") >= before.count(
+        "dalc_http_trigger_requests_total",
     )
 
 
@@ -286,9 +286,9 @@ def test_trigger_http_error_4xx_stays_client_error(
     r = client.post("/api/v1/trigger", json={"message": "hi"})
     assert r.status_code == 404
     after = _metrics_text(client)
-    assert 'agent_runtime_http_trigger_requests_total{result="client_error"}' in after
-    assert after.count("agent_runtime_http_trigger_requests_total") >= before.count(
-        "agent_runtime_http_trigger_requests_total",
+    assert 'dalc_http_trigger_requests_total{result="client_error"}' in after
+    assert after.count("dalc_http_trigger_requests_total") >= before.count(
+        "dalc_http_trigger_requests_total",
     )
 
 

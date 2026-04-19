@@ -119,6 +119,23 @@ tests:
           content:
             name: HOSTED_AGENT_SLACK_TOOLS_TIMEOUT_SECONDS
             value: "45"
+  # Optional Grafana dashboard ConfigMap ([DALC-REQ-O11Y-LOGS-003] packaging; see grafana/README.md).
+  - it: observability.plugins.grafana.enabled renders Grafana dashboards ConfigMap
+    set:
+      agent.observability.plugins.grafana.enabled: true
+    template: templates/agent.yaml
+    documentSelector:
+      path: metadata.labels["dalc.agent.grafana.dashboards"]
+      value: "true"
+    asserts:
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data["dalc-overview.json"]
+          pattern: dalc_http_trigger_requests_total
+      - matchRegex:
+          path: data["cfha-token-metrics.json"]
+          pattern: dalc_llm_output_tokens_total
   # [DALC-REQ-SLACK-TRIGGER-004] distinct HOSTED_AGENT_SLACK_TRIGGER_* from Secrets (not slackTools/scrapers)
   - it: slackTrigger wires trigger env toggles and secret refs on agent Deployment
     set:

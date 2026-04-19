@@ -1,7 +1,7 @@
 """kind + Prometheus + with-observability: agent and RAG metrics visible in PromQL.
 
 Deploys the example chart (agent + RAG via an enabled scraper job), Prometheus with two static scrape jobs,
-asserts trigger counters and ``agent_runtime_rag_*`` after embed/query traffic.
+asserts trigger counters and ``dalc_rag_*`` after embed/query traffic.
 
 Requires: docker, kind, kubectl, helm, curl; network to pull Helm chart + images.
 

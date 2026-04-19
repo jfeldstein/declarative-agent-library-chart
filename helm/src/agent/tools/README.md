@@ -49,7 +49,7 @@ End-to-end validation needs **`openspec/changes/slack-trigger`** applied so `@me
 1. Create a Secret with an `xoxb` token; set `slackTools.botTokenSecretName` / `botTokenSecretKey`.
 2. Allow-list tools in `mcp.enabledTools` (e.g. `slack.post_message`, `slack.reactions_add`).
 3. Deploy the agent **with** the Slack ingress/Socket Mode listener from `slack-trigger`.
-4. Mention the bot; confirm threaded reply and reaction via real API (check Slack UI); verify agent logs/metrics show `agent_runtime_slack_tool_web_api_calls_total` without token material in stdout.
+4. Mention the bot; confirm threaded reply and reaction via real API (check Slack UI); verify agent logs/metrics show `dalc_slack_tool_web_api_calls_total` without token material in stdout.
 
 There is **no** requirement that the tools path call `/v1/embed`.
 
@@ -75,4 +75,4 @@ These tools **do not** call `POST /v1/embed` or ingest tool I/O into the managed
 1. Create a Secret with the webhook shared secret; set `jiraTrigger.webhookSecretSecretName` / `webhookSecretSecretKey` and `jiraTrigger.enabled: true`.
 2. Configure Jira to POST to your ingress URL (include the same secret as the `secret` query parameter or inject `X-Jira-Webhook-Secret`).
 3. Allow-list Jira tool ids in `mcp.enabledTools` as needed.
-4. Fire a webhook; confirm a trigger run starts (`agent_runtime_jira_trigger_inbound_total`) and the agent can invoke Jira tools during the run; the **trigger handler** never calls `/v1/embed`.
+4. Fire a webhook; confirm a trigger run starts (`dalc_jira_trigger_inbound_total`) and the agent can invoke Jira tools during the run; the **trigger handler** never calls `/v1/embed`.

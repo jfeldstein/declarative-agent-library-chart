@@ -69,7 +69,7 @@ def test_subagent_tool_via_supervisor(
     assert r.text == "ok"
     metrics = client.get("/metrics").text
     assert (
-        'agent_runtime_subagent_invocations_total{result="success",subagent="s1"}'
+        'dalc_subagent_invocations_total{result="success",subagent="s1"}'
         in metrics
     )
 

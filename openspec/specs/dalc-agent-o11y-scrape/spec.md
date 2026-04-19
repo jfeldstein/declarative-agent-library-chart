@@ -13,34 +13,34 @@ The agent HTTP server SHALL expose a **Prometheus text exposition** endpoint at 
 
 The runtime SHALL register Prometheus metrics for **`POST /api/v1/trigger`** using these **exact metric base names** (suffixes and label names follow Prometheus client conventions such as `_total`, `_bucket`, `_count`, `_sum` for histograms):
 
-- Counter **`agent_runtime_http_trigger_requests_total`** labeled **`result`** with values drawn from the fixed set **`success`**, **`client_error`**, **`server_error`** (mapping **2xx** → `success`, **4xx** → `client_error`, **5xx** and unhandled exceptions → `server_error`).
-- Histogram **`agent_runtime_http_trigger_duration_seconds`** with the same **`result`** label on observation (or equivalent labeling that preserves the same cardinality rules).
+- Counter **`dalc_http_trigger_requests_total`** labeled **`result`** with values drawn from the fixed set **`success`**, **`client_error`**, **`server_error`** (mapping **2xx** → `success`, **4xx** → `client_error`, **5xx** and unhandled exceptions → `server_error`).
+- Histogram **`dalc_http_trigger_duration_seconds`** with the same **`result`** label on observation (or equivalent labeling that preserves the same cardinality rules).
 
 Implementations SHALL NOT attach labels derived from prompt text, user ids, or other unbounded domains.
 
 #### Scenario: Successful trigger increments success path
 
 - **WHEN** a client successfully completes `POST /api/v1/trigger` with a **2xx** response
-- **THEN** the exposed `/metrics` payload SHALL include an increased **`agent_runtime_http_trigger_requests_total{result="success"}`** series and SHALL record latency on **`agent_runtime_http_trigger_duration_seconds`**
+- **THEN** the exposed `/metrics` payload SHALL include an increased **`dalc_http_trigger_requests_total{result="success"}`** series and SHALL record latency on **`dalc_http_trigger_duration_seconds`**
 
 #### Scenario: Client error on trigger
 
 - **WHEN** a client receives a **4xx** response from `POST /api/v1/trigger`
-- **THEN** the exposed `/metrics` payload SHALL include an increased **`agent_runtime_http_trigger_requests_total{result="client_error"}`** series
+- **THEN** the exposed `/metrics` payload SHALL include an increased **`dalc_http_trigger_requests_total{result="client_error"}`** series
 
 #### Scenario: Server error on trigger
 
 - **WHEN** a client receives a **5xx** response or the handler fails with an unhandled error
-- **THEN** the exposed `/metrics` payload SHALL include an increased **`agent_runtime_http_trigger_requests_total{result="server_error"}`** series
+- **THEN** the exposed `/metrics` payload SHALL include an increased **`dalc_http_trigger_requests_total{result="server_error"}`** series
 
 ### Requirement: [DALC-REQ-O11Y-SCRAPE-003] In-process runtime components reuse platform metric names
 
-When this deployment integrates **tools**, **subagents**, and/or **skills** as specified in **`runtime-tools-mcp`** (reference contract for tool discovery, invocation, and metrics), **`runtime-subagents`**, and **`runtime-skills`** (see change **`agent-runtime-components`**), the agent process SHALL expose the **corresponding `agent_runtime_*` metrics** defined in those capability specs on the **same `/metrics` endpoint** using a **shared registry**, so centralized scrapers collect one target per agent pod for HTTP trigger and in-process components. Conforming tool exposure **MAY** use **LangGraph-native or in-process** bindings without a standalone MCP server process, as described in **`runtime-tools-mcp`**.
+When this deployment integrates **tools**, **subagents**, and/or **skills** as specified in **`runtime-tools-mcp`** (reference contract for tool discovery, invocation, and metrics), **`runtime-subagents`**, and **`runtime-skills`** (see change **`agent-runtime-components`**), the agent process SHALL expose the **corresponding `dalc_*` metrics** defined in those capability specs on the **same `/metrics` endpoint** using a **shared registry**, so centralized scrapers collect one target per agent pod for HTTP trigger and in-process components. Conforming tool exposure **MAY** use **LangGraph-native or in-process** bindings without a standalone MCP server process, as described in **`runtime-tools-mcp`**.
 
 #### Scenario: Tool-enabled deployment exports tool metrics
 
 - **WHEN** values enable at least one configured tool and the agent invokes that tool during operation
-- **THEN** `/metrics` SHALL include the **`agent_runtime_mcp_tool_*`** series prescribed in **`runtime-tools-mcp`** with **`tool`** labels restricted to **configured** tool identifiers for that deployment
+- **THEN** `/metrics` SHALL include the **`dalc_mcp_tool_*`** series prescribed in **`runtime-tools-mcp`** with **`tool`** labels restricted to **configured** tool identifiers for that deployment
 
 ### Requirement: [DALC-REQ-O11Y-SCRAPE-004] Helm values control scrape discovery
 

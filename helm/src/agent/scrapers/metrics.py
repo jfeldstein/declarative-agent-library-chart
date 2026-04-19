@@ -1,4 +1,4 @@
-"""Prometheus metrics for scheduled scraper jobs (``agent_runtime_scraper_*`` prefix).
+"""Prometheus metrics for scheduled scraper jobs (``dalc_scraper_*`` prefix).
 
 New integration checklist (keep in sync when adding a scraper implementation):
 
@@ -86,20 +86,20 @@ _DURATION_BUCKETS = (
 )
 
 SCRAPER_RUNS = Counter(
-    "agent_runtime_scraper_runs_total",
+    "dalc_scraper_runs_total",
     "Count of scraper job executions",
     ("integration", "result"),
     registry=SCRAPER_REGISTRY,
 )
 SCRAPER_RUN_DURATION = Histogram(
-    "agent_runtime_scraper_run_duration_seconds",
+    "dalc_scraper_run_duration_seconds",
     "Wall time of a scraper job from start to completion",
     ("integration",),
     buckets=_DURATION_BUCKETS,
     registry=SCRAPER_REGISTRY,
 )
 SCRAPER_RAG_SUBMISSIONS = Counter(
-    "agent_runtime_scraper_rag_submissions_total",
+    "dalc_scraper_rag_submissions_total",
     "Attempts to submit ingested content to RAG /v1/embed",
     ("integration", "result"),
     registry=SCRAPER_REGISTRY,

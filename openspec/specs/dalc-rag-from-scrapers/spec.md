@@ -99,7 +99,7 @@ The Slack scraper **SHALL** expose scraper metrics consistent with existing scra
 #### Scenario: Successful run labels
 
 - **WHEN** a Slack scraper run completes without uncaught exceptions and records a successful RAG submission for a selected message
-- **THEN** metrics **SHALL** increment **`agent_runtime_scraper_runs_total{integration="<bounded>",result="success"}`** and **`agent_runtime_scraper_rag_submissions_total{integration="<bounded>",result="success"}`** for that integration label
+- **THEN** metrics **SHALL** increment **`dalc_scraper_runs_total{integration="<bounded>",result="success"}`** and **`dalc_scraper_rag_submissions_total{integration="<bounded>",result="success"}`** for that integration label
 
 ### Requirement: [DALC-REQ-SLACK-SCRAPER-005] Secrets are never written to logs or metrics labels
 

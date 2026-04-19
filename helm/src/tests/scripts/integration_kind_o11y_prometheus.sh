@@ -209,7 +209,7 @@ for _ in $(seq 1 "${TRIGGER_COUNT}"); do
   echo "    trigger ok: ${body:0:40}..."
 done
 
-echo "==> POST RAG /v1/embed + /v1/query (agent_runtime_rag_* traffic)"
+echo "==> POST RAG /v1/embed + /v1/query (dalc_rag_* traffic)"
 curl -sf -X POST "http://127.0.0.1:18189/v1/embed" \
   -H 'content-type: application/json' \
   -d '{"scope":"o11y-it","items":[{"text":"prometheus integration rag corpus","metadata":{"src":"it"}}]}' >/dev/null
@@ -220,7 +220,7 @@ curl -sf -X POST "http://127.0.0.1:18189/v1/query" \
 echo "==> wait for Prometheus scrape (allow ~25s at 3s interval, two jobs)"
 sleep 25
 
-QUERY='sum(agent_runtime_http_trigger_requests_total{result="success"})'
+QUERY='sum(dalc_http_trigger_requests_total{result="success"})'
 echo "==> PromQL: ${QUERY}"
 RESP=$(curl -sf -G "http://127.0.0.1:19090/api/v1/query" --data-urlencode "query=${QUERY}")
 
@@ -236,18 +236,18 @@ if resp.get("status") != "success":
     sys.exit(f"unexpected response: {resp!r}")
 results = resp.get("data", {}).get("result", [])
 if not results:
-    sys.exit("no series for agent_runtime_http_trigger_requests_total — check scrape target and /metrics")
+    sys.exit("no series for dalc_http_trigger_requests_total — check scrape target and /metrics")
 val = float(results[0]["value"][1])
 need = float(os.environ.get("TRIGGER_COUNT", "5"))
 if val < need:
     sys.exit(f"expected sum(success) >= {need}, got {val}")
-print(f"ok: sum(agent_runtime_http_trigger_requests_total{{result=\"success\"}}) = {val}")
+print(f"ok: sum(dalc_http_trigger_requests_total{{result=\"success\"}}) = {val}")
 PY
 
-QUERY_RAG_EMBED='sum(agent_runtime_rag_embed_requests_total{result="success"})'
+QUERY_RAG_EMBED='sum(dalc_rag_embed_requests_total{result="success"})'
 echo "==> PromQL: ${QUERY_RAG_EMBED}"
 RESP_RE=$(curl -sf -G "http://127.0.0.1:19090/api/v1/query" --data-urlencode "query=${QUERY_RAG_EMBED}")
-QUERY_RAG_Q='sum(agent_runtime_rag_query_requests_total{result="success"})'
+QUERY_RAG_Q='sum(dalc_rag_query_requests_total{result="success"})'
 echo "==> PromQL: ${QUERY_RAG_Q}"
 RESP_RQ=$(curl -sf -G "http://127.0.0.1:19090/api/v1/query" --data-urlencode "query=${QUERY_RAG_Q}")
 

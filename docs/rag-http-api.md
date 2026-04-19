@@ -5,7 +5,7 @@ The in-repo POC implements the **`agent-runtime-components`** RAG contract under
 | Method | Path | Purpose |
 |--------|------|---------|
 | `GET` | `/health` | Liveness/readiness |
-| `GET` | `/metrics` | Prometheus exposition (`agent_runtime_rag_embed_*`, `agent_runtime_rag_query_*`) |
+| `GET` | `/metrics` | Prometheus exposition (`dalc_rag_embed_*`, `dalc_rag_query_*`) |
 | `POST` | `/v1/embed` | Upsert **entities**, **relationships**, and **text chunks** (with optional `entity_id` per chunk) |
 | `POST` | `/v1/relate` | Append **relationships** only (no new chunk text) |
 | `POST` | `/v1/query` | Semantic-ish retrieval (deterministic pseudo-embeddings) + optional **relationship expansion** |

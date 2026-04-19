@@ -18,8 +18,8 @@ def test_rag_metrics_endpoint_lists_series() -> None:
     reset_store_for_tests()
     client = TestClient(create_app(store=RAGStore()))
     text = _metrics(client)
-    assert "agent_runtime_rag_embed_requests_total" in text
-    assert "agent_runtime_rag_query_requests_total" in text
+    assert "dalc_rag_embed_requests_total" in text
+    assert "dalc_rag_query_requests_total" in text
 
 
 def test_embed_success_updates_counters() -> None:
@@ -32,10 +32,10 @@ def test_embed_success_updates_counters() -> None:
     )
     assert r.status_code == 200
     after = _metrics(client)
-    assert after.count("agent_runtime_rag_embed_requests_total") >= before.count(
-        "agent_runtime_rag_embed_requests_total",
+    assert after.count("dalc_rag_embed_requests_total") >= before.count(
+        "dalc_rag_embed_requests_total",
     )
-    assert 'agent_runtime_rag_embed_requests_total{result="success"}' in after
+    assert 'dalc_rag_embed_requests_total{result="success"}' in after
 
 
 def test_query_client_error_updates_counter() -> None:
@@ -44,4 +44,4 @@ def test_query_client_error_updates_counter() -> None:
     r = client.post("/v1/query", json={"scope": "m", "query": ""})
     assert r.status_code == 422
     text = _metrics(client)
-    assert 'agent_runtime_rag_query_requests_total{result="client_error"}' in text
+    assert 'dalc_rag_query_requests_total{result="client_error"}' in text

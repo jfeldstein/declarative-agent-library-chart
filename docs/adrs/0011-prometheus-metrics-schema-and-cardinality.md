@@ -14,9 +14,9 @@ Implementation today lives in `helm/src/agent/metrics.py`, `helm/src/agent/rag/m
 
 ### Naming conventions
 
-- **Hosted agent runtime (default registry):** metric names **SHALL** use the prefix `agent_runtime_` for counters and histograms that describe trigger handling, MCP-style tools, subagents, and skill loads (for example `agent_runtime_http_trigger_requests_total`, `agent_runtime_mcp_tool_calls_total`).
-- **RAG HTTP service:** metric names **SHALL** use the prefix `agent_runtime_rag_` so RAG request/latency series are distinct from the main trigger path (for example `agent_runtime_rag_embed_requests_total`, `agent_runtime_rag_query_duration_seconds`).
-- **Scraper jobs:** metric names **SHALL** use the prefix `agent_runtime_scraper_` so batch/ingestion work is not confused with interactive runtime paths (for example `agent_runtime_scraper_runs_total`, `agent_runtime_scraper_rag_submissions_total`).
+- **Hosted agent runtime (default registry):** metric names **SHALL** use the prefix `dalc_` for counters and histograms that describe trigger handling, MCP-style tools, subagents, and skill loads (for example `dalc_http_trigger_requests_total`, `dalc_mcp_tool_calls_total`).
+- **RAG HTTP service:** metric names **SHALL** use the prefix `dalc_rag_` so RAG request/latency series are distinct from the main trigger path (for example `dalc_rag_embed_requests_total`, `dalc_rag_query_duration_seconds`).
+- **Scraper jobs:** metric names **SHALL** use the prefix `dalc_scraper_` so batch/ingestion work is not confused with interactive runtime paths (for example `dalc_scraper_runs_total`, `dalc_scraper_rag_submissions_total`).
 - Histograms **SHALL** use the `_seconds` suffix and document wall-time or processing latency in the help string; counters **SHALL** use `_total` where they are cumulative counts.
 
 ### Label rules and cardinality
@@ -33,7 +33,7 @@ Implementation today lives in `helm/src/agent/metrics.py`, `helm/src/agent/rag/m
 
 ### Grafana and dashboards (high level)
 
-- Dashboards **SHOULD** use the prefixes above in PromQL to select the right tier (`agent_runtime_*` vs `agent_runtime_rag_*` vs `agent_runtime_scraper_*`).
+- Dashboards **SHOULD** use the prefixes above in PromQL to select the right tier (`dalc_*` vs `dalc_rag_*` vs `dalc_scraper_*`).
 - New metrics or labels **SHOULD** be accompanied by panel or row updates in the repository Grafana JSON (for example `grafana/dalc-overview.json`) and brief operator notes where scrape paths differ (agent Deployment vs RAG vs scraper metrics listener).
 - Authors **SHOULD** assume alerting and SLO panels aggregate by **result** and **integration** / **role**, not by high-cardinality dimensions; drill-down belongs in logs or traces, not in every panel’s `group by`.
 

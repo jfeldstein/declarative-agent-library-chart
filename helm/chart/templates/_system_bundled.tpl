@@ -18,6 +18,8 @@
 {{- $acc = include "declarative-agent-library-chart.appendDoc" (dict "prev" $acc "next" $d) }}
 {{- $d = include "declarative-agent-library-chart.manifest.configmap" . | trim }}
 {{- $acc = include "declarative-agent-library-chart.appendDoc" (dict "prev" $acc "next" $d) }}
+{{- $d = include "declarative-agent-library-chart.manifest.grafanaDashboards" . | trim }}
+{{- $acc = include "declarative-agent-library-chart.appendDoc" (dict "prev" $acc "next" $d) }}
 {{- $d = include "declarative-agent-library-chart.manifest.deployment" . | trim }}
 {{- $acc = include "declarative-agent-library-chart.appendDoc" (dict "prev" $acc "next" $d) }}
 {{- $d = include "declarative-agent-library-chart.manifest.service" . | trim }}

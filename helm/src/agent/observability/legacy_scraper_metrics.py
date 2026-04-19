@@ -1,4 +1,4 @@
-"""Mirror scraper lifecycle events into ``agent_runtime_scraper_*`` metrics (separate registry)."""
+"""Mirror scraper lifecycle events into ``dalc_scraper_*`` metrics (separate registry)."""
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""Subscribe lifecycle events and mirror legacy ``agent_runtime_*`` Prometheus metrics."""
+"""Subscribe lifecycle events and mirror legacy ``dalc_*`` Prometheus metrics."""
 
 from __future__ import annotations
 

@@ -31,7 +31,7 @@ fullnameOverride: ""
 # checkpoints.postgresUrl → HOSTED_AGENT_POSTGRES_URL on the agent container.
 # LLM cost **estimates** on /metrics (optional): HOSTED_AGENT_LLM_EST_COST_USD_PER_INPUT_TOKEN,
 # HOSTED_AGENT_LLM_EST_COST_USD_PER_OUTPUT_TOKEN (non-negative floats; both required to increment
-# agent_runtime_llm_estimated_cost_usd_total). See docs/observability.md.
+# dalc_llm_estimated_cost_usd_total). See docs/observability.md.
 extraEnv: []
 
 # Slack / Jira agent identity (Kubernetes Secret → HOSTED_AGENT_SLACK_BOT_USER_ID /

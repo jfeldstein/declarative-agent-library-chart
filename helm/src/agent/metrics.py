@@ -1,4 +1,4 @@
-"""Prometheus metrics for the hosted agent runtime (agent_runtime_* prefix).
+"""Prometheus metrics for the hosted agent runtime (dalc_* prefix).
 
 Traceability: [DALC-REQ-TOKEN-MET-001] [DALC-REQ-TOKEN-MET-002] [DALC-REQ-TOKEN-MET-003]
 [DALC-REQ-TOKEN-MET-004] [DALC-REQ-TOKEN-MET-005] [DALC-REQ-TOKEN-MET-006]
@@ -80,88 +80,88 @@ TriggerResult = Literal["success", "client_error", "server_error"]
 BinaryResult = Literal["success", "error"]
 
 HTTP_TRIGGER_REQUESTS = Counter(
-    "agent_runtime_http_trigger_requests_total",
+    "dalc_http_trigger_requests_total",
     "Count of POST /api/v1/trigger invocations",
     ("result",),
 )
 HTTP_TRIGGER_DURATION = Histogram(
-    "agent_runtime_http_trigger_duration_seconds",
+    "dalc_http_trigger_duration_seconds",
     "Latency of POST /api/v1/trigger handling",
     ("result",),
     buckets=_DURATION_BUCKETS,
 )
 
 HTTP_TRIGGER_REQUEST_BYTES = Histogram(
-    "agent_runtime_http_trigger_request_bytes",
+    "dalc_http_trigger_request_bytes",
     "Serialized POST /api/v1/trigger JSON body length in bytes (runtime-measured; large values clamped).",
     (),
     buckets=_PAYLOAD_BUCKETS,
 )
 HTTP_TRIGGER_RESPONSE_BYTES = Histogram(
-    "agent_runtime_http_trigger_response_bytes",
+    "dalc_http_trigger_response_bytes",
     "Plain-text HTTP response body length in bytes for successful trigger responses (UTF-8 encoded size).",
     (),
     buckets=_PAYLOAD_BUCKETS,
 )
 
 LLM_INPUT_TOKENS = Counter(
-    "agent_runtime_llm_input_tokens_total",
+    "dalc_llm_input_tokens_total",
     "Provider-reported cumulative input (prompt) tokens for completed LLM generations.",
     ("agent_id", "model_id", "result"),
 )
 LLM_OUTPUT_TOKENS = Counter(
-    "agent_runtime_llm_output_tokens_total",
+    "dalc_llm_output_tokens_total",
     "Provider-reported cumulative output (completion) tokens for completed LLM generations.",
     ("agent_id", "model_id", "result"),
 )
 LLM_USAGE_MISSING = Counter(
-    "agent_runtime_llm_usage_missing_total",
+    "dalc_llm_usage_missing_total",
     "Count of LLM completions where provider-reported token usage was incomplete (input and/or output missing).",
     ("agent_id", "model_id", "result"),
 )
 LLM_TTFT = Histogram(
-    "agent_runtime_llm_time_to_first_token_seconds",
+    "dalc_llm_time_to_first_token_seconds",
     "Wall time from chat model start to first streamed output token, or full completion for non-streaming paths (provider-reported timing boundary via runtime).",
     ("agent_id", "model_id", "result", "streaming"),
     buckets=_TTFT_BUCKETS,
 )
 LLM_ESTIMATED_COST_USD = Counter(
-    "agent_runtime_llm_estimated_cost_usd_total",
+    "dalc_llm_estimated_cost_usd_total",
     "Runtime-estimated USD cost from provider-reported token counts and configured per-token rates (estimate only; not billing).",
     ("agent_id", "model_id", "result"),
 )
 
 MCP_TOOL_CALLS = Counter(
-    "agent_runtime_mcp_tool_calls_total",
+    "dalc_mcp_tool_calls_total",
     "Count of MCP-style tool invocations",
     ("tool", "result"),
 )
 MCP_TOOL_DURATION = Histogram(
-    "agent_runtime_mcp_tool_duration_seconds",
+    "dalc_mcp_tool_duration_seconds",
     "Latency of MCP-style tool invocations",
     ("tool", "result"),
     buckets=_DURATION_BUCKETS,
 )
 
 SUBAGENT_INVOCATIONS = Counter(
-    "agent_runtime_subagent_invocations_total",
+    "dalc_subagent_invocations_total",
     "Count of subagent invocations",
     ("subagent", "result"),
 )
 SUBAGENT_DURATION = Histogram(
-    "agent_runtime_subagent_duration_seconds",
+    "dalc_subagent_duration_seconds",
     "Latency of subagent invocations",
     ("subagent", "result"),
     buckets=_DURATION_BUCKETS,
 )
 
 SKILL_LOADS = Counter(
-    "agent_runtime_skill_loads_total",
+    "dalc_skill_loads_total",
     "Count of skill load operations",
     ("skill", "result"),
 )
 SKILL_LOAD_DURATION = Histogram(
-    "agent_runtime_skill_load_duration_seconds",
+    "dalc_skill_load_duration_seconds",
     "Latency of skill load operations",
     ("skill", "result"),
     buckets=_DURATION_BUCKETS,
@@ -169,12 +169,12 @@ SKILL_LOAD_DURATION = Histogram(
 
 # Traceability: [DALC-REQ-SLACK-TOOLS-006] (method/result labels only; never secrets)
 SLACK_TOOL_WEB_API_CALLS = Counter(
-    "agent_runtime_slack_tool_web_api_calls_total",
+    "dalc_slack_tool_web_api_calls_total",
     "Slack Web API calls issued from LLM-time tools (not scrapers)",
     ("method", "result"),
 )
 SLACK_TOOL_WEB_API_DURATION = Histogram(
-    "agent_runtime_slack_tool_web_api_duration_seconds",
+    "dalc_slack_tool_web_api_duration_seconds",
     "Latency of Slack Web API calls from LLM-time tools",
     ("method", "result"),
     buckets=_DURATION_BUCKETS,
@@ -239,7 +239,7 @@ def observe_slack_tool_api(
 
 # [DALC-REQ-SLACK-TRIGGER-005] labels must never carry signing secrets, tokens, or raw bodies.
 SLACK_TRIGGER_INBOUND = Counter(
-    "agent_runtime_slack_trigger_inbound_total",
+    "dalc_slack_trigger_inbound_total",
     "Inbound Slack trigger bridge (HTTP Events API / Socket Mode); labels exclude secrets.",
     ("transport", "result"),
 )
@@ -252,7 +252,7 @@ def observe_slack_trigger_inbound(transport: str, result: str) -> None:
 
 # [DALC-REQ-JIRA-TRIGGER-005] labels must never carry webhook secrets or raw bodies.
 JIRA_TRIGGER_INBOUND = Counter(
-    "agent_runtime_jira_trigger_inbound_total",
+    "dalc_jira_trigger_inbound_total",
     "Inbound Jira webhook trigger bridge; labels exclude secrets.",
     ("transport", "result"),
 )
