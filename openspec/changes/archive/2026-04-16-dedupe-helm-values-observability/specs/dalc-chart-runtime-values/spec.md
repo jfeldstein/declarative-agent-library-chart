@@ -27,7 +27,7 @@ The Helm library chart SHALL expose a top-level **`wandb`** object with **enable
 
 The Helm library chart SHALL expose Slack feedback configuration under **`scrapers.slack.feedback`**, including at minimum **enabled** and an **emoji-to-label map** for reaction ingestion, rendered to the documented ConfigMap keys and environment variables.
 
-Human-feedback **label taxonomy** data (the object that populates **`HOSTED_AGENT_LABEL_REGISTRY_JSON`** / `label-registry.json`) SHALL be configured under this **`scrapers.slack.feedback`** subtree (field name as implemented—e.g. **`labelRegistry`** or **`feedbackLabelRegistry`**) and SHALL be documented as the **feedback label registry**, not Kubernetes or Prometheus labels.
+Human-feedback **label taxonomy** data (the object that populates **`HOSTED_AGENT_LABEL_REGISTRY_JSON`** / `label-registry.json`) SHALL be configured under this **`scrapers.slack.feedback`** subtree as **`labelRegistry`** and SHALL be documented as the **feedback label registry**, not Kubernetes or Prometheus labels.
 
 #### Scenario: Slack feedback enabled from values
 
