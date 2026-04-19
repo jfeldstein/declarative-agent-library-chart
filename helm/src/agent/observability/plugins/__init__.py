@@ -1,1 +1,1 @@
-"""Optional observability provider plugins."""
+"""Optional observability provider plugins (Prometheus, Langfuse, …)."""

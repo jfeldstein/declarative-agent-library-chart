@@ -404,7 +404,28 @@
             },
             "langfuse": {
               "type": "object",
-              "properties": { "enabled": { "type": "boolean" } }
+              "properties": {
+                "enabled": { "type": "boolean" },
+                "host": { "type": "string" },
+                "flushIntervalSeconds": {
+                  "type": ["integer", "null"],
+                  "minimum": 1
+                },
+                "publicKeySecret": {
+                  "type": "object",
+                  "properties": {
+                    "secretName": { "type": "string" },
+                    "secretKey": { "type": "string" }
+                  }
+                },
+                "secretKeySecret": {
+                  "type": "object",
+                  "properties": {
+                    "secretName": { "type": "string" },
+                    "secretKey": { "type": "string" }
+                  }
+                }
+              }
             },
             "wandb": {
               "type": "object",

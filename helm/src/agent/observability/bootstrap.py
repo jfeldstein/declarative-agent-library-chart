@@ -5,6 +5,10 @@ from __future__ import annotations
 from typing import Literal
 
 from agent.observability.events import SyncEventBus
+from agent.observability.plugins.langfuse_bridge import (
+    build_langfuse_client,
+    register_langfuse_plugin,
+)
 from agent.observability.plugins.prometheus import (
     register_prometheus_agent_plugin,
     register_prometheus_scraper_plugin,
@@ -33,6 +37,7 @@ def build_event_bus(
             register_prometheus_agent_plugin(bus)
         else:
             register_prometheus_scraper_plugin(bus)
+    register_langfuse_plugin(bus, build_langfuse_client(cfg.langfuse))
     return bus
 
 
