@@ -16,7 +16,8 @@ from agent.agent_models import RagQueryBody, TriggerBody
 from agent.agent_tracing import observability_summary
 from agent.checkpointing import checkpoints_globally_enabled
 from agent.env import system_prompt_from_env
-from agent.metrics import observe_http_trigger, observe_trigger_http_payloads
+from agent.observability.middleware import publish_http_trigger_response
+from agent.observability.bootstrap import ensure_agent_observability
 from agent.observability.settings import ObservabilitySettings
 from agent.observability.stores import (
     bind_observability_stores,
@@ -152,25 +153,37 @@ def _register_trigger_route(app: FastAPI, system_prompt: str | None) -> None:
         try:
             out = run_trigger_graph(ctx)
         except ValueError as exc:
-            observe_http_trigger("client_error", start)
-            observe_trigger_http_payloads(req_bytes, None)
+            publish_http_trigger_response(
+                http_result="client_error",
+                started_at=start,
+                request_bytes=req_bytes,
+                response_bytes=None,
+            )
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         except TriggerHttpError as exc:
-            observe_http_trigger(
-                "client_error" if exc.status_code < 500 else "server_error",
-                start,
+            publish_http_trigger_response(
+                http_result=(
+                    "client_error" if exc.status_code < 500 else "server_error"
+                ),
+                started_at=start,
+                request_bytes=req_bytes,
+                response_bytes=None,
             )
-            observe_trigger_http_payloads(req_bytes, None)
             raise HTTPException(exc.status_code, exc.detail) from exc
         except Exception:
-            observe_http_trigger("server_error", start)
-            observe_trigger_http_payloads(req_bytes, None)
+            publish_http_trigger_response(
+                http_result="server_error",
+                started_at=start,
+                request_bytes=req_bytes,
+                response_bytes=None,
+            )
             raise
-        observe_http_trigger("success", start)
         # [DALC-REQ-TOKEN-MET-004] serialized trigger JSON / response body sizes
-        observe_trigger_http_payloads(
-            req_bytes,
-            len(out.encode("utf-8", errors="replace")),
+        publish_http_trigger_response(
+            http_result="success",
+            started_at=start,
+            request_bytes=req_bytes,
+            response_bytes=len(out.encode("utf-8", errors="replace")),
         )
         return out
 
@@ -375,6 +388,7 @@ def create_app(*, system_prompt: str | None = None) -> FastAPI:
     Otherwise the value comes from :func:`system_prompt_from_env`.
     """
     configure_request_logging()
+    ensure_agent_observability()
     app = FastAPI(
         title="declarative-agent-library-chart",
         version="0.1.0",

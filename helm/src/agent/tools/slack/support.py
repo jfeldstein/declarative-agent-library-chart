@@ -9,7 +9,6 @@ from typing import Any
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 
-from agent.metrics import observe_slack_tool_api
 from agent.o11y_logging import get_logger
 
 _SLACK_TOOLS_TOKEN = "HOSTED_AGENT_SLACK_TOOLS_BOT_TOKEN"
@@ -86,11 +85,8 @@ def _slack_req_id_from_headers(headers: object | None) -> str:
     return ""
 
 
-def slack_api_error_payload(
-    exc: SlackApiError, *, method: str, start: float
-) -> dict[str, Any]:
+def slack_api_error_payload(exc: SlackApiError, *, method: str) -> dict[str, Any]:
     """Structured error for the model; never includes tokens."""
-    observe_slack_tool_api(method, "error", start)
     err = "slack_api_error"
     req_id = ""
     resp = getattr(exc, "response", None)
@@ -111,8 +107,8 @@ def slack_api_error_payload(
     return out
 
 
-def finish_ok(method: str, payload: dict[str, Any], start: float) -> dict[str, Any]:
-    observe_slack_tool_api(method, "success", start)
+def finish_ok(_method: str, payload: dict[str, Any]) -> dict[str, Any]:
+    """Return tool JSON; Prometheus metrics are emitted in :mod:`agent.trigger_steps`."""
     return payload
 
 

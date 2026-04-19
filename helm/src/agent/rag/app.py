@@ -6,6 +6,7 @@ from fastapi import FastAPI, HTTPException, status
 from fastapi.responses import Response
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
+from agent.observability.bootstrap import ensure_agent_observability
 from agent.rag.models import (
     EmbedRequest,
     EmbedResponse,
@@ -93,6 +94,7 @@ def _register_rag_routes(app: FastAPI, rag_store: RAGStore) -> None:
 
 def create_app(*, store: RAGStore | None = None) -> FastAPI:
     """Build the RAG ASGI app. Tests may inject ``store``."""
+    ensure_agent_observability()
     app = FastAPI(
         title="dalc-rag",
         version="0.1.0",

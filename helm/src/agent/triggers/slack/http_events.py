@@ -9,7 +9,7 @@ from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from slack_sdk.signature import SignatureVerifier
 
-from agent.metrics import observe_slack_trigger_inbound
+from agent.observability.middleware import publish_slack_trigger_inbound
 from agent.triggers.http_common import parse_utf8_json_object, request_id_from_request
 from agent.triggers.slack.config import SlackTriggerSettings
 from agent.triggers.slack.dispatch import dispatch_app_mention
@@ -42,15 +42,15 @@ def _slack_http_response_for_payload(
     if type_ == "url_verification":
         challenge = payload.get("challenge")
         if not isinstance(challenge, str) or not challenge.strip():
-            observe_slack_trigger_inbound("http", "ignored")
+            publish_slack_trigger_inbound(transport="http", outcome="ignored")
             raise HTTPException(
                 status_code=400, detail="Missing url_verification challenge"
             )
-        observe_slack_trigger_inbound("http", "challenge_ok")
+        publish_slack_trigger_inbound(transport="http", outcome="challenge_ok")
         return JSONResponse({"challenge": challenge})
 
     if type_ != "event_callback":
-        observe_slack_trigger_inbound("http", "ignored")
+        publish_slack_trigger_inbound(transport="http", outcome="ignored")
         return JSONResponse({"ok": True})
 
     deduper = getattr(request.app.state, "slack_trigger_deduper", None)
@@ -97,12 +97,14 @@ def register_slack_trigger_http_route(
             timestamp=ts,
             signature=sig,
         ):
-            observe_slack_trigger_inbound("http", "rejected")
+            publish_slack_trigger_inbound(transport="http", outcome="rejected")
             raise HTTPException(status_code=401, detail="Invalid Slack signature")
 
         payload = parse_utf8_json_object(
             raw_body,
-            on_bad_json=lambda: observe_slack_trigger_inbound("http", "bad_json"),
+            on_bad_json=lambda: publish_slack_trigger_inbound(
+                transport="http", outcome="bad_json"
+            ),
         )
         return _slack_http_response_for_payload(
             payload,

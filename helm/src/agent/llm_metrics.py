@@ -16,9 +16,9 @@ from langchain_core.callbacks import BaseCallbackHandler
 from langchain_core.messages import AIMessage
 from langchain_core.outputs import ChatGeneration, LLMResult
 
-from agent.metrics import (
-    observe_llm_completion_metrics,
-    observe_llm_time_to_first_token,
+from agent.observability.middleware import (
+    publish_llm_first_token,
+    publish_llm_generation_completed,
 )
 from agent.trigger_context import TriggerContext
 
@@ -104,9 +104,9 @@ class SupervisorLlmMetricsCallback(BaseCallbackHandler):
         if st is None or st.get("ttft_done"):
             return
         elapsed = max(time.perf_counter() - st["t0"], 0.0)
-        observe_llm_time_to_first_token(
-            self._ctx,
-            elapsed,
+        publish_llm_first_token(
+            ctx=self._ctx,
+            seconds=elapsed,
             streaming_label="true",
             result="success",
         )
@@ -126,9 +126,9 @@ class SupervisorLlmMetricsCallback(BaseCallbackHandler):
             ttft_done = bool(st.get("ttft_done"))
             if not ttft_done:
                 elapsed = max(time.perf_counter() - st["t0"], 0.0)
-                observe_llm_time_to_first_token(
-                    self._ctx,
-                    elapsed,
+                publish_llm_first_token(
+                    ctx=self._ctx,
+                    seconds=elapsed,
                     streaming_label="false",
                     result="success",
                 )
@@ -147,8 +147,8 @@ class SupervisorLlmMetricsCallback(BaseCallbackHandler):
                 it, ot = _usage_tokens_from_message(msg)
 
         in_rate, out_rate = _parse_cost_rates_from_env()
-        observe_llm_completion_metrics(
-            self._ctx,
+        publish_llm_generation_completed(
+            ctx=self._ctx,
             input_tokens=it,
             output_tokens=ot,
             input_rate_usd=in_rate,

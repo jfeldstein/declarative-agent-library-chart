@@ -75,6 +75,18 @@ observability:
     migrations:
       enabled: false
       image: postgres:16-alpine
+  # Optional provider plugins (single tree for agent + scraper processes). Phase 2+ wires env/templates.
+  plugins:
+    prometheus:
+      enabled: false
+    langfuse:
+      enabled: false
+    wandb:
+      enabled: false
+    grafana:
+      enabled: false
+    logShipping:
+      enabled: false
 
 # LangGraph checkpoint store (maps to HOSTED_AGENT_CHECKPOINT_* when enabled).
 checkpoints:

@@ -8,6 +8,8 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ## 2026-04-19
 
+**Observability lifecycle event bus (UNBLOCK / Phase 1)** — Introduced `SyncEventBus`, `EventName`, and `agent.observability.middleware` publish helpers; legacy subscribers keep existing `agent_runtime_*` Prometheus series. Refactored HTTP trigger, `run_tool_json`, LLM metrics callback, RAG HTTP middleware, scraper base, and Slack/Jira trigger paths; Slack tool modules no longer call `observe_slack_tool_api` (MCP + Web API metrics from `trigger_steps`). Helm scaffold `observability.plugins.{prometheus,langfuse,wandb,grafana,logShipping}.enabled` (all false). OpenSpec change `openspec/changes/observability-lifecycle-events/`. Worktree branch `feature--observability-plugins-unblock--agents--agent-z3q9--lifecycle-events-phase1`. Gates: `uv run pytest` (helm/src), `python3 scripts/check_spec_traceability.py`.
+
 **Trigger package DRY** — Shared **`agent/triggers/env_bool.py`** (**`env_truthy`**), **`http_common.py`** (**`parse_utf8_json_object`**, **`request_id_from_request`**), and **`guarded_run.py`** (**`run_guarded`** for consistent error metrics around **`run_trigger_graph`**). Slack/Jira HTTP routes and **`dispatch`** modules rewired; **`dedupe`** docstrings generalized. **`uv run pytest`** (**helm/src**), **`python3 scripts/check_spec_traceability.py`** ok.
 
 **Agent image Dockerfile path** — Moved **`helm/Dockerfile`** → **`helm/src/Dockerfile`** (build context still repo root; **`COPY helm/src/…`** unchanged). References updated in **`skaffold.yaml`**, **`devspace.yaml`**, **`scripts/deploy-kind-slack-hello.sh`**, **`helm/src/tests/scripts/integration_kind_o11y_prometheus.sh`**, **`ARCHITECTURE.md`**, **`helm/src/README.md`**.

@@ -16,7 +16,6 @@ from agent.observability.run_context import (
 from agent.observability.side_effects import record_side_effect_checkpoint
 from agent.observability.stores import get_correlation_store
 from agent.tools.slack.support import (
-    api_start,
     finish_ok,
     normalize_channel_id,
     optional_tools_client,
@@ -92,21 +91,19 @@ def run(arguments: dict[str, Any]) -> dict[str, Any]:
     if client is None:
         return _simulated_post(arguments)
 
-    start = api_start()
     kwargs: dict[str, Any] = {"channel": channel_id, "text": text}
     if thread_ts:
         kwargs["thread_ts"] = thread_ts
     try:
         resp = client.chat_postMessage(**kwargs)
     except SlackApiError as exc:
-        return slack_api_error_payload(exc, method="chat.postMessage", start=start)
+        return slack_api_error_payload(exc, method="chat.postMessage")
 
     message_ts = _response_ts(resp)
     if not message_ts:
         return finish_ok(
             "chat.postMessage",
             {"ok": False, "error": "missing_ts", "channel_id": channel_id},
-            start,
         )
 
     tool_call_id, checkpoint_id = _record_post_message_correlation(
@@ -124,7 +121,6 @@ def run(arguments: dict[str, Any]) -> dict[str, Any]:
             "tool_call_id": tool_call_id,
             "checkpoint_id": checkpoint_id,
         },
-        start,
     )
 
 

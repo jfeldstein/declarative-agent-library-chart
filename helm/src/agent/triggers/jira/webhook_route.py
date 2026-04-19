@@ -8,7 +8,7 @@ import secrets
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 
-from agent.metrics import observe_jira_trigger_inbound
+from agent.observability.middleware import publish_jira_trigger_inbound
 from agent.triggers.http_common import parse_utf8_json_object, request_id_from_request
 from agent.triggers.jira.config import JiraTriggerSettings
 from agent.triggers.jira.dispatch import dispatch_jira_webhook
@@ -53,12 +53,14 @@ def register_jira_trigger_http_route(
     ) -> JSONResponse:
         raw_body = await request.body()
         if not _verify_shared_secret(request, secret):
-            observe_jira_trigger_inbound("http", "rejected")
+            publish_jira_trigger_inbound(transport="http", outcome="rejected")
             raise HTTPException(status_code=401, detail="Invalid Jira webhook secret")
 
         payload = parse_utf8_json_object(
             raw_body,
-            on_bad_json=lambda: observe_jira_trigger_inbound("http", "bad_json"),
+            on_bad_json=lambda: publish_jira_trigger_inbound(
+                transport="http", outcome="bad_json"
+            ),
         )
         req_id = request_id_from_request(request)
         delivery = (request.headers.get("X-Atlassian-Webhook-Identifier") or "").strip()

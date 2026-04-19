@@ -7,7 +7,6 @@ from typing import Any
 from slack_sdk.errors import SlackApiError
 
 from agent.tools.slack.support import (
-    api_start,
     finish_ok,
     history_limit,
     normalize_channel_id,
@@ -34,11 +33,10 @@ def chat_update(arguments: dict[str, Any]) -> dict[str, Any]:
             "text": text,
         }
 
-    start = api_start()
     try:
         resp = client.chat_update(channel=channel_id, ts=ts, text=text)
     except SlackApiError as exc:
-        return slack_api_error_payload(exc, method="chat.update", start=start)
+        return slack_api_error_payload(exc, method="chat.update")
 
     data = slack_response_data(resp)
     out_ts = str(data.get("ts") or ts)
@@ -50,7 +48,6 @@ def chat_update(arguments: dict[str, Any]) -> dict[str, Any]:
             "ts": out_ts,
             "text": text,
         },
-        start,
     )
 
 
@@ -88,11 +85,10 @@ def conversations_history(arguments: dict[str, Any]) -> dict[str, Any]:
             "limit": lim,
         }
 
-    start = api_start()
     try:
         resp = client.conversations_history(channel=channel_id, limit=lim)
     except SlackApiError as exc:
-        return slack_api_error_payload(exc, method="conversations.history", start=start)
+        return slack_api_error_payload(exc, method="conversations.history")
 
     data = slack_response_data(resp)
     messages = _normalize_messages(data.get("messages"))
@@ -104,7 +100,6 @@ def conversations_history(arguments: dict[str, Any]) -> dict[str, Any]:
             "messages": messages,
             "limit": lim,
         },
-        start,
     )
 
 
@@ -129,7 +124,6 @@ def conversations_replies(arguments: dict[str, Any]) -> dict[str, Any]:
             "limit": lim,
         }
 
-    start = api_start()
     try:
         resp = client.conversations_replies(
             channel=channel_id,
@@ -137,7 +131,7 @@ def conversations_replies(arguments: dict[str, Any]) -> dict[str, Any]:
             limit=lim,
         )
     except SlackApiError as exc:
-        return slack_api_error_payload(exc, method="conversations.replies", start=start)
+        return slack_api_error_payload(exc, method="conversations.replies")
 
     data = slack_response_data(resp)
     messages = _normalize_messages(data.get("messages"))
@@ -150,5 +144,4 @@ def conversations_replies(arguments: dict[str, Any]) -> dict[str, Any]:
             "messages": messages,
             "limit": lim,
         },
-        start,
     )

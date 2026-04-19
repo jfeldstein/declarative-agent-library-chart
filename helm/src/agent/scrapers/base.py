@@ -17,12 +17,15 @@ from typing import Any, Protocol
 
 import httpx
 
+from agent.observability.bootstrap import ensure_scraper_observability
+from agent.observability.middleware import (
+    publish_scraper_rag_embed_attempt,
+    publish_scraper_run_completed,
+)
 from agent.scrapers.metrics import (
     bounded_integration_label,
     classify_rag_submission_result,
     maybe_start_scraper_metrics_http,
-    observe_rag_embed_attempt,
-    observe_scraper_run,
     stop_scraper_metrics_http,
 )
 
@@ -47,11 +50,12 @@ def ingest_embed_payloads(
                 r = hx.post(f"{rag}/v1/embed", json=payload)
                 r.raise_for_status()
             except httpx.HTTPError as exc:
-                observe_rag_embed_attempt(
-                    integration, classify_rag_submission_result(exc)
+                publish_scraper_rag_embed_attempt(
+                    integration=integration,
+                    result=classify_rag_submission_result(exc),
                 )
                 raise
-            observe_rag_embed_attempt(integration, "success")
+            publish_scraper_rag_embed_attempt(integration=integration, result="success")
 
 
 @dataclass(frozen=True)
@@ -100,6 +104,7 @@ def ingest_scraped_embeds(
 
 def run_scraper_main(integration: str, main: Callable[[], None]) -> None:
     """Metrics HTTP server, wall-clock timing, and ``observe_scraper_run`` wrapper."""
+    ensure_scraper_observability()
     t0 = time.perf_counter()
     httpd = maybe_start_scraper_metrics_http()
     run_ok = False
@@ -108,5 +113,9 @@ def run_scraper_main(integration: str, main: Callable[[], None]) -> None:
         run_ok = True
     finally:
         elapsed = time.perf_counter() - t0
-        observe_scraper_run(integration, run_ok, elapsed)
+        publish_scraper_run_completed(
+            integration=integration,
+            success=run_ok,
+            elapsed_seconds=elapsed,
+        )
         stop_scraper_metrics_http(httpd)

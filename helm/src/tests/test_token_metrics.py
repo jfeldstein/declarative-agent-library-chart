@@ -148,7 +148,7 @@ def test_orphan_on_llm_end_skips_ttft_observe(monkeypatch: pytest.MonkeyPatch) -
     ) -> None:
         calls.append((seconds, streaming_label))
 
-    monkeypatch.setattr(lm, "observe_llm_time_to_first_token", _spy_ttft)
+    monkeypatch.setattr(lm, "publish_llm_first_token", _spy_ttft)
     ctx = trigger_context_for_admin_reads()
     cb = SupervisorLlmMetricsCallback(ctx)
     rid = uuid4()

@@ -12,7 +12,7 @@ from agent.triggers.jira.payload import (
     extract_issue_context,
     stable_thread_suffix,
 )
-from agent.metrics import observe_jira_trigger_inbound
+from agent.observability.middleware import publish_jira_trigger_inbound
 from agent.observability.settings import ObservabilitySettings
 from agent.runtime_config import RuntimeConfig
 from agent.triggers.guarded_run import run_guarded
@@ -32,12 +32,12 @@ def dispatch_jira_webhook(
     if settings_event_dedupe and deduper is not None:
         dedupe_key = delivery_header.strip()
         if dedupe_key and deduper.is_duplicate(dedupe_key):
-            observe_jira_trigger_inbound("http", "deduped")
+            publish_jira_trigger_inbound(transport="http", outcome="deduped")
             return
 
     issue_key, project_key, webhook_event = extract_issue_context(payload)
     if not issue_key:
-        observe_jira_trigger_inbound("http", "ignored")
+        publish_jira_trigger_inbound(transport="http", outcome="ignored")
         return
 
     message = build_jira_trigger_message(payload).strip() or (
@@ -72,9 +72,9 @@ def dispatch_jira_webhook(
 
     def _run_graph() -> None:
         run_trigger_graph(ctx)
-        observe_jira_trigger_inbound("http", "ok")
+        publish_jira_trigger_inbound(transport="http", outcome="ok")
 
     run_guarded(
         _run_graph,
-        on_error=lambda: observe_jira_trigger_inbound("http", "error"),
+        on_error=lambda: publish_jira_trigger_inbound(transport="http", outcome="error"),
     )

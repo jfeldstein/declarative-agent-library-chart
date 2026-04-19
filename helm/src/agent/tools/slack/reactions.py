@@ -9,7 +9,6 @@ from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 
 from agent.tools.slack.support import (
-    api_start,
     finish_ok,
     normalize_channel_id,
     optional_tools_client,
@@ -47,17 +46,15 @@ def _reaction_tool(
             "name": name,
         }
 
-    start = api_start()
     try:
         resp = invoke(client, channel_id, ts, name)
     except SlackApiError as exc:
-        return slack_api_error_payload(exc, method=metric_method, start=start)
+        return slack_api_error_payload(exc, method=metric_method)
 
     ok = slack_response_ok(resp)
     return finish_ok(
         metric_method,
         {"ok": ok, "channel_id": channel_id, "timestamp": ts, "name": name},
-        start,
     )
 
 

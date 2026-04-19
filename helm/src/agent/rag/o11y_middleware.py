@@ -8,11 +8,11 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 
-from agent.rag.metrics import (
-    classify_http_status,
-    observe_rag_embed,
-    observe_rag_query,
+from agent.observability.middleware import (
+    publish_rag_embed_completed,
+    publish_rag_query_completed,
 )
+from agent.rag.metrics import classify_http_status
 
 
 class RAGMetricsMiddleware(BaseHTTPMiddleware):
@@ -34,15 +34,15 @@ class RAGMetricsMiddleware(BaseHTTPMiddleware):
             elapsed = time.perf_counter() - start
             res = "server_error"
             if path in ("/v1/embed", "/v1/relate"):
-                observe_rag_embed(res, elapsed)
+                publish_rag_embed_completed(result=res, elapsed_seconds=elapsed)
             elif path == "/v1/query":
-                observe_rag_query(res, elapsed)
+                publish_rag_query_completed(result=res, elapsed_seconds=elapsed)
             raise
 
         elapsed = time.perf_counter() - start
         result = classify_http_status(response.status_code)
         if path in ("/v1/embed", "/v1/relate"):
-            observe_rag_embed(result, elapsed)
+            publish_rag_embed_completed(result=result, elapsed_seconds=elapsed)
         elif path == "/v1/query":
-            observe_rag_query(result, elapsed)
+            publish_rag_query_completed(result=result, elapsed_seconds=elapsed)
         return response

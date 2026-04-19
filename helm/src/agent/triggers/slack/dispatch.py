@@ -10,7 +10,7 @@ from slack_sdk import WebClient
 
 from agent.agent_models import TriggerBody
 from agent.env import system_prompt_from_env
-from agent.metrics import observe_slack_trigger_inbound
+from agent.observability.middleware import publish_slack_trigger_inbound
 from agent.observability.settings import ObservabilitySettings
 from agent.runtime_config import RuntimeConfig
 from agent.o11y_logging import get_logger
@@ -79,7 +79,7 @@ def dispatch_app_mention(
     """Run trigger graph for a normalized Events API body (inner ``event`` dict)."""
     event = body.get("event")
     if not isinstance(event, dict):
-        observe_slack_trigger_inbound(transport, "ignored")
+        publish_slack_trigger_inbound(transport=transport, outcome="ignored")
         return
 
     event_id = ""
@@ -88,22 +88,22 @@ def dispatch_app_mention(
 
     if settings_event_dedupe and deduper is not None and event_id:
         if deduper.is_duplicate(event_id):
-            observe_slack_trigger_inbound(transport, "deduped")
+            publish_slack_trigger_inbound(transport=transport, outcome="deduped")
             return
 
     if str(event.get("bot_id") or "").strip():
-        observe_slack_trigger_inbound(transport, "ignored")
+        publish_slack_trigger_inbound(transport=transport, outcome="ignored")
         return
 
     parsed = extract_app_mention(event)
     if parsed is None:
-        observe_slack_trigger_inbound(transport, "ignored")
+        publish_slack_trigger_inbound(transport=transport, outcome="ignored")
         return
 
     message, channel_id, thread_ts, message_ts = parsed
     thread_id = slack_thread_id_for_event(event)
     if not thread_id:
-        observe_slack_trigger_inbound(transport, "ignored")
+        publish_slack_trigger_inbound(transport=transport, outcome="ignored")
         return
 
     payload = TriggerBody(message=message or None, thread_id=thread_id)
@@ -128,12 +128,14 @@ def dispatch_app_mention(
     def _run_and_reply() -> str:
         out = run_trigger_graph(ctx)
         _post_slack_trigger_reply(ctx, out)
-        observe_slack_trigger_inbound(transport, "ok")
+        publish_slack_trigger_inbound(transport=transport, outcome="ok")
         return out
 
     run_guarded(
         _run_and_reply,
-        on_error=lambda: observe_slack_trigger_inbound(transport, "error"),
+        on_error=lambda: publish_slack_trigger_inbound(
+            transport=transport, outcome="error"
+        ),
     )
 
 

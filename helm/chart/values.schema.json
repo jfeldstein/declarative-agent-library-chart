@@ -392,6 +392,33 @@
             "scrapeTimeout": { "type": "string" },
             "extraLabels": { "type": "object" }
           }
+        },
+        "plugins": {
+          "type": "object",
+          "description": "Observability provider plugins (shared config shape for agent + scraper processes). Disabled by default.",
+          "additionalProperties": false,
+          "properties": {
+            "prometheus": {
+              "type": "object",
+              "properties": { "enabled": { "type": "boolean" } }
+            },
+            "langfuse": {
+              "type": "object",
+              "properties": { "enabled": { "type": "boolean" } }
+            },
+            "wandb": {
+              "type": "object",
+              "properties": { "enabled": { "type": "boolean" } }
+            },
+            "grafana": {
+              "type": "object",
+              "properties": { "enabled": { "type": "boolean" } }
+            },
+            "logShipping": {
+              "type": "object",
+              "properties": { "enabled": { "type": "boolean" } }
+            }
+          }
         }
       }
     },
