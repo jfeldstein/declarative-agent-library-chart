@@ -1,4 +1,4 @@
-# Traceability: [DALC-REQ-HELM-UNITTEST-001] [DALC-REQ-RAG-SCRAPERS-002] [DALC-REQ-SLACK-SCRAPER-001] [DALC-REQ-HELM-UNITTEST-004] [DALC-REQ-EXAMPLE-VALUES-FILES-001] [DALC-REQ-O11Y-SCRAPE-004] [DALC-REQ-JIRA-SCRAPER-002]
+# Traceability: [DALC-REQ-HELM-UNITTEST-001] [DALC-REQ-RAG-SCRAPERS-002] [DALC-REQ-RAG-SCRAPERS-005] [DALC-REQ-SLACK-SCRAPER-001] [DALC-REQ-HELM-UNITTEST-004] [DALC-REQ-EXAMPLE-VALUES-FILES-001] [DALC-REQ-O11Y-SCRAPE-004] [DALC-REQ-JIRA-SCRAPER-002]
 values:
   - ../../examples/with-scrapers/values.yaml
 suite: with-scrapers default values
@@ -60,6 +60,33 @@ tests:
           content:
             name: SCRAPER_JOB_CONFIG
             value: /config/job.json
+      - equal:
+          path: spec.concurrencyPolicy
+          value: Forbid
+  - it: jira scraper CronJob respects per-job concurrencyPolicy Allow # [DALC-REQ-RAG-SCRAPERS-005]
+    template: templates/agent.yaml
+    values:
+      - ../../examples/with-scrapers/values.yaml
+      - ../../examples/with-scrapers/values.scraper-jira-concurrency-allow.yaml
+    documentSelector:
+      path: metadata.name
+      value: dalc-ci-scrapers-declarative-agent-library-chart-scraper-jira-0
+    asserts:
+      - equal:
+          path: spec.concurrencyPolicy
+          value: Allow
+  - it: jira ConfigMap job.json omits Helm-only concurrencyPolicy # [DALC-REQ-RAG-SCRAPERS-005]
+    template: templates/agent.yaml
+    values:
+      - ../../examples/with-scrapers/values.yaml
+      - ../../examples/with-scrapers/values.scraper-jira-concurrency-replace.yaml
+    documentSelector:
+      path: metadata.name
+      value: dalc-ci-scrapers-declarative-agent-library-chart-scraper-job-jira-0
+    asserts:
+      - notMatchRegex:
+          path: data["job.json"]
+          pattern: concurrencyPolicy
   - it: slack_search CronJob runs slack_job module
     template: templates/agent.yaml
     documentSelector:

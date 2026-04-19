@@ -7,16 +7,16 @@
 
 ## 2. Helm: concurrencyPolicy
 
-- [ ] 2.1 Add optional **`concurrencyPolicy`** under **`scrapers.jira.jobs[]`** and **`scrapers.slack.jobs[]`** in **`values.yaml`** and **`values.schema.json`** (enum **`Forbid`**, **`Allow`**, **`Replace`**); strip from **`job.json`** merge in templates
-- [ ] 2.2 Render **`spec.concurrencyPolicy`** on scraper CronJobs defaulting **`Forbid`** when unset
-- [ ] 2.3 Extend **`helm/tests/with_scrapers_test.yaml`** (and examples README if examples gain the field)
+- [x] 2.1 Add optional **`concurrencyPolicy`** under **`scrapers.jira.jobs[]`** and **`scrapers.slack.jobs[]`** in **`values.yaml`** and **`values.schema.json`** (enum **`Forbid`**, **`Allow`**, **`Replace`**); strip from **`job.json`** merge in templates
+- [x] 2.2 Render **`spec.concurrencyPolicy`** on scraper CronJobs defaulting **`Forbid`** when unset
+- [x] 2.3 Extend **`helm/tests/with_scrapers_test.yaml`** (and examples README if examples gain the field)
 
 ## 3. Spec promotion and CI
 
-- [ ] 3.1 After implementation, merge deltas **`scraper-base-runtime`** and **`dalc-rag-from-scrapers`** **`[DALC-REQ-RAG-SCRAPERS-005]`** into **`openspec/specs/`**, update **`docs/spec-test-traceability.md`**, cite IDs in pytest/Helm unittest
-- [ ] 3.2 Run **`python3 scripts/check_spec_traceability.py`**, **`uv run pytest`**, Helm unittest suites per **`docs/local-ci.md`**
+- [x] 3.1 After implementation, merge deltas **`scraper-base-runtime`** and **`dalc-rag-from-scrapers`** **`[DALC-REQ-RAG-SCRAPERS-005]`** into **`openspec/specs/`**, update **`docs/spec-test-traceability.md`**, cite IDs in pytest/Helm unittest
+- [x] 3.2 Run **`python3 scripts/check_spec_traceability.py`**, **`uv run pytest`**, Helm unittest suites per **`docs/local-ci.md`**
 
 ## 4. Housekeeping
 
-- [ ] 4.1 Update **`ADR 0009`** with **base.py** vs integration responsibilities (RAG ingest + persistence vs return-data-only)
+- [x] 4.1 Update **`ADR 0009`** with **base.py** vs integration responsibilities (RAG ingest + persistence vs return-data-only)
 - [ ] 4.2 Archive **`scrapers-basescraper-concurrency`** when promoted and merged (optional dated **`openspec/changes/archive/`** move)

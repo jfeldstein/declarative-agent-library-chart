@@ -1,0 +1,15 @@
+# Override for Helm unittest: Helm-only concurrencyPolicy must not appear in mounted job.json.
+# Traceability: [DALC-REQ-RAG-SCRAPERS-005]
+agent:
+  scrapers:
+    jira:
+      jobs:
+        - schedule: "0 * * * *"
+          source: jira
+          query: 'project = DEMO ORDER BY updated ASC'
+          scope: demo-jira-scope
+          concurrencyPolicy: Replace
+        - schedule: "15 0 * * *"
+          enabled: false
+          source: jira
+          query: 'project = OTHER ORDER BY updated ASC'

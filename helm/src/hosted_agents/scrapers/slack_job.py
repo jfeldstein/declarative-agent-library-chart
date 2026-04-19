@@ -18,6 +18,8 @@ Per-run limits (defaults in parentheses):
 - ``maxMessagesPerRun`` — stop collecting after this many messages for the job (``10000``).
 
 Unknown ``source`` or invalid job JSON fields → exit code 1 with actionable stderr.
+
+Traceability: [DALC-REQ-SCRAPER-BASE-002]
 """
 
 from __future__ import annotations

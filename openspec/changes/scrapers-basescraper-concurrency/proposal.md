@@ -26,3 +26,7 @@ Separately, scraper **CronJobs** today use a fixed **`concurrencyPolicy`**; oper
 - **Python**: **`hosted_agents/scrapers/base.py`** (new), refactors to **`jira_job.py`** / **`slack_job.py`**, tests in **`helm/src/tests/test_*_job.py`** and **`test_scraper_metrics.py`** as needed.
 - **Helm**: **`values.yaml`**, **`values.schema.json`**, **`_manifest_scraper_cronjobs.tpl`** (or equivalent), **`helm/tests/with_scrapers_test.yaml`**.
 - **OpenSpec**: Promote delta specs after implementation; update **`docs/spec-test-traceability.md`** for new IDs.
+
+## Promotion status (post-implementation)
+
+- **Promoted** to **`openspec/specs/dalc-scraper-base-runtime/spec.md`** (**`[DALC-REQ-SCRAPER-BASE-001]` … `003`**) and **`openspec/specs/dalc-rag-from-scrapers/spec.md`** (**`[DALC-REQ-RAG-SCRAPERS-005]`**). **Traceability** in **`docs/spec-test-traceability.md`**; **ADR 0009** updated. **Helm** `concurrencyPolicy` + **ConfigMap** strip; **example** value patches for unittest. **Delta** under **`openspec/changes/scrapers-basescraper-concurrency/specs/`** is superseded by root specs; archive when ready.

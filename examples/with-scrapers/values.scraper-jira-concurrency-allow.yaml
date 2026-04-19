@@ -1,0 +1,15 @@
+# Override for Helm unittest: first Jira scraper CronJob uses concurrencyPolicy Allow.
+# Traceability: [DALC-REQ-RAG-SCRAPERS-005]
+agent:
+  scrapers:
+    jira:
+      jobs:
+        - schedule: "0 * * * *"
+          source: jira
+          query: 'project = DEMO ORDER BY updated ASC'
+          scope: demo-jira-scope
+          concurrencyPolicy: Allow
+        - schedule: "15 0 * * *"
+          enabled: false
+          source: jira
+          query: 'project = OTHER ORDER BY updated ASC'

@@ -153,6 +153,11 @@
                     "description": "Optional per-job on-disk watermark directory; overrides scrapers.jira.watermarkDir for env JIRA_WATERMARK_DIR only"
                   },
                   "scope": { "type": "string" },
+                  "concurrencyPolicy": {
+                    "type": "string",
+                    "enum": ["Forbid", "Allow", "Replace"],
+                    "description": "Kubernetes CronJob concurrencyPolicy (Helm-only; not mounted in job.json). Traceability: [DALC-REQ-RAG-SCRAPERS-005]"
+                  },
                   "source": {
                     "type": "string",
                     "enum": ["jira"],
@@ -211,6 +216,11 @@
                   "enabled": { "type": "boolean" },
                   "schedule": { "type": "string", "minLength": 1 },
                   "scope": { "type": "string" },
+                  "concurrencyPolicy": {
+                    "type": "string",
+                    "enum": ["Forbid", "Allow", "Replace"],
+                    "description": "Kubernetes CronJob concurrencyPolicy (Helm-only; not mounted in job.json). Traceability: [DALC-REQ-RAG-SCRAPERS-005]"
+                  },
                   "source": {
                     "type": "string",
                     "enum": ["slack_search", "slack_channel"]

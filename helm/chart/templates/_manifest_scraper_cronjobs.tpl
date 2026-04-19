@@ -1,5 +1,5 @@
 {{- define "declarative-agent-library-chart.manifest.scraperCronjobs" -}}
-{{/* One CronJob per enabled scraper job; secrets via env (Secret refs), config via mounted ConfigMap. Traceability: [DALC-REQ-RAG-SCRAPERS-002] [DALC-REQ-SCRAPER-CURSOR-003] [DALC-REQ-SCRAPER-CURSOR-004] */}}
+{{/* One CronJob per enabled scraper job; secrets via env (Secret refs), config via mounted ConfigMap. Traceability: [DALC-REQ-RAG-SCRAPERS-002] [DALC-REQ-RAG-SCRAPERS-005] [DALC-REQ-SCRAPER-CURSOR-003] [DALC-REQ-SCRAPER-CURSOR-004] */}}
 {{- $root := . }}
 {{- $cursorBackend := default "file" $root.Values.scrapers.cursorStore.backend }}
 {{- $cursorStoreSecretName := default "" $root.Values.scrapers.cursorStore.postgresUrlSecretName }}
@@ -23,7 +23,7 @@ metadata:
     scraper.agentic.dalc/index: {{ $ji | quote }}
 spec:
   schedule: {{ $job.schedule | quote }}
-  concurrencyPolicy: Forbid
+  concurrencyPolicy: {{ default "Forbid" $job.concurrencyPolicy | quote }}
   successfulJobsHistoryLimit: 1
   failedJobsHistoryLimit: 2
   jobTemplate:
@@ -141,7 +141,7 @@ metadata:
     scraper.agentic.dalc/index: {{ $si | quote }}
 spec:
   schedule: {{ $job.schedule | quote }}
-  concurrencyPolicy: Forbid
+  concurrencyPolicy: {{ default "Forbid" $job.concurrencyPolicy | quote }}
   successfulJobsHistoryLimit: 1
   failedJobsHistoryLimit: 2
   jobTemplate:

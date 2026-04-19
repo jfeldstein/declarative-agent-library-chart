@@ -34,6 +34,7 @@ The table is parsed by `scripts/check_spec_traceability.py`; keep the **Matrix**
 | [DALC-REQ-RAG-SCRAPERS-002] | `openspec/specs/dalc-rag-from-scrapers/spec.md` | `helm/tests/with_scrapers_test.yaml`, `helm/tests/hello_world_test.yaml`, `helm/chart/templates/_manifest_scraper_job_configmaps.tpl` | default PR | - | - |
 | [DALC-REQ-RAG-SCRAPERS-003] | `openspec/specs/dalc-rag-from-scrapers/spec.md` | `helm/chart/values.yaml`, `helm/chart/values.schema.json` | default PR | - | - |
 | [DALC-REQ-RAG-SCRAPERS-004] | `openspec/specs/dalc-rag-from-scrapers/spec.md` | `helm/src/tests/test_runtime_config.py::test_from_env_empty`, `helm/tests/hello_world_test.yaml` | default PR | - | - |
+| [DALC-REQ-RAG-SCRAPERS-005] | `openspec/specs/dalc-rag-from-scrapers/spec.md` | `helm/tests/with_scrapers_test.yaml`, `helm/chart/templates/_manifest_scraper_cronjobs.tpl`, `helm/chart/templates/_manifest_scraper_job_configmaps.tpl`, `helm/chart/values.schema.json`, `examples/with-scrapers/values.scraper-jira-concurrency-allow.yaml`, `examples/with-scrapers/values.scraper-jira-concurrency-replace.yaml` | default PR | - | - |
 | [DALC-REQ-SLACK-SCRAPER-001] | `openspec/specs/dalc-rag-from-scrapers/spec.md` | `helm/tests/with_scrapers_test.yaml` | default PR | - | - |
 | [DALC-REQ-SLACK-SCRAPER-002] | `openspec/specs/dalc-rag-from-scrapers/spec.md` | `helm/src/pyproject.toml` | default PR | - | - |
 | [DALC-REQ-SLACK-SCRAPER-003] | `openspec/specs/dalc-rag-from-scrapers/spec.md` | `helm/src/tests/test_slack_job.py::test_run_slack_search_posts_embed` | default PR | - | - |
@@ -44,6 +45,9 @@ The table is parsed by `scripts/check_spec_traceability.py`; keep the **Matrix**
 | [DALC-REQ-JIRA-SCRAPER-003] | `openspec/specs/dalc-jira-scraper/spec.md` | `helm/src/tests/test_jira_job.py` | default PR | - | - |
 | [DALC-REQ-JIRA-SCRAPER-004] | `openspec/specs/dalc-jira-scraper/spec.md` | `helm/src/tests/test_jira_job.py` | default PR | - | - |
 | [DALC-REQ-JIRA-SCRAPER-005] | `openspec/specs/dalc-jira-scraper/spec.md` | `helm/src/tests/test_jira_job.py` | default PR | - | - |
+| [DALC-REQ-SCRAPER-BASE-001] | `openspec/specs/dalc-scraper-base-runtime/spec.md` | `helm/src/hosted_agents/scrapers/base.py` | default PR | - | - |
+| [DALC-REQ-SCRAPER-BASE-002] | `openspec/specs/dalc-scraper-base-runtime/spec.md` | `helm/src/hosted_agents/scrapers/jira_job.py`, `helm/src/hosted_agents/scrapers/slack_job.py` | default PR | - | - |
+| [DALC-REQ-SCRAPER-BASE-003] | `openspec/specs/dalc-scraper-base-runtime/spec.md` | `helm/src/hosted_agents/scrapers/base.py`, `helm/src/tests/test_jira_job.py` | default PR | - | - |
 | [DALC-REQ-SCRAPER-CURSOR-001] | `openspec/specs/dalc-scraper-cursor-store/spec.md` | `helm/src/tests/test_cursor_store.py::test_file_store_jira_compat_roundtrip`, `helm/src/tests/test_cursor_store.py::test_file_store_slack_compat_roundtrip`, `helm/src/hosted_agents/scrapers/cursor_store.py` | default PR | - | - |
 | [DALC-REQ-SCRAPER-CURSOR-002] | `openspec/specs/dalc-scraper-cursor-store/spec.md` | `helm/src/tests/test_cursor_store.py::test_postgres_store_issues_idempotent_ddl_and_upsert`, `helm/src/hosted_agents/scrapers/cursor_store.py` | default PR | - | - |
 | [DALC-REQ-SCRAPER-CURSOR-003] | `openspec/specs/dalc-scraper-cursor-store/spec.md` | `helm/tests/with_scrapers_test.yaml`, `helm/chart/templates/_manifest_scraper_cronjobs.tpl`, `helm/chart/values.yaml`, `helm/chart/values.schema.json` | default PR | - | - |

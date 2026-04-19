@@ -1,12 +1,12 @@
 {{- define "declarative-agent-library-chart.manifest.scraperJobConfigmaps" -}}
-{{/* One ConfigMap per enabled scraper job (non-secret JSON at job.json). Traceability: [DALC-REQ-RAG-SCRAPERS-002] */}}
+{{/* One ConfigMap per enabled scraper job (non-secret JSON at job.json). Traceability: [DALC-REQ-RAG-SCRAPERS-002] [DALC-REQ-RAG-SCRAPERS-005] */}}
 {{- $root := . }}
 {{- if and $root.Values.scrapers.jira.enabled $root.Values.scrapers.jira.jobs }}
 {{- range $ji, $job := $root.Values.scrapers.jira.jobs }}
 {{- if or (not (hasKey $job "enabled")) $job.enabled }}
 {{- $clean := dict }}
 {{- range $k, $v := $job }}
-{{- if and (ne $k "enabled") (ne $k "schedule") (ne $k "siteUrl") (ne $k "watermarkDir") }}
+{{- if and (ne $k "enabled") (ne $k "schedule") (ne $k "siteUrl") (ne $k "watermarkDir") (ne $k "concurrencyPolicy") }}
 {{- $_ := set $clean $k $v }}
 {{- end }}
 {{- end }}
@@ -33,7 +33,7 @@ data:
 {{- if or (not (hasKey $job "enabled")) $job.enabled }}
 {{- $clean := dict }}
 {{- range $k, $v := $job }}
-{{- if and (ne $k "enabled") (ne $k "schedule") }}
+{{- if and (ne $k "enabled") (ne $k "schedule") (ne $k "concurrencyPolicy") }}
 {{- $_ := set $clean $k $v }}
 {{- end }}
 {{- end }}

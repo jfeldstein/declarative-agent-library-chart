@@ -41,6 +41,20 @@ The chart SHALL populate the cluster-internal RAG base URL (for example the help
 - **WHEN** no scraper job is enabled under `scrapers.jira` / `scrapers.slack` per [DALC-REQ-RAG-SCRAPERS-002]
 - **THEN** the agent Deployment SHALL not receive a non-empty RAG base URL from this helper (consistent with no RAG Service)
 
+### Requirement: [DALC-REQ-RAG-SCRAPERS-005] Scraper CronJob concurrency policy is operator-tunable per job
+
+For each rendered scraper **CronJob** under **`scrapers.jira.jobs`** and **`scrapers.slack.jobs`**, the Helm chart SHALL set **`spec.concurrencyPolicy`** from operator values when provided, and SHALL default to **`Forbid`** when omitted, matching the previous chart behavior. Allowed values SHALL be those accepted by Kubernetes **`batch/v1` `CronJob` `concurrencyPolicy`** at the chart’s targeted Kubernetes version (**`Forbid`**, **`Allow`**, **`Replace`**). The chart SHALL NOT place this field inside mounted **`job.json`** (it is Helm-only configuration, like **`schedule`**).
+
+#### Scenario: Default remains Forbid
+
+- **WHEN** a scraper job entry omits **`concurrencyPolicy`**
+- **THEN** rendered **CronJob** **`spec.concurrencyPolicy`** SHALL be **`Forbid`**
+
+#### Scenario: Operator selects Allow
+
+- **WHEN** an operator sets **`concurrencyPolicy: Allow`** on a scraper job entry and the value is valid
+- **THEN** the rendered **CronJob** **`spec.concurrencyPolicy`** SHALL be **`Allow`**
+
 ### Requirement: [DALC-REQ-SLACK-SCRAPER-001] Slack scraper executes an operator-defined search list each run
 
 The Slack scraper **SHALL** read an operator-supplied **ordered list of search definitions** and **SHALL** execute **every** definition **once** per scraper run, in list order, unless a step fails in a way that aborts the run as documented.

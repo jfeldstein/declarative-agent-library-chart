@@ -6,6 +6,8 @@ Config is mounted at ``SCRAPER_JOB_CONFIG`` (default ``/config/job.json``) with
 
 Search uses **``POST /rest/api/3/search/jql``** with ``nextPageToken`` pagination.
 See ``openspec/changes/jira-scraper/``.
+
+Traceability: [DALC-REQ-SCRAPER-BASE-002]
 """
 
 from __future__ import annotations

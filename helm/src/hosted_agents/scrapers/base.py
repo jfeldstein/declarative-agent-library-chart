@@ -4,6 +4,8 @@ Integration modules fetch remote data and map it to one or more **embed payloads
 (JSON bodies for ``POST .../v1/embed``). This module performs HTTP submission,
 metrics for each attempt, and optional **commit** callbacks only after all payloads
 in a batch succeed (matching prior per-scraper behavior).
+
+Traceability: [DALC-REQ-SCRAPER-BASE-001] [DALC-REQ-SCRAPER-BASE-003]
 """
 
 from __future__ import annotations
