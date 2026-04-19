@@ -34,3 +34,4 @@ New ADRs can follow the structure in `0001-use-python-for-runtime.md` (Context, 
 - **0011 — [Prometheus metrics schema and cardinality](0011-prometheus-metrics-schema-and-cardinality.md)** — naming, labels, scraper registry separation.
 - **0012 — [CI parity as merge gate](0012-ci-parity-as-merge-gate.md)** — local parity with `.github/workflows/ci.yml`.
 - **0013 — [Core architectural shape: IaC, agent, scaffolding](0013-core-architectural-shape-iac-agent-scaffolding.md)** — taxonomy: IaC vs agent vs non-agentic scaffolding; observability first-class; tool layers; trigger vs tool.
+- **0014 — [Observability plugin architecture](0014-observability-plugin-architecture.md)** — lifecycle event bus, single `observability.plugins` Helm tree, tool boundary; alerts/checkpointing out of scope here.

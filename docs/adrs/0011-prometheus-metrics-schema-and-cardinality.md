@@ -8,7 +8,9 @@ Accepted
 
 This project exposes **Prometheus observability metrics** (see [ADR 0005](0005-observability-vs-execution-persistence.md)) from the hosted agent HTTP runtime, the optional RAG HTTP service, and scheduled scraper CronJobs. Without shared naming and label rules, series proliferate, cardinality grows, and dashboards or alerts accidentally capture secrets or unbounded dimensions.
 
-Implementation today lives in `helm/src/agent/metrics.py`, `helm/src/agent/rag/metrics.py`, and `helm/src/agent/scrapers/metrics.py`.
+**Phase 1** (**`openspec/changes/observability-lifecycle-events/`**) routes many emission sites through a **lifecycle event bus** ([ADR 0014](0014-observability-plugin-architecture.md)): subscribers (including Prometheus observers) continue to register **`agent_runtime_*`** (and tier-specific prefixes below) on the usual registries. Future **metric renames**—for example aligning a histogram with a revised event taxonomy—**SHALL** ship with **release notes**, **dashboard JSON** updates under `grafana/`, and a **breaking row** in the observability migration table for the release.
+
+Implementation today lives in `helm/src/agent/metrics.py`, `helm/src/agent/rag/metrics.py`, `helm/src/agent/scrapers/metrics.py`, and **bus subscribers** under `helm/src/agent/observability/` (see Phase 1 change).
 
 ## Decision
 
@@ -30,6 +32,12 @@ Implementation today lives in `helm/src/agent/metrics.py`, `helm/src/agent/rag/m
 
 - The main agent and RAG processes **MAY** use the **default** `prometheus_client` registry for `/metrics` on their workloads.
 - Scraper CronJob pods **SHALL** register scraper metrics on a **dedicated** `CollectorRegistry` (`SCRAPER_REGISTRY` in `scrapers/metrics.py`) and expose them via that registry only, so short-lived jobs do not emit or merge unrelated agent/RAG series and operators scrape a coherent scraper surface.
+
+### Event bus vs plugin flags
+
+- **Instrumentation** (counters/histograms) **SHALL** remain in the Prometheus tiers and registries defined above; the bus **SHALL NOT** introduce new arbitrary label dimensions.
+- Helm **`agent.observability.plugins.prometheus`** is **reserved** for a possible second surface or opt-in wiring; **default `/metrics` scraping does not depend on plugin flags today** ([ADR 0014](0014-observability-plugin-architecture.md)).
+- Non-Prometheus plugins (Langfuse, log shipping, and similar) **MUST NOT** bypass label rules by encoding high-cardinality fields in new `agent_runtime_*` labels; they **SHOULD** consume **logs**, **traces**, or **execution persistence** fields instead.
 
 ### Grafana and dashboards (high level)
 
@@ -53,3 +61,4 @@ Implementation today lives in `helm/src/agent/metrics.py`, `helm/src/agent/rag/m
 **Follow-ups:**
 
 - When adding new metric families, extend the checklist in `scrapers/metrics.py` (Helm, examples, tests, dashboard, registry) in parallel so schema and documentation stay aligned.
+- When renaming series after event-bus refactors, update **`docs/release-notes/`** for the release and re-import guidance for **`grafana/*.json`** panels that embed PromQL.
