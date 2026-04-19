@@ -6,6 +6,8 @@ If you are starting a new body of work, create a new worktree for it. Read the p
 
 ## OpenSpec test-to-spec traceability ([DALC-VER-005])
 
+For OpenSpec **change workflow**—drafts under `openspec/changes/`, **promotion** of normative requirements into `openspec/specs/`, and **archiving** completed changes—read **[openspec/AGENTS.md](openspec/AGENTS.md)**.
+
 **Test-to-spec traceability** means: promoted **`openspec/specs/*/spec.md`** **SHALL** rows carry stable IDs, **`docs/spec-test-traceability.md`** lists evidence, and tests cite those IDs—see **`openspec/specs/dalc-requirement-verification/spec.md`**. Use this phrase (or **spec–test traceability**) when you mean this mechanism; bare **traceability** is ambiguous (e.g. data lineage, supply chain).
 
 When you add or materially change a normative **SHALL** under `openspec/specs/*/spec.md`:
