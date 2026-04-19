@@ -11,7 +11,7 @@
 - [x] 2.1 Define stable `tool_call_id`, `run_id`, and `thread_id` propagation through tool execution context
 - [x] 2.2 Add **durable** (survives restarts / multi-replica) store mapping **`(slack_channel_id, message_ts)`** → tool/run/**`checkpoint_id`**. *(**Done:** **`PostgresCorrelationStore`** when **`HOSTED_AGENT_OBSERVABILITY_STORE=postgres`** + **`HOSTED_AGENT_POSTGRES_URL`**; in-memory **`CorrelationStore`** remains the default for single-process dev.)*
 - [x] 2.3 Implement Slack Events subscription for reactions; map configured emoji to **global registry** labels (positive / negative / neutral per policy)
-- [x] 2.4 Implement idempotency for duplicate deliveries; **`reaction_added`** / **`reaction_removed`** ingestion with **scalar-based mutual exclusivity** (positive vs negative labels for the same user + correlation). *(**Out of scope:** polling Slack—bridge sends add/remove events only.)*
+- [x] 2.4 Implement idempotency for duplicate deliveries; **`reaction_added`** / **`reaction_removed`** ingestion with **scalar-based mutual exclusivity** (positive vs negative labels for the same user + correlation).
 - [x] 2.5 Orphan reactions: log/queue only—no training-eligible label without resolved correlation
 
 ## 3. Weights & Biases integration

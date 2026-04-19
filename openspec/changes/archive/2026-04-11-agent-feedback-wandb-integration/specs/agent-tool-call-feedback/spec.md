@@ -39,4 +39,4 @@ The system SHALL define idempotency rules (for example one active label per user
 #### Scenario: Duplicate event delivery
 
 - **WHEN** the same reaction-added event is delivered twice
-- **THEN** the persisted feedback state SHALL match the policy (no duplicate rows, or upserted single row) and SHALL remain consistent with the latest known Slack state after reconciliation
+- **THEN** the persisted feedback state SHALL match the policy (no duplicate rows, or upserted single row per dedupe key)
