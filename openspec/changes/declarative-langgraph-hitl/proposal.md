@@ -25,3 +25,7 @@ Production agents often need **human-in-the-loop (HITL)** pauses—for approval,
 - **Python runtime** may add or extend a LangGraph `@entrypoint` path with `InMemorySaver` or production checkpointer, plus code generation or interpretation from declarative HITL config.
 - **Dependencies**: `langgraph` (and related `langchain-core` types where tool-call review is implemented), consistent with existing stack choices in the runtime project.
 - **API / ops**: callers and operators need a clear story for `thread_id`, streaming until interrupt, and resuming with structured JSON.
+
+## Promotion status (DALC sync checklist §D)
+
+**`declarative-langgraph-hitl`** remains a **draft** delta; there is **no** **`openspec/specs/declarative-langgraph-hitl/`** directory. Promotion is **deferred** until HITL behavior is ready for standalone **`openspec/specs/`** extraction and traceability.

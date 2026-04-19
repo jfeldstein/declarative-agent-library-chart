@@ -25,3 +25,7 @@ Operators need **project-scoped Jira context** (issues, workflow state, ownershi
 - **Helm**: **`values.yaml`**, **`values.schema.json`**, scraper CronJob template; example values under **`examples/`**.
 - **Security**: Jira **API token** or OAuth app credentials via Kubernetes **Secrets**; document required OAuth scopes / classic permissions.
 - **CI**: **`uv run pytest`**; if new normative SHALLs are promoted into **`openspec/specs/`** later, follow **[DALC-VER-005]** traceability (`scripts/check_spec_traceability.py`).
+
+## Promotion status (DALC sync checklist §D)
+
+The **Jira scraper** ships under **`scrapers.jira`** and shares RAG/embed contracts with **`dalc-rag-from-scrapers`**. The **`jira-scraper`** delta spec remains the OpenSpec workspace for this change; a dedicated **`openspec/specs/jira-scraper/`** tree is **optional** and **deferred** (extract when Jira-specific **`[DALC-REQ-*]`** rows are split out from **`dalc-rag-from-scrapers`**).

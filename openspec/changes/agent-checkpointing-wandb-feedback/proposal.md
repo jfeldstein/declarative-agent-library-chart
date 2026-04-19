@@ -35,3 +35,7 @@ Hosted agents need durable, inspectable runs so we can resume work, audit decisi
 - **Integrations**: Slack Events API (or Bolt) for reactions; `wandb` SDK for traces and feedback enrichment.
 - **Ops**: secrets for Slack and W&B; retention and PII policies for checkpoints and traces.
 - **Docs**: **`docs/observability.md`** documents checkpoints, W&B tags, correlation, and env stubs per **`wandb-agent-traces`** (operator documentation requirement).
+
+## Promotion status (DALC sync checklist §D)
+
+The capability deltas under **`openspec/changes/agent-checkpointing-wandb-feedback/specs/`** (`agent-feedback-model`, `runtime-langgraph-checkpoints`, `tool-feedback-slack`, `wandb-agent-traces`) do **not** yet have same-named **`openspec/specs/<slug>/`** directories. Checkpointing, observability, Postgres, Slack feedback, and W&B tracing behavior that has landed is partly reflected in promoted **`dalc-postgres-agent-persistence`**, **`dalc-chart-runtime-values`**, **`dalc-requirement-verification`**, and related specs; **standalone** promotion of these four slug trees with stable **`[DALC-REQ-*]`** IDs and full matrix rows is **deferred** to a focused pass. This records the explicit fold/deferral per **`openspec/AGENTS.md`** §5–§6.

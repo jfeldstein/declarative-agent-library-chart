@@ -76,3 +76,9 @@ Relevant external patterns:
 - Whether **`/query`** returns only text snippets, structured citations, or **both**, and maximum payload limits for production.
 - Default **hop depth** and **relationship-type** filters for expansion, and whether **undirected** interpretation is allowed for selected edge types.
 - **Credential storage** for scrapers and tools (Kubernetes Secrets vs external secret store) — required for implementation but orthogonal to component taxonomy.
+
+## Checklist §D — `runtime-*` delta specs vs `openspec/specs/`
+
+The five **`runtime-*`** specs under **`openspec/changes/agent-runtime-components/specs/`** remain **draft deltas** for this umbrella change. There is **no** matching **`openspec/specs/runtime-<name>/`** directory yet.
+
+**Explicit fold (DALC sync remediation):** shipping today is reflected in other **promoted** capabilities (for example **`dalc-rag-from-scrapers`**, **`dalc-chart-runtime-values`**, **`dalc-agent-o11y-*`**). Standalone promotion of **`openspec/specs/runtime-rag-http/`**, **`runtime-scrapers/`**, **`runtime-skills/`**, **`runtime-subagents/`**, and **`runtime-tools-mcp/`** is **deferred** to a future OpenSpec promotion pass that lifts these drafts into long-lived **`dalc-*`** slugs with IDs + matrix rows per **`openspec/AGENTS.md`** §4.
