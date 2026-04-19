@@ -1,4 +1,4 @@
-# Traceability: [DALC-REQ-HELM-UNITTEST-001] [DALC-REQ-RAG-SCRAPERS-002] [DALC-REQ-SLACK-SCRAPER-001] [DALC-REQ-HELM-UNITTEST-004] [DALC-REQ-EXAMPLE-VALUES-FILES-001]
+# Traceability: [DALC-REQ-HELM-UNITTEST-001] [DALC-REQ-RAG-SCRAPERS-002] [DALC-REQ-SLACK-SCRAPER-001] [DALC-REQ-HELM-UNITTEST-004] [DALC-REQ-EXAMPLE-VALUES-FILES-001] [DALC-REQ-O11Y-SCRAPE-004]
 values:
   - ../../examples/with-scrapers/values.yaml
 suite: with-scrapers default values
@@ -69,6 +69,24 @@ tests:
       - equal:
           path: spec.jobTemplate.spec.template.spec.containers[0].command[2]
           value: hosted_agents.scrapers.slack_job
+  - it: scraper CronJob pod template has prometheus scrape annotations when enabled
+    template: templates/agent.yaml
+    values:
+      - ../../examples/with-scrapers/values.yaml
+      - ../../examples/with-scrapers/values.prometheus-annotations.yaml
+    documentSelector:
+      path: metadata.name
+      value: dalc-ci-scrapers-declarative-agent-library-chart-scraper-jira-0
+    asserts:
+      - equal:
+          path: spec.jobTemplate.spec.template.metadata.annotations["prometheus.io/scrape"]
+          value: "true"
+      - equal:
+          path: spec.jobTemplate.spec.template.metadata.annotations["prometheus.io/port"]
+          value: "9091"
+      - equal:
+          path: spec.jobTemplate.spec.template.metadata.annotations["prometheus.io/path"]
+          value: "/metrics"
   - it: renders RAG deployment when a scraper job is enabled
     template: templates/agent.yaml
     documentSelector:

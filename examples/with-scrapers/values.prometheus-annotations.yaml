@@ -1,0 +1,8 @@
+# Overlay for Helm unittest: CronJob pod templates pick up chart-level Prometheus scrape
+# annotations when ``agent.observability.prometheusAnnotations.enabled`` is true (see
+# ``_manifest_scraper_cronjobs.tpl``).
+# Traceability: [DALC-REQ-EXAMPLE-VALUES-FILES-001] [DALC-REQ-O11Y-SCRAPE-004]
+agent:
+  observability:
+    prometheusAnnotations:
+      enabled: true

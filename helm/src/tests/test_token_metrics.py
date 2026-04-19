@@ -28,6 +28,14 @@ def _metrics_text(client: TestClient) -> str:
     return r.text
 
 
+def _histogram_sum(text: str, metric_name: str) -> float:
+    prefix = f"{metric_name}_sum "
+    for ln in text.splitlines():
+        if ln.startswith(prefix):
+            return float(ln.split()[-1])
+    return 0.0
+
+
 def _counter_value(text: str, line_prefix: str) -> float:
     """Parse counter value from first matching exposition line; 0 if series not yet emitted."""
     for ln in text.splitlines():
@@ -214,6 +222,43 @@ def test_new_metric_help_lines_include_semantics() -> None:
         pytest.fail("missing HELP for estimated cost")
 
 
+def test_trigger_payload_histograms_record_response_size(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """[DALC-REQ-TOKEN-MET-004] Successful trigger responses observe response byte histogram."""
+    monkeypatch.setenv(
+        "HOSTED_AGENT_SUBAGENTS_JSON",
+        json.dumps(
+            [{"name": "s1", "systemPrompt": 'Respond, "S"', "description": "s1"}],
+        ),
+    )
+    patch_supervisor_fake_model(
+        monkeypatch,
+        FakeToolChatModel(
+            responses=[
+                AIMessage(
+                    content="payload-response-body-text",
+                    usage_metadata={
+                        "input_tokens": 1,
+                        "output_tokens": 2,
+                        "total_tokens": 3,
+                    },
+                ),
+            ],
+        ),
+    )
+    client = TestClient(create_app(system_prompt="sys"))
+    before = _metrics_text(client)
+    r = client.post("/api/v1/trigger", json={"message": "hello-response-bytes"})
+    assert r.status_code == 200
+    out_len = len(r.text.encode("utf-8"))
+    after = _metrics_text(client)
+    assert "agent_runtime_http_trigger_response_bytes" in after
+    assert _histogram_sum(after, "agent_runtime_http_trigger_response_bytes") >= (
+        _histogram_sum(before, "agent_runtime_http_trigger_response_bytes") + out_len - 1e-9
+    )
+
+
 def test_trigger_payload_histograms_record_request_size(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -263,3 +308,24 @@ def test_o11y_logs_token_dashboard_capability_documented() -> None:
     text = readme.read_text(encoding="utf-8")
     assert "cfha-token-metrics.json" in text
     assert "docs/observability.md" in text
+
+
+def test_cfha_token_dashboard_promql_matches_observability_metric_names() -> None:
+    """[DALC-REQ-O11Y-LOGS-006] Grafana ``cfha-token-metrics.json`` queries reference documented names."""
+    import re
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parent.parent.parent.parent
+    dash = json.loads((root / "grafana" / "cfha-token-metrics.json").read_text(encoding="utf-8"))
+    obs = (root / "docs" / "observability.md").read_text(encoding="utf-8")
+    pat = re.compile(r"\b(agent_runtime[a-z0-9_]+)\b")
+    for panel in dash.get("panels", []):
+        for t in panel.get("targets", []):
+            expr = t.get("expr") or ""
+            for m in pat.findall(expr):
+                base = (
+                    m.removesuffix("_bucket").removesuffix("_sum").removesuffix("_count")
+                )
+                assert base in obs, (
+                    f"missing from docs/observability.md: {base} (from {expr!r})"
+                )

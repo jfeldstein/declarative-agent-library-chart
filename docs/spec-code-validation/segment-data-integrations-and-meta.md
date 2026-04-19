@@ -49,7 +49,7 @@
 
 | ID | Alignment | Notes |
 |----|-----------|--------|
-| JIRA-TRIGGER-001 | Strong | Issue-updated webhook invokes `run_trigger_graph` (mocked) with captured context. |
+| JIRA-TRIGGER-001 | Strong | Issue-updated webhook invokes `run_trigger_graph` (mocked) with captured context. **Opt-in:** `RUN_JIRA_TRIGGER_HTTP_PARITY=1` runs `test_optional_jira_webhook_trigger_context_message_matches_direct_trigger` — full `TestClient` stack (`run_trigger_graph` wrapped only to record contexts) compares `TriggerBody.message` vs an equivalent **`POST /api/v1/trigger`** body built from **`build_jira_trigger_message`**. |
 | JIRA-TRIGGER-002 | Strong | Tests assert sources avoid embed route; quick scan: no `/v1/embed` under `hosted_agents/jira_trigger/`. **Operational:** managed RAG disabled unless separately configured — not a live webhook+RAG integration test in default PR. |
 | JIRA-TRIGGER-003 | Strong | Bad secret → 401 without graph; invalid JSON → 400 without graph. **Not exhaustively proven:** every future validation branch (e.g. alternate webhook types) would need matching tests if added to code. |
 | JIRA-TRIGGER-004 | Strong | README + chart surface distinct keys from scraper batch/watermark settings. |

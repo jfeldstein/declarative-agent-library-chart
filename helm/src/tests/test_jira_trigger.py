@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from unittest.mock import patch
 
@@ -15,6 +16,68 @@ from hosted_agents.app import create_app
 @pytest.fixture()
 def webhook_secret() -> str:
     return "test-jira-webhook-secret-not-real"
+
+
+@pytest.mark.skipif(
+    os.environ.get("RUN_JIRA_TRIGGER_HTTP_PARITY") != "1",
+    reason="Opt-in parity check (set RUN_JIRA_TRIGGER_HTTP_PARITY=1).",
+)
+def test_optional_jira_webhook_trigger_context_message_matches_direct_trigger(
+    monkeypatch: pytest.MonkeyPatch,
+    webhook_secret: str,
+) -> None:
+    """[DALC-REQ-JIRA-TRIGGER-001] Same ``TriggerBody.message`` as ``POST /api/v1/trigger`` for equivalent payload."""
+    import hosted_agents.trigger_graph as tg
+    from hosted_agents.jira_trigger.payload import build_jira_trigger_message
+
+    monkeypatch.setenv("HOSTED_AGENT_JIRA_TRIGGER_ENABLED", "true")
+    monkeypatch.setenv("HOSTED_AGENT_JIRA_TRIGGER_WEBHOOK_SECRET", webhook_secret)
+
+    payload = {
+        "webhookEvent": "jira:issue_updated",
+        "issue": {
+            "key": "PAR-99",
+            "fields": {
+                "summary": "parity summary",
+                "project": {"key": "PAR"},
+            },
+        },
+    }
+    expected_msg = build_jira_trigger_message(payload)
+
+    captured: list[object] = []
+    real = tg.run_trigger_graph
+
+    def _wrap(ctx: object) -> str:
+        captured.append(ctx)
+        return real(ctx)
+
+    monkeypatch.setattr("hosted_agents.app.run_trigger_graph", _wrap)
+    monkeypatch.setattr("hosted_agents.jira_trigger.dispatch.run_trigger_graph", _wrap)
+
+    app = create_app(system_prompt="system")
+    with TestClient(app) as client:
+        r1 = client.post(
+            "/api/v1/trigger",
+            json={"message": expected_msg, "thread_id": "parity-direct-thread"},
+        )
+        r2 = client.post(
+            "/api/v1/integrations/jira/webhook",
+            content=json.dumps(payload).encode(),
+            params={"secret": webhook_secret},
+            headers={"X-Atlassian-Webhook-Identifier": "parity-wh"},
+        )
+
+    assert r1.status_code == 200
+    assert r2.status_code == 200
+    assert len(captured) == 2
+    ctx_direct, ctx_jira = captured[0], captured[1]
+    assert getattr(ctx_direct, "body").message.strip() == getattr(
+        ctx_jira,
+        "body",
+    ).message.strip()
+    assert getattr(ctx_jira, "thread_id", "").startswith("jira:PAR-99:")
+    assert getattr(ctx_direct, "thread_id") == "parity-direct-thread"
 
 
 def test_jira_trigger_http_bad_secret_does_not_run_graph(
