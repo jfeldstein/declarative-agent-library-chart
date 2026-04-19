@@ -5,9 +5,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 
-
-def _truthy(name: str) -> bool:
-    return os.environ.get(name, "").strip().lower() in {"1", "true", "yes", "on"}
+from agent.triggers.env_bool import env_truthy
 
 
 @dataclass(frozen=True)
@@ -25,7 +23,7 @@ class SlackTriggerSettings:
     @classmethod
     def from_env(cls) -> SlackTriggerSettings:
         return cls(
-            enabled=_truthy("HOSTED_AGENT_SLACK_TRIGGER_ENABLED"),
+            enabled=env_truthy("HOSTED_AGENT_SLACK_TRIGGER_ENABLED"),
             signing_secret=os.environ.get(
                 "HOSTED_AGENT_SLACK_TRIGGER_SIGNING_SECRET", ""
             ).strip(),
@@ -35,8 +33,8 @@ class SlackTriggerSettings:
             bot_token=os.environ.get(
                 "HOSTED_AGENT_SLACK_TRIGGER_BOT_TOKEN", ""
             ).strip(),
-            socket_mode=_truthy("HOSTED_AGENT_SLACK_TRIGGER_SOCKET_MODE"),
-            event_dedupe=_truthy("HOSTED_AGENT_SLACK_TRIGGER_EVENT_DEDUPE"),
+            socket_mode=env_truthy("HOSTED_AGENT_SLACK_TRIGGER_SOCKET_MODE"),
+            event_dedupe=env_truthy("HOSTED_AGENT_SLACK_TRIGGER_EVENT_DEDUPE"),
             http_path=(
                 os.environ.get(
                     "HOSTED_AGENT_SLACK_TRIGGER_HTTP_PATH",

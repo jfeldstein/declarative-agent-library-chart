@@ -2,18 +2,16 @@
 
 from __future__ import annotations
 
-import json
 import logging
 import secrets
-import uuid
-from typing import Any
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 
+from agent.metrics import observe_jira_trigger_inbound
+from agent.triggers.http_common import parse_utf8_json_object, request_id_from_request
 from agent.triggers.jira.config import JiraTriggerSettings
 from agent.triggers.jira.dispatch import dispatch_jira_webhook
-from agent.metrics import observe_jira_trigger_inbound
 
 _LOG = logging.getLogger(__name__)
 
@@ -37,18 +35,6 @@ def _verify_shared_secret(request: Request, configured: str) -> bool:
     return secrets.compare_digest(configured, incoming)
 
 
-def _json_object_from_body(raw_body: bytes) -> dict[str, Any]:
-    try:
-        data = json.loads(raw_body.decode("utf-8"))
-    except (UnicodeDecodeError, json.JSONDecodeError):
-        observe_jira_trigger_inbound("http", "bad_json")
-        raise HTTPException(status_code=400, detail="Invalid JSON body") from None
-    if not isinstance(data, dict):
-        observe_jira_trigger_inbound("http", "bad_json")
-        raise HTTPException(status_code=400, detail="JSON body must be an object")
-    return data
-
-
 def register_jira_trigger_http_route(
     app: FastAPI, settings: JiraTriggerSettings
 ) -> None:
@@ -70,11 +56,11 @@ def register_jira_trigger_http_route(
             observe_jira_trigger_inbound("http", "rejected")
             raise HTTPException(status_code=401, detail="Invalid Jira webhook secret")
 
-        payload = _json_object_from_body(raw_body)
-        rid = getattr(request.state, "request_id", None) or request.headers.get(
-            "x-request-id"
+        payload = parse_utf8_json_object(
+            raw_body,
+            on_bad_json=lambda: observe_jira_trigger_inbound("http", "bad_json"),
         )
-        req_id = str(rid).strip() if rid else str(uuid.uuid4())
+        req_id = request_id_from_request(request)
         delivery = (request.headers.get("X-Atlassian-Webhook-Identifier") or "").strip()
 
         deduper = getattr(request.app.state, "jira_trigger_deduper", None)

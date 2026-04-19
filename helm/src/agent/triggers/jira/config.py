@@ -5,9 +5,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 
-
-def _truthy(name: str) -> bool:
-    return os.environ.get(name, "").strip().lower() in {"1", "true", "yes", "on"}
+from agent.triggers.env_bool import env_truthy
 
 
 @dataclass(frozen=True)
@@ -22,11 +20,11 @@ class JiraTriggerSettings:
     @classmethod
     def from_env(cls) -> JiraTriggerSettings:
         return cls(
-            enabled=_truthy("HOSTED_AGENT_JIRA_TRIGGER_ENABLED"),
+            enabled=env_truthy("HOSTED_AGENT_JIRA_TRIGGER_ENABLED"),
             webhook_secret=os.environ.get(
                 "HOSTED_AGENT_JIRA_TRIGGER_WEBHOOK_SECRET", ""
             ).strip(),
-            event_dedupe=_truthy("HOSTED_AGENT_JIRA_TRIGGER_EVENT_DEDUPE"),
+            event_dedupe=env_truthy("HOSTED_AGENT_JIRA_TRIGGER_EVENT_DEDUPE"),
             http_path=(
                 os.environ.get(
                     "HOSTED_AGENT_JIRA_TRIGGER_HTTP_PATH",

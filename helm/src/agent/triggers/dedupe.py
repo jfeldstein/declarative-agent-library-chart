@@ -1,4 +1,4 @@
-"""Optional in-memory dedupe for Slack ``event_id`` retries."""
+"""Optional in-memory dedupe for trigger webhook delivery ids."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ from collections import OrderedDict
 
 
 class EventDeduper:
-    """FIFO-bounded set for Slack event ids (no secrets stored)."""
+    """FIFO-bounded set for opaque event/delivery ids (no secrets stored)."""
 
     def __init__(self, *, max_entries: int = 10_000) -> None:
         self._max = max(1, max_entries)

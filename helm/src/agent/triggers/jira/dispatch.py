@@ -15,6 +15,7 @@ from agent.triggers.jira.payload import (
 from agent.metrics import observe_jira_trigger_inbound
 from agent.observability.settings import ObservabilitySettings
 from agent.runtime_config import RuntimeConfig
+from agent.triggers.guarded_run import run_guarded
 from agent.trigger_graph import TriggerContext, run_trigger_graph
 
 
@@ -68,9 +69,12 @@ def dispatch_jira_webhook(
         jira_webhook_event=webhook_event or None,
         jira_webhook_delivery_id=delivery_header.strip() or None,
     )
-    try:
+
+    def _run_graph() -> None:
         run_trigger_graph(ctx)
         observe_jira_trigger_inbound("http", "ok")
-    except Exception:
-        observe_jira_trigger_inbound("http", "error")
-        raise
+
+    run_guarded(
+        _run_graph,
+        on_error=lambda: observe_jira_trigger_inbound("http", "error"),
+    )

@@ -19,6 +19,7 @@ from agent.triggers.slack.mention import (
     slack_thread_id_for_event,
 )
 from agent.tools.slack.support import optional_tools_client, timeout_seconds
+from agent.triggers.guarded_run import run_guarded
 from agent.trigger_graph import TriggerContext, run_trigger_graph
 
 Transport = Literal["http", "socket"]
@@ -123,13 +124,17 @@ def dispatch_app_mention(
         slack_thread_ts=thread_ts,
         slack_message_ts=message_ts,
     )
-    try:
+
+    def _run_and_reply() -> str:
         out = run_trigger_graph(ctx)
         _post_slack_trigger_reply(ctx, out)
         observe_slack_trigger_inbound(transport, "ok")
-    except Exception:
-        observe_slack_trigger_inbound(transport, "error")
-        raise
+        return out
+
+    run_guarded(
+        _run_and_reply,
+        on_error=lambda: observe_slack_trigger_inbound(transport, "error"),
+    )
 
 
 def dispatch_raw_app_mention_event(

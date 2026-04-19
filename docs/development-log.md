@@ -8,6 +8,8 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ## 2026-04-19
 
+**Trigger package DRY** — Shared **`agent/triggers/env_bool.py`** (**`env_truthy`**), **`http_common.py`** (**`parse_utf8_json_object`**, **`request_id_from_request`**), and **`guarded_run.py`** (**`run_guarded`** for consistent error metrics around **`run_trigger_graph`**). Slack/Jira HTTP routes and **`dispatch`** modules rewired; **`dedupe`** docstrings generalized. **`uv run pytest`** (**helm/src**), **`python3 scripts/check_spec_traceability.py`** ok.
+
 **Agent image Dockerfile path** — Moved **`helm/Dockerfile`** → **`helm/src/Dockerfile`** (build context still repo root; **`COPY helm/src/…`** unchanged). References updated in **`skaffold.yaml`**, **`devspace.yaml`**, **`scripts/deploy-kind-slack-hello.sh`**, **`helm/src/tests/scripts/integration_kind_o11y_prometheus.sh`**, **`ARCHITECTURE.md`**, **`helm/src/README.md`**.
 
 **Package `agent` + `triggers/{slack,jira}`** — Rename **`helm/src/hosted_agents/`** → **`helm/src/agent/`** (imports **`agent`**). Inbound Slack/Jira bridges live under **`agent/triggers/slack/`** and **`agent/triggers/jira/`** with shared **`agent/triggers/dedupe.py`**. Container **`uvicorn agent.app:create_app`**; CronJobs **`python -m agent.scrapers.*`**; RAG **`agent.rag.app`**. PostgreSQL schema **`hosted_agents`** unchanged in SQL and **`postgres_repos`** query text. Updates: Hatch/coverage/complexipy/ruff paths (**`agent`**), Helm templates, **`docs/spec-test-traceability.md`**, **`openspec/specs/`** module strings. Gates: **`uv run pytest tests/`**, **`python3 scripts/check_spec_traceability.py`**.

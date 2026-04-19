@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-import json
 import logging
-import uuid
 from typing import Any
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
@@ -12,6 +10,7 @@ from fastapi.responses import JSONResponse
 from slack_sdk.signature import SignatureVerifier
 
 from agent.metrics import observe_slack_trigger_inbound
+from agent.triggers.http_common import parse_utf8_json_object, request_id_from_request
 from agent.triggers.slack.config import SlackTriggerSettings
 from agent.triggers.slack.dispatch import dispatch_app_mention
 
@@ -29,18 +28,6 @@ def _verify_slack_signature(
     if not timestamp or not signature:
         return False
     return bool(verifier.is_valid(raw_body, timestamp, signature))
-
-
-def _json_payload_from_body(raw_body: bytes) -> dict[str, Any]:
-    try:
-        payload: dict[str, Any] = json.loads(raw_body.decode("utf-8"))
-    except (UnicodeDecodeError, json.JSONDecodeError):
-        observe_slack_trigger_inbound("http", "bad_json")
-        raise HTTPException(status_code=400, detail="Invalid JSON body") from None
-    if not isinstance(payload, dict):
-        observe_slack_trigger_inbound("http", "bad_json")
-        raise HTTPException(status_code=400, detail="JSON body must be an object")
-    return payload
 
 
 def _slack_http_response_for_payload(
@@ -67,10 +54,7 @@ def _slack_http_response_for_payload(
         return JSONResponse({"ok": True})
 
     deduper = getattr(request.app.state, "slack_trigger_deduper", None)
-    rid = getattr(request.state, "request_id", None) or request.headers.get(
-        "x-request-id"
-    )
-    req_id = str(rid).strip() if rid else str(uuid.uuid4())
+    req_id = request_id_from_request(request)
 
     def _run() -> None:
         try:
@@ -116,7 +100,10 @@ def register_slack_trigger_http_route(
             observe_slack_trigger_inbound("http", "rejected")
             raise HTTPException(status_code=401, detail="Invalid Slack signature")
 
-        payload = _json_payload_from_body(raw_body)
+        payload = parse_utf8_json_object(
+            raw_body,
+            on_bad_json=lambda: observe_slack_trigger_inbound("http", "bad_json"),
+        )
         return _slack_http_response_for_payload(
             payload,
             request=request,
