@@ -17,7 +17,7 @@
 
 - [x] 3.1 Add Kubernetes **`CronJob`** (or equivalent) templates parameterized by values for enabled scrapers, schedules, and credentials references.
 - [x] 3.2 Implement at least one scraper type end-to-end (fetch → normalize → **`POST /v1/embed`**) and additional integrations (**Jira**, **Slack**) per **`scrapers.jobs`**; there is **no** separate **`reference`** scraper type in the chart anymore.
-- [ ] 3.3 **Helm:** assert disabled scrapers omit CronJobs; enabled scrapers render CronJobs with expected schedules (**`helm unittest`** / CI). **Runtime:** Cron firing on a live cluster remains a manual or opt-in integration check (not default PR CI).
+- [x] 3.3 **Helm:** assert disabled scrapers omit CronJobs; enabled scrapers render CronJobs with expected schedules (**`helm unittest`** / CI). **Runtime:** Cron firing on a live cluster remains a manual or opt-in integration check (not default PR CI).
 - [x] 3.4 Instrument scraper processes with **`agent_runtime_scraper_runs_total`**, **`agent_runtime_scraper_run_duration_seconds`**, and **`agent_runtime_scraper_rag_submissions_total`** per **`runtime-scrapers`**.
 
 ## 4. MCP tools from modules

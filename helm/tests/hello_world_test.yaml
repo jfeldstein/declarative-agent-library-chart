@@ -51,6 +51,44 @@ tests:
           content:
             name: HOSTED_AGENT_SLACK_FEEDBACK_ENABLED
             value: "true"
+  # [DALC-REQ-RAG-SCRAPERS-002] Negative paths: scraper CronJobs omitted when scrapers off or jobs disabled.
+  - it: no CronJobs when scrapers default off (hello-world baseline)
+    template: templates/agent.yaml
+    asserts:
+      - containsDocument:
+          kind: CronJob
+          apiVersion: batch/v1
+        not: true
+  - it: no CronJobs when scrapers.jira.enabled false even if jobs list is non-empty
+    template: templates/agent.yaml
+    set:
+      agent.scrapers.jira.enabled: false
+      agent.scrapers.jira.jobs:
+        - schedule: "0 * * * *"
+          source: jira
+          query: "project = DEMO ORDER BY updated ASC"
+          scope: parent-disabled-ignored
+    asserts:
+      - containsDocument:
+          kind: CronJob
+          apiVersion: batch/v1
+        not: true
+  - it: no CronJobs when jira scraper enabled but sole job has enabled false
+    template: templates/agent.yaml
+    set:
+      agent.scrapers.jira.enabled: true
+      agent.scrapers.jira.siteUrl: https://example.atlassian.net
+      agent.scrapers.jira.jobs:
+        - enabled: false
+          schedule: "0 * * * *"
+          source: jira
+          query: "project = DEMO ORDER BY updated ASC"
+          scope: job-disabled-scope
+    asserts:
+      - containsDocument:
+          kind: CronJob
+          apiVersion: batch/v1
+        not: true
   # Slack LLM-time tools ([DALC-REQ-SLACK-TOOLS-002]): HOSTED_AGENT_SLACK_TOOLS_* on agent only
   - it: slackTools wires bot token secret and tuning env on agent Deployment
     set:
