@@ -11,19 +11,19 @@ from unittest.mock import MagicMock
 import pytest
 from fastapi.testclient import TestClient
 
-from hosted_agents.app import create_app
-from hosted_agents.observability.correlation import (
+from agent.app import create_app
+from agent.observability.correlation import (
     SlackMessageRef,
     ToolCorrelation,
     correlation_store,
 )
-from hosted_agents.observability.feedback import feedback_store
-from hosted_agents.observability.run_context import bind_run_context, set_wandb_session
-from hosted_agents.observability.settings import ObservabilitySettings
-from hosted_agents.observability.side_effects import side_effect_checkpoints
-from hosted_agents.tools.dispatch import invoke_tool
-from hosted_agents.observability.checkpointer import reset_compiled_trigger_graph_cache
-from hosted_agents.trigger_graph import get_thread_state, get_thread_state_history
+from agent.observability.feedback import feedback_store
+from agent.observability.run_context import bind_run_context, set_wandb_session
+from agent.observability.settings import ObservabilitySettings
+from agent.observability.side_effects import side_effect_checkpoints
+from agent.tools.dispatch import invoke_tool
+from agent.observability.checkpointer import reset_compiled_trigger_graph_cache
+from agent.trigger_graph import get_thread_state, get_thread_state_history
 
 
 def _reset_graph() -> None:
@@ -392,8 +392,8 @@ def test_run_tool_json_logs_span_when_wandb_session_bound(
     bind_run_context(run_id="r-wandb", thread_id="t-wandb")
     set_wandb_session(_Sess())
     try:
-        from hosted_agents.runtime_config import RuntimeConfig
-        from hosted_agents.trigger_steps import run_tool_json
+        from agent.runtime_config import RuntimeConfig
+        from agent.trigger_steps import run_tool_json
 
         run_tool_json(RuntimeConfig.from_env(), "sample.echo", {"message": "z"})
     finally:
@@ -407,10 +407,10 @@ def test_get_thread_state_functions_directly(monkeypatch: pytest.MonkeyPatch) ->
         "HOSTED_AGENT_ENABLED_MCP_TOOLS_JSON", json.dumps(["sample.echo"])
     )
     _reset_graph()
-    from hosted_agents.agent_models import TriggerBody
-    from hosted_agents.runtime_config import RuntimeConfig
-    from hosted_agents.trigger_context import TriggerContext
-    from hosted_agents.trigger_graph import run_trigger_graph
+    from agent.agent_models import TriggerBody
+    from agent.runtime_config import RuntimeConfig
+    from agent.trigger_context import TriggerContext
+    from agent.trigger_graph import run_trigger_graph
 
     tid = "direct-api"
     ctx = TriggerContext(

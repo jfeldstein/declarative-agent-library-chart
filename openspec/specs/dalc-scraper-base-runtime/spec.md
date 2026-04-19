@@ -2,13 +2,13 @@
 
 ### Requirement: [DALC-REQ-SCRAPER-BASE-001] Shared scraper runtime owns lifecycle, RAG ingest, and incremental persistence
 
-The Python package **`hosted_agents.scrapers`** SHALL provide a documented **shared runtime** (implemented in a coordinator module such as **`base.py`** alongside **`typing.Protocol`** / ABC definitions) that owns **`job.json`** loading, environment validation, optional **metrics HTTP** listener lifecycle, **all** managed RAG **`POST /v1/embed`** requests for the process (sole ingest path to the RAG HTTP API), **cursor / watermark** persistence via **`cursor_store`** (including when state advances relative to embed success), process exit codes on fatal misconfiguration, and graceful shutdown hooks.
+The Python package **`agent.scrapers`** SHALL provide a documented **shared runtime** (implemented in a coordinator module such as **`base.py`** alongside **`typing.Protocol`** / ABC definitions) that owns **`job.json`** loading, environment validation, optional **metrics HTTP** listener lifecycle, **all** managed RAG **`POST /v1/embed`** requests for the process (sole ingest path to the RAG HTTP API), **cursor / watermark** persistence via **`cursor_store`** (including when state advances relative to embed success), process exit codes on fatal misconfiguration, and graceful shutdown hooks.
 
 Integration-specific modules SHALL **not** implement embed submission or durable incremental persistence themselves.
 
 #### Scenario: Entrypoint stability
 
-- **WHEN** the chart invokes **`python -m hosted_agents.scrapers.jira_job`** or **`python -m hosted_agents.scrapers.slack_job`**
+- **WHEN** the chart invokes **`python -m agent.scrapers.jira_job`** or **`python -m agent.scrapers.slack_job`**
 - **THEN** the module **`run()`** or equivalent SHALL remain the supported entrypoint and SHALL delegate orchestration to this shared runtime after this change
 
 #### Scenario: RAG ingest is centralized

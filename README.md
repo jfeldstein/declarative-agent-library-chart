@@ -102,7 +102,7 @@ See the [examples](examples) directory for more examples.
 | Path                        | Purpose                                                      |
 |-----------------------------|--------------------------------------------------------------|
 | `helm/chart/`               | Declarative Agent Library Helm chart (**`type: library`**; render via parent `templates/agent.yaml` + `declarative-agent.system`) |
-| `helm/src/hosted_agents/`   | Python app: FastAPI entry, trigger logic, RAG, scrapers      |
+| `helm/src/agent/`   | Python app: FastAPI entry, trigger logic, RAG, scrapers      |
 | `examples/hello-world/`     | Minimal example chart, uses the agent subchart               |
 
 ### Helm chart tests ([DALC-REQ-HELM-UNITTEST-003])

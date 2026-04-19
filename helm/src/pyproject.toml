@@ -35,7 +35,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["hosted_agents"]
+packages = ["agent"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -47,13 +47,13 @@ markers = [
     "postgres_integration: requires Docker Postgres (not run in default CI)",
 ]
 addopts = [
-    "--cov=hosted_agents",
+    "--cov=agent",
     "--cov-report=term-missing",
     "--cov-fail-under=85",
 ]
 
 [tool.coverage.run]
-source = ["hosted_agents"]
+source = ["agent"]
 omit = [
     "*/tests/*",
     "*/test_*.py",
@@ -102,7 +102,7 @@ extend-select = ["C901"]
 max-complexity = 10
 
 [tool.complexipy]
-paths = ["hosted_agents", "tests"]
+paths = ["agent", "tests"]
 # Ladder complete: cognitive cap 15 (complexipy default culture).
 max-complexity-allowed = 15
 quiet = true

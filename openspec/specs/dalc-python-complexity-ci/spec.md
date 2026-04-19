@@ -2,7 +2,7 @@
 
 ### Requirement: [DALC-REQ-PYTHON-COMPLEXITY-CI-001] Ruff McCabe cyclomatic complexity is configured and enforced on default Python CI
 
-The project SHALL enable Ruff rule **`C901`** (*complex-structure* / McCabe cyclomatic complexity) for the **`helm/src`** Python package and SHALL set **`[tool.ruff.lint.mccabe]`** `max-complexity` to a committed value. The default pull-request CI workflow SHALL run **`ruff check`** (or equivalent) such that **`C901`** violations cause a **non-zero** exit code for the same scope used for linting application code (at minimum paths under **`helm/src`** that cover **`hosted_agents`** and **`tests`**).
+The project SHALL enable Ruff rule **`C901`** (*complex-structure* / McCabe cyclomatic complexity) for the **`helm/src`** Python package and SHALL set **`[tool.ruff.lint.mccabe]`** `max-complexity` to a committed value. The default pull-request CI workflow SHALL run **`ruff check`** (or equivalent) such that **`C901`** violations cause a **non-zero** exit code for the same scope used for linting application code (at minimum paths under **`helm/src`** that cover **`agent`** and **`tests`**).
 
 #### Scenario: CI fails when cyclomatic complexity exceeds the configured maximum
 

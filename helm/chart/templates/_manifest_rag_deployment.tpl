@@ -28,7 +28,7 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args:
-            - hosted_agents.rag.app:create_app
+            - agent.rag.app:create_app
             - --factory
             - --host
             - "0.0.0.0"

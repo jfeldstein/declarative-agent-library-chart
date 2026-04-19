@@ -26,10 +26,10 @@ pre-push:
   commands:
     ruff-format-check:
       root: helm/src
-      run: uv run ruff format --check hosted_agents tests
+      run: uv run ruff format --check agent tests
     ruff:
       root: helm/src
-      run: uv run ruff check hosted_agents tests
+      run: uv run ruff check agent tests
     complexipy:
       root: helm/src
       run: uv run complexipy

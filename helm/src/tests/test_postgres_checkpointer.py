@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import pytest
 
-from hosted_agents.observability.checkpointer import (
+from agent.observability.checkpointer import (
     build_checkpointer,
     reset_checkpoint_postgres_pool,
 )
-from hosted_agents.observability.settings import ObservabilitySettings
+from agent.observability.settings import ObservabilitySettings
 
 
 def test_build_checkpointer_postgres_requires_url(
@@ -69,7 +69,7 @@ def test_build_checkpointer_postgres_constructs_saver(
         def setup(self) -> None:
             pool_holder["setup"] = True
 
-    import hosted_agents.observability.checkpointer as ch
+    import agent.observability.checkpointer as ch
 
     obs = ObservabilitySettings.from_env()
     monkeypatch.setattr(ch, "_checkpoint_connection_pool_cls", lambda: FakePool)

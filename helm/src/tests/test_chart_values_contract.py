@@ -7,7 +7,7 @@ from typing import Any
 
 import yaml
 
-from hosted_agents.tools.dispatch import REGISTERED_MCP_TOOL_IDS
+from agent.tools.dispatch import REGISTERED_MCP_TOOL_IDS
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 _HELLO_CHART = _REPO_ROOT / "examples" / "hello-world" / "Chart.yaml"

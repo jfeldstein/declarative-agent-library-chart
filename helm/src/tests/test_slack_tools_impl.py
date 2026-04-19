@@ -8,8 +8,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 from slack_sdk.errors import SlackApiError
 
-from hosted_agents.tools.dispatch import invoke_tool
-from hosted_agents.tools.slack.support import _slack_req_id_from_headers
+from agent.tools.dispatch import invoke_tool
+from agent.tools.slack.support import _slack_req_id_from_headers
 
 
 @pytest.fixture(autouse=True)
@@ -37,7 +37,7 @@ def test_slack_post_real_calls_chat_post_message(
     mock_resp = MagicMock()
     mock_resp.data = {"ok": True, "ts": "1234.5678", "channel": "C123"}
 
-    with patch("hosted_agents.tools.slack.support.WebClient") as wc:
+    with patch("agent.tools.slack.support.WebClient") as wc:
         inst = wc.return_value
         inst.chat_postMessage.return_value = mock_resp
         out = invoke_tool(
@@ -65,7 +65,7 @@ def test_slack_api_error_has_no_token_in_payload(
     resp.headers = {}
     err = SlackApiError(message="slack failed", response=resp)
 
-    with patch("hosted_agents.tools.slack.support.WebClient") as wc:
+    with patch("agent.tools.slack.support.WebClient") as wc:
         inst = wc.return_value
         inst.chat_postMessage.side_effect = err
         out = invoke_tool(
@@ -106,7 +106,7 @@ def test_reactions_real_path(monkeypatch: pytest.MonkeyPatch) -> None:
     mock_rm = MagicMock()
     mock_rm.data = {"ok": True}
 
-    with patch("hosted_agents.tools.slack.support.WebClient") as wc:
+    with patch("agent.tools.slack.support.WebClient") as wc:
         inst = wc.return_value
         inst.reactions_add.return_value = mock_add
         inst.reactions_remove.return_value = mock_rm
@@ -143,7 +143,7 @@ def test_chat_update_and_history_real_path(monkeypatch: pytest.MonkeyPatch) -> N
         "messages": [{"ts": "2", "user": "U2", "text": "b", "type": "message"}],
     }
 
-    with patch("hosted_agents.tools.slack.support.WebClient") as wc:
+    with patch("agent.tools.slack.support.WebClient") as wc:
         inst = wc.return_value
         inst.chat_update.return_value = upd
         inst.conversations_history.return_value = hist
@@ -188,9 +188,9 @@ def test_slack_req_id_from_headers_never_raises() -> None:
 
 def test_tools_impl_has_no_embed_client_import() -> None:
     """[DALC-REQ-SLACK-TOOLS-001] Guard: Slack tools modules must not pull RAG embed client."""
-    import hosted_agents.tools.slack.history as sch
-    import hosted_agents.tools.slack.post as sp
-    import hosted_agents.tools.slack.reactions as sr
+    import agent.tools.slack.history as sch
+    import agent.tools.slack.post as sp
+    import agent.tools.slack.reactions as sr
 
     for mod in (sp, sr, sch):
         src = open(mod.__file__, encoding="utf-8").read()

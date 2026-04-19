@@ -9,11 +9,14 @@ import re
 
 import pytest
 
-from hosted_agents.agent_models import TriggerBody
-from hosted_agents.mcp_langchain_tools import MCP_LANGCHAIN_TYPED_TOOL_IDS, make_mcp_langchain_tool
-from hosted_agents.runtime_config import RuntimeConfig
-from hosted_agents.tools.dispatch import REGISTERED_MCP_TOOL_IDS
-from hosted_agents.trigger_context import TriggerContext
+from agent.agent_models import TriggerBody
+from agent.mcp_langchain_tools import (
+    MCP_LANGCHAIN_TYPED_TOOL_IDS,
+    make_mcp_langchain_tool,
+)
+from agent.runtime_config import RuntimeConfig
+from agent.tools.dispatch import REGISTERED_MCP_TOOL_IDS
+from agent.trigger_context import TriggerContext
 
 
 def _sanitize_tool_name_fragment(raw: str) -> str:
@@ -66,14 +69,21 @@ INVOCATION_PAYLOADS: dict[str, dict[str, object]] = {
     "jira.search_issues": {"jql": "project = DEMO"},
     "jira.get_issue": {"issue_key": "DEMO-1"},
     "jira.add_comment": {"issue_key": "DEMO-1", "body": "hello"},
-    "jira.transition_issue": {"issue_key": "DEMO-1", "transition_id": "41", "transition_name": ""},
+    "jira.transition_issue": {
+        "issue_key": "DEMO-1",
+        "transition_id": "41",
+        "transition_name": "",
+    },
     "jira.create_issue": {
         "project_key": "DEMO",
         "summary": "task",
         "issue_type": "Task",
         "description": "",
     },
-    "jira.update_issue": {"issue_key": "DEMO-1", "fields": {"summary": [{"set": "New"}]}},
+    "jira.update_issue": {
+        "issue_key": "DEMO-1",
+        "fields": {"summary": [{"set": "New"}]},
+    },
 }
 
 
@@ -83,7 +93,9 @@ def test_registered_mcp_tool_ids_match_langchain_builders() -> None:
 
 
 @pytest.mark.parametrize("tool_id", sorted(REGISTERED_MCP_TOOL_IDS))
-def test_each_typed_tool_invokes_run_tool_json(tool_id: str, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_each_typed_tool_invokes_run_tool_json(
+    tool_id: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """[DALC-REQ-TYPED-LANGCHAIN-TOOL-BINDINGS-001] Structured LangChain invoke → ``run_tool_json`` (no opaque JSON-only path)."""
     calls: list[tuple[str, dict[str, object]]] = []
 
@@ -92,7 +104,7 @@ def test_each_typed_tool_invokes_run_tool_json(tool_id: str, monkeypatch: pytest
         return json.dumps({"tool": tid, "result": {"ok": True}})
 
     monkeypatch.setattr(
-        "hosted_agents.mcp_langchain_tools.run_tool_json",
+        "agent.mcp_langchain_tools.run_tool_json",
         fake_run,
     )
 
@@ -109,7 +121,9 @@ def test_each_typed_tool_invokes_run_tool_json(tool_id: str, monkeypatch: pytest
     assert isinstance(captured, dict)
 
 
-def test_unknown_tool_id_falls_back_to_generic_json(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_unknown_tool_id_falls_back_to_generic_json(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """[DALC-REQ-TYPED-LANGCHAIN-TOOL-BINDINGS-003] Generic ``arguments_json`` exists only for non-registry tool ids."""
     calls: list[tuple[str, dict[str, object]]] = []
 
@@ -118,7 +132,7 @@ def test_unknown_tool_id_falls_back_to_generic_json(monkeypatch: pytest.MonkeyPa
         return json.dumps({"tool": tid, "result": {}})
 
     monkeypatch.setattr(
-        "hosted_agents.mcp_langchain_tools.run_tool_json",
+        "agent.mcp_langchain_tools.run_tool_json",
         fake_run,
     )
 

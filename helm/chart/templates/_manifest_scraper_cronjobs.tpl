@@ -55,7 +55,7 @@ spec:
               command:
                 - python
                 - -m
-                - hosted_agents.scrapers.jira_job
+                - agent.scrapers.jira_job
               ports:
                 - name: metrics
                   containerPort: 9091
@@ -173,7 +173,7 @@ spec:
               command:
                 - python
                 - -m
-                - hosted_agents.scrapers.slack_job
+                - agent.scrapers.slack_job
               ports:
                 - name: metrics
                   containerPort: 9091

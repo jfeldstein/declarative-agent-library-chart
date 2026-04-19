@@ -7,10 +7,10 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from hosted_agents.feedback_registry import load_feedback_registry
-from hosted_agents.runtime_config import RuntimeConfig
-from hosted_agents.trigger_context import TriggerContext
-from hosted_agents.wandb_session import _tag_dict_for_run, wandb_run_scope
+from agent.feedback_registry import load_feedback_registry
+from agent.runtime_config import RuntimeConfig
+from agent.trigger_context import TriggerContext
+from agent.wandb_session import _tag_dict_for_run, wandb_run_scope
 
 
 def _ctx() -> TriggerContext:

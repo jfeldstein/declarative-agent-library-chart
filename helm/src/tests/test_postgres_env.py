@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from hosted_agents.observability.postgres_env import postgres_url
-from hosted_agents.observability.settings import ObservabilitySettings
+from agent.observability.postgres_env import postgres_url
+from agent.observability.settings import ObservabilitySettings
 
 
 def test_postgres_url_reads_env(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -1,6 +1,6 @@
 # Declarative Agent Library Chart — Architecture
 
-This document describes how **user application charts** (in other repositories or in `examples/*` in this repo) compose the **Declarative Agent Library** Helm chart and Python **runtime** (`helm/src/hosted_agents/`) into a deployable system. It aligns with the promoted OpenSpec capabilities under `openspec/specs/`.
+This document describes how **user application charts** (in other repositories or in `examples/*` in this repo) compose the **Declarative Agent Library** Helm chart and Python **runtime** (`helm/src/agent/`) into a deployable system. It aligns with the promoted OpenSpec capabilities under `openspec/specs/`.
 
 ## System context
 
@@ -88,7 +88,7 @@ Under `values.observability`, the chart wires optional runtime behavior (checkpo
 
 - **Postgres URL:** `observability.postgresUrl` → `HOSTED_AGENT_POSTGRES_URL` (shared DSN pattern for checkpointing and related features).
 - **Checkpoints:** `observability.checkpoints` → `HOSTED_AGENT_CHECKPOINTS_ENABLED`, `HOSTED_AGENT_CHECKPOINT_BACKEND`.
-- **Weights & Biases:** `observability.wandb` → `HOSTED_AGENT_WANDB_ENABLED`, `WANDB_PROJECT`, `WANDB_ENTITY` when enabled. The LangGraph trigger path integrates W&B session handling in code (`hosted_agents.observability.wandb_trace`, used from `trigger_graph.py`).
+- **Weights & Biases:** `observability.wandb` → `HOSTED_AGENT_WANDB_ENABLED`, `WANDB_PROJECT`, `WANDB_ENTITY` when enabled. The LangGraph trigger path integrates W&B session handling in code (`agent.observability.wandb_trace`, used from `trigger_graph.py`).
 - **Slack feedback, ATIF export, shadow rollouts:** toggles and JSON maps from values → env / ConfigMap keys as rendered in `templates/deployment.yaml` and `templates/configmap.yaml`.
 
 These are **runtime** concerns; the chart’s role is to pass consistent env and mounted JSON so the same image can be used across environments.
@@ -108,7 +108,7 @@ Scrapers exist to **feed** the managed RAG service (embed/ingest); they are not 
 - **Tuning:** `scrapers.ragService` controls replicas, Service type/port, and resources ([DALC-REQ-RAG-SCRAPERS-003](openspec/specs/dalc-rag-from-scrapers/spec.md)).
 - **Agent integration:** When RAG is deployed, the chart sets `HOSTED_AGENT_RAG_BASE_URL` to the internal `http://<release>-rag:<port>` URL ([DALC-REQ-RAG-SCRAPERS-004](openspec/specs/dalc-rag-from-scrapers/spec.md)). The agent runtime exposes `POST /api/v1/rag/query`, which proxies to the RAG service’s HTTP API (e.g. `/v1/query`).
 
-The RAG container runs **uvicorn** with factory `hosted_agents.rag.app:create_app` on the configured port; health checks hit `/health`.
+The RAG container runs **uvicorn** with factory `agent.rag.app:create_app` on the configured port; health checks hit `/health`.
 
 ### Triggers
 

@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import pytest
 
-from hosted_agents.agent_models import TriggerBody
-from hosted_agents.observability.wandb_run_tags import wandb_mandatory_tags_for_run
-from hosted_agents.runtime_config import RuntimeConfig
-from hosted_agents.trigger_context import TriggerContext
+from agent.agent_models import TriggerBody
+from agent.observability.wandb_run_tags import wandb_mandatory_tags_for_run
+from agent.runtime_config import RuntimeConfig
+from agent.trigger_context import TriggerContext
 
 
 def _ctx(body: TriggerBody | None) -> TriggerContext:

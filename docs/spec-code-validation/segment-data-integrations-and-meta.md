@@ -28,7 +28,7 @@
 
 ## `dalc-jira-tools`
 
-**Matrix:** `[DALC-REQ-JIRA-TOOLS-001]` … `[DALC-REQ-JIRA-TOOLS-006]` → `helm/src/tests/test_jira_tools.py`, `helm/tests/hello_world_test.yaml`, chart values/schema, `helm/src/hosted_agents/tools/README.md`, `helm/src/pyproject.toml`.
+**Matrix:** `[DALC-REQ-JIRA-TOOLS-001]` … `[DALC-REQ-JIRA-TOOLS-006]` → `helm/src/tests/test_jira_tools.py`, `helm/tests/hello_world_test.yaml`, chart values/schema, `helm/src/agent/tools/README.md`, `helm/src/pyproject.toml`.
 
 | ID | Alignment | Notes |
 |----|-----------|--------|
@@ -45,7 +45,7 @@
 
 ## `dalc-jira-trigger`
 
-**Matrix:** `[DALC-REQ-JIRA-TRIGGER-001]` … `[DALC-REQ-JIRA-TRIGGER-005]` → `helm/src/tests/test_jira_trigger.py`, chart values/schema, `helm/src/hosted_agents/jira_trigger/README.md`, `helm/src/hosted_agents/metrics.py`.
+**Matrix:** `[DALC-REQ-JIRA-TRIGGER-001]` … `[DALC-REQ-JIRA-TRIGGER-005]` → `helm/src/tests/test_jira_trigger.py`, chart values/schema, `helm/src/agent/jira_trigger/README.md`, `helm/src/agent/metrics.py`.
 
 | ID | Alignment | Notes |
 |----|-----------|--------|

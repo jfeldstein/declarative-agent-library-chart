@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from hosted_agents.tools.dispatch import invoke_tool
+from agent.tools.dispatch import invoke_tool
 
 
 def test_sample_echo() -> None:

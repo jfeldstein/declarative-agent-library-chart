@@ -1,4 +1,4 @@
-"""Tests for Jira REST tools (`hosted_agents.tools.jira`)."""
+"""Tests for Jira REST tools (`agent.tools.jira`)."""
 
 from __future__ import annotations
 
@@ -8,10 +8,10 @@ from pathlib import Path
 import httpx
 import pytest
 
-from hosted_agents.tools.dispatch import invoke_tool
-from hosted_agents.tools.jira.config import load_settings
-from hosted_agents.tools.jira.rest import normalize_jira_error
-from hosted_agents.tools.jira.router import TOOL_IDS
+from agent.tools.dispatch import invoke_tool
+from agent.tools.jira.config import load_settings
+from agent.tools.jira.rest import normalize_jira_error
+from agent.tools.jira.router import TOOL_IDS
 
 
 def _enable_jira_tools(
@@ -52,7 +52,7 @@ def test_jira_tools_python_sources_avoid_embed_route():
     Evidence: ``helm/src/tests/test_jira_tools.py::test_jira_tools_python_sources_avoid_embed_route``
     """
 
-    root = Path(__file__).resolve().parents[1] / "hosted_agents" / "tools" / "jira"
+    root = Path(__file__).resolve().parents[1] / "agent" / "tools" / "jira"
     for path in sorted(root.glob("*.py")):
         text = path.read_text(encoding="utf-8")
         assert "/v1/embed" not in text, path.name
@@ -174,7 +174,7 @@ def test_real_search_uses_httpx(monkeypatch: pytest.MonkeyPatch) -> None:
             return mock_resp
 
     monkeypatch.setattr(
-        "hosted_agents.tools.jira.handlers.build_client", lambda _s: FakeClient()
+        "agent.tools.jira.handlers.build_client", lambda _s: FakeClient()
     )
 
     out = invoke_tool("jira.search_issues", {"jql": "project = DEMO"})
@@ -212,7 +212,7 @@ def test_token_not_in_tool_error_payload(monkeypatch: pytest.MonkeyPatch) -> Non
             return bad
 
     monkeypatch.setattr(
-        "hosted_agents.tools.jira.handlers.build_client", lambda _s: BoomClient()
+        "agent.tools.jira.handlers.build_client", lambda _s: BoomClient()
     )
 
     out = invoke_tool("jira.search_issues", {"jql": "project = DEMO"})
@@ -252,7 +252,7 @@ def test_router_rejects_unknown_tool(monkeypatch: pytest.MonkeyPatch) -> None:
     """Exercise guard branches on the Jira router."""
 
     _enable_jira_tools(monkeypatch)
-    from hosted_agents.tools.jira.router import invoke as jinvoke
+    from agent.tools.jira.router import invoke as jinvoke
 
     with pytest.raises(ValueError, match="unknown Jira tool"):
         jinvoke("jira.typo_tool", {})
@@ -291,7 +291,7 @@ def test_real_get_issue(monkeypatch: pytest.MonkeyPatch) -> None:
         json={"key": "DEMO-1", "fields": {"summary": "s"}},
     )
     monkeypatch.setattr(
-        "hosted_agents.tools.jira.handlers.build_client",
+        "agent.tools.jira.handlers.build_client",
         lambda _s: _QueuedHttpxClient([body]),
     )
     out = invoke_tool("jira.get_issue", {"issue_key": "DEMO-1"})
@@ -321,7 +321,7 @@ def test_real_transition_with_name(monkeypatch: pytest.MonkeyPatch) -> None:
     )
     tr_post = httpx.Response(204, request=req2)
     monkeypatch.setattr(
-        "hosted_agents.tools.jira.handlers.build_client",
+        "agent.tools.jira.handlers.build_client",
         lambda _s: _QueuedHttpxClient([tr_get, tr_post]),
     )
     out = invoke_tool(
@@ -349,7 +349,7 @@ def test_real_create_issue(monkeypatch: pytest.MonkeyPatch) -> None:
         },
     )
     monkeypatch.setattr(
-        "hosted_agents.tools.jira.handlers.build_client",
+        "agent.tools.jira.handlers.build_client",
         lambda _s: _QueuedHttpxClient([created]),
     )
     out = invoke_tool(
@@ -377,7 +377,7 @@ def test_real_add_comment(monkeypatch: pytest.MonkeyPatch) -> None:
     )
     ok = httpx.Response(201, request=req, json={"id": "c1"})
     monkeypatch.setattr(
-        "hosted_agents.tools.jira.handlers.build_client",
+        "agent.tools.jira.handlers.build_client",
         lambda _s: _QueuedHttpxClient([ok]),
     )
     out = invoke_tool(
@@ -400,7 +400,7 @@ def test_real_update_issue(monkeypatch: pytest.MonkeyPatch) -> None:
     )
     ok = httpx.Response(204, request=req)
     monkeypatch.setattr(
-        "hosted_agents.tools.jira.handlers.build_client",
+        "agent.tools.jira.handlers.build_client",
         lambda _s: _QueuedHttpxClient([ok]),
     )
     out = invoke_tool(
@@ -432,7 +432,7 @@ def test_transport_error_mapping(monkeypatch: pytest.MonkeyPatch) -> None:
             raise httpx.ConnectError("boom")
 
     monkeypatch.setattr(
-        "hosted_agents.tools.jira.handlers.build_client",
+        "agent.tools.jira.handlers.build_client",
         lambda _s: BadClient(),
     )
     out = invoke_tool("jira.search_issues", {"jql": "project = DEMO"})

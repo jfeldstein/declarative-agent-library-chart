@@ -7,16 +7,16 @@ from dataclasses import dataclass, field
 
 import pytest
 
-from hosted_agents.observability.correlation import SlackMessageRef, ToolCorrelation
-from hosted_agents.observability.feedback import HumanFeedbackEvent, OrphanReactionEvent
-from hosted_agents.observability.postgres_repos import (
+from agent.observability.correlation import SlackMessageRef, ToolCorrelation
+from agent.observability.feedback import HumanFeedbackEvent, OrphanReactionEvent
+from agent.observability.postgres_repos import (
     PostgresCorrelationStore,
     PostgresFeedbackStore,
     PostgresSideEffectStore,
     PostgresSpanSummaryStore,
 )
-from hosted_agents.observability.side_effects import SideEffectCheckpoint
-from hosted_agents.observability.span_summaries import ToolSpanSummary
+from agent.observability.side_effects import SideEffectCheckpoint
+from agent.observability.span_summaries import ToolSpanSummary
 
 
 @dataclass
@@ -213,8 +213,8 @@ def test_build_observability_stores_postgres_requires_url(
     monkeypatch.setenv("HOSTED_AGENT_OBSERVABILITY_STORE", "postgres")
     monkeypatch.delenv("HOSTED_AGENT_POSTGRES_URL", raising=False)
     monkeypatch.delenv("HOSTED_AGENT_USE_PGLITE", raising=False)
-    from hosted_agents.observability.settings import ObservabilitySettings
-    from hosted_agents.observability.stores import (
+    from agent.observability.settings import ObservabilitySettings
+    from agent.observability.stores import (
         build_observability_stores,
         reset_observability_stores_cache,
     )

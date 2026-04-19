@@ -16,9 +16,9 @@ from fastapi.testclient import TestClient
 from langchain_core.messages import AIMessage
 from langchain_core.outputs import ChatGeneration, LLMResult
 
-from hosted_agents.app import create_app
-from hosted_agents.chat_model import FakeToolChatModel
-from hosted_agents.llm_metrics import SupervisorLlmMetricsCallback
+from agent.app import create_app
+from agent.chat_model import FakeToolChatModel
+from agent.llm_metrics import SupervisorLlmMetricsCallback
 from tests.conftest import patch_supervisor_fake_model
 
 
@@ -133,9 +133,9 @@ def test_llm_usage_missing_when_no_usage_metadata(
 
 def test_orphan_on_llm_end_skips_ttft_observe(monkeypatch: pytest.MonkeyPatch) -> None:
     """[DALC-REQ-TOKEN-MET-003] No paired start → no TTFT sample (avoids bogus near-zero)."""
-    import hosted_agents.llm_metrics as lm
+    import agent.llm_metrics as lm
 
-    from hosted_agents.trigger_graph import trigger_context_for_admin_reads
+    from agent.trigger_graph import trigger_context_for_admin_reads
 
     calls: list[tuple[float, str]] = []
 
@@ -168,9 +168,9 @@ def test_orphan_on_llm_end_skips_ttft_observe(monkeypatch: pytest.MonkeyPatch) -
 
 def test_ttft_histogram_on_streaming_first_token() -> None:
     """[DALC-REQ-TOKEN-MET-003]"""
-    import hosted_agents.llm_metrics as lm
+    import agent.llm_metrics as lm
 
-    from hosted_agents.trigger_graph import trigger_context_for_admin_reads
+    from agent.trigger_graph import trigger_context_for_admin_reads
 
     ctx = trigger_context_for_admin_reads()
     cb = SupervisorLlmMetricsCallback(ctx)
@@ -255,7 +255,9 @@ def test_trigger_payload_histograms_record_response_size(
     after = _metrics_text(client)
     assert "agent_runtime_http_trigger_response_bytes" in after
     assert _histogram_sum(after, "agent_runtime_http_trigger_response_bytes") >= (
-        _histogram_sum(before, "agent_runtime_http_trigger_response_bytes") + out_len - 1e-9
+        _histogram_sum(before, "agent_runtime_http_trigger_response_bytes")
+        + out_len
+        - 1e-9
     )
 
 
@@ -316,7 +318,9 @@ def test_cfha_token_dashboard_promql_matches_observability_metric_names() -> Non
     from pathlib import Path
 
     root = Path(__file__).resolve().parent.parent.parent.parent
-    dash = json.loads((root / "grafana" / "cfha-token-metrics.json").read_text(encoding="utf-8"))
+    dash = json.loads(
+        (root / "grafana" / "cfha-token-metrics.json").read_text(encoding="utf-8")
+    )
     obs = (root / "docs" / "observability.md").read_text(encoding="utf-8")
     pat = re.compile(r"\b(agent_runtime[a-z0-9_]+)\b")
     for panel in dash.get("panels", []):
@@ -324,7 +328,9 @@ def test_cfha_token_dashboard_promql_matches_observability_metric_names() -> Non
             expr = t.get("expr") or ""
             for m in pat.findall(expr):
                 base = (
-                    m.removesuffix("_bucket").removesuffix("_sum").removesuffix("_count")
+                    m.removesuffix("_bucket")
+                    .removesuffix("_sum")
+                    .removesuffix("_count")
                 )
                 assert base in obs, (
                     f"missing from docs/observability.md: {base} (from {expr!r})"

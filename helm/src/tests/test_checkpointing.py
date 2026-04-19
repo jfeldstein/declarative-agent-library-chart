@@ -7,9 +7,9 @@ import json
 import pytest
 from fastapi.testclient import TestClient
 
-from hosted_agents.app import create_app
-from hosted_agents.checkpointing import clear_memory_checkpointer
-from hosted_agents.skills_state import reset_skill_unlocked_tools
+from agent.app import create_app
+from agent.checkpointing import clear_memory_checkpointer
+from agent.skills_state import reset_skill_unlocked_tools
 from tests.conftest import patch_supervisor_fake_model, tool_then_text_responses
 
 

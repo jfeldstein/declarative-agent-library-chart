@@ -1,6 +1,6 @@
 """Package metadata."""
 
-from hosted_agents import __version__
+from agent import __version__
 
 
 def test_version_is_semantic_string() -> None:

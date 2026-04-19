@@ -3,7 +3,7 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from hosted_agents.app import create_app
+from agent.app import create_app
 
 
 def test_post_trigger_uses_injected_prompt() -> None:
@@ -15,7 +15,7 @@ def test_post_trigger_uses_injected_prompt() -> None:
 
 
 def test_post_trigger_uses_env(monkeypatch: pytest.MonkeyPatch) -> None:
-    from hosted_agents.env import SYSTEM_PROMPT_ENV_KEY
+    from agent.env import SYSTEM_PROMPT_ENV_KEY
 
     monkeypatch.setenv(SYSTEM_PROMPT_ENV_KEY, 'Respond, "from env"')
     app = create_app()
@@ -26,7 +26,7 @@ def test_post_trigger_uses_env(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_post_trigger_bad_prompt_returns_400(monkeypatch: pytest.MonkeyPatch) -> None:
-    from hosted_agents.env import SYSTEM_PROMPT_ENV_KEY
+    from agent.env import SYSTEM_PROMPT_ENV_KEY
 
     monkeypatch.setenv(SYSTEM_PROMPT_ENV_KEY, "   ")
     app = create_app()

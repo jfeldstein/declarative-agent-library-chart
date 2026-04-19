@@ -11,12 +11,12 @@ The Helm chart SHALL publish a **`scrapers.jira`** object in **`values.yaml`** a
 
 ### Requirement: [DALC-REQ-JIRA-SCRAPER-002] Jira scraper job routes to `jira_job` by integration
 
-When a scraper CronJob is configured for the Jira integration (**`SCRAPER_INTEGRATION`** **`jira`** and **`source: jira`** in **`job.json`**), the chart SHALL invoke **`hosted_agents.scrapers.jira_job`** as the container entrypoint module (or a documented successor).
+When a scraper CronJob is configured for the Jira integration (**`SCRAPER_INTEGRATION`** **`jira`** and **`source: jira`** in **`job.json`**), the chart SHALL invoke **`agent.scrapers.jira_job`** as the container entrypoint module (or a documented successor).
 
 #### Scenario: Enabled Jira integration uses jira entrypoint
 
 - **WHEN** `helm template` renders an enabled scraper job for Jira
-- **THEN** the scraper container command SHALL target **`hosted_agents.scrapers.jira_job`**
+- **THEN** the scraper container command SHALL target **`agent.scrapers.jira_job`**
 
 ### Requirement: [DALC-REQ-JIRA-SCRAPER-003] Incremental Jira sync uses JQL on `updated` with a persisted watermark
 

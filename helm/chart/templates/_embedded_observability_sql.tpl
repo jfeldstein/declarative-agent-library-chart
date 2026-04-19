@@ -4,7 +4,7 @@
 -- [DALC-REQ-POSTGRES-AGENT-PERSISTENCE-004] Versioned DDL for operator apply (see runbook).
 -- Schema is namespaced for shared Postgres clusters. LangGraph checkpoint tables are
 -- created separately by langgraph-checkpoint-postgres via PostgresSaver.setup().
--- Mirror: helm/src/hosted_agents/migrations/001_hosted_agents_observability.sql
+-- Mirror: helm/src/agent/migrations/001_hosted_agents_observability.sql
 
 CREATE SCHEMA IF NOT EXISTS hosted_agents;
 

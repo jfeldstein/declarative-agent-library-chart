@@ -2,7 +2,7 @@
 
 import pytest
 
-from hosted_agents.env import SYSTEM_PROMPT_ENV_KEY, system_prompt_from_env
+from agent.env import SYSTEM_PROMPT_ENV_KEY, system_prompt_from_env
 
 
 def test_system_prompt_from_env_unset(monkeypatch: pytest.MonkeyPatch) -> None:

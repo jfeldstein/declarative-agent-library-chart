@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from fastapi.testclient import TestClient
 
-from hosted_agents.rag.app import create_app
-from hosted_agents.rag.store import RAGStore, reset_store_for_tests
+from agent.rag.app import create_app
+from agent.rag.store import RAGStore, reset_store_for_tests
 
 
 def _metrics(client: TestClient) -> str:

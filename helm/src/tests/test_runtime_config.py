@@ -1,4 +1,4 @@
-"""Tests for :mod:`hosted_agents.runtime_config`."""
+"""Tests for :mod:`agent.runtime_config`."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import json
 
 import pytest
 
-from hosted_agents.runtime_config import RuntimeConfig, subagent_system_prompt
+from agent.runtime_config import RuntimeConfig, subagent_system_prompt
 
 
 def test_from_env_empty(monkeypatch: pytest.MonkeyPatch) -> None:

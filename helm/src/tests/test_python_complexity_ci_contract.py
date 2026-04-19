@@ -27,8 +27,8 @@ def test_complexipy_config_targets_package_paths() -> None:
     """[DALC-REQ-PYTHON-COMPLEXITY-CI-002] complexipy paths and cognitive threshold are committed in pyproject."""
     cfg = _pyproject_table().get("tool", {}).get("complexipy", {})
     paths = set(cfg.get("paths", []))
-    assert {"hosted_agents", "tests"}.issubset(paths), (
-        "complexipy paths must include hosted_agents and tests"
+    assert {"agent", "tests"}.issubset(paths), (
+        "complexipy paths must include agent and tests"
     )
     assert isinstance(cfg.get("max-complexity-allowed"), int), (
         "max-complexity-allowed must be set"

@@ -1,4 +1,4 @@
-"""Tests for ``hosted_agents.scrapers.jira_job``."""
+"""Tests for ``agent.scrapers.jira_job``."""
 
 # Traceability: [DALC-REQ-JIRA-SCRAPER-003] [DALC-REQ-JIRA-SCRAPER-004] [DALC-REQ-JIRA-SCRAPER-005] [DALC-REQ-SCRAPER-BASE-003]
 
@@ -11,9 +11,9 @@ import httpx
 import pytest
 from prometheus_client import generate_latest
 
-from hosted_agents.scrapers import jira_job
-from hosted_agents.scrapers.jira_job import search_issues
-from hosted_agents.scrapers.metrics import SCRAPER_REGISTRY, bounded_integration_label
+from agent.scrapers import jira_job
+from agent.scrapers.jira_job import search_issues
+from agent.scrapers.metrics import SCRAPER_REGISTRY, bounded_integration_label
 
 
 def test_search_issues_single_page() -> None:

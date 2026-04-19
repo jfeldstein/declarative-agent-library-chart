@@ -1,6 +1,6 @@
 # RAG HTTP API (managed service)
 
-The in-repo POC implements the **`agent-runtime-components`** RAG contract under `hosted_agents.rag`:
+The in-repo POC implements the **`agent-runtime-components`** RAG contract under `agent.rag`:
 
 | Method | Path | Purpose |
 |--------|------|---------|
@@ -82,7 +82,7 @@ Payload limits are enforced in `hosted_agents/rag/models.py` (text length, max l
 ```bash
 cd helm/src
 uv sync
-uv run uvicorn hosted_agents.rag.app:create_app --factory --host 127.0.0.1 --port 8090
+uv run uvicorn agent.rag.app:create_app --factory --host 127.0.0.1 --port 8090
 ```
 
 Smoke (in-process, no server):

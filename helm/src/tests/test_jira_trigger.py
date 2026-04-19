@@ -10,7 +10,7 @@ from unittest.mock import patch
 import pytest
 from fastapi.testclient import TestClient
 
-from hosted_agents.app import create_app
+from agent.app import create_app
 
 
 @pytest.fixture()
@@ -27,8 +27,8 @@ def test_optional_jira_webhook_trigger_context_message_matches_direct_trigger(
     webhook_secret: str,
 ) -> None:
     """[DALC-REQ-JIRA-TRIGGER-001] Same ``TriggerBody.message`` as ``POST /api/v1/trigger`` for equivalent payload."""
-    import hosted_agents.trigger_graph as tg
-    from hosted_agents.jira_trigger.payload import build_jira_trigger_message
+    import agent.trigger_graph as tg
+    from agent.triggers.jira.payload import build_jira_trigger_message
 
     monkeypatch.setenv("HOSTED_AGENT_JIRA_TRIGGER_ENABLED", "true")
     monkeypatch.setenv("HOSTED_AGENT_JIRA_TRIGGER_WEBHOOK_SECRET", webhook_secret)
@@ -52,8 +52,8 @@ def test_optional_jira_webhook_trigger_context_message_matches_direct_trigger(
         captured.append(ctx)
         return real(ctx)
 
-    monkeypatch.setattr("hosted_agents.app.run_trigger_graph", _wrap)
-    monkeypatch.setattr("hosted_agents.jira_trigger.dispatch.run_trigger_graph", _wrap)
+    monkeypatch.setattr("agent.app.run_trigger_graph", _wrap)
+    monkeypatch.setattr("agent.triggers.jira.dispatch.run_trigger_graph", _wrap)
 
     app = create_app(system_prompt="system")
     with TestClient(app) as client:
@@ -72,10 +72,13 @@ def test_optional_jira_webhook_trigger_context_message_matches_direct_trigger(
     assert r2.status_code == 200
     assert len(captured) == 2
     ctx_direct, ctx_jira = captured[0], captured[1]
-    assert getattr(ctx_direct, "body").message.strip() == getattr(
-        ctx_jira,
-        "body",
-    ).message.strip()
+    assert (
+        getattr(ctx_direct, "body").message.strip()
+        == getattr(
+            ctx_jira,
+            "body",
+        ).message.strip()
+    )
     assert getattr(ctx_jira, "thread_id", "").startswith("jira:PAR-99:")
     assert getattr(ctx_direct, "thread_id") == "parity-direct-thread"
 
@@ -95,7 +98,7 @@ def test_jira_trigger_http_bad_secret_does_not_run_graph(
 
     app = create_app(system_prompt="system")
     body = json.dumps({"webhookEvent": "jira:issue_updated"}).encode()
-    with patch("hosted_agents.jira_trigger.dispatch.run_trigger_graph", _boom):
+    with patch("agent.triggers.jira.dispatch.run_trigger_graph", _boom):
         with TestClient(app) as client:
             r = client.post(
                 "/api/v1/integrations/jira/webhook",
@@ -120,7 +123,7 @@ def test_jira_trigger_http_invalid_json_does_not_run_graph(
         return "no"
 
     app = create_app(system_prompt="system")
-    with patch("hosted_agents.jira_trigger.dispatch.run_trigger_graph", _boom):
+    with patch("agent.triggers.jira.dispatch.run_trigger_graph", _boom):
         with TestClient(app) as client:
             r = client.post(
                 "/api/v1/integrations/jira/webhook?secret=" + webhook_secret,
@@ -156,7 +159,7 @@ def test_jira_trigger_issue_updated_invokes_run_trigger_graph(
     body = json.dumps(payload).encode()
 
     app = create_app(system_prompt="system")
-    with patch("hosted_agents.jira_trigger.dispatch.run_trigger_graph", _capture):
+    with patch("agent.triggers.jira.dispatch.run_trigger_graph", _capture):
         with TestClient(app) as client:
             r = client.post(
                 "/api/v1/integrations/jira/webhook",
@@ -179,7 +182,7 @@ def test_jira_trigger_issue_updated_invokes_run_trigger_graph(
 
 def test_jira_trigger_sources_do_not_reference_embed_route() -> None:
     """[DALC-REQ-JIRA-TRIGGER-002] Trigger bridge must not call managed RAG embed path."""
-    root = Path(__file__).resolve().parents[1] / "hosted_agents" / "jira_trigger"
+    root = Path(__file__).resolve().parents[1] / "agent" / "triggers" / "jira"
     for path in sorted(root.rglob("*.py")):
         text = path.read_text(encoding="utf-8")
         assert "/v1/embed" not in text, path
@@ -187,7 +190,7 @@ def test_jira_trigger_sources_do_not_reference_embed_route() -> None:
 
 def test_jira_trigger_metrics_counter_has_no_secret_labels() -> None:
     """[DALC-REQ-JIRA-TRIGGER-005] Prometheus labels are fixed strings (transport/result)."""
-    from hosted_agents.metrics import JIRA_TRIGGER_INBOUND
+    from agent.metrics import JIRA_TRIGGER_INBOUND
 
     assert list(JIRA_TRIGGER_INBOUND._labelnames) == ["transport", "result"]  # noqa: SLF001
 
@@ -218,7 +221,7 @@ def test_jira_trigger_event_dedupe_skips_second_delivery(
         ).encode()
 
     app = create_app(system_prompt="system")
-    with patch("hosted_agents.jira_trigger.dispatch.run_trigger_graph", _count):
+    with patch("agent.triggers.jira.dispatch.run_trigger_graph", _count):
         with TestClient(app) as client:
             hdrs = {"X-Atlassian-Webhook-Identifier": "wh-dedupe"}
             r1 = client.post(
@@ -261,7 +264,7 @@ def test_jira_tools_can_coexist_with_trigger_runtime_paths(
         }
     ).encode()
     app = create_app(system_prompt="system")
-    with patch("hosted_agents.jira_trigger.dispatch.run_trigger_graph", _capture):
+    with patch("agent.triggers.jira.dispatch.run_trigger_graph", _capture):
         with TestClient(app) as client:
             r = client.post(
                 "/api/v1/integrations/jira/webhook",

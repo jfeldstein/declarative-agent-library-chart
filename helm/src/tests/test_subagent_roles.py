@@ -8,7 +8,7 @@ from unittest.mock import MagicMock
 import pytest
 from fastapi.testclient import TestClient
 
-from hosted_agents.app import create_app
+from agent.app import create_app
 from tests.conftest import patch_supervisor_fake_model, tool_then_text_responses
 
 
@@ -69,9 +69,7 @@ def test_rag_role_proxies_to_rag(monkeypatch: pytest.MonkeyPatch) -> None:
         mock_cm.__exit__.return_value = None
         return mock_cm
 
-    monkeypatch.setattr(
-        "hosted_agents.subagent_exec.httpx.Client", capture_httpx_client
-    )
+    monkeypatch.setattr("agent.subagent_exec.httpx.Client", capture_httpx_client)
 
     patch_supervisor_fake_model(
         monkeypatch,

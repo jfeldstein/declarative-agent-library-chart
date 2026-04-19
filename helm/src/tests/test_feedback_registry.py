@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from hosted_agents.feedback_registry import (
+from agent.feedback_registry import (
     load_feedback_registry,
     resolve_slack_reaction,
 )
-from hosted_agents.observability.label_registry import _builtin_default_registry
+from agent.observability.label_registry import _builtin_default_registry
 
 
 def test_load_registry() -> None:

@@ -2,7 +2,7 @@
 
 import pytest
 
-from hosted_agents.reply import trigger_reply_text
+from agent.reply import trigger_reply_text
 
 
 def test_trigger_reply_extracts_respond_double_quotes() -> None:

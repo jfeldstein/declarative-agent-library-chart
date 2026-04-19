@@ -8,8 +8,8 @@ from unittest.mock import MagicMock
 import pytest
 from fastapi.testclient import TestClient
 
-from hosted_agents.app import create_app
-from hosted_agents.skills_state import reset_skill_unlocked_tools
+from agent.app import create_app
+from agent.skills_state import reset_skill_unlocked_tools
 from tests.conftest import patch_supervisor_fake_model, tool_then_text_responses
 
 
@@ -105,7 +105,7 @@ def test_rag_query_proxies(monkeypatch: pytest.MonkeyPatch, client: TestClient) 
         return mock_cm
 
     with monkeypatch.context() as m:
-        m.setattr("hosted_agents.app.httpx.Client", capture_httpx_client)
+        m.setattr("agent.app.httpx.Client", capture_httpx_client)
         r = client.post(
             "/api/v1/rag/query",
             json={"query": "hello", "expand_relationships": True},

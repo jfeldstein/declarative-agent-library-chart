@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-from hosted_agents.migrations.schema import (
+from agent.migrations.schema import (
     apply_observability_schema,
     iter_observability_statements,
     observability_ddl_text,

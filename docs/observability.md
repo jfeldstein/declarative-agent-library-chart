@@ -109,13 +109,13 @@ Helm: set `observability.structuredLogs.json: true` under the `agent` subchart (
 | `agent_runtime_subagent_duration_seconds`     | `subagent`, `result`         | Subagent latency                   |
 | `agent_runtime_skill_loads_total`             | `skill`, `result`            | Skill load operations              |
 | `agent_runtime_skill_load_duration_seconds`   | `skill`, `result`            | Skill load latency                 |
-| `agent_runtime_slack_tool_web_api_calls_total` | `method`, `result` (`success` / `error`) | Slack Web API calls from **`hosted_agents.tools`** (LLM-time tools, not scraper CronJobs). |
+| `agent_runtime_slack_tool_web_api_calls_total` | `method`, `result` (`success` / `error`) | Slack Web API calls from **`agent.tools`** (LLM-time tools, not scraper CronJobs). |
 | `agent_runtime_slack_tool_web_api_duration_seconds` | `method`, `result` | Latency for those Slack Web API calls. |
 
 
 `tool`, `subagent`, and `skill` label values come from **configuration** only (bounded), not user-supplied free text. For Slack tools metrics, **`method`** is a fixed Slack Web API surface name from the runtime (for example `chat.postMessage`), not channel ids or message text.
 
-For **`agent_id`** and **`model_id`** on LLM metrics, the runtime uses `HOSTED_AGENT_ID` / `HOSTED_AGENT_AGENT_ID` and `HOSTED_AGENT_CHAT_MODEL` / `HOSTED_AGENT_MODEL_ID` when set; long values are shortened via stable hashes (see `hosted_agents.metrics.tagify_metric_label`).
+For **`agent_id`** and **`model_id`** on LLM metrics, the runtime uses `HOSTED_AGENT_ID` / `HOSTED_AGENT_AGENT_ID` and `HOSTED_AGENT_CHAT_MODEL` / `HOSTED_AGENT_MODEL_ID` when set; long values are shortened via stable hashes (see `agent.metrics.tagify_metric_label`).
 
 ### Kubernetes scrape discovery (Helm)
 
@@ -177,8 +177,8 @@ Configured subagents are **tools** on the root agent ([LangChain subagents](http
 
 Every enabled scraper container listens on **`SCRAPER_METRICS_ADDR`** (Helm sets **`0.0.0.0:9091`**) and exposes **`GET /metrics`** using a **scraper-only** Prometheus registry, so this endpoint does **not** include agent or RAG `agent_runtime_*` series from other workloads. After the job’s main work finishes, the process waits **`SCRAPER_METRICS_GRACE_SECONDS`** (default **35** in the chart) so Prometheus can scrape the Job pod before exit.
 
-- **Jira** job (`hosted_agents.scrapers.jira_job`): reads **`/config/job.json`**, posts issue payloads to RAG **`/v1/embed`**, increments **`agent_runtime_scraper_rag_submissions_total`** per attempt.
-- **Slack** job (`hosted_agents.scrapers.slack_job`): **`slack_search`** (Real-time Search + thread/history context) or **`slack_channel`** (`conversations.history`); same RAG + scraper metrics series as Jira.
+- **Jira** job (`agent.scrapers.jira_job`): reads **`/config/job.json`**, posts issue payloads to RAG **`/v1/embed`**, increments **`agent_runtime_scraper_rag_submissions_total`** per attempt.
+- **Slack** job (`agent.scrapers.slack_job`): **`slack_search`** (Real-time Search + thread/history context) or **`slack_channel`** (`conversations.history`); same RAG + scraper metrics series as Jira.
 
 | Metric | Labels | Description |
 |--------|--------|-------------|

@@ -8,7 +8,7 @@ import urllib.request
 import pytest
 from prometheus_client import generate_latest
 
-from hosted_agents.scrapers.metrics import (
+from agent.scrapers.metrics import (
     SCRAPER_REGISTRY,
     bounded_integration_label,
     observe_scraper_run,

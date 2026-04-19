@@ -54,7 +54,7 @@ tests:
           of: CronJob
       - equal:
           path: spec.jobTemplate.spec.template.spec.containers[0].command[2]
-          value: hosted_agents.scrapers.jira_job
+          value: agent.scrapers.jira_job
       - contains:
           path: spec.jobTemplate.spec.template.spec.containers[0].env
           content:
@@ -95,7 +95,7 @@ tests:
     asserts:
       - equal:
           path: spec.jobTemplate.spec.template.spec.containers[0].command[2]
-          value: hosted_agents.scrapers.slack_job
+          value: agent.scrapers.slack_job
   - it: scraper CronJob pod template has prometheus scrape annotations when enabled
     template: templates/agent.yaml
     values:
@@ -149,7 +149,7 @@ tests:
           filterAware: true
       - equal:
           path: spec.jobTemplate.spec.template.spec.containers[0].command[2]
-          value: hosted_agents.scrapers.jira_job
+          value: agent.scrapers.jira_job
   - it: jira-only values render RAG deployment
     values:
       - ../../examples/with-scrapers/values.jira-only.yaml
@@ -185,7 +185,7 @@ tests:
           filterAware: true
       - equal:
           path: spec.jobTemplate.spec.template.spec.containers[0].command[2]
-          value: hosted_agents.scrapers.slack_job
+          value: agent.scrapers.slack_job
   - it: slack-only values render RAG deployment
     values:
       - ../../examples/with-scrapers/values.slack-only.yaml

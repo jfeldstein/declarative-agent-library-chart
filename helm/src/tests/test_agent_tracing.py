@@ -4,14 +4,14 @@ from __future__ import annotations
 
 import pytest
 
-from hosted_agents.agent_tracing import (
+from agent.agent_tracing import (
     MANDATORY_WANDB_TAG_KEYS,
     checkpoint_store_kind,
     observability_summary,
     wandb_trace_stub_config,
     wandb_tracing_ready,
 )
-from hosted_agents.checkpointing import checkpoints_globally_enabled
+from agent.checkpointing import checkpoints_globally_enabled
 
 
 def test_defaults_disabled(monkeypatch: pytest.MonkeyPatch) -> None:

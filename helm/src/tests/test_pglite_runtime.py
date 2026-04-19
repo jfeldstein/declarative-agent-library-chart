@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from hosted_agents.observability import pglite_runtime as pr
+from agent.observability import pglite_runtime as pr
 
 
 def test_pglite_noop_when_disabled(monkeypatch: pytest.MonkeyPatch) -> None:

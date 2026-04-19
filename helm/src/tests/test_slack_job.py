@@ -1,4 +1,4 @@
-"""Tests for ``hosted_agents.scrapers.slack_job``.
+"""Tests for ``agent.scrapers.slack_job``.
 
 Traceability: exercises slack scraper job JSON validation, normalization, and RAG embed wiring.
 """
@@ -10,7 +10,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from hosted_agents.scrapers import slack_job
+from agent.scrapers import slack_job
 
 
 def test_ts_window() -> None:
@@ -83,8 +83,8 @@ def test_rts_messages_parses_results() -> None:
     assert len(slack_job._rts_messages(page)) == 1
 
 
-@patch("hosted_agents.scrapers.base.httpx.Client")
-@patch("hosted_agents.scrapers.slack_job.WebClient")
+@patch("agent.scrapers.base.httpx.Client")
+@patch("agent.scrapers.slack_job.WebClient")
 def test_run_slack_channel_posts_embed(
     mock_wc_class, mock_hx_cls, tmp_path, monkeypatch
 ) -> None:
@@ -120,8 +120,8 @@ def test_run_slack_channel_posts_embed(
     hx_inst.post.assert_called_once()
 
 
-@patch("hosted_agents.scrapers.base.httpx.Client")
-@patch("hosted_agents.scrapers.slack_job.WebClient")
+@patch("agent.scrapers.base.httpx.Client")
+@patch("agent.scrapers.slack_job.WebClient")
 def test_run_slack_search_posts_embed(
     mock_wc_class, mock_hx_cls, tmp_path, monkeypatch
 ) -> None:
@@ -187,7 +187,7 @@ def test_run_invalid_job_config_exits_before_slack_client(
     monkeypatch.setenv("SCRAPER_METRICS_ADDR", "")
     monkeypatch.setenv("SLACK_USER_TOKEN", "test-user-token-not-real")
 
-    with patch("hosted_agents.scrapers.slack_job.WebClient") as mock_wc:
+    with patch("agent.scrapers.slack_job.WebClient") as mock_wc:
         with pytest.raises(SystemExit) as ei:
             slack_job.run()
         assert ei.value.code == 1

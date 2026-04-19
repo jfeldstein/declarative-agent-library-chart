@@ -13,7 +13,7 @@ import pytest
 from fastapi.testclient import TestClient
 from slack_sdk.signature import SignatureVerifier
 
-from hosted_agents.app import create_app
+from agent.app import create_app
 
 
 def _sign_slack_body(signing_secret: str, body: bytes) -> dict[str, str]:
@@ -61,7 +61,7 @@ def test_slack_trigger_http_bad_signature_does_not_run_graph(
 
     app = create_app(system_prompt="system")
     body = json.dumps({"type": "event_callback"}).encode()
-    with patch("hosted_agents.slack_trigger.dispatch.run_trigger_graph", _boom):
+    with patch("agent.triggers.slack.dispatch.run_trigger_graph", _boom):
         with TestClient(app) as client:
             r = client.post(
                 "/api/v1/integrations/slack/events",
@@ -94,7 +94,7 @@ def test_slack_trigger_url_challenge_does_not_run_graph(
     _assert_sig_well_formed(signing_secret, body, hdrs)
 
     app = create_app(system_prompt="system")
-    with patch("hosted_agents.slack_trigger.dispatch.run_trigger_graph", _boom):
+    with patch("agent.triggers.slack.dispatch.run_trigger_graph", _boom):
         with TestClient(app) as client:
             r = client.post(
                 "/api/v1/integrations/slack/events",
@@ -135,7 +135,7 @@ def test_slack_trigger_app_mention_invokes_run_trigger_graph(
     hdrs = _sign_slack_body(signing_secret, body)
 
     app = create_app(system_prompt="system")
-    with patch("hosted_agents.slack_trigger.dispatch.run_trigger_graph", _capture):
+    with patch("agent.triggers.slack.dispatch.run_trigger_graph", _capture):
         with TestClient(app) as client:
             r = client.post(
                 "/api/v1/integrations/slack/events",
@@ -153,7 +153,7 @@ def test_slack_trigger_app_mention_invokes_run_trigger_graph(
 
 def test_slack_trigger_sources_do_not_reference_embed_route() -> None:
     """[DALC-REQ-SLACK-TRIGGER-002] Trigger bridge must not call managed RAG embed path."""
-    root = Path(__file__).resolve().parents[1] / "hosted_agents" / "slack_trigger"
+    root = Path(__file__).resolve().parents[1] / "agent" / "triggers" / "slack"
     for path in sorted(root.rglob("*.py")):
         text = path.read_text(encoding="utf-8")
         assert "/v1/embed" not in text, path
@@ -161,7 +161,7 @@ def test_slack_trigger_sources_do_not_reference_embed_route() -> None:
 
 def test_slack_trigger_metrics_counter_has_no_secret_labels() -> None:
     """[DALC-REQ-SLACK-TRIGGER-005] Prometheus labels are fixed strings (transport/result)."""
-    from hosted_agents.metrics import SLACK_TRIGGER_INBOUND
+    from agent.metrics import SLACK_TRIGGER_INBOUND
 
     assert list(SLACK_TRIGGER_INBOUND._labelnames) == ["transport", "result"]  # noqa: SLF001
 
@@ -197,7 +197,7 @@ def test_slack_trigger_event_dedupe_skips_second_delivery(
         ).encode()
 
     app = create_app(system_prompt="system")
-    with patch("hosted_agents.slack_trigger.dispatch.run_trigger_graph", _count):
+    with patch("agent.triggers.slack.dispatch.run_trigger_graph", _count):
         with TestClient(app) as client:
             for _ in range(2):
                 b = _envelope()
@@ -237,11 +237,11 @@ def test_slack_trigger_posts_graph_output_to_slack_when_client_available(
 
     app = create_app(system_prompt='Respond, "Hello :wave:"')
     with patch(
-        "hosted_agents.slack_trigger.dispatch.run_trigger_graph",
+        "agent.triggers.slack.dispatch.run_trigger_graph",
         return_value="Hello :wave:",
     ):
         with patch(
-            "hosted_agents.slack_trigger.dispatch._slack_client_for_trigger_reply",
+            "agent.triggers.slack.dispatch._slack_client_for_trigger_reply",
             return_value=mock_client,
         ):
             with TestClient(app) as client:

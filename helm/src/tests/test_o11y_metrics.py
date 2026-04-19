@@ -15,9 +15,9 @@ from unittest.mock import MagicMock
 import pytest
 from fastapi.testclient import TestClient
 
-from hosted_agents.app import create_app
-from hosted_agents.skills_state import reset_skill_unlocked_tools
-from hosted_agents.trigger_errors import TriggerHttpError
+from agent.app import create_app
+from agent.skills_state import reset_skill_unlocked_tools
+from agent.trigger_errors import TriggerHttpError
 from tests.conftest import patch_supervisor_fake_model, tool_then_text_responses
 
 
@@ -54,7 +54,7 @@ def test_trigger_client_error_increments_client_error(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """[DALC-REQ-O11Y-SCRAPE-002] client_error classification."""
-    from hosted_agents.env import SYSTEM_PROMPT_ENV_KEY
+    from agent.env import SYSTEM_PROMPT_ENV_KEY
 
     monkeypatch.setenv(SYSTEM_PROMPT_ENV_KEY, "   ")
     app = create_app()
@@ -95,9 +95,7 @@ def test_trigger_forwards_x_request_id_to_rag(monkeypatch: pytest.MonkeyPatch) -
         mock_cm.__exit__.return_value = None
         return mock_cm
 
-    monkeypatch.setattr(
-        "hosted_agents.subagent_exec.httpx.Client", capture_httpx_client
-    )
+    monkeypatch.setattr("agent.subagent_exec.httpx.Client", capture_httpx_client)
     patch_supervisor_fake_model(
         monkeypatch,
         tool_then_text_responses("subagent_rag", {"query": "q"}, final_text="ok"),
@@ -137,7 +135,7 @@ def test_subagent_and_skill_and_mcp_metrics(monkeypatch: pytest.MonkeyPatch) -> 
     client.post("/api/v1/trigger", json={"message": "call s1"})
 
     def _missing_factory() -> object:
-        from hosted_agents.chat_model import FakeToolChatModel
+        from agent.chat_model import FakeToolChatModel
         from langchain_core.messages import AIMessage
 
         return FakeToolChatModel(
@@ -158,7 +156,7 @@ def test_subagent_and_skill_and_mcp_metrics(monkeypatch: pytest.MonkeyPatch) -> 
         )
 
     monkeypatch.setattr(
-        "hosted_agents.supervisor.resolve_chat_model",
+        "agent.supervisor.resolve_chat_model",
         _missing_factory,
     )
     client.post("/api/v1/trigger", json={"message": "call missing"})
@@ -191,10 +189,10 @@ def test_json_logs_emit_structured_correlation_for_trigger_route() -> None:
     env["HOSTED_AGENT_LOG_FORMAT"] = "json"
     env["PYTHONPATH"] = str(runtime)
     script = """
-from hosted_agents.o11y_logging import reset_logging_for_tests
+from agent.o11y_logging import reset_logging_for_tests
 
 reset_logging_for_tests()
-from hosted_agents.app import create_app
+from agent.app import create_app
 from fastapi.testclient import TestClient
 
 app = create_app(system_prompt='Respond, "Probe"')
@@ -240,8 +238,10 @@ def test_trigger_unhandled_exception_increments_server_error(
     def _boom(_ctx: object) -> str:
         raise RuntimeError("simulated handler failure")
 
-    monkeypatch.setattr("hosted_agents.app.run_trigger_graph", _boom)
-    client = TestClient(create_app(system_prompt='Respond, "Hi"'), raise_server_exceptions=False)
+    monkeypatch.setattr("agent.app.run_trigger_graph", _boom)
+    client = TestClient(
+        create_app(system_prompt='Respond, "Hi"'), raise_server_exceptions=False
+    )
     before = _metrics_text(client)
     r = client.post("/api/v1/trigger", json={"message": "hi"})
     assert r.status_code == 500
@@ -260,7 +260,7 @@ def test_trigger_http_error_5xx_increments_server_error(
     def _raise(_ctx: object) -> str:
         raise TriggerHttpError(503, "upstream unavailable")
 
-    monkeypatch.setattr("hosted_agents.app.run_trigger_graph", _raise)
+    monkeypatch.setattr("agent.app.run_trigger_graph", _raise)
     client = TestClient(create_app(system_prompt='Respond, "Hi"'))
     before = _metrics_text(client)
     r = client.post("/api/v1/trigger", json={"message": "hi"})
@@ -280,7 +280,7 @@ def test_trigger_http_error_4xx_stays_client_error(
     def _raise(_ctx: object) -> str:
         raise TriggerHttpError(404, "missing")
 
-    monkeypatch.setattr("hosted_agents.app.run_trigger_graph", _raise)
+    monkeypatch.setattr("agent.app.run_trigger_graph", _raise)
     client = TestClient(create_app(system_prompt='Respond, "Hi"'))
     before = _metrics_text(client)
     r = client.post("/api/v1/trigger", json={"message": "hi"})
@@ -299,7 +299,7 @@ def test_json_log_format_emits_message_key() -> None:
     env["HOSTED_AGENT_LOG_FORMAT"] = "json"
     env["PYTHONPATH"] = str(runtime)
     code = """
-from hosted_agents.o11y_logging import configure_request_logging, get_logger
+from agent.o11y_logging import configure_request_logging, get_logger
 configure_request_logging()
 get_logger().info("hello_probe", request_id="abc")
 """

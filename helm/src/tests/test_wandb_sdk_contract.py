@@ -7,8 +7,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from hosted_agents.observability.settings import ObservabilitySettings
-from hosted_agents.observability.wandb_trace import WandbTraceSession
+from agent.observability.settings import ObservabilitySettings
+from agent.observability.wandb_trace import WandbTraceSession
 
 
 @pytest.fixture()

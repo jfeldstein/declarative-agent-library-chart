@@ -8,7 +8,7 @@ Accepted
 
 This project exposes **Prometheus observability metrics** (see [ADR 0005](0005-observability-vs-execution-persistence.md)) from the hosted agent HTTP runtime, the optional RAG HTTP service, and scheduled scraper CronJobs. Without shared naming and label rules, series proliferate, cardinality grows, and dashboards or alerts accidentally capture secrets or unbounded dimensions.
 
-Implementation today lives in `helm/src/hosted_agents/metrics.py`, `helm/src/hosted_agents/rag/metrics.py`, and `helm/src/hosted_agents/scrapers/metrics.py`.
+Implementation today lives in `helm/src/agent/metrics.py`, `helm/src/agent/rag/metrics.py`, and `helm/src/agent/scrapers/metrics.py`.
 
 ## Decision
 

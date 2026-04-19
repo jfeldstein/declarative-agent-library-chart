@@ -47,7 +47,7 @@ Worktree validation snapshot: promoted specs under `openspec/specs/` vs `docs/sp
 
 | ID | Status | Evidence (matrix) | Spot-check |
 | --- | --- | --- | --- |
-| [DALC-REQ-TOKEN-MET-001] | OK | `helm/src/hosted_agents/metrics.py`, `helm/src/hosted_agents/llm_metrics.py`, `helm/src/tests/test_token_metrics.py` | Counters and `test_llm_usage_missing_when_no_usage_metadata` / token tests. |
+| [DALC-REQ-TOKEN-MET-001] | OK | `helm/src/agent/metrics.py`, `helm/src/agent/llm_metrics.py`, `helm/src/tests/test_token_metrics.py` | Counters and `test_llm_usage_missing_when_no_usage_metadata` / token tests. |
 | [DALC-REQ-TOKEN-MET-002] | OK | same | Input tokens asserted in `test_llm_token_counters_and_cost_with_usage_metadata`. |
 | [DALC-REQ-TOKEN-MET-003] | OK | same | `agent_runtime_llm_time_to_first_token_seconds` + streaming labels covered by TTFT tests. |
 | [DALC-REQ-TOKEN-MET-004] | OK | same + `helm/src/tests/test_token_metrics.py::test_trigger_payload_histograms_record_response_size` | Request histogram coverage unchanged; **`test_trigger_payload_histograms_record_response_size`** asserts **`agent_runtime_http_trigger_response_bytes_sum`** increases by at least the UTF-8 length of the successful plain-text trigger response body. |

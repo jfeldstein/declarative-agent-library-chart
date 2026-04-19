@@ -10,7 +10,7 @@ The `config-first-hosted-agents` prototype needs a small, testable runtime (HTTP
 
 ## Decision
 
-All first-party implementation code for this project **SHALL** be **Python** (currently `>=3.11`), packaged under `helm/src/hosted_agents/`, with tests under `helm/src/tests/` and dependency management via **`uv`** + `helm/src/pyproject.toml`.
+All first-party implementation code for this project **SHALL** be **Python** (currently `>=3.11`), packaged under `helm/src/agent/`, with tests under `helm/src/tests/` and dependency management via **`uv`** + `helm/src/pyproject.toml`.
 
 Non-Python assets (Helm charts, Skaffold/DevSpace YAML) live at the project root; the Python runtime is isolated under `helm/src/`.
 

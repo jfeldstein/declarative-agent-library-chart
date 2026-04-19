@@ -6,7 +6,7 @@ import types
 
 import pytest
 
-from hosted_agents.scrapers import cursor_store
+from agent.scrapers import cursor_store
 
 
 def test_file_store_jira_compat_roundtrip(
