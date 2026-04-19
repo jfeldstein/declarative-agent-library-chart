@@ -429,7 +429,12 @@
             },
             "wandb": {
               "type": "object",
-              "properties": { "enabled": { "type": "boolean" } }
+              "description": "Weights & Biases tracing plugin; maps to HOSTED_AGENT_WANDB_* / WANDB_*.",
+              "properties": {
+                "enabled": { "type": "boolean" },
+                "project": { "type": "string" },
+                "entity": { "type": "string" }
+              }
             },
             "grafana": {
               "type": "object",
@@ -450,15 +455,6 @@
         "postgresUrl": { "type": "string" },
         "enabled": { "type": "boolean" },
         "backend": { "type": "string" }
-      }
-    },
-    "wandb": {
-      "type": "object",
-      "description": "Weights & Biases tracing toggles. Traceability: [DALC-REQ-CHART-RTV-002]",
-      "properties": {
-        "enabled": { "type": "boolean" },
-        "project": { "type": "string" },
-        "entity": { "type": "string" }
       }
     },
     "presence": {

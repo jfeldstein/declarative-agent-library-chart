@@ -74,14 +74,15 @@ def plugins_config_from_env() -> ObservabilityPluginsConfig:
             "HOSTED_AGENT_LANGFUSE_FLUSH_INTERVAL_SECONDS",
         ),
     )
+    wandb_enabled = _truthy(
+        "HOSTED_AGENT_OBSERVABILITY_PLUGINS_WANDB_ENABLED",
+    ) or _truthy("HOSTED_AGENT_WANDB_ENABLED")
     return ObservabilityPluginsConfig(
         prometheus=PluginToggle(
             enabled=_truthy("HOSTED_AGENT_OBSERVABILITY_PLUGINS_PROMETHEUS_ENABLED"),
         ),
         langfuse=lf,
-        wandb=PluginToggle(
-            enabled=_truthy("HOSTED_AGENT_OBSERVABILITY_PLUGINS_WANDB_ENABLED"),
-        ),
+        wandb=PluginToggle(enabled=wandb_enabled),
         grafana=PluginToggle(
             enabled=_truthy("HOSTED_AGENT_OBSERVABILITY_PLUGINS_GRAFANA_ENABLED"),
         ),

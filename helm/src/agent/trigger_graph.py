@@ -15,15 +15,11 @@ from agent.checkpointing import (
     resolve_checkpointer,
 )
 from agent.observability.checkpointer import build_checkpointer
-from agent.observability.run_context import (
-    bind_run_context,
-    get_run_id,
-    set_wandb_session,
-)
+from agent.observability.middleware import publish_run_ended, publish_run_started
+from agent.observability.run_context import bind_run_context, get_run_id
 from agent.observability.settings import ObservabilitySettings
 from agent.observability.trajectory import trajectory_recorder
 from agent.observability.wandb_run_tags import wandb_mandatory_tags_for_run
-from agent.observability.wandb_trace import WandbTraceSession
 from agent.reply import trigger_reply_text
 from agent.run_context import (
     TriggerRunIds,
@@ -282,8 +278,12 @@ def run_trigger_graph(ctx: TriggerContext) -> str:
         ctx=ctx,
         request_correlation_id=ctx.request_id,
     )
-    wandb_session = WandbTraceSession(settings=obs, run_name=ctx.run_id, tags=tags)
-    set_wandb_session(wandb_session if obs.wandb_enabled else None)
+    publish_run_started(
+        run_id=ctx.run_id,
+        thread_id=ctx.thread_id,
+        tags=tags,
+        observability=obs,
+    )
 
     graph = compiled_trigger_graph(ctx)
     thread_cfg: dict[str, Any] = {
@@ -292,8 +292,7 @@ def run_trigger_graph(ctx: TriggerContext) -> str:
     try:
         result = graph.invoke({"output": ""}, config=thread_cfg)
     finally:
-        set_wandb_session(None)
-        wandb_session.finish()
+        publish_run_ended()
         reset_trigger_ids(tid_tok)
 
     assert isinstance(result, dict)

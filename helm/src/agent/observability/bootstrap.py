@@ -13,6 +13,7 @@ from agent.observability.plugins.prometheus import (
     register_prometheus_agent_plugin,
     register_prometheus_scraper_plugin,
 )
+from agent.observability.plugins.wandb.plugin import register_wandb_trace_plugin
 from agent.observability.plugins_config import (
     ObservabilityPluginsConfig,
     plugins_config_from_env,
@@ -38,6 +39,8 @@ def build_event_bus(
         else:
             register_prometheus_scraper_plugin(bus)
     register_langfuse_plugin(bus, build_langfuse_client(cfg.langfuse))
+    if process == "agent":
+        register_wandb_trace_plugin(bus, cfg)
     return bus
 
 
