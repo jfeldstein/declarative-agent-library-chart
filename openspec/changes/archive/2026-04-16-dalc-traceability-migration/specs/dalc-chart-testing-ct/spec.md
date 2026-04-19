@@ -1,4 +1,4 @@
-## MODIFIED Requirements
+## ADDED Requirements
 
 ### Requirement: [DALC-REQ-CHART-CT-001] Chart-testing discovers and lints Declarative Agent Library Helm charts
 
