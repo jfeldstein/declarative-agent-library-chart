@@ -1,21 +1,37 @@
 ## ADDED Requirements
 
-### Requirement: [DALC-REQ-SCRAPER-BASE-001] Shared scraper runtime owns process lifecycle
+### Requirement: [DALC-REQ-SCRAPER-BASE-001] Shared scraper runtime owns lifecycle, RAG ingest, and incremental persistence
 
-The Python package **`hosted_agents.scrapers`** SHALL provide a documented **shared runtime** (for example a **`BaseScraper`** abstract type or **`ScraperRuntime`** coordinator plus a **`typing.Protocol`** for integrations) that implements **`job.json`** loading, environment validation, optional **metrics HTTP** listener lifecycle, **RAG** **`POST /v1/embed`** submission with the existing result taxonomy, **cursor / watermark** coordination via **`cursor_store`**, process exit codes on fatal misconfiguration, and graceful shutdown hooks. Integration-specific modules SHALL delegate those concerns to this runtime rather than reimplementing them.
+The Python package **`hosted_agents.scrapers`** SHALL provide a documented **shared runtime** (implemented in a coordinator module such as **`base.py`** alongside **`typing.Protocol`** / ABC definitions) that owns **`job.json`** loading, environment validation, optional **metrics HTTP** listener lifecycle, **all** managed RAG **`POST /v1/embed`** requests for the process (sole ingest path to the RAG HTTP API), **cursor / watermark** persistence via **`cursor_store`** (including when state advances relative to embed success), process exit codes on fatal misconfiguration, and graceful shutdown hooks.
+
+Integration-specific modules SHALL **not** implement embed submission or durable incremental persistence themselves.
 
 #### Scenario: Entrypoint stability
 
 - **WHEN** the chart invokes **`python -m hosted_agents.scrapers.jira_job`** or **`python -m hosted_agents.scrapers.slack_job`**
-- **THEN** the module **`run()`** or equivalent SHALL remain the supported entrypoint and SHALL route execution through the shared runtime after this change
+- **THEN** the module **`run()`** or equivalent SHALL remain the supported entrypoint and SHALL delegate orchestration to this shared runtime after this change
 
-### Requirement: [DALC-REQ-SCRAPER-BASE-002] Integration adapters focus on remote calls and normalization
+#### Scenario: RAG ingest is centralized
 
-Integration-specific scraper code (Jira, Slack, or future sources) SHALL be responsible only for **authenticated remote API interaction**, **pagination**, **rate-limit handling** as documented, and **mapping** remote payloads into the repository’s **normalized embed contract** (deterministic **`entity_id`**, **`items[]`**, **`relationships`** where applicable). It SHALL NOT duplicate metrics registry setup, scraper **`integration`** label normalization, or generic RAG HTTP client wiring except through the shared runtime.
+- **WHEN** a scraper run produces normalized chunks ready for indexing
+- **THEN** only the shared runtime SHALL send those chunks to the managed RAG service using **`POST /v1/embed`** (or its documented successor path)
+
+### Requirement: [DALC-REQ-SCRAPER-BASE-002] Integration adapters return data only
+
+Integration-specific scraper code (Jira, Slack, or future sources) SHALL be responsible only for **authenticated remote API interaction**, **pagination**, **rate-limit handling** as documented, and **mapping** remote payloads into **in-memory** structures ready for embedding (deterministic **`entity_id`**, **`items[]`**, **`relationships`** where applicable).
+
+It SHALL **NOT** invoke the managed RAG **embed** HTTP API, **NOT** write **cursor / watermark** or other incremental persistence, **NOT** configure the scraper **Prometheus** registry or metrics HTTP server, and **NOT** duplicate **bounded `integration`** label logic.
+
+It MAY return **proposed persistence updates** (for example a candidate next watermark) as plain data for the runtime; the runtime SHALL commit such state only according to documented **post-embed** / **batch success** rules.
+
+#### Scenario: No direct RAG calls from integration code
+
+- **WHEN** integration-specific code runs as part of a scraper job
+- **THEN** it SHALL NOT issue HTTP requests to the RAG service’s **`/v1/embed`** endpoint (or equivalent)
 
 #### Scenario: Deterministic identifiers unchanged
 
-- **WHEN** a scraper adapter emits chunks for RAG ingestion
+- **WHEN** an integration adapter yields normalized chunks for a run
 - **THEN** **`entity_id`** and metadata keys SHALL follow the same deterministic rules as documented for that integration prior to this refactor (unless a separate **BREAKING** change explicitly updates them)
 
 ### Requirement: [DALC-REQ-SCRAPER-BASE-003] Bounded observability labels preserved

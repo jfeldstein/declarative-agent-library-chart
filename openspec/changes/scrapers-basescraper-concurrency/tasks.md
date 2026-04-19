@@ -1,15 +1,15 @@
-## 1. Scraper runtime extraction
+## 1. Scraper runtime (`base.py`)
 
-- [ ] 1.1 Add **`hosted_agents.scrapers`** module (e.g. **`runtime.py`** / **`base.py`**) implementing shared **`run()`** flow: load **`job.json`**, env checks, cursor store, RAG client, metrics sidecar, bounded **`integration`** label, exit codes
-- [ ] 1.2 Define **`ScraperIntegration`** **`Protocol`** (or ABC) with methods for “execute one sync pass” or chunk iterator; document extension points in module docstring
-- [ ] 1.3 Refactor **`jira_job`** to use the runtime; keep **`python -m hosted_agents.scrapers.jira_job`** behavior and tests green
-- [ ] 1.4 Refactor **`slack_job`** to use the same runtime; keep tests green
+- [ ] 1.1 Add **`hosted_agents/scrapers/base.py`**: shared **`run()`** orchestration — load **`job.json`**, env validation, metrics HTTP lifecycle, **sole owner of `POST /v1/embed`** to managed RAG, **cursor/watermark read/write** via **`cursor_store`**, bounded **`integration`** label, exit codes
+- [ ] 1.2 Define **`ScraperIntegration`** **`Protocol`** (or ABC): methods return **normalized in-memory payloads** (and optional proposed watermark/cursor updates as **data** only); **no** RAG HTTP, **no** persistence side effects inside integration implementations
+- [ ] 1.3 Refactor **`jira_job`** to integration-only **return-data** pattern; entrypoint delegates to **`base.py`**; tests green
+- [ ] 1.4 Refactor **`slack_job`** the same way; tests green
 
 ## 2. Helm: concurrencyPolicy
 
-- [ ] 1.5 Add optional **`concurrencyPolicy`** under **`scrapers.jira.jobs[]`** and **`scrapers.slack.jobs[]`** in **`values.yaml`** and **`values.schema.json`** (enum **`Forbid`**, **`Allow`**, **`Replace`**); strip from **`job.json`** merge in templates
-- [ ] 1.6 Render **`spec.concurrencyPolicy`** on scraper CronJobs defaulting **`Forbid`** when unset
-- [ ] 1.7 Extend **`helm/tests/with_scrapers_test.yaml`** (and examples README if examples gain the field)
+- [ ] 2.1 Add optional **`concurrencyPolicy`** under **`scrapers.jira.jobs[]`** and **`scrapers.slack.jobs[]`** in **`values.yaml`** and **`values.schema.json`** (enum **`Forbid`**, **`Allow`**, **`Replace`**); strip from **`job.json`** merge in templates
+- [ ] 2.2 Render **`spec.concurrencyPolicy`** on scraper CronJobs defaulting **`Forbid`** when unset
+- [ ] 2.3 Extend **`helm/tests/with_scrapers_test.yaml`** (and examples README if examples gain the field)
 
 ## 3. Spec promotion and CI
 
@@ -18,5 +18,5 @@
 
 ## 4. Housekeeping
 
-- [ ] 4.1 Update **`ADR 0009`** cross-reference or add a short subsection pointing at **`BaseScraper`** / runtime
+- [ ] 4.1 Update **`ADR 0009`** with **base.py** vs integration responsibilities (RAG ingest + persistence vs return-data-only)
 - [ ] 4.2 Archive **`scrapers-basescraper-concurrency`** when promoted and merged (optional dated **`openspec/changes/archive/`** move)
