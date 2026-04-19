@@ -1,6 +1,6 @@
-# In-process MCP tools (`tools_impl`)
+# In-process MCP tools (`tools`)
 
-Tools are dispatched from `hosted_agents.tools_impl.dispatch.invoke_tool` when the tool id is allow-listed (`HOSTED_AGENT_ENABLED_MCP_TOOLS_JSON`) and invoked via `POST /api/v1/trigger` (`tool` + `tool_arguments`) or the supervisor runtime.
+Tools are dispatched from `hosted_agents.tools.dispatch.invoke_tool` when the tool id is allow-listed (`HOSTED_AGENT_ENABLED_MCP_TOOLS_JSON`) and invoked via `POST /api/v1/trigger` (`tool` + `tool_arguments`) or the supervisor runtime.
 
 In the **supervisor** (`create_agent`), each allow-listed id is exposed as a **typed** LangChain `@tool` built in `hosted_agents.mcp_langchain_tools`: named parameters map to the **same argument dict keys** documented here and consumed by `invoke_tool` (no generic `arguments_json` wrapper for registered ids). Skill-unlocked tool ids that are **not** in `REGISTERED_MCP_TOOL_IDS` still use a JSON-string escape hatch until given a typed binding.
 

@@ -15,7 +15,7 @@ from hosted_agents.observability.run_context import (
 )
 from hosted_agents.observability.side_effects import record_side_effect_checkpoint
 from hosted_agents.observability.stores import get_correlation_store
-from hosted_agents.tools_impl.slack_support import (
+from hosted_agents.tools.slack.support import (
     api_start,
     finish_ok,
     normalize_channel_id,
@@ -126,3 +126,6 @@ def run(arguments: dict[str, Any]) -> dict[str, Any]:
         },
         start,
     )
+
+
+send_message = run

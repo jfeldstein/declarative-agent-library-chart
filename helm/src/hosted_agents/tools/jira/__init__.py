@@ -2,6 +2,6 @@
 
 from __future__ import annotations
 
-from hosted_agents.tools_impl.jira.router import TOOL_IDS, invoke
+from .router import TOOL_IDS, invoke
 
 __all__ = ["TOOL_IDS", "invoke"]

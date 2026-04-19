@@ -7,7 +7,7 @@ from typing import Any
 
 import yaml
 
-from hosted_agents.tools_impl.dispatch import REGISTERED_MCP_TOOL_IDS
+from hosted_agents.tools.dispatch import REGISTERED_MCP_TOOL_IDS
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 _HELLO_CHART = _REPO_ROOT / "examples" / "hello-world" / "Chart.yaml"
@@ -109,7 +109,7 @@ def test_hello_world_example_uses_agent_alias_and_values_key() -> None:
 
 
 def test_mcp_enabled_tools_are_subset_of_dispatch_registry() -> None:
-    """Helm `mcp.enabledTools` must reference only ids implemented in `tools_impl.dispatch`."""
+    """Helm `mcp.enabledTools` must reference only ids implemented in `tools.dispatch`."""
     bad: list[str] = []
     for pattern in _VALUES_GLOBS:
         for path in sorted(_REPO_ROOT.glob(pattern)):
@@ -123,5 +123,5 @@ def test_mcp_enabled_tools_are_subset_of_dispatch_registry() -> None:
                     bad.append(f"{path.relative_to(_REPO_ROOT)}: {tid}")
     assert not bad, (
         "mcp.enabledTools entries must be in REGISTERED_MCP_TOOL_IDS "
-        f"(tools_impl.dispatch): {bad}"
+        f"(tools.dispatch): {bad}"
     )

@@ -109,7 +109,7 @@ Helm: set `observability.structuredLogs.json: true` under the `agent` subchart (
 | `agent_runtime_subagent_duration_seconds`     | `subagent`, `result`         | Subagent latency                   |
 | `agent_runtime_skill_loads_total`             | `skill`, `result`            | Skill load operations              |
 | `agent_runtime_skill_load_duration_seconds`   | `skill`, `result`            | Skill load latency                 |
-| `agent_runtime_slack_tool_web_api_calls_total` | `method`, `result` (`success` / `error`) | Slack Web API calls from **`tools_impl`** (not scraper CronJobs). |
+| `agent_runtime_slack_tool_web_api_calls_total` | `method`, `result` (`success` / `error`) | Slack Web API calls from **`hosted_agents.tools`** (LLM-time tools, not scraper CronJobs). |
 | `agent_runtime_slack_tool_web_api_duration_seconds` | `method`, `result` | Latency for those Slack Web API calls. |
 
 

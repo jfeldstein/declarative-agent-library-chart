@@ -8,14 +8,16 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
-from hosted_agents.tools_impl import (
-    sample_echo,
-    slack_chat_and_history,
-    slack_post,
-    slack_reactions,
+from . import sample_echo
+from .jira import TOOL_IDS as JIRA_TOOL_IDS
+from .jira import invoke as invoke_jira_tool
+from .slack import (
+    chat_update,
+    conversations_history,
+    conversations_replies,
 )
-from hosted_agents.tools_impl.jira import TOOL_IDS as JIRA_TOOL_IDS
-from hosted_agents.tools_impl.jira import invoke as invoke_jira_tool
+from .slack.post import run as slack_post_message
+from .slack.reactions import reactions_add, reactions_remove
 
 # Authoritative allowlist for Helm `mcp.enabledTools` contract tests (`tests/test_chart_values_contract.py`).
 REGISTERED_MCP_TOOL_IDS: frozenset[str] = frozenset(
@@ -32,12 +34,12 @@ REGISTERED_MCP_TOOL_IDS: frozenset[str] = frozenset(
 
 _NON_JIRA_DISPATCH: dict[str, Callable[[dict[str, Any]], dict[str, Any]]] = {
     "sample.echo": sample_echo.run,
-    "slack.post_message": slack_post.run,
-    "slack.reactions_add": slack_reactions.reactions_add,
-    "slack.reactions_remove": slack_reactions.reactions_remove,
-    "slack.chat_update": slack_chat_and_history.chat_update,
-    "slack.conversations_history": slack_chat_and_history.conversations_history,
-    "slack.conversations_replies": slack_chat_and_history.conversations_replies,
+    "slack.post_message": slack_post_message,
+    "slack.reactions_add": reactions_add,
+    "slack.reactions_remove": reactions_remove,
+    "slack.chat_update": chat_update,
+    "slack.conversations_history": conversations_history,
+    "slack.conversations_replies": conversations_replies,
 }
 
 

@@ -12,7 +12,7 @@ import pytest
 from hosted_agents.agent_models import TriggerBody
 from hosted_agents.mcp_langchain_tools import MCP_LANGCHAIN_TYPED_TOOL_IDS, make_mcp_langchain_tool
 from hosted_agents.runtime_config import RuntimeConfig
-from hosted_agents.tools_impl.dispatch import REGISTERED_MCP_TOOL_IDS
+from hosted_agents.tools.dispatch import REGISTERED_MCP_TOOL_IDS
 from hosted_agents.trigger_context import TriggerContext
 
 

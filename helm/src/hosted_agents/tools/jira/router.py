@@ -5,8 +5,8 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
-from hosted_agents.tools_impl.jira.config import JiraToolsSettings, load_settings
-from hosted_agents.tools_impl.jira.handlers import (
+from hosted_agents.tools.jira.config import JiraToolsSettings, load_settings
+from hosted_agents.tools.jira.handlers import (
     run_add_comment,
     run_create_issue,
     run_get_issue,

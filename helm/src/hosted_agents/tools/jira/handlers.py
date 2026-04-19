@@ -6,9 +6,9 @@ import re
 from typing import Any
 
 from hosted_agents.observability.side_effects import record_side_effect_checkpoint
-from hosted_agents.tools_impl.jira.adf import plain_text_comment_body
-from hosted_agents.tools_impl.jira.config import JiraToolsScopes, JiraToolsSettings
-from hosted_agents.tools_impl.jira.rest import build_client, request_json
+from hosted_agents.tools.jira.adf import plain_text_comment_body
+from hosted_agents.tools.jira.config import JiraToolsScopes, JiraToolsSettings
+from hosted_agents.tools.jira.rest import build_client, request_json
 
 _ISSUE_KEY_RE = re.compile(r"^[A-Z][A-Z0-9_]*-\d+$")
 

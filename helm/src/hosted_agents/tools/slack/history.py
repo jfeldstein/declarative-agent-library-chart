@@ -6,7 +6,7 @@ from typing import Any
 
 from slack_sdk.errors import SlackApiError
 
-from hosted_agents.tools_impl.slack_support import (
+from hosted_agents.tools.slack.support import (
     api_start,
     finish_ok,
     history_limit,

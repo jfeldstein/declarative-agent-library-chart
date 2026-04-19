@@ -17,7 +17,7 @@
 
 | Capability | Mechanical traceability | Main residual gaps |
 |------------|-------------------------|---------------------|
-| `dalc-jira-tools` | OK | “Invocable only during agent run” is architectural, not asserted by tests; REQ-001 uses static `/v1/embed` absence in `tools_impl/jira/*.py`. |
+| `dalc-jira-tools` | OK | “Invocable only during agent run” is architectural, not asserted by tests; REQ-001 uses static `/v1/embed` absence in `tools/jira/*.py`. |
 | `dalc-jira-trigger` | OK | Parity with `POST /api/v1/trigger` is integration-level; webhook verification is covered for secret + invalid JSON paths. |
 | `dalc-postgres-agent-persistence` | OK | Applying migrations and live DB upgrades are operator/runbook workflows; pytest uses in-process / test doubles. |
 | `dalc-rag-from-scrapers` | OK | Chart RAG deployment gates are Helm unittest–level; full cluster wiring not exercised in default PR pytest. |
@@ -28,11 +28,11 @@
 
 ## `dalc-jira-tools`
 
-**Matrix:** `[DALC-REQ-JIRA-TOOLS-001]` … `[DALC-REQ-JIRA-TOOLS-006]` → `helm/src/tests/test_jira_tools.py`, `helm/tests/hello_world_test.yaml`, chart values/schema, `helm/src/hosted_agents/tools_impl/README.md`, `helm/src/pyproject.toml`.
+**Matrix:** `[DALC-REQ-JIRA-TOOLS-001]` … `[DALC-REQ-JIRA-TOOLS-006]` → `helm/src/tests/test_jira_tools.py`, `helm/tests/hello_world_test.yaml`, chart values/schema, `helm/src/hosted_agents/tools/README.md`, `helm/src/pyproject.toml`.
 
 | ID | Alignment | Notes |
 |----|-----------|--------|
-| JIRA-TOOLS-001 | Partial | `test_jira_tools_python_sources_avoid_embed_route` forbids `/v1/embed` in `hosted_agents/tools_impl/jira/*.py`. **Operational / not fully proven:** “only during an active agent run” depends on dispatch/trigger design; README states tools do not call embed by default. |
+| JIRA-TOOLS-001 | Partial | `test_jira_tools_python_sources_avoid_embed_route` forbids `/v1/embed` in `hosted_agents/tools/jira/*.py`. **Operational / not fully proven:** “only during an active agent run” depends on dispatch/trigger design; README states tools do not call embed by default. |
 | JIRA-TOOLS-002 | Strong | README documents non-overlapping env/chart keys vs scraper (`scrapers.jira.auth`) and trigger (`HOSTED_AGENT_JIRA_TRIGGER_*`). Helm evidence ties `jiraTools` in values/schema. |
 | JIRA-TOOLS-003 | Strong | Simulated + real-path tests cover search, comment, transition, create, update where scopes allow. |
 | JIRA-TOOLS-004 | Strong | JQL required, length cap, bounded search results in tests. |

@@ -21,7 +21,7 @@ from hosted_agents.observability.feedback import feedback_store
 from hosted_agents.observability.run_context import bind_run_context, set_wandb_session
 from hosted_agents.observability.settings import ObservabilitySettings
 from hosted_agents.observability.side_effects import side_effect_checkpoints
-from hosted_agents.tools_impl.dispatch import invoke_tool
+from hosted_agents.tools.dispatch import invoke_tool
 from hosted_agents.observability.checkpointer import reset_compiled_trigger_graph_cache
 from hosted_agents.trigger_graph import get_thread_state, get_thread_state_history
 

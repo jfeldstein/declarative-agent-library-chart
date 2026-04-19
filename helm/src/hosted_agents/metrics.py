@@ -230,7 +230,7 @@ def observe_skill_load(skill: str, result: BinaryResult, start: float) -> None:
 def observe_slack_tool_api(
     method: str, result: BinaryResult, start: float | None = None
 ) -> None:
-    """Count Slack Web API usage from ``tools_impl`` (labels: method name, never secrets)."""
+    """Count Slack Web API usage from LLM-time ``hosted_agents.tools`` (labels: method name, never secrets)."""
     dt = _elapsed(start) if start is not None else 0.0
     SLACK_TOOL_WEB_API_CALLS.labels(method=method, result=result).inc()
     if start is not None:

@@ -18,7 +18,7 @@ from hosted_agents.slack_trigger.mention import (
     extract_app_mention,
     slack_thread_id_for_event,
 )
-from hosted_agents.tools_impl.slack_support import optional_tools_client, timeout_seconds
+from hosted_agents.tools.slack.support import optional_tools_client, timeout_seconds
 from hosted_agents.trigger_graph import TriggerContext, run_trigger_graph
 
 Transport = Literal["http", "socket"]

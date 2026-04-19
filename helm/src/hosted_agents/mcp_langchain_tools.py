@@ -11,7 +11,7 @@ from typing import Any
 
 from langchain_core.tools import tool
 
-from hosted_agents.tools_impl.dispatch import REGISTERED_MCP_TOOL_IDS
+from hosted_agents.tools.dispatch import REGISTERED_MCP_TOOL_IDS
 from hosted_agents.trigger_context import TriggerContext
 from hosted_agents.trigger_steps import run_tool_json
 

@@ -8,7 +8,7 @@ from typing import Any
 import httpx
 
 from hosted_agents.o11y_logging import get_logger
-from hosted_agents.tools_impl.jira.config import JiraToolsSettings
+from hosted_agents.tools.jira.config import JiraToolsSettings
 
 
 def _safe_detail_from_parsed(parsed: object) -> dict[str, Any] | list[Any] | str:

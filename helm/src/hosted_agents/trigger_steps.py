@@ -22,7 +22,7 @@ from hosted_agents.observability.trajectory import trajectory_recorder
 from hosted_agents.run_context import next_tool_call_id
 from hosted_agents.runtime_config import RuntimeConfig
 from hosted_agents.skills_state import unlock_tools, unlocked_tools
-from hosted_agents.tools_impl.dispatch import invoke_tool
+from hosted_agents.tools.dispatch import invoke_tool
 from hosted_agents.trigger_errors import TriggerHttpError
 
 
