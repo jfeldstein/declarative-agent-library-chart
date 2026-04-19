@@ -29,7 +29,7 @@ These **root** `openspec/specs/*/spec.md` files are **byte-identical** to at lea
 - [ ] `openspec/specs/dalc-agent-o11y-logs-dashboards/spec.md` — also compare `changes/token-metrics-dashboard/specs/dalc-agent-o11y-logs-dashboards/spec.md` (differs from root)
 - [ ] `openspec/specs/dalc-agent-o11y-scrape/spec.md`
 - [ ] `openspec/specs/dalc-chart-runtime-values/spec.md`
-- [ ] `openspec/specs/dalc-chart-testing-ct/spec.md`
+- [x] `openspec/specs/dalc-chart-testing-ct/spec.md`
 - [ ] `openspec/specs/dalc-helm-unittest/spec.md`
 - [ ] `openspec/specs/dalc-postgres-agent-persistence/spec.md`
 - [ ] `openspec/specs/dalc-rag-from-scrapers/spec.md`
