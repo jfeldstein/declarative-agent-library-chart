@@ -101,16 +101,17 @@ spec:
             - name: HOSTED_AGENT_CHECKPOINT_BACKEND
               value: {{ .Values.checkpoints.backend | quote }}
             {{- end }}
-            {{- if .Values.wandb.enabled }}
+            {{- $wbPlug := .Values.observability.plugins.wandb | default dict }}
+            {{- if $wbPlug.enabled }}
             - name: HOSTED_AGENT_WANDB_ENABLED
               value: "true"
-            {{- if .Values.wandb.project }}
+            {{- if $wbPlug.project }}
             - name: WANDB_PROJECT
-              value: {{ .Values.wandb.project | quote }}
+              value: {{ $wbPlug.project | quote }}
             {{- end }}
-            {{- if .Values.wandb.entity }}
+            {{- if $wbPlug.entity }}
             - name: WANDB_ENTITY
-              value: {{ .Values.wandb.entity | quote }}
+              value: {{ $wbPlug.entity | quote }}
             {{- end }}
             {{- end }}
             {{- if .Values.scrapers.slack.feedback.enabled }}

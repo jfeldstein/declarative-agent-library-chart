@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 
-from agent.observability.wandb_trace import WandbTraceSession
+from agent.observability.plugins.wandb.trace import WandbTraceSession
 
 
 def _first_nonempty_env(*keys: str) -> str | None:

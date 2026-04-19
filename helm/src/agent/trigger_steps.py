@@ -13,11 +13,7 @@ from agent.observability.middleware import (
     publish_tool_call_failed,
 )
 from agent.o11y_logging import get_logger
-from agent.observability.run_context import (
-    get_run_id,
-    get_thread_id,
-    get_wandb_session,
-)
+from agent.observability.run_context import get_run_id, get_thread_id
 from agent.observability.span_summaries import (
     ToolSpanSummary,
     redacted_args_hash,
@@ -65,8 +61,14 @@ def run_tool_json(cfg: RuntimeConfig, tool: str, arguments: dict[str, Any]) -> s
     ok = True
     if isinstance(result, dict) and result.get("ok") is False:
         ok = False
-    publish_tool_call_completed(tool=tool, started_at=start, ok=ok)
     duration = time.perf_counter() - start
+    publish_tool_call_completed(
+        tool=tool,
+        started_at=start,
+        ok=ok,
+        tool_call_id=tool_call_id,
+        duration_s=duration,
+    )
     run_id = get_run_id()
     if run_id:
         trajectory_recorder.append(
@@ -89,12 +91,5 @@ def run_tool_json(cfg: RuntimeConfig, tool: str, arguments: dict[str, Any]) -> s
                 outcome="success",
                 args_hash=redacted_args_hash(arguments),
             )
-        )
-    wandb_sess = get_wandb_session()
-    if wandb_sess is not None:
-        wandb_sess.log_tool_span(
-            tool_call_id=tool_call_id,
-            tool_name=tool,
-            duration_s=duration,
         )
     return json.dumps({"tool": tool, "result": result})

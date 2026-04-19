@@ -83,6 +83,8 @@ observability:
       enabled: false
     wandb:
       enabled: false
+      project: ""
+      entity: ""
     grafana:
       enabled: false
     logShipping:
@@ -93,12 +95,6 @@ checkpoints:
   postgresUrl: ""
   enabled: false
   backend: memory
-
-# Weights & Biases tracing (maps to HOSTED_AGENT_WANDB_* and WANDB_* when enabled).
-wandb:
-  enabled: false
-  project: ""
-  entity: ""
 
 # Traceability: [DALC-REQ-RAG-SCRAPERS-003] (RAG tunables under ``scrapers.ragService``).
 # Scheduled scrapers: ``scrapers.jira`` and ``scrapers.slack`` each have ``enabled``, ``jobs[]``.

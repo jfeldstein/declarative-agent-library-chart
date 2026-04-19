@@ -20,9 +20,9 @@ tests:
             value: "postgresql://u:p@h:5432/db"
   - it: wandb enabled with project sets env
     set:
-      agent.wandb.enabled: true
-      agent.wandb.project: myproj
-      agent.wandb.entity: acme
+      agent.observability.plugins.wandb.enabled: true
+      agent.observability.plugins.wandb.project: myproj
+      agent.observability.plugins.wandb.entity: acme
     template: templates/agent.yaml
     documentSelector:
       path: kind

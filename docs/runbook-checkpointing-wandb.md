@@ -69,4 +69,4 @@ The global feedback taxonomy is loaded from **`HOSTED_AGENT_LABEL_REGISTRY_JSON`
 
 ## Helm values (short)
 
-See `helm/chart/values.yaml` → top-level **`checkpoints`**, **`wandb`**, and **`scrapers.slack.feedback`** for toggles that map to the env vars above. **`checkpoints.postgresUrl`** sets **`HOSTED_AGENT_POSTGRES_URL`**. Optional **`scrapers.slack.feedback.labelRegistry`** overrides the default global feedback label registry JSON (`HOSTED_AGENT_LABEL_REGISTRY_JSON`).
+See `helm/chart/values.yaml` → top-level **`checkpoints`**, **`observability.plugins.wandb`** (Weights & Biases), and **`scrapers.slack.feedback`** for toggles that map to the env vars above. **`checkpoints.postgresUrl`** sets **`HOSTED_AGENT_POSTGRES_URL`**. Optional **`scrapers.slack.feedback.labelRegistry`** overrides the default global feedback label registry JSON (`HOSTED_AGENT_LABEL_REGISTRY_JSON`).

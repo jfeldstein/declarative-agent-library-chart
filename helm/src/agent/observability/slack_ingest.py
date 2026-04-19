@@ -13,8 +13,8 @@ from agent.observability.stores import (
 from agent.observability.label_registry import get_label_registry
 from agent.observability.settings import ObservabilitySettings
 from agent.observability.trajectory import trajectory_recorder
+from agent.observability.middleware import publish_feedback_recorded
 from agent.observability.wandb_run_tags import wandb_mandatory_tags_for_run
-from agent.observability.wandb_trace import WandbTraceSession
 
 
 def _feedback_dedupe_key(user_id: str, checkpoint_id: str | None, label_id: str) -> str:
@@ -124,23 +124,15 @@ def handle_slack_reaction_event(
         },
     )
 
-    late: WandbTraceSession | None = None
-    if settings.wandb_enabled:
-        late = WandbTraceSession(
-            settings=settings,
-            run_name=corr.run_id,
-            tags=wandb_mandatory_tags_for_run(thread_id=corr.thread_id),
-        )
-    try:
-        if late is not None:
-            late.log_feedback(
-                tool_call_id=corr.tool_call_id,
-                checkpoint_id=corr.checkpoint_id,
-                feedback_label=entry.label_id,
-                feedback_source="slack_reaction",
-            )
-    finally:
-        if late is not None:
-            late.finish()
+    publish_feedback_recorded(
+        observability_settings=settings,
+        run_id=corr.run_id,
+        thread_id=corr.thread_id,
+        tags=wandb_mandatory_tags_for_run(thread_id=corr.thread_id),
+        tool_call_id=corr.tool_call_id,
+        checkpoint_id=corr.checkpoint_id,
+        feedback_label=entry.label_id,
+        feedback_source="slack_reaction",
+    )
 
     return {"status": "recorded", "label_id": entry.label_id}

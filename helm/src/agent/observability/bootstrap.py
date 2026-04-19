@@ -7,9 +7,11 @@ from typing import Literal
 from agent.observability.events import SyncEventBus
 from agent.observability.legacy_agent_metrics import register_agent_legacy_metrics
 from agent.observability.legacy_scraper_metrics import register_scraper_legacy_metrics
+from agent.observability.plugins.wandb import register_wandb_trace_plugin
 from agent.observability.plugins_config import (
     ObservabilityPluginsConfig,
     default_plugins_config,
+    plugins_config_from_env,
 )
 
 ProcessKind = Literal["agent", "scraper"]
@@ -20,15 +22,15 @@ _scraper_bus: SyncEventBus | None = None
 
 def build_event_bus(
     process: ProcessKind,
-    _config: ObservabilityPluginsConfig | None = None,
+    config: ObservabilityPluginsConfig | None = None,
 ) -> SyncEventBus:
     """Construct an isolated bus instance and attach Phase 1 legacy Prometheus subscribers."""
 
-    cfg = _config or default_plugins_config()
+    cfg = config or default_plugins_config()
     bus = SyncEventBus()
-    _ = cfg  # Future: gate plugin subscribers (Langfuse, Prometheus plugin, …).
     if process == "agent":
         register_agent_legacy_metrics(bus)
+        register_wandb_trace_plugin(bus, cfg)
     else:
         register_scraper_legacy_metrics(bus)
     return bus
@@ -41,7 +43,9 @@ def ensure_agent_observability(
 
     global _agent_bus
     if _agent_bus is None:
-        _agent_bus = build_event_bus("agent", config)
+        _agent_bus = build_event_bus(
+            "agent", config or plugins_config_from_env()
+        )
     return _agent_bus
 
 

@@ -22,6 +22,72 @@ def _utc_now() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def publish_run_started(
+    *,
+    run_id: str,
+    thread_id: str,
+    tags: dict[str, str],
+    observability: Any,
+    bus: SyncEventBus | None = None,
+) -> None:
+    """Emit when a trigger run begins (LangGraph invoke wrapper)."""
+
+    b = bus or agent_event_bus()
+    b.publish(
+        LifecycleEvent(
+            EventName.RUN_STARTED,
+            {
+                "run_id": run_id,
+                "run_name": run_id,
+                "thread_id": thread_id,
+                "tags": dict(tags),
+                "observability": observability,
+            },
+            occurred_at=_utc_now(),
+        )
+    )
+
+
+def publish_run_ended(*, bus: SyncEventBus | None = None) -> None:
+    """Emit when a trigger run completes (paired with :func:`publish_run_started`)."""
+
+    b = bus or agent_event_bus()
+    b.publish(LifecycleEvent(EventName.RUN_ENDED, {}, occurred_at=_utc_now()))
+
+
+def publish_feedback_recorded(
+    *,
+    observability_settings: Any,
+    run_id: str,
+    thread_id: str,
+    tags: dict[str, str],
+    tool_call_id: str,
+    checkpoint_id: str | None,
+    feedback_label: str,
+    feedback_source: str,
+    bus: SyncEventBus | None = None,
+) -> None:
+    """Emit after durable human feedback is recorded (Slack reactions, API, …)."""
+
+    b = bus or agent_event_bus()
+    b.publish(
+        LifecycleEvent(
+            EventName.FEEDBACK_RECORDED,
+            {
+                "observability_settings": observability_settings,
+                "run_id": run_id,
+                "thread_id": thread_id,
+                "tags": dict(tags),
+                "tool_call_id": tool_call_id,
+                "checkpoint_id": checkpoint_id,
+                "feedback_label": feedback_label,
+                "feedback_source": feedback_source,
+            },
+            occurred_at=_utc_now(),
+        )
+    )
+
+
 def publish_http_trigger_response(
     *,
     http_result: str,
@@ -91,6 +157,8 @@ def publish_tool_call_completed(
     tool: str,
     started_at: float,
     ok: bool,
+    tool_call_id: str | None = None,
+    duration_s: float | None = None,
     bus: SyncEventBus | None = None,
 ) -> None:
     b = bus or agent_event_bus()
@@ -98,15 +166,20 @@ def publish_tool_call_completed(
     sm = _SLACK_TOOL_WEB_API_METHOD.get(tool)
     if sm is not None:
         extra["slack_web_api_method"] = sm
+    payload: dict[str, Any] = {
+        "tool": tool,
+        "started_at": started_at,
+        "ok": ok,
+        **extra,
+    }
+    if tool_call_id is not None:
+        payload["tool_call_id"] = tool_call_id
+    if duration_s is not None:
+        payload["duration_s"] = duration_s
     b.publish(
         LifecycleEvent(
             EventName.TOOL_CALL_COMPLETED,
-            {
-                "tool": tool,
-                "started_at": started_at,
-                "ok": ok,
-                **extra,
-            },
+            payload,
             occurred_at=_utc_now(),
         )
     )
