@@ -3,7 +3,7 @@
 - [x] 1.1 Create the repository root with `README.md` describing Helm library chart vs examples, kind prerequisite, and the `curl` acceptance command.
 - [x] 1.2 Add `helm/chart/Chart.yaml` and `helm/chart/templates/` with a Service + workload on port **8088**. *(**Shipped:** library chart exposes agent **Deployment** + **Service** on **8088** via named templates; **`Chart.yaml`** is **`type: library`**. Application charts under **`examples/*`** render the bundle by including **`declarative-agent.system`** in **`templates/agent.yaml`**—see **`cfha-helm-library`** task **1.2**.)*
 - [x] 1.3 Add `helm/src/` with a minimal HTTP server implementing **`POST /api/v1/trigger`** that reads `system-prompt` from env/ConfigMap and returns a response body matching hello-world behavior (e.g. greeting with **Hello** and wave). *(Runtime source: `helm/src/hosted_agents/`; `helm/src/README.md` documents mapping.)*
-- [x] 1.4 Add container build artifacts (e.g. `helm/Dockerfile`; build from repository root) and wire image repo/tag via Helm values with sensible defaults for local dev.
+- [x] 1.4 Add container build artifacts (e.g. `helm/src/Dockerfile`; build from repository root) and wire image repo/tag via Helm values with sensible defaults for local dev.
 
 ## 2. Helm wiring and example chart
 

@@ -1,6 +1,6 @@
 # Agent image — Python project under helm/src/ (flattened: ./agent at project root).
 # Build from repository root (Skaffold / DevSpace use this context):
-#   docker build -f helm/Dockerfile -t declarative-agent-library-chart:local .
+#   docker build -f helm/src/Dockerfile -t declarative-agent-library-chart:local .
 # syntax=docker/dockerfile:1
 FROM python:3.12-slim-bookworm
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv

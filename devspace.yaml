@@ -6,7 +6,7 @@ name: declarative-agent
 images:
   app:
     image: declarative-agent
-    dockerfile: helm/Dockerfile
+    dockerfile: helm/src/Dockerfile
     context: .
     tags:
       - local

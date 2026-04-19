@@ -42,7 +42,7 @@ fi
 kubectl config use-context "kind-${CLUSTER}"
 
 echo "==> Building agent image"
-docker build -t declarative-agent-library-chart:local -f "${ROOT}/helm/Dockerfile" "${ROOT}"
+docker build -t declarative-agent-library-chart:local -f "${ROOT}/helm/src/Dockerfile" "${ROOT}"
 
 echo "==> Loading image into kind"
 kind load docker-image declarative-agent-library-chart:local --name "${CLUSTER}"

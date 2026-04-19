@@ -138,7 +138,7 @@ if [[ ${#PROM_PRELOAD_IMAGES[@]} -gt 0 ]]; then
 fi
 
 echo "==> docker build"
-docker build -f helm/Dockerfile -t declarative-agent:local .
+docker build -f helm/src/Dockerfile -t declarative-agent:local .
 
 echo "==> kind load image"
 kind load docker-image declarative-agent:local --name "${KIND_CLUSTER_NAME}"

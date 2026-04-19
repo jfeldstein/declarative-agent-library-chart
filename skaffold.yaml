@@ -13,7 +13,7 @@ build:
     - image: declarative-agent
       context: .
       docker:
-        dockerfile: helm/Dockerfile
+        dockerfile: helm/src/Dockerfile
 deploy:
   helm:
     releases:

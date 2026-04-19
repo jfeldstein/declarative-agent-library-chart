@@ -50,7 +50,7 @@ A **user chart** is a normal Helm **application** chart that lists `declarative-
 Responsibilities of the user chart:
 
 - **Release identity:** `Release.Name`, namespace, and any org-specific labels or annotations not modeled in the library.
-- **Image supply:** Point `image.repository` / `image.tag` at a built image that contains `hosted_agents` (built with [`helm/Dockerfile`](helm/Dockerfile) from the repository root; see README).
+- **Image supply:** Point `image.repository` / `image.tag` at a built image that contains `hosted_agents` (built with [`helm/src/Dockerfile`](helm/src/Dockerfile) from the repository root; see README).
 - **Policy:** NetworkPolicies, PodSecurity, external Secrets operators, ingress controllers, etc., if required beyond what the library renders.
 - **Composition:** Enable scrapers, observability flags, and resource limits appropriate to the workload.
 
