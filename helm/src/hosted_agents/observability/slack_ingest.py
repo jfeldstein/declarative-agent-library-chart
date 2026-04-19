@@ -17,15 +17,36 @@ from hosted_agents.observability.wandb_run_tags import wandb_mandatory_tags_for_
 from hosted_agents.observability.wandb_trace import WandbTraceSession
 
 
+def _feedback_dedupe_key(user_id: str, checkpoint_id: str | None, label_id: str) -> str:
+    return f"{user_id}:{checkpoint_id or 'nocp'}:{label_id}"
+
+
+def _normalize_event_type(payload: dict[str, Any]) -> str:
+    raw = (
+        payload.get("event_type")
+        or payload.get("type")
+        or payload.get("slack_event_type")
+        or "reaction_added"
+    )
+    et = str(raw).lower()
+    if et in ("reaction_added", "reaction_removed"):
+        return et
+    return "reaction_added"
+
+
 def handle_slack_reaction_event(
     payload: dict[str, Any],
     *,
     settings: ObservabilitySettings,
 ) -> dict[str, str]:
-    """Handle a normalized reaction-added payload.
+    """Handle normalized Slack reaction payloads (added or removed).
 
     Expected keys: ``channel_id``, ``message_ts``, ``reaction``, ``event_id``, ``user_id``.
-    Returns a small status dict for HTTP clients.
+
+    Optional:
+
+    - ``event_type`` — ``reaction_added`` (default) or ``reaction_removed``
+    - ``type`` / ``slack_event_type`` — aliases accepted for compatibility
     """
 
     if not settings.slack_feedback_enabled:
@@ -36,6 +57,7 @@ def handle_slack_reaction_event(
     reaction = str(payload.get("reaction") or "")
     event_id = str(payload.get("event_id") or "") or None
     user_id = str(payload.get("user_id") or "unknown")
+    event_type = _normalize_event_type(payload)
 
     ref = SlackMessageRef(channel_id=channel_id, message_ts=message_ts)
     corr = get_correlation_store().get_by_slack(ref)
@@ -50,9 +72,9 @@ def handle_slack_reaction_event(
         )
         return {"status": "orphan"}
 
-    label_id = settings.slack_emoji_map.get(reaction) or reaction
+    label_input = settings.slack_emoji_map.get(reaction) or reaction
     reg = get_label_registry()
-    entry = reg.resolve(label_id)
+    entry = reg.resolve(label_input)
     if entry is None:
         get_feedback_store().record_orphan_reaction(
             OrphanReactionEvent(
@@ -64,7 +86,19 @@ def handle_slack_reaction_event(
         )
         return {"status": "orphan", "reason": "unknown_label"}
 
-    dedupe_key = f"{user_id}:{corr.checkpoint_id or 'nocp'}:{label_id}"
+    cp_id = corr.checkpoint_id
+    dk = _feedback_dedupe_key(user_id, cp_id, entry.label_id)
+
+    if event_type == "reaction_removed":
+        removed = get_feedback_store().retract_human(dk)
+        if removed:
+            return {"status": "retracted", "label_id": entry.label_id}
+        return {"status": "ignored", "reason": "no_prior_feedback"}
+
+    # reaction_added: drop opposite scalar labels for this user + checkpoint
+    for opp_id in reg.opposing_scalar_label_ids(entry.label_id):
+        get_feedback_store().retract_human(_feedback_dedupe_key(user_id, cp_id, opp_id))
+
     ev = HumanFeedbackEvent(
         registry_id=reg.registry_id,
         schema_version=reg.schema_version,
@@ -74,7 +108,7 @@ def handle_slack_reaction_event(
         run_id=corr.run_id,
         thread_id=corr.thread_id,
         feedback_source="slack_reaction",
-        dedupe_key=dedupe_key,
+        dedupe_key=dk,
     )
     get_feedback_store().record_human(ev)
 

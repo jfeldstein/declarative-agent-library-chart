@@ -214,6 +214,148 @@ def test_slack_reaction_records_human_feedback(monkeypatch: pytest.MonkeyPatch) 
     assert listed.json()["events"][0]["label_id"] == "positive"
 
 
+def test_slack_reaction_removed_retracts_human_feedback(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("HOSTED_AGENT_SLACK_FEEDBACK_ENABLED", "true")
+    monkeypatch.setenv(
+        "HOSTED_AGENT_SLACK_EMOJI_LABEL_MAP_JSON",
+        json.dumps({"+1": "positive"}),
+    )
+    feedback_store.reset()
+    correlation_store.reset()
+    ref = SlackMessageRef(channel_id="C1", message_ts="1.0")
+    correlation_store.put_slack_message(
+        ref,
+        ToolCorrelation(
+            tool_call_id="tc-1",
+            run_id="r1",
+            thread_id="t1",
+            checkpoint_id="cp-1",
+            tool_name="slack.post_message",
+        ),
+    )
+    app = create_app(system_prompt='Respond, "Hi"')
+    client = TestClient(app)
+    client.post(
+        "/api/v1/integrations/slack/reactions",
+        json={
+            "channel_id": "C1",
+            "message_ts": "1.0",
+            "reaction": "+1",
+            "event_id": "evt-add",
+            "user_id": "U1",
+        },
+    )
+    assert client.get("/api/v1/runtime/feedback/human").json()["events"]
+    rm = client.post(
+        "/api/v1/integrations/slack/reactions",
+        json={
+            "channel_id": "C1",
+            "message_ts": "1.0",
+            "reaction": "+1",
+            "event_id": "evt-rm",
+            "user_id": "U1",
+            "event_type": "reaction_removed",
+        },
+    )
+    assert rm.status_code == 200
+    assert rm.json()["status"] == "retracted"
+    assert client.get("/api/v1/runtime/feedback/human").json()["events"] == []
+
+
+def test_slack_reaction_positive_then_negative_retracts_positive(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("HOSTED_AGENT_SLACK_FEEDBACK_ENABLED", "true")
+    monkeypatch.setenv(
+        "HOSTED_AGENT_SLACK_EMOJI_LABEL_MAP_JSON",
+        json.dumps({"+1": "positive", "-1": "negative"}),
+    )
+    feedback_store.reset()
+    correlation_store.reset()
+    ref = SlackMessageRef(channel_id="C1", message_ts="1.0")
+    correlation_store.put_slack_message(
+        ref,
+        ToolCorrelation(
+            tool_call_id="tc-1",
+            run_id="r1",
+            thread_id="t1",
+            checkpoint_id="cp-1",
+            tool_name="slack.post_message",
+        ),
+    )
+    app = create_app(system_prompt='Respond, "Hi"')
+    client = TestClient(app)
+    client.post(
+        "/api/v1/integrations/slack/reactions",
+        json={
+            "channel_id": "C1",
+            "message_ts": "1.0",
+            "reaction": "+1",
+            "user_id": "U1",
+        },
+    )
+    client.post(
+        "/api/v1/integrations/slack/reactions",
+        json={
+            "channel_id": "C1",
+            "message_ts": "1.0",
+            "reaction": "-1",
+            "user_id": "U1",
+        },
+    )
+    evs = client.get("/api/v1/runtime/feedback/human").json()["events"]
+    assert len(evs) == 1
+    assert evs[0]["label_id"] == "negative"
+
+
+def test_slack_reaction_negative_then_positive_retracts_negative(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("HOSTED_AGENT_SLACK_FEEDBACK_ENABLED", "true")
+    monkeypatch.setenv(
+        "HOSTED_AGENT_SLACK_EMOJI_LABEL_MAP_JSON",
+        json.dumps({"+1": "positive", "-1": "negative"}),
+    )
+    feedback_store.reset()
+    correlation_store.reset()
+    ref = SlackMessageRef(channel_id="C1", message_ts="1.0")
+    correlation_store.put_slack_message(
+        ref,
+        ToolCorrelation(
+            tool_call_id="tc-1",
+            run_id="r1",
+            thread_id="t1",
+            checkpoint_id="cp-1",
+            tool_name="slack.post_message",
+        ),
+    )
+    app = create_app(system_prompt='Respond, "Hi"')
+    client = TestClient(app)
+    client.post(
+        "/api/v1/integrations/slack/reactions",
+        json={
+            "channel_id": "C1",
+            "message_ts": "1.0",
+            "reaction": "-1",
+            "user_id": "U1",
+        },
+    )
+    client.post(
+        "/api/v1/integrations/slack/reactions",
+        json={
+            "channel_id": "C1",
+            "message_ts": "1.0",
+            "reaction": "+1",
+            "user_id": "U1",
+        },
+    )
+    evs = client.get("/api/v1/runtime/feedback/human").json()["events"]
+    assert len(evs) == 1
+    assert evs[0]["label_id"] == "positive"
+
+
 def test_slack_orphan_without_correlation(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("HOSTED_AGENT_SLACK_FEEDBACK_ENABLED", "true")
     feedback_store.reset()

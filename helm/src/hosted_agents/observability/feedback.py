@@ -53,6 +53,19 @@ class FeedbackStore:
             self._human.append(ev)
             return ev
 
+    def retract_human(self, dedupe_key: str) -> bool:
+        """Remove persisted feedback for ``dedupe_key`` (e.g. reaction_removed)."""
+
+        with self._lock:
+            existing = self._idempotency.pop(dedupe_key, None)
+            if existing is None:
+                return False
+            try:
+                self._human.remove(existing)
+            except ValueError:
+                pass
+            return True
+
     def record_orphan_reaction(self, ev: OrphanReactionEvent) -> None:
         with self._lock:
             self._orphans.append(ev)

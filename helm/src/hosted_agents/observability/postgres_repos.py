@@ -118,6 +118,19 @@ class PostgresFeedbackStore:
                 )
         return ev
 
+    def retract_human(self, dedupe_key: str) -> bool:
+        with self._pool.connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    DELETE FROM hosted_agents.human_feedback
+                    WHERE dedupe_key = %s
+                    RETURNING 1
+                    """,
+                    (dedupe_key,),
+                )
+                return cur.fetchone() is not None
+
     def record_orphan_reaction(self, ev: OrphanReactionEvent) -> None:
         with self._pool.connection() as conn:
             with conn.cursor() as cur:

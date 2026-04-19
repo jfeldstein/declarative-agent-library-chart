@@ -1,5 +1,14 @@
 ## ADDED Requirements
 
+### Requirement: Scrapers chart surface includes nested RAG workload configuration
+
+Beyond per-integration scraper jobs (**`scrapers.jira`**, **`scrapers.slack`**, …), the Helm chart SHALL expose the **managed RAG HTTP service** tunables under **`scrapers.ragService`** (not a separate top-level **`rag:`** key). This aligns with **`dalc-rag-from-scrapers`** **[DALC-REQ-RAG-SCRAPERS-003]** so operators do not duplicate RAG configuration.
+
+#### Scenario: Structured values without a duplicate `rag` tree
+
+- **WHEN** an operator configures **`scrapers.ragService`** alongside enabled **`scrapers.jobs`**
+- **THEN** rendered manifests SHALL deploy the shared RAG workload using those nested values **without** requiring **`rag:`** at the chart root
+
 ### Requirement: Scrapers run on a schedule
 
 The platform SHALL run **scrapers** as **scheduled jobs** using **cron** (or semantically equivalent scheduling, such as Kubernetes `CronJob` schedules). Each enabled scraper instance SHALL execute on its configured schedule until disabled.

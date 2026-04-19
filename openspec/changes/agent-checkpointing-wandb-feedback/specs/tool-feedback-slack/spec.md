@@ -41,11 +41,29 @@ When a reaction is received for a message with no matching correlation record, t
 - **WHEN** the reaction event references an unknown `external_ref` (or unknown channel and `ts`)
 - **THEN** the system SHALL log or queue the event for investigation and SHALL NOT emit a labeled human feedback record tied to a `checkpoint_id`
 
-### Requirement: Idempotent feedback and Slack reconciliation
+### Requirement: Reaction add/remove and mutually exclusive polarity
 
-The system SHALL define idempotency rules (for example one active label per user per checkpoint or latest-wins). Duplicate deliveries of the same reaction SHALL NOT create duplicate conflicting primary labels without an explicit conflict-resolution policy. Where channel APIs allow, persisted feedback state SHOULD remain consistent with the latest known Slack reaction state after reconciliation (including reaction removed events mapped per policy).
+The system SHALL ingest **two classes** of normalized reaction signals per message: **`reaction_added`** and **`reaction_removed`** (for example via `event_type` on the integration payload).
+
+- **WHEN** a **`reaction_added`** event resolves to registry label **L** for user **U** on a correlated message  
+  - **THEN** the system SHALL persist feedback for **L** under the **dedupe key** policy (`user_id`, `checkpoint_id`, `label_id`), and **SHALL** retract any persisted feedback for **U** on the same correlation for labels whose **scalar** is on the **opposite side of zero** from **L** (for example adding **positive** retracts **negative** for **U**, and vice versa).
+
+- **WHEN** a **`reaction_removed`** event resolves to registry label **L** for **U**  
+  - **THEN** the system SHALL **retract** the persisted feedback row for **U** + **L** for that correlation (same dedupe key as add), so the store reflects “no longer reacted with **L**”.
+
+When **U** adds **L1** then adds **L2** where **L1** and **L2** are not mutually exclusive by scalar policy, **latest label wins** per dedupe policy (one row per `(user_id, checkpoint_id, label_id)`; distinct labels produce distinct rows unless retracted).
 
 #### Scenario: Duplicate webhook delivery
 
-- **WHEN** the same reaction-added event is delivered twice with identical event identifiers
-- **THEN** the persisted feedback state SHALL match the policy (no duplicate rows, or upserted single row) and SHALL remain consistent with the latest known Slack state after reconciliation
+- **WHEN** the same **reaction_added** event is delivered twice with identical dedupe semantics  
+- **THEN** the persisted feedback state SHALL upsert (no duplicate rows for the same dedupe key)
+
+#### Scenario: User removes an emoji
+
+- **WHEN** **`reaction_removed`** is ingested for an emoji mapped to label **L**  
+- **THEN** the persisted human-feedback row for that user + **L** + correlation SHALL be removed when present
+
+#### Scenario: User switches thumbs up versus thumbs down
+
+- **WHEN** the user previously recorded **positive** scalar feedback and subsequently adds **negative** scalar feedback (or the reverse), on the same correlated message  
+- **THEN** the opposite polarity feedback for that user SHALL be retracted before recording the new label

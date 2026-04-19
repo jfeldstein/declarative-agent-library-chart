@@ -6,6 +6,7 @@ from hosted_agents.feedback_registry import (
     load_feedback_registry,
     resolve_slack_reaction,
 )
+from hosted_agents.observability.label_registry import _builtin_default_registry
 
 
 def test_load_registry() -> None:
@@ -26,3 +27,10 @@ def test_resolve_slack_negative() -> None:
 
 def test_resolve_unknown_emoji() -> None:
     assert resolve_slack_reaction("unknown_emoji") is None
+
+
+def test_observability_registry_opposing_scalar_ids() -> None:
+    reg = _builtin_default_registry()
+    assert set(reg.opposing_scalar_label_ids("positive")) == {"negative"}
+    assert set(reg.opposing_scalar_label_ids("negative")) == {"positive"}
+    assert reg.opposing_scalar_label_ids("neutral") == []

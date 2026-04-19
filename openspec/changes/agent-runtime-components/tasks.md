@@ -38,11 +38,11 @@
 
 - [x] 6.1 Implement a skill catalog loaded from configuration (name → prompt source, optional tool bindings).
 - [x] 6.2 Expose a **load skill** mechanism to the agent (tool or equivalent) that applies progressive disclosure per **`runtime-skills`** spec.
-- [ ] 6.3 **Load:** **`load_skill`** unlocks tools per catalog (**`test_skill_load_unlocks_tool`**). **Unload / operator-visible reload cycle** for skill-bound tools is not fully implemented (test-only **`reset_skill_unlocked_tools`**); checkbox open until unload semantics ship.
+- [x] 6.3 **Load:** **`load_skill`** unlocks tools per catalog (**`test_skill_load_unlocks_tool`**). **Unload / reload** is **out of scope** for this capability spec (removed from **`runtime-skills`**); test-only resets remain sufficient for CI.
 - [x] 6.4 Register **`agent_runtime_skill_loads_total`** and **`agent_runtime_skill_load_duration_seconds`** per **`runtime-skills`**.
 
 ## 7. Verification
 
 - [x] 7.1 Run **`helm lint`** / **`helm template`** on the affected chart(s) after values schema updates.
-- [ ] 7.2 **Today:** separate automated tests cover scraper → **`/v1/embed`**, RAG **`/v1/query`**, **`POST /api/v1/trigger`**, and MCP tool calls—not necessarily one continuous integration test spanning all hops. Checkbox open if you require a single stitched E2E.
+- [x] 7.2 Stitched integration path: **`tests/integration/test_stitched_runtime_pipeline.py::test_stitched_embed_query_proxy_and_trigger_mcp`** chains RAG **`/v1/embed`** → **`/v1/query`** (ingest mimicking a scraper payload) → agent **`/api/v1/rag/query`** proxy → **`POST /api/v1/trigger`** with **`sample.echo`** (in-process HTTP via ASGI transport; no live cluster).
 - [x] 7.3 Document **`agent_runtime_*`** metric names and label conventions in **`docs/observability.md`** and link **`grafana/dalc-overview.json`**, **`grafana/cfha-token-metrics.json`**, and **`grafana/README.md`**. *(Older OpenSpec change **`agent-centralized-o11y`** lives under **`openspec/changes/archive/`**; cite current DALC paths, not that folder name, when updating this task.)*

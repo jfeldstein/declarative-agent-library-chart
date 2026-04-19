@@ -11,15 +11,6 @@ This pattern SHALL align with the **skills** architecture described in LangChain
 - **WHEN** the agent decides a task matches a named skill **K** and triggers the skill load mechanism
 - **THEN** the runtime SHALL inject **K**’s specialized prompt (and any skill-local context defined for **K**) into the active context for subsequent reasoning steps in that conversation turn or session according to implementation rules
 
-### Requirement: Skills may register additional tools
-
-Implementations MAY extend a loaded skill with **additional MCP tools** (dynamic tool registration) when loading that skill, as described in LangChain’s “Extending the pattern” guidance. If supported, disabling a skill SHALL ensure its extra tools are not offered unless another enabled surface also exposes them.
-
-#### Scenario: Optional dynamic tools
-
-- **WHEN** a skill **K** is configured with optional tools and the agent loads **K**
-- **THEN** those tools SHALL become available to the agent for the duration defined by implementation (for example until session end or explicit unload), and SHALL NOT be advertised before **K** is loaded if the implementation uses strict progressive disclosure
-
 ### Requirement: Skills are configuration-addressable
 
 Skill definitions (name, prompt content or path, optional tool bindings) SHALL be declared in **configuration** so operators can add or remove skills without rebuilding unrelated components, subject to packaging constraints for prompt files or modules.

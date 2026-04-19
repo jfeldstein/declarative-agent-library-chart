@@ -1,5 +1,14 @@
 ## ADDED Requirements
 
+### Requirement: Helm places the managed RAG workload under `scrapers.ragService`
+
+The DALC chart SHALL **not** use a separate top-level **`rag:`** values key for the managed RAG HTTP deployment. Operator tunables for that workload (**replicas, Service, resources**, and related **`scrapers` job wiring**) SHALL live under **`scrapers.ragService`** and **`scrapers` / `scrapers.jobs`** as described in **`dalc-rag-from-scrapers`** ([DALC-REQ-RAG-SCRAPERS-003]). This capability spec defines **HTTP behavior** of the RAG service; chart placement is **nested under scrapers** by design.
+
+#### Scenario: Operators tune RAG without a top-level `rag` key
+
+- **WHEN** an operator configures the chart’s **`scrapers.ragService`** (and enables scraper jobs as needed)
+- **THEN** the deployment remains consistent with **`values.schema.json`** and SHALL not require a duplicate **`rag:`** block for the same workload
+
 ### Requirement: RAG HTTP service exposes embed and query
 
 The platform SHALL provide a **managed RAG HTTP service** that exposes at minimum:

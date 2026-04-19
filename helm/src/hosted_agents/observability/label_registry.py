@@ -23,6 +23,26 @@ class LabelRegistry:
     def resolve(self, label_id: str) -> LabelEntry | None:
         return self.labels.get(label_id)
 
+    def opposing_scalar_label_ids(self, label_id: str) -> list[str]:
+        """Return registry label ids on the opposite side of zero (e.g. negative vs positive).
+
+        Used when a user adds a thumbs-up/down style reaction to retract prior opposite feedback.
+        """
+
+        entry = self.resolve(label_id)
+        if entry is None or entry.scalar is None:
+            return []
+        out: list[str] = []
+        if entry.scalar > 0:
+            for lid, other in self.labels.items():
+                if other.scalar is not None and other.scalar < 0:
+                    out.append(lid)
+        elif entry.scalar < 0:
+            for lid, other in self.labels.items():
+                if other.scalar is not None and other.scalar > 0:
+                    out.append(lid)
+        return sorted(out)
+
 
 def _builtin_default_registry() -> LabelRegistry:
     return LabelRegistry(
