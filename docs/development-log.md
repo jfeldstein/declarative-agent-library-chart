@@ -8,6 +8,8 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ## 2026-04-18
 
+**OpenSpec `agent-checkpointing-wandb-feedback` tasks** — Closed **1.1–1.2**, **2.2** as delivered in-repo (Postgres checkpoint + observability Postgres correlation paths; Redis checkpoint + Slack reaction reconcile explicitly deferred); **`tasks.md`** § **2.4** remains open as deferred scope.
+
 **W&B mandatory tags & checkpointing tasks** — Added **`hosted_agents.observability.wandb_run_tags`** (**`wandb_mandatory_tags_for_run`**) resolving agent/env/skill/model/prompt/**`rollout_arm`** from env + trigger body (**`load_skill`** / **`tool`**), wired **`run_trigger_graph`** and Slack feedback **`WandbTraceSession`** without a **`TriggerContext`** import cycle (duck-typed **`ctx`**). Tests: **`test_wandb_mandatory_tags`**, **`test_wandb_sdk_contract`**, **`test_slack_reaction_logs_feedback_via_wandb_sdk_when_enabled`**; **`openspec/changes/agent-checkpointing-wandb-feedback/tasks.md`** updated; runbook § label registry governance in **`docs/runbook-checkpointing-wandb.md`**.
 
 **Slack trigger reply delivery** — After **`app_mention`** → **`run_trigger_graph`**, the plain-text result is posted back to the channel/thread with **`chat.postMessage`**, using **`HOSTED_AGENT_SLACK_TOOLS_BOT_TOKEN`** when set, else **`HOSTED_AGENT_SLACK_TRIGGER_BOT_TOKEN`**, so hello-world style **`Respond, "…"`** prompts surface in Slack (not only as a discarded graph return). Test: **`test_slack_trigger_posts_graph_output_to_slack_when_client_available`**.

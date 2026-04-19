@@ -1,7 +1,7 @@
 ## 1. Checkpointing foundation
 
-- [ ] 1.1 Select and configure **production** checkpointer backends (**Postgres** / **Redis** savers) and document **`thread_id` / `checkpoint_id`**. *(**Blocked:** Postgres/Redis prod paths remain gated on **`postgres-agent-persistence`** chart integration and **`build_checkpointer`** wiring beyond bundled PGlite/memory; doc source: `docs/runbook-checkpointing-wandb.md` § Thread and checkpoint identifiers.)*
-- [ ] 1.2 Wire persistence via **`StateGraph` + `compile(checkpointer=…)`** + **`graph.invoke`** (**`trigger_graph.py`**). *(**Partial:** compiled graph + saver is implemented; LangGraph **`@entrypoint` / `@task`** API not used—by design per change notes.)*
+- [x] 1.1 Select and configure **production** checkpointer backends (**Postgres** / **Redis** savers) and document **`thread_id` / `checkpoint_id`**. *(**Done:** Postgres LangGraph saver via **`HOSTED_AGENT_CHECKPOINT_BACKEND=postgres`** + **`HOSTED_AGENT_POSTGRES_URL`** (`build_checkpointer`); identifiers documented in **`docs/runbook-checkpointing-wandb.md`**. **Deferred:** Redis saver not pinned—**`build_checkpointer`** still rejects **`redis`** until a supported Redis implementation exists.)*
+- [x] 1.2 Wire persistence via **`StateGraph` + `compile(checkpointer=…)`** + **`graph.invoke`** (**`trigger_graph.py`**). *(**Done:** compiled graph uses checkpointer when enabled; LangGraph **`@entrypoint` / `@task`** API intentionally not used.)*
 - [x] 1.3 Implement host policy: default-on checkpointing with explicit ephemeral opt-out flag
 - [x] 1.4 Expose `get_state` / `get_state_history`-compatible read APIs for operators and internal services
 - [x] 1.5 Persist checkpoints around user-visible external side effects (e.g. Slack post) with `checkpoint_id`, `tool_call_id`, `external_ref`, timestamp per spec
@@ -9,9 +9,9 @@
 ## 2. Correlation and Slack feedback
 
 - [x] 2.1 Define stable `tool_call_id`, `run_id`, and `thread_id` propagation through tool execution context
-- [ ] 2.2 Add **durable** (survives restarts / multi-replica) store mapping **`(slack_channel_id, message_ts)`** → tool/run/**`checkpoint_id`**. *(**Blocked:** **`CorrelationStore`** is process-local unless **`HOSTED_AGENT_OBSERVABILITY_STORE=postgres`** and Postgres is configured; shared DB needed for multi-replica.)*
+- [x] 2.2 Add **durable** (survives restarts / multi-replica) store mapping **`(slack_channel_id, message_ts)`** → tool/run/**`checkpoint_id`**. *(**Done:** **`PostgresCorrelationStore`** when **`HOSTED_AGENT_OBSERVABILITY_STORE=postgres`** + **`HOSTED_AGENT_POSTGRES_URL`**; in-memory **`CorrelationStore`** remains the default for single-process dev.)*
 - [x] 2.3 Implement Slack Events subscription for reactions; map configured emoji to **global registry** labels (positive / negative / neutral per policy)
-- [ ] 2.4 Implement idempotency and conflict policy for duplicate, changed, or removed reactions; reconcile with latest Slack state where feasible. *(**Shipped today:** **`dedupe_key`** upsert (“latest wins”) on ingest; **no** removal/reconcile loop against Slack.)*
+- [ ] 2.4 Implement idempotency and conflict policy for duplicate, changed, or removed reactions; reconcile with latest Slack state where feasible. *(**Deferred:** ingest uses **`dedupe_key`** upsert (“latest wins”) only; no reaction removal reconciliation or Slack API poll loop in this codebase.)*
 - [x] 2.5 Orphan reactions: log/queue only—no training-eligible label without resolved correlation
 
 ## 3. Weights & Biases integration
