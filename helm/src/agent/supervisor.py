@@ -1,4 +1,7 @@
-"""Supervisor agent (``create_agent``) + subagent/MCP LangChain tools."""
+"""Supervisor agent (``create_agent``) + subagent/MCP LangChain tools.
+
+[DALC-REQ-TYPED-LANGCHAIN-TOOL-BINDINGS-002] MCP tools bind via ``_bind`` → ``run_tool_json`` → ``invoke_tool``.
+"""
 
 from __future__ import annotations
 
@@ -6,17 +9,19 @@ import re
 from typing import Any
 
 from langchain.agents import create_agent
-from langchain.tools import ToolRuntime
-from langchain_core.messages import AIMessage, HumanMessage
-from langchain_core.tools import tool
+from langchain.messages import AIMessage, HumanMessage
+from langchain.tools import ToolRuntime, tool
 
+from agent.agent_models import SubagentInvokeBody
 from agent.chat_model import resolve_chat_model
 from agent.llm_metrics import SupervisorLlmMetricsCallback
-from agent.mcp_langchain_tools import make_mcp_langchain_tool
-from agent.subagent_units import compile_subagent_subgraph
+from agent.skills_state import unlocked_tools
+from agent.subagent_exec import _run_subagent_text
+from agent.tools.contract import ToolSpec
+from agent.tools.registry import load_registry, sanitize_tool_name
 from agent.trigger_context import TriggerContext
 from agent.trigger_errors import TriggerHttpError
-from agent.skills_state import unlocked_tools
+from agent.trigger_steps import run_tool_json
 
 
 def _sanitize_tool_name_fragment(raw: str) -> str:
@@ -74,7 +79,19 @@ def build_supervisor_system_prompt(ctx: TriggerContext) -> str:
     return base
 
 
-def _build_subagent_tool(entry: dict[str, Any], compiled: Any) -> Any:
+def _bind(spec: ToolSpec) -> Any:
+    @tool(
+        sanitize_tool_name(spec.id),
+        description=spec.description,
+        args_schema=spec.args_schema,
+    )
+    def _run(runtime: ToolRuntime[TriggerContext], **kwargs: Any) -> str:
+        return run_tool_json(runtime.context.cfg, spec.id, kwargs)
+
+    return _run
+
+
+def _build_subagent_tool(entry: dict[str, Any]) -> Any:
     role = str(entry.get("role") or "default").strip().lower()
     name = str(entry.get("name") or "").strip()
     safe = _sanitize_tool_name_fragment(name)
@@ -86,55 +103,54 @@ def _build_subagent_tool(entry: dict[str, Any], compiled: Any) -> Any:
         @tool(tool_id, description=description)
         def _rag_tool(
             query: str,
-            runtime: ToolRuntime,
+            runtime: ToolRuntime[TriggerContext],
             scope: str = "default",
             top_k: int = 5,
             expand_relationships: bool = False,
             relationship_types: list[str] | None = None,
             max_hops: int = 1,
         ) -> str:
-            return compiled.invoke(
-                {
-                    "query": query,
-                    "scope": scope,
-                    "top_k": top_k,
-                    "expand_relationships": expand_relationships,
-                    "relationship_types": relationship_types,
-                    "max_hops": max_hops,
-                },
-                config=runtime.config,
-            )["output"]
+            rag_payload = SubagentInvokeBody(
+                query=query,
+                scope=scope,
+                top_k=top_k,
+                expand_relationships=expand_relationships,
+                relationship_types=relationship_types,
+                max_hops=max_hops,
+            )
+            return _run_subagent_text(
+                runtime.context.cfg,
+                name,
+                rag_payload,
+                runtime.context.request_id,
+            )
 
         return _rag_tool
 
     if role == "metrics":
 
         @tool(tool_id, description=description)
-        def _metrics_tool(runtime: ToolRuntime) -> str:
-            return compiled.invoke({}, config=runtime.config)["output"]
+        def _metrics_tool(runtime: ToolRuntime[TriggerContext]) -> str:
+            return _run_subagent_text(
+                runtime.context.cfg,
+                name,
+                None,
+                runtime.context.request_id,
+            )
 
         return _metrics_tool
 
     @tool(tool_id, description=description)
-    def _default_tool(task: str, runtime: ToolRuntime) -> str:
-        return compiled.invoke({"task": task}, config=runtime.config)["output"]
+    def _default_tool(task: str, runtime: ToolRuntime[TriggerContext]) -> str:
+        return _run_subagent_text(
+            runtime.context.cfg,
+            name,
+            None,
+            runtime.context.request_id,
+            default_task=task,
+        )
 
     return _default_tool
-
-
-def _build_mcp_langchain_tools(ctx: TriggerContext) -> list[Any]:
-    allowed = set(ctx.cfg.enabled_mcp_tools) | set(unlocked_tools())
-    tools: list[Any] = []
-    for tool_id in sorted(allowed):
-        safe = _sanitize_tool_name_fragment(tool_id)
-        mcp_tool = _make_mcp_tool(tool_id, safe, ctx)
-        tools.append(mcp_tool)
-    return tools
-
-
-def _make_mcp_tool(tool_id: str, safe_name: str, ctx: TriggerContext) -> Any:
-    """LangChain binding for one MCP tool id (typed params for registered ids)."""
-    return make_mcp_langchain_tool(tool_id, safe_name, ctx)
 
 
 def build_supervisor_tools(ctx: TriggerContext) -> list[Any]:
@@ -145,9 +161,10 @@ def build_supervisor_tools(ctx: TriggerContext) -> list[Any]:
         name = str(entry.get("name") or "").strip()
         if not name or not subagent_exposed_as_tool(entry):
             continue
-        compiled = compile_subagent_subgraph(entry)
-        tools.append(_build_subagent_tool(entry, compiled))
-    tools.extend(_build_mcp_langchain_tools(ctx))
+        tools.append(_build_subagent_tool(entry))
+    allowed = set(ctx.cfg.enabled_mcp_tools) | set(unlocked_tools())
+    reg = load_registry()
+    tools.extend(_bind(reg[tid]) for tid in sorted(allowed & reg.keys()))
     return tools
 
 
@@ -171,10 +188,16 @@ def run_supervisor_agent(ctx: TriggerContext, user_message: str) -> str:
         raise TriggerHttpError(503, str(exc)) from exc
     tools = build_supervisor_tools(ctx)
     system_prompt = build_supervisor_system_prompt(ctx)
-    agent = create_agent(model, tools, system_prompt=system_prompt)
+    agent = create_agent(
+        model,
+        tools=tools,
+        system_prompt=system_prompt,
+        context_schema=TriggerContext,
+    )
     llm_cb = SupervisorLlmMetricsCallback(ctx)
     result = agent.invoke(
         {"messages": [HumanMessage(content=user_message)]},
-        config={"configurable": {"ctx": ctx}, "callbacks": [llm_cb]},
+        context=ctx,
+        config={"callbacks": [llm_cb]},
     )
     return extract_final_ai_text(result)

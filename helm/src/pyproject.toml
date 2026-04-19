@@ -33,6 +33,11 @@ postgres = [
     "psycopg[binary]==3.3.3",
 ]
 
+[project.entry-points."declarative_agent.tools"]
+builtin-sample = "agent.tools.sample_echo:TOOLS"
+builtin-slack = "agent.tools.slack:TOOLS"
+builtin-jira = "agent.tools.jira:TOOLS"
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

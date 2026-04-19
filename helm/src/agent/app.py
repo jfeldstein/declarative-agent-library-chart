@@ -30,6 +30,7 @@ from agent.observability.slack_ingest import handle_slack_reaction_event
 from agent.o11y_logging import configure_request_logging
 from agent.o11y_middleware import ObservabilityMiddleware
 from agent.runtime_config import RuntimeConfig
+from agent.tools.registry import load_registry
 from agent.skills_state import unlocked_tools
 from agent.triggers.jira.config import JiraTriggerSettings
 from agent.triggers.jira.webhook_route import register_jira_trigger_http_route
@@ -104,6 +105,17 @@ def _snapshot_to_dict(sn: object) -> dict:
         "created_at": getattr(sn, "created_at", None),
         "parent_config": getattr(sn, "parent_config", None),
     }
+
+
+def validate_enabled_tools(cfg: RuntimeConfig) -> None:
+    """Reject unknown MCP tool ids from configuration before serving traffic."""
+    reg = load_registry()
+    unknown = set(cfg.enabled_mcp_tools) - reg.keys()
+    if unknown:
+        raise RuntimeError(
+            "values.yaml mcp.enabledTools references unknown tool ids: "
+            f"{sorted(unknown)}. Registered ids: {sorted(reg)}"
+        )
 
 
 _CHECKPOINTS_DISABLED = (
@@ -372,6 +384,9 @@ def _register_rag_query_route(app: FastAPI) -> None:
 async def _slack_trigger_lifespan(app: FastAPI):
     from agent.triggers.dedupe import EventDeduper
     from agent.triggers.slack.socket_mode import start_socket_mode_listener
+
+    cfg = RuntimeConfig.from_env()
+    validate_enabled_tools(cfg)
 
     st = SlackTriggerSettings.from_env()
     if st.enabled:

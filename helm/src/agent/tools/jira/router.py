@@ -15,17 +15,6 @@ from agent.tools.jira.handlers import (
     run_update_issue,
 )
 
-TOOL_IDS: frozenset[str] = frozenset(
-    {
-        "jira.search_issues",
-        "jira.get_issue",
-        "jira.add_comment",
-        "jira.transition_issue",
-        "jira.create_issue",
-        "jira.update_issue",
-    }
-)
-
 _HANDLER: dict[str, Callable[[JiraToolsSettings, dict[str, Any]], dict[str, Any]]] = {
     "jira.search_issues": run_search_issues,
     "jira.get_issue": run_get_issue,

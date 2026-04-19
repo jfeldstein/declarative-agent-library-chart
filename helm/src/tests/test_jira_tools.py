@@ -11,7 +11,7 @@ import pytest
 from agent.tools.dispatch import invoke_tool
 from agent.tools.jira.config import load_settings
 from agent.tools.jira.rest import normalize_jira_error
-from agent.tools.jira.router import TOOL_IDS
+from agent.tools.jira import TOOL_IDS
 
 
 def _enable_jira_tools(

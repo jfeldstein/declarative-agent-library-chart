@@ -28,10 +28,12 @@ def _reset_langgraph_checkpoint_isolation() -> None:
     from agent.observability.checkpointer import reset_checkpoint_postgres_pool
     from agent.observability.pglite_runtime import stop_pglite_embedded
     from agent.observability.stores import reset_observability_stores_cache
+    from agent.tools.registry import _reset_for_tests
 
     clear_memory_checkpointer()
     reset_checkpoint_postgres_pool()
     reset_observability_stores_cache()
+    _reset_for_tests()
     yield
     stop_pglite_embedded()
 
