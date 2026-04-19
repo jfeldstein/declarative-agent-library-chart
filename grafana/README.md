@@ -28,7 +28,7 @@ Metric names and label semantics: **`docs/observability.md`** (LLM token metrics
 
 Starter dashboard for the **Declarative Agent Library** runtime (import one dashboard):
 
-- **Agent** (port 8088): rate of `dalc_http_trigger_requests_total` by `result`; p95 latency from `dalc_http_trigger_duration_seconds`
+- **Agent** (port 8088): rate of `dalc_trigger_requests_total{trigger="http",transport="http"}` by `result`; p95 latency from `dalc_trigger_duration_seconds{trigger="http",transport="http"}`
 - **Optional rows** (see section titles in the JSON): when the chart deploys additional metrics endpoints, matching panels apply—for example **managed RAG HTTP** (embed/query rates on the RAG Service port, default **8090** when scraper jobs enable RAG) and **scraper CronJob** metrics (`dalc_scraper_*` on port **9091** when `observability.prometheusAnnotations.enabled`)
 
 The dashboard groups optional workloads under **row** headings so agent-only deployments stay readable; empty series for absent components are expected.

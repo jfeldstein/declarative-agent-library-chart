@@ -6,7 +6,7 @@ import inspect
 from unittest.mock import MagicMock
 
 from agent.observability.events import EventName, LifecycleEvent, SyncEventBus
-from agent.observability.legacy_agent_metrics import register_agent_legacy_metrics
+from agent.observability.plugins.prometheus import register_prometheus_agent_plugin
 from agent.observability.middleware import publish_tool_call_completed
 from agent.observability.plugins.langfuse_bridge import LangfuseLifecycleBridge
 from agent.observability.plugins_config import LangfusePluginSettings
@@ -53,7 +53,7 @@ def test_langfuse_bridge_maps_llm_tool_and_flush() -> None:
 
     bridge = LangfuseLifecycleBridge(mock)
     bus = SyncEventBus()
-    register_agent_legacy_metrics(bus)
+    register_prometheus_agent_plugin(bus)
     bridge.register(bus)
 
     ctx = _trigger_ctx()

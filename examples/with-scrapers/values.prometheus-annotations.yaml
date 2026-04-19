@@ -4,5 +4,8 @@
 # Traceability: [DALC-REQ-EXAMPLE-VALUES-FILES-001] [DALC-REQ-O11Y-SCRAPE-004]
 agent:
   observability:
+    plugins:
+      prometheus:
+        enabled: true
     prometheusAnnotations:
       enabled: true

@@ -18,7 +18,7 @@
       "options": { "legend": { "displayMode": "list", "placement": "bottom" } },
       "targets": [
         {
-          "expr": "sum by (result) (rate(dalc_http_trigger_requests_total[5m]))",
+          "expr": "sum by (result) (rate(dalc_trigger_requests_total{trigger=\"http\",transport=\"http\"}[5m]))",
           "legendFormat": "{{result}}",
           "refId": "A"
         }
@@ -37,7 +37,7 @@
       "options": { "legend": { "displayMode": "list", "placement": "bottom" } },
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, sum by (le, result) (rate(dalc_http_trigger_duration_seconds_bucket[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le, result) (rate(dalc_trigger_duration_seconds_bucket{trigger=\"http\",transport=\"http\"}[5m])))",
           "legendFormat": "p95 {{result}}",
           "refId": "A"
         }

@@ -11,6 +11,9 @@ agent:
     tag: local
     pullPolicy: Never
   observability:
+    plugins:
+      prometheus:
+        enabled: true
     prometheusAnnotations:
       enabled: true
     structuredLogs:
