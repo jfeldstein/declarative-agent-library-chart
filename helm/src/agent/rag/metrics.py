@@ -1,10 +1,10 @@
-"""Prometheus metrics for the RAG HTTP service (agent_runtime_rag_* prefix)."""
+"""Prometheus metrics for the RAG HTTP service (``dalc_rag_*`` prefix)."""
 
 from __future__ import annotations
 
 from prometheus_client import Counter, Histogram
 
-from agent.metrics import TriggerResult
+from agent.observability.metric_semantics import TriggerResult
 
 _DURATION_BUCKETS = (
     0.001,
@@ -22,24 +22,24 @@ _DURATION_BUCKETS = (
 )
 
 RAG_EMBED_REQUESTS = Counter(
-    "agent_runtime_rag_embed_requests_total",
+    "dalc_rag_embed_requests_total",
     "Count of RAG embed and relate mutations",
     ("result",),
 )
 RAG_EMBED_DURATION = Histogram(
-    "agent_runtime_rag_embed_duration_seconds",
+    "dalc_rag_embed_duration_seconds",
     "Latency of RAG /v1/embed and /v1/relate handling",
     ("result",),
     buckets=_DURATION_BUCKETS,
 )
 
 RAG_QUERY_REQUESTS = Counter(
-    "agent_runtime_rag_query_requests_total",
+    "dalc_rag_query_requests_total",
     "Count of RAG /v1/query invocations",
     ("result",),
 )
 RAG_QUERY_DURATION = Histogram(
-    "agent_runtime_rag_query_duration_seconds",
+    "dalc_rag_query_duration_seconds",
     "Latency of RAG /v1/query handling",
     ("result",),
     buckets=_DURATION_BUCKETS,

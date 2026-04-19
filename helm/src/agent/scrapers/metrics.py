@@ -1,4 +1,4 @@
-"""Prometheus metrics for scheduled scraper jobs (``agent_runtime_scraper_*`` prefix).
+"""Prometheus metrics for scheduled scraper jobs (``dalc_scraper_*`` prefix).
 
 New integration checklist (keep in sync when adding a scraper implementation):
 
@@ -31,6 +31,8 @@ from prometheus_client import (
     Histogram,
     generate_latest,
 )
+
+from agent.observability.plugins_config import plugins_config_from_env
 
 # Dedicated registry so scraper CronJob pods do not expose agent/RAG metrics from the global REGISTRY.
 SCRAPER_REGISTRY = CollectorRegistry()
@@ -86,20 +88,20 @@ _DURATION_BUCKETS = (
 )
 
 SCRAPER_RUNS = Counter(
-    "agent_runtime_scraper_runs_total",
+    "dalc_scraper_runs_total",
     "Count of scraper job executions",
     ("integration", "result"),
     registry=SCRAPER_REGISTRY,
 )
 SCRAPER_RUN_DURATION = Histogram(
-    "agent_runtime_scraper_run_duration_seconds",
+    "dalc_scraper_run_duration_seconds",
     "Wall time of a scraper job from start to completion",
     ("integration",),
     buckets=_DURATION_BUCKETS,
     registry=SCRAPER_REGISTRY,
 )
 SCRAPER_RAG_SUBMISSIONS = Counter(
-    "agent_runtime_scraper_rag_submissions_total",
+    "dalc_scraper_rag_submissions_total",
     "Attempts to submit ingested content to RAG /v1/embed",
     ("integration", "result"),
     registry=SCRAPER_REGISTRY,
@@ -184,6 +186,8 @@ def start_scraper_metrics_http(addr: str) -> HTTPServer:
 def maybe_start_scraper_metrics_http() -> HTTPServer | None:
     addr = os.environ.get("SCRAPER_METRICS_ADDR", "").strip()
     if not addr:
+        return None
+    if not plugins_config_from_env().prometheus.enabled:
         return None
     return start_scraper_metrics_http(addr)
 

@@ -7,6 +7,7 @@ from fastapi.responses import Response
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
 from agent.observability.bootstrap import ensure_agent_observability
+from agent.observability.plugins_config import plugins_config_from_env
 from agent.rag.models import (
     EmbedRequest,
     EmbedResponse,
@@ -86,7 +87,14 @@ def _register_rag_query(app: FastAPI, rag_store: RAGStore) -> None:
 
 
 def _register_rag_routes(app: FastAPI, rag_store: RAGStore) -> None:
-    _register_rag_metrics_and_health(app)
+    if plugins_config_from_env().prometheus.enabled:
+        _register_rag_metrics_and_health(app)
+    else:
+
+        @app.get("/health")
+        def health() -> dict[str, str]:
+            return {"status": "ok"}
+
     _register_rag_embed(app, rag_store)
     _register_rag_relate(app, rag_store)
     _register_rag_query(app, rag_store)

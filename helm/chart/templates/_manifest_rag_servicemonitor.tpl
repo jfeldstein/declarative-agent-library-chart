@@ -1,5 +1,5 @@
 {{- define "declarative-agent-library-chart.manifest.ragServiceMonitor" -}}
-{{- if and (include "declarative-agent-library-chart.ragDeployed" .) .Values.observability.serviceMonitor.enabled }}
+{{- if and (include "declarative-agent-library-chart.ragDeployed" .) .Values.observability.serviceMonitor.enabled .Values.observability.plugins.prometheus.enabled }}
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:

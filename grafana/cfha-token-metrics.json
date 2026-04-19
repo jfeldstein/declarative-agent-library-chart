@@ -19,7 +19,7 @@
       "options": { "legend": { "displayMode": "list", "placement": "bottom" } },
       "targets": [
         {
-          "expr": "sum(rate(agent_runtime_llm_output_tokens_total[5m]))",
+          "expr": "sum(rate(dalc_llm_output_tokens_total[5m]))",
           "legendFormat": "output tokens/s",
           "refId": "A"
         }
@@ -38,12 +38,12 @@
       "options": { "legend": { "displayMode": "list", "placement": "bottom" } },
       "targets": [
         {
-          "expr": "histogram_quantile(0.5, sum by (le, streaming) (rate(agent_runtime_llm_time_to_first_token_seconds_bucket[5m])))",
+          "expr": "histogram_quantile(0.5, sum by (le, streaming) (rate(dalc_llm_time_to_first_token_seconds_bucket[5m])))",
           "legendFormat": "p50 streaming={{streaming}}",
           "refId": "A"
         },
         {
-          "expr": "histogram_quantile(0.95, sum by (le, streaming) (rate(agent_runtime_llm_time_to_first_token_seconds_bucket[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le, streaming) (rate(dalc_llm_time_to_first_token_seconds_bucket[5m])))",
           "legendFormat": "p95 streaming={{streaming}}",
           "refId": "B"
         }
@@ -62,12 +62,12 @@
       "options": { "legend": { "displayMode": "list", "placement": "bottom" } },
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(agent_runtime_http_trigger_request_bytes_bucket[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(dalc_trigger_request_bytes_bucket[5m])))",
           "legendFormat": "p95 trigger request bytes",
           "refId": "A"
         },
         {
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(agent_runtime_http_trigger_response_bytes_bucket[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(dalc_trigger_response_bytes_bucket[5m])))",
           "legendFormat": "p95 trigger response bytes",
           "refId": "B"
         }
@@ -86,7 +86,7 @@
       "options": { "legend": { "displayMode": "list", "placement": "bottom" } },
       "targets": [
         {
-          "expr": "sum(rate(agent_runtime_llm_estimated_cost_usd_total[5m]))",
+          "expr": "sum(rate(dalc_llm_estimated_cost_usd_total[5m]))",
           "legendFormat": "estimated USD/s (estimate only)",
           "refId": "A"
         }

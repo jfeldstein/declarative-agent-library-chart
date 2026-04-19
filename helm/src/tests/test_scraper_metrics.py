@@ -46,7 +46,7 @@ def test_observe_scraper_run_records_metric() -> None:
     observe_scraper_run("unit-test", True, 0.01)
     text = generate_latest(SCRAPER_REGISTRY).decode()
     assert (
-        'agent_runtime_scraper_runs_total{integration="unit-test",result="success"}'
+        'dalc_scraper_runs_total{integration="unit-test",result="success"}'
         in text
     )
 
@@ -76,6 +76,6 @@ def test_scraper_metrics_http_server_exposes_registry() -> None:
     httpd = start_scraper_metrics_http(addr)
     try:
         body = urllib.request.urlopen(f"http://{addr}/metrics", timeout=3).read()
-        assert b"agent_runtime_scraper_runs_total" in body
+        assert b"dalc_scraper_runs_total" in body
     finally:
         httpd.shutdown()

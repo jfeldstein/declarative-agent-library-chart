@@ -14,7 +14,7 @@ spec:
     metadata:
       labels:
         {{- include "declarative-agent-library-chart.agentSelectorLabels" . | nindent 8 }}
-      {{- if .Values.observability.prometheusAnnotations.enabled }}
+      {{- if and .Values.observability.prometheusAnnotations.enabled .Values.observability.plugins.prometheus.enabled }}
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: {{ .Values.service.port | quote }}
@@ -80,6 +80,10 @@ spec:
             {{- if .Values.observability.structuredLogs.json }}
             - name: HOSTED_AGENT_LOG_FORMAT
               value: "json"
+            {{- end }}
+            {{- if .Values.observability.plugins.prometheus.enabled }}
+            - name: HOSTED_AGENT_OBSERVABILITY_PLUGINS_PROMETHEUS_ENABLED
+              value: "true"
             {{- end }}
             - name: HOSTED_AGENT_OBSERVABILITY_STORE
               value: {{ .Values.observability.store | default "memory" | quote }}

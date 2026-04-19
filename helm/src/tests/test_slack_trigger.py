@@ -163,7 +163,11 @@ def test_slack_trigger_metrics_counter_has_no_secret_labels() -> None:
     """[DALC-REQ-SLACK-TRIGGER-005] Prometheus labels are fixed strings (transport/result)."""
     from agent.metrics import SLACK_TRIGGER_INBOUND
 
-    assert list(SLACK_TRIGGER_INBOUND._labelnames) == ["transport", "result"]  # noqa: SLF001
+    assert list(SLACK_TRIGGER_INBOUND._labelnames) == [
+        "trigger",
+        "transport",
+        "result",
+    ]  # noqa: SLF001
 
 
 def test_slack_trigger_event_dedupe_skips_second_delivery(

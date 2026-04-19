@@ -18,6 +18,7 @@ from agent.checkpointing import checkpoints_globally_enabled
 from agent.env import system_prompt_from_env
 from agent.observability.middleware import publish_http_trigger_response
 from agent.observability.bootstrap import ensure_agent_observability
+from agent.observability.plugins_config import plugins_config_from_env
 from agent.observability.settings import ObservabilitySettings
 from agent.observability.stores import (
     bind_observability_stores,
@@ -117,6 +118,8 @@ def _require_checkpoints_enabled() -> None:
 
 
 def _register_metrics_route(app: FastAPI) -> None:
+    """Traceability: [DALC-REQ-O11Y-SCRAPE-001]."""
+
     @app.get("/metrics")
     def get_metrics() -> Response:
         return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
@@ -395,7 +398,8 @@ def create_app(*, system_prompt: str | None = None) -> FastAPI:
         lifespan=_slack_trigger_lifespan,
     )
     app.add_middleware(ObservabilityMiddleware)
-    _register_metrics_route(app)
+    if plugins_config_from_env().prometheus.enabled:
+        _register_metrics_route(app)
     _register_trigger_route(app, system_prompt)
     _register_runtime_summary_route(app)
     _register_runtime_thread_routes(app)

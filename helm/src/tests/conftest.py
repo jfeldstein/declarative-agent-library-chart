@@ -14,6 +14,12 @@ from agent.chat_model import FakeToolChatModel
 # Avoid LangSmith network noise during unit tests when LangChain/LangGraph is on the path.
 os.environ.setdefault("LANGCHAIN_TRACING_V2", "false")
 
+# Prometheus plugin mirrors lifecycle events into ``dalc_*`` metrics (chart defaults plugin off).
+os.environ.setdefault(
+    "HOSTED_AGENT_OBSERVABILITY_PLUGINS_PROMETHEUS_ENABLED",
+    "true",
+)
+
 
 @pytest.fixture(autouse=True)
 def _reset_langgraph_checkpoint_isolation() -> None:

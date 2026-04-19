@@ -16,7 +16,7 @@ spec:
     metadata:
       labels:
         {{- include "declarative-agent-library-chart.ragSelectorLabels" . | nindent 8 }}
-      {{- if .Values.observability.prometheusAnnotations.enabled }}
+      {{- if and .Values.observability.prometheusAnnotations.enabled .Values.observability.plugins.prometheus.enabled }}
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: {{ .Values.scrapers.ragService.service.port | quote }}
@@ -40,6 +40,11 @@ spec:
             - name: http
               containerPort: {{ .Values.scrapers.ragService.service.port }}
               protocol: TCP
+          {{- if .Values.observability.plugins.prometheus.enabled }}
+          env:
+            - name: HOSTED_AGENT_OBSERVABILITY_PLUGINS_PROMETHEUS_ENABLED
+              value: "true"
+          {{- end }}
           readinessProbe:
             httpGet:
               path: /health

@@ -31,7 +31,7 @@ spec:
       backoffLimit: 2
       template:
         metadata:
-          {{- if $root.Values.observability.prometheusAnnotations.enabled }}
+          {{- if and $root.Values.observability.prometheusAnnotations.enabled $root.Values.observability.plugins.prometheus.enabled }}
           annotations:
             prometheus.io/scrape: "true"
             prometheus.io/port: "9091"
@@ -65,6 +65,10 @@ spec:
                   mountPath: /config
                   readOnly: true
               env:
+                {{- if $root.Values.observability.plugins.prometheus.enabled }}
+                - name: HOSTED_AGENT_OBSERVABILITY_PLUGINS_PROMETHEUS_ENABLED
+                  value: "true"
+                {{- end }}
                 - name: RAG_SERVICE_URL
                   value: {{ include "declarative-agent-library-chart.ragInternalBaseUrl" $root | quote }}
                 - name: SCRAPER_JOB_CONFIG
@@ -149,7 +153,7 @@ spec:
       backoffLimit: 2
       template:
         metadata:
-          {{- if $root.Values.observability.prometheusAnnotations.enabled }}
+          {{- if and $root.Values.observability.prometheusAnnotations.enabled $root.Values.observability.plugins.prometheus.enabled }}
           annotations:
             prometheus.io/scrape: "true"
             prometheus.io/port: "9091"
@@ -183,6 +187,10 @@ spec:
                   mountPath: /config
                   readOnly: true
               env:
+                {{- if $root.Values.observability.plugins.prometheus.enabled }}
+                - name: HOSTED_AGENT_OBSERVABILITY_PLUGINS_PROMETHEUS_ENABLED
+                  value: "true"
+                {{- end }}
                 - name: RAG_SERVICE_URL
                   value: {{ include "declarative-agent-library-chart.ragInternalBaseUrl" $root | quote }}
                 - name: SCRAPER_JOB_CONFIG

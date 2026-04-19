@@ -35,8 +35,8 @@ def test_metrics_role_returns_prometheus_text(monkeypatch: pytest.MonkeyPatch) -
     assert r.status_code == 200
     # HTTP body is the supervisor's final turn; Prometheus text is produced inside the tool.
     prom = client.get("/metrics").text
-    assert "agent_runtime_http_trigger" in prom
-    assert "agent_runtime_subagent_invocations_total" in prom
+    assert "dalc_trigger_requests_total" in prom
+    assert "dalc_subagent_invocations_total" in prom
 
 
 def test_rag_role_proxies_to_rag(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -18,7 +18,7 @@
       "options": { "legend": { "displayMode": "list", "placement": "bottom" } },
       "targets": [
         {
-          "expr": "sum by (result) (rate(agent_runtime_http_trigger_requests_total[5m]))",
+          "expr": "sum by (result) (rate(dalc_trigger_requests_total[5m]))",
           "legendFormat": "{{result}}",
           "refId": "A"
         }
@@ -37,7 +37,7 @@
       "options": { "legend": { "displayMode": "list", "placement": "bottom" } },
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, sum by (le, result) (rate(agent_runtime_http_trigger_duration_seconds_bucket[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le, result) (rate(dalc_trigger_duration_seconds_bucket[5m])))",
           "legendFormat": "p95 {{result}}",
           "refId": "A"
         }
@@ -63,7 +63,7 @@
       "options": { "legend": { "displayMode": "list", "placement": "bottom" } },
       "targets": [
         {
-          "expr": "sum by (result) (rate(agent_runtime_rag_embed_requests_total[5m]))",
+          "expr": "sum by (result) (rate(dalc_rag_embed_requests_total[5m]))",
           "legendFormat": "embed {{result}}",
           "refId": "A"
         }
@@ -82,7 +82,7 @@
       "options": { "legend": { "displayMode": "list", "placement": "bottom" } },
       "targets": [
         {
-          "expr": "sum by (result) (rate(agent_runtime_rag_query_requests_total[5m]))",
+          "expr": "sum by (result) (rate(dalc_rag_query_requests_total[5m]))",
           "legendFormat": "query {{result}}",
           "refId": "A"
         }
@@ -108,7 +108,7 @@
       "options": { "legend": { "displayMode": "list", "placement": "bottom" } },
       "targets": [
         {
-          "expr": "sum by (integration, result) (rate(agent_runtime_scraper_runs_total[5m]))",
+          "expr": "sum by (integration, result) (rate(dalc_scraper_runs_total[5m]))",
           "legendFormat": "{{integration}} {{result}}",
           "refId": "A"
         }
@@ -127,7 +127,7 @@
       "options": { "legend": { "displayMode": "list", "placement": "bottom" } },
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, sum by (le, integration) (rate(agent_runtime_scraper_run_duration_seconds_bucket[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le, integration) (rate(dalc_scraper_run_duration_seconds_bucket[5m])))",
           "legendFormat": "p95 {{integration}}",
           "refId": "A"
         }
@@ -146,7 +146,7 @@
       "options": { "legend": { "displayMode": "list", "placement": "bottom" } },
       "targets": [
         {
-          "expr": "sum by (integration, result) (rate(agent_runtime_scraper_rag_submissions_total[5m]))",
+          "expr": "sum by (integration, result) (rate(dalc_scraper_rag_submissions_total[5m]))",
           "legendFormat": "{{integration}} {{result}}",
           "refId": "A"
         }

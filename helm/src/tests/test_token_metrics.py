@@ -83,17 +83,17 @@ def test_llm_token_counters_and_cost_with_usage_metadata(
     after = _metrics_text(client)
 
     pfx = (
-        'agent_runtime_llm_input_tokens_total{agent_id="unit-agent",'
+        'dalc_llm_input_tokens_total{agent_id="unit-agent",'
         'model_id="fake:unit-model",result="success"}'
     )
     assert _counter_value(after, pfx) >= _counter_value(before, pfx) + 10 - 1e-9
     pfx_o = (
-        'agent_runtime_llm_output_tokens_total{agent_id="unit-agent",'
+        'dalc_llm_output_tokens_total{agent_id="unit-agent",'
         'model_id="fake:unit-model",result="success"}'
     )
     assert _counter_value(after, pfx_o) >= _counter_value(before, pfx_o) + 4 - 1e-9
     pfx_c = (
-        'agent_runtime_llm_estimated_cost_usd_total{agent_id="unit-agent",'
+        'dalc_llm_estimated_cost_usd_total{agent_id="unit-agent",'
         'model_id="fake:unit-model",result="success"}'
     )
     # 10 * 1e-5 + 4 * 2e-5
@@ -125,7 +125,7 @@ def test_llm_usage_missing_when_no_usage_metadata(
     after = _metrics_text(client)
 
     pfx_m = (
-        'agent_runtime_llm_usage_missing_total{agent_id="unit-agent",'
+        'dalc_llm_usage_missing_total{agent_id="unit-agent",'
         'model_id="fake:unit-model",result="success"}'
     )
     assert _counter_value(after, pfx_m) == _counter_value(before, pfx_m) + 1.0
@@ -201,7 +201,7 @@ def test_ttft_histogram_on_streaming_first_token() -> None:
 
     client = TestClient(create_app(system_prompt='Respond, "x"'))
     text = _metrics_text(client)
-    assert "agent_runtime_llm_time_to_first_token_seconds" in text
+    assert "dalc_llm_time_to_first_token_seconds" in text
     assert 'streaming="true"' in text
 
 
@@ -210,12 +210,12 @@ def test_new_metric_help_lines_include_semantics() -> None:
     client = TestClient(create_app(system_prompt='Respond, "x"'))
     text = _metrics_text(client)
     assert (
-        "# HELP agent_runtime_llm_estimated_cost_usd_total" in text
-        or "agent_runtime_llm_estimated_cost_usd_total" in text
+        "# HELP dalc_llm_estimated_cost_usd_total" in text
+        or "dalc_llm_estimated_cost_usd_total" in text
     )
     help_block = text
     for line in help_block.splitlines():
-        if line.startswith("# HELP agent_runtime_llm_estimated_cost_usd_total"):
+        if line.startswith("# HELP dalc_llm_estimated_cost_usd_total"):
             assert "estimate" in line.lower()
             break
     else:
@@ -253,9 +253,9 @@ def test_trigger_payload_histograms_record_response_size(
     assert r.status_code == 200
     out_len = len(r.text.encode("utf-8"))
     after = _metrics_text(client)
-    assert "agent_runtime_http_trigger_response_bytes" in after
-    assert _histogram_sum(after, "agent_runtime_http_trigger_response_bytes") >= (
-        _histogram_sum(before, "agent_runtime_http_trigger_response_bytes")
+    assert "dalc_trigger_response_bytes" in after
+    assert _histogram_sum(after, "dalc_trigger_response_bytes") >= (
+        _histogram_sum(before, "dalc_trigger_response_bytes")
         + out_len
         - 1e-9
     )
@@ -293,9 +293,9 @@ def test_trigger_payload_histograms_record_request_size(
     client.post("/api/v1/trigger", json=body)
     after = _metrics_text(client)
     # Histogram _sum increases by observed value; check bucket or sum moved
-    assert "agent_runtime_http_trigger_request_bytes" in after
-    assert after.count("agent_runtime_http_trigger_request_bytes") >= before.count(
-        "agent_runtime_http_trigger_request_bytes",
+    assert "dalc_trigger_request_bytes" in after
+    assert after.count("dalc_trigger_request_bytes") >= before.count(
+        "dalc_trigger_request_bytes",
     )
     assert raw_len > 10
 
@@ -322,7 +322,7 @@ def test_cfha_token_dashboard_promql_matches_observability_metric_names() -> Non
         (root / "grafana" / "cfha-token-metrics.json").read_text(encoding="utf-8")
     )
     obs = (root / "docs" / "observability.md").read_text(encoding="utf-8")
-    pat = re.compile(r"\b(agent_runtime[a-z0-9_]+)\b")
+    pat = re.compile(r"\b(dalc[a-z0-9_]+)\b")
     for panel in dash.get("panels", []):
         for t in panel.get("targets", []):
             expr = t.get("expr") or ""

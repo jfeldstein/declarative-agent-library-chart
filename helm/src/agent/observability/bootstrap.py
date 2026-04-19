@@ -5,11 +5,13 @@ from __future__ import annotations
 from typing import Literal
 
 from agent.observability.events import SyncEventBus
-from agent.observability.legacy_agent_metrics import register_agent_legacy_metrics
-from agent.observability.legacy_scraper_metrics import register_scraper_legacy_metrics
+from agent.observability.plugins.prometheus import (
+    register_prometheus_agent_plugin,
+    register_prometheus_scraper_plugin,
+)
 from agent.observability.plugins_config import (
     ObservabilityPluginsConfig,
-    default_plugins_config,
+    plugins_config_from_env,
 )
 
 ProcessKind = Literal["agent", "scraper"]
@@ -20,17 +22,17 @@ _scraper_bus: SyncEventBus | None = None
 
 def build_event_bus(
     process: ProcessKind,
-    _config: ObservabilityPluginsConfig | None = None,
+    config: ObservabilityPluginsConfig | None = None,
 ) -> SyncEventBus:
-    """Construct an isolated bus instance and attach Phase 1 legacy Prometheus subscribers."""
+    """Construct an isolated bus instance and attach optional observability plugins."""
 
-    cfg = _config or default_plugins_config()
+    cfg = config or plugins_config_from_env()
     bus = SyncEventBus()
-    _ = cfg  # Future: gate plugin subscribers (Langfuse, Prometheus plugin, …).
-    if process == "agent":
-        register_agent_legacy_metrics(bus)
-    else:
-        register_scraper_legacy_metrics(bus)
+    if cfg.prometheus.enabled:
+        if process == "agent":
+            register_prometheus_agent_plugin(bus)
+        else:
+            register_prometheus_scraper_plugin(bus)
     return bus
 
 
@@ -41,7 +43,7 @@ def ensure_agent_observability(
 
     global _agent_bus
     if _agent_bus is None:
-        _agent_bus = build_event_bus("agent", config)
+        _agent_bus = build_event_bus("agent", config or plugins_config_from_env())
     return _agent_bus
 
 
@@ -52,7 +54,7 @@ def ensure_scraper_observability(
 
     global _scraper_bus
     if _scraper_bus is None:
-        _scraper_bus = build_event_bus("scraper", config)
+        _scraper_bus = build_event_bus("scraper", config or plugins_config_from_env())
     return _scraper_bus
 
 

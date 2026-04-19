@@ -5,7 +5,7 @@ metadata:
   name: {{ include "declarative-agent-library-chart.fullname" . }}
   labels:
     {{- include "declarative-agent-library-chart.labels" . | nindent 4 }}
-  {{- if .Values.observability.prometheusAnnotations.enabled }}
+  {{- if and .Values.observability.prometheusAnnotations.enabled .Values.observability.plugins.prometheus.enabled }}
   annotations:
     prometheus.io/scrape: "true"
     prometheus.io/port: {{ .Values.service.port | quote }}

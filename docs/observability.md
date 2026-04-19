@@ -57,7 +57,7 @@ This section aligns with **`openspec/changes/agent-checkpointing-wandb-feedback`
 
 ## Metrics (Prometheus)
 
-The agent HTTP server exposes `**GET /metrics**` on the same port as the API (default **8088**), in Prometheus text format.
+When **`observability.plugins.prometheus.enabled`** is **true** (Helm) / **`HOSTED_AGENT_OBSERVABILITY_PLUGINS_PROMETHEUS_ENABLED`** is truthy (env), the agent HTTP server exposes **`GET /metrics`** on the same port as the API (default **8088**), in Prometheus text format (`dalc_*` series).
 
 ### Environment
 
@@ -82,7 +82,7 @@ This is separate from Uvicorn’s own access logs; it applies to the structured 
 | Variable | Purpose |
 | -------- | ------- |
 | `HOSTED_AGENT_METRICS_TRIGGER_PAYLOAD_MAX_BYTES` | Upper bound (bytes) for histogram clamping of trigger request/response size observations; values above map to the `+Inf` bucket (default **262144**). |
-| `HOSTED_AGENT_LLM_EST_COST_USD_PER_INPUT_TOKEN` | Non-negative float; when **both** this and `HOSTED_AGENT_LLM_EST_COST_USD_PER_OUTPUT_TOKEN` are set, `agent_runtime_llm_estimated_cost_usd_total` increments by `input_tokens * in + output_tokens * out` (estimate only). |
+| `HOSTED_AGENT_LLM_EST_COST_USD_PER_INPUT_TOKEN` | Non-negative float; when **both** this and `HOSTED_AGENT_LLM_EST_COST_USD_PER_OUTPUT_TOKEN` are set, `dalc_llm_estimated_cost_usd_total` increments by `input_tokens * in + output_tokens * out` (estimate only). |
 | `HOSTED_AGENT_LLM_EST_COST_USD_PER_OUTPUT_TOKEN` | See above. |
 
 Helm: add entries under `extraEnv` on the agent workload (see `helm/chart/values.yaml`) to set pricing inputs without committing secrets.
@@ -94,34 +94,35 @@ Helm: set `observability.structuredLogs.json: true` under the `agent` subchart (
 
 | Metric                                        | Labels                       | Description                        |
 | --------------------------------------------- | ---------------------------- | ---------------------------------- |
-| `agent_runtime_http_trigger_requests_total`   | `result` = `success`         | `client_error`                     |
-| `agent_runtime_http_trigger_duration_seconds` | `result`                     | Histogram of trigger handling time |
-| `agent_runtime_http_trigger_request_bytes` | (none) | Histogram of `POST /api/v1/trigger` JSON body size (bytes; large values clamped). |
-| `agent_runtime_http_trigger_response_bytes` | (none) | Histogram of successful plain-text response body size (UTF-8 bytes). |
-| `agent_runtime_llm_input_tokens_total` | `agent_id`, `model_id`, `result` | Cumulative provider-reported input tokens (supervisor LLM path). |
-| `agent_runtime_llm_output_tokens_total` | `agent_id`, `model_id`, `result` | Cumulative provider-reported output tokens. |
-| `agent_runtime_llm_usage_missing_total` | `agent_id`, `model_id`, `result` | Completions with incomplete token usage metadata. |
-| `agent_runtime_llm_time_to_first_token_seconds` | `agent_id`, `model_id`, `result`, `streaming` | TTFT (streaming vs non-streaming). |
-| `agent_runtime_llm_estimated_cost_usd_total` | `agent_id`, `model_id`, `result` | Estimated USD (see env table; not billing). |
-| `agent_runtime_mcp_tool_calls_total`          | `tool`, `result` = `success` | `error`                            |
-| `agent_runtime_mcp_tool_duration_seconds`     | `tool`, `result`             | Tool call latency                  |
-| `agent_runtime_subagent_invocations_total`    | `subagent`, `result`         | Subagent delegations               |
-| `agent_runtime_subagent_duration_seconds`     | `subagent`, `result`         | Subagent latency                   |
-| `agent_runtime_skill_loads_total`             | `skill`, `result`            | Skill load operations              |
-| `agent_runtime_skill_load_duration_seconds`   | `skill`, `result`            | Skill load latency                 |
-| `agent_runtime_slack_tool_web_api_calls_total` | `method`, `result` (`success` / `error`) | Slack Web API calls from **`agent.tools`** (LLM-time tools, not scraper CronJobs). |
-| `agent_runtime_slack_tool_web_api_duration_seconds` | `method`, `result` | Latency for those Slack Web API calls. |
+| `dalc_trigger_requests_total`   | `trigger`, `transport`, `result` | HTTP trigger rows use `trigger="http"` and `transport="http"`; Slack/Jira bridges use `trigger="slack"|"jira"` plus outcome in `result`. |
+| `dalc_trigger_duration_seconds` | `trigger`, `transport`, `result` | Histogram of inbound trigger handling time |
+| `dalc_trigger_request_bytes` | (none) | Histogram of `POST /api/v1/trigger` JSON body size (bytes; large values clamped). |
+| `dalc_trigger_response_bytes` | (none) | Histogram of successful plain-text response body size (UTF-8 bytes). |
+| `dalc_llm_input_tokens_total` | `agent_id`, `model_id`, `result` | Cumulative provider-reported input tokens (supervisor LLM path). |
+| `dalc_llm_output_tokens_total` | `agent_id`, `model_id`, `result` | Cumulative provider-reported output tokens. |
+| `dalc_llm_usage_missing_total` | `agent_id`, `model_id`, `result` | Completions with incomplete token usage metadata. |
+| `dalc_llm_time_to_first_token_seconds` | `agent_id`, `model_id`, `result`, `streaming` | TTFT (streaming vs non-streaming). |
+| `dalc_llm_estimated_cost_usd_total` | `agent_id`, `model_id`, `result` | Estimated USD (see env table; not billing). |
+| `dalc_tool_calls_total`          | `tool`, `result` = `success` | `error`                            |
+| `dalc_tool_duration_seconds`     | `tool`, `result`             | Tool call latency                  |
+| `dalc_subagent_invocations_total`    | `subagent`, `result`         | Subagent delegations               |
+| `dalc_subagent_duration_seconds`     | `subagent`, `result`         | Subagent latency                   |
+| `dalc_skill_loads_total`             | `skill`, `result`            | Skill load operations              |
+| `dalc_skill_load_duration_seconds`   | `skill`, `result`            | Skill load latency                 |
+| `dalc_slack_tool_web_api_calls_total` | `method`, `result` (`success` / `error`) | Slack Web API calls from **`agent.tools`** (LLM-time tools, not scraper CronJobs). |
+| `dalc_slack_tool_web_api_duration_seconds` | `method`, `result` | Latency for those Slack Web API calls. |
 
 
 `tool`, `subagent`, and `skill` label values come from **configuration** only (bounded), not user-supplied free text. For Slack tools metrics, **`method`** is a fixed Slack Web API surface name from the runtime (for example `chat.postMessage`), not channel ids or message text.
 
-For **`agent_id`** and **`model_id`** on LLM metrics, the runtime uses `HOSTED_AGENT_ID` / `HOSTED_AGENT_AGENT_ID` and `HOSTED_AGENT_CHAT_MODEL` / `HOSTED_AGENT_MODEL_ID` when set; long values are shortened via stable hashes (see `agent.metrics.tagify_metric_label`).
+For **`agent_id`** and **`model_id`** on LLM metrics, the runtime uses `HOSTED_AGENT_ID` / `HOSTED_AGENT_AGENT_ID` and `HOSTED_AGENT_CHAT_MODEL` / `HOSTED_AGENT_MODEL_ID` when set; long values are shortened via stable hashes (see `agent.observability.plugins.prometheus.tagify_metric_label`).
 
 ### Kubernetes scrape discovery (Helm)
 
 Under `agent.observability` (Kubernetes scrape and log format only; checkpoints, W&B, and Slack feedback use other top-level keys—see `helm/chart/values.yaml`):
 
-- `**observability.prometheusAnnotations.enabled`**: adds `prometheus.io/scrape`, `prometheus.io/port`, `prometheus.io/path` to the agent **Pod** and **Service** (for scrapers that honor these annotations).
+- `**observability.plugins.prometheus.enabled**`: wires **`HOSTED_AGENT_OBSERVABILITY_PLUGINS_PROMETHEUS_ENABLED`** so `/metrics` is served and **`dalc_*`** series are populated from the lifecycle bus.
+- `**observability.prometheusAnnotations.enabled`**: adds `prometheus.io/scrape`, `prometheus.io/port`, `prometheus.io/path` to chart-managed workloads **when `observability.plugins.prometheus.enabled` is also true** (otherwise there is no `/metrics` surface to scrape).
 - `**observability.serviceMonitor.enabled`**: renders a `**monitoring.coreos.com/v1` `ServiceMonitor`** selecting the agent `Service` on port `**http**`, path `**/metrics**`. Requires the **Prometheus Operator** CRDs in the cluster.
 
 When the chart deploys the **managed RAG** workload (at least one enabled job under `**scrapers.jira**` or `**scrapers.slack**`; see [DALC-REQ-RAG-SCRAPERS-002](../openspec/specs/dalc-rag-from-scrapers/spec.md)):
@@ -151,15 +152,15 @@ Import `**grafana/dalc-overview.json**` (see `**grafana/README.md**`) for agent 
 
 ### Metric names (RAG workload)
 
-The **RAG** HTTP server (separate Deployment when an enabled scraper job exists; port **8090** by default via `**scrapers.ragService.service.port`**) exposes `**GET /metrics`** with:
+The **RAG** HTTP server (separate Deployment when an enabled scraper job exists; port **8090** by default via `**scrapers.ragService.service.port`**) exposes `**GET /metrics`** (when the same **`observability.plugins.prometheus.enabled`** / env flag is on) with:
 
 
 | Metric                                     | Labels               | Description              |
 | ------------------------------------------ | -------------------- | ------------------------ |
-| `agent_runtime_rag_embed_requests_total`   | `result` = `success` | `client_error`           |
-| `agent_runtime_rag_embed_duration_seconds` | `result`             | Latency for those routes |
-| `agent_runtime_rag_query_requests_total`   | `result`             | `POST /v1/query`         |
-| `agent_runtime_rag_query_duration_seconds` | `result`             | Query latency            |
+| `dalc_rag_embed_requests_total`   | `result` = `success` | `client_error`           |
+| `dalc_rag_embed_duration_seconds` | `result`             | Latency for those routes |
+| `dalc_rag_query_requests_total`   | `result`             | `POST /v1/query`         |
+| `dalc_rag_query_duration_seconds` | `result`             | Query latency            |
 
 
 Helm: set `**observability.prometheusAnnotations.enabled: true**` under `agent` to add `prometheus.io/*` hints on **both** agent and RAG Service/Pod when RAG is deployed (RAG port from `**scrapers.ragService.service.port`**).
@@ -169,22 +170,22 @@ Helm: set `**observability.prometheusAnnotations.enabled: true**` under `agent` 
 Configured subagents are **tools** on the root agent ([LangChain subagents](https://docs.langchain.com/oss/python/langchain/multi-agent/subagents)). They run when the supervisor invokes them during `**POST /api/v1/trigger`** (after a `**message`** turn), or when exercising them via unit tests with a scripted model.
 
 - `**metrics**`: tool body returns the agent process **Prometheus snapshot** (same registry as `GET /metrics`). `**role: metrics`** is omitted from the default tool list unless `**exposeAsTool: true`** is set on that entry.
-- `**rag**`: tool arguments carry `**query**` and optional RAG fields; execution proxies to managed RAG `**/v1/query**`. Requires `HOSTED_AGENT_RAG_BASE_URL` and a separate scrape target for `**agent_runtime_rag_***` on the RAG pod.
+- `**rag**`: tool arguments carry `**query**` and optional RAG fields; execution proxies to managed RAG `**/v1/query**`. Requires `HOSTED_AGENT_RAG_BASE_URL` and a separate scrape target for `**dalc_rag_***` on the RAG pod.
 
-`**agent_runtime_subagent_***`, `**agent_runtime_skill_***`, and `**agent_runtime_mcp_tool_***` increment when those tools or the legacy direct `**tool**` / `**load_skill**` paths run through the trigger pipeline.
+`**dalc_subagent_***`, `**dalc_skill_***`, and `**dalc_tool_***` increment when those tools or the legacy direct `**tool**` / `**load_skill**` paths run through the trigger pipeline.
 
 ### Metric names (scraper CronJob pods)
 
-Every enabled scraper container listens on **`SCRAPER_METRICS_ADDR`** (Helm sets **`0.0.0.0:9091`**) and exposes **`GET /metrics`** using a **scraper-only** Prometheus registry, so this endpoint does **not** include agent or RAG `agent_runtime_*` series from other workloads. After the job’s main work finishes, the process waits **`SCRAPER_METRICS_GRACE_SECONDS`** (default **35** in the chart) so Prometheus can scrape the Job pod before exit.
+Every enabled scraper container listens on **`SCRAPER_METRICS_ADDR`** (Helm sets **`0.0.0.0:9091`**) and exposes **`GET /metrics`** using a **scraper-only** Prometheus registry, so this endpoint does **not** include agent or RAG `dalc_*` series from other workloads. After the job’s main work finishes, the process waits **`SCRAPER_METRICS_GRACE_SECONDS`** (default **35** in the chart) so Prometheus can scrape the Job pod before exit.
 
-- **Jira** job (`agent.scrapers.jira_job`): reads **`/config/job.json`**, posts issue payloads to RAG **`/v1/embed`**, increments **`agent_runtime_scraper_rag_submissions_total`** per attempt.
+- **Jira** job (`agent.scrapers.jira_job`): reads **`/config/job.json`**, posts issue payloads to RAG **`/v1/embed`**, increments **`dalc_scraper_rag_submissions_total`** per attempt.
 - **Slack** job (`agent.scrapers.slack_job`): **`slack_search`** (Real-time Search + thread/history context) or **`slack_channel`** (`conversations.history`); same RAG + scraper metrics series as Jira.
 
 | Metric | Labels | Description |
 |--------|--------|-------------|
-| `agent_runtime_scraper_runs_total` | `integration`, `result` = `success` \| `error` | One completion per CronJob run |
-| `agent_runtime_scraper_run_duration_seconds` | `integration` | Wall time for the job |
-| `agent_runtime_scraper_rag_submissions_total` | `integration`, `result` = `success` \| `client_error` \| `server_error` | RAG **`/v1/embed`** attempts (reference job) |
+| `dalc_scraper_runs_total` | `integration`, `result` = `success` \| `error` | One completion per CronJob run |
+| `dalc_scraper_run_duration_seconds` | `integration` | Wall time for the job |
+| `dalc_scraper_rag_submissions_total` | `integration`, `result` = `success` \| `client_error` \| `server_error` | RAG **`/v1/embed`** attempts (reference job) |
 
 **`SCRAPER_INTEGRATION`** sets the Prometheus label **`integration`**: it names the **integration type** for metrics (a bounded, operator-controlled value such as **`reference`**, **`slack`**, or **`jira`**), not an instance id. If unset, the **reference** job defaults to **`reference`**; the **stub** job defaults to **`SCRAPER_NAME`** (the job’s configured `name` in values) or **`stub`**. Use **`SCRAPER_INTEGRATION`** when the Helm job name should differ from the metric type (e.g. job `ingest-prod` but type **`slack`**).
 
@@ -209,8 +210,8 @@ Migration from file mode to Postgres can be a cold cutover (first run re-establi
 
 End-to-end check that `**examples/with-observability`** deploys to **kind** (agent **+** RAG), **Prometheus** (community Helm chart) scrapes **both** Services, and PromQL sees:
 
-- `**agent_runtime_http_trigger_requests_total`** after several `POST /api/v1/trigger` calls, and  
-- `**agent_runtime_rag_embed_requests_total`** / `**agent_runtime_rag_query_requests_total**` after `POST /v1/embed` and `POST /v1/query` on RAG.
+- `**dalc_trigger_requests_total`** after several `POST /api/v1/trigger` calls, and  
+- `**dalc_rag_embed_requests_total`** / `**dalc_rag_query_requests_total**` after `POST /v1/embed` and `POST /v1/query` on RAG.
 - **Script:** `[helm/src/tests/scripts/integration_kind_o11y_prometheus.sh](../helm/src/tests/scripts/integration_kind_o11y_prometheus.sh)` — installs Prometheus with **two** static scrape jobs (`dalc-agent-metrics`, `dalc-rag-metrics`); disables **ServiceMonitor** on the release (`--set agent.observability.serviceMonitor.enabled=false`) so **Prometheus Operator CRDs** are not required.
 - **Prometheus values template:** `[helm/src/tests/scripts/prometheus-kind-o11y-values.yaml](../helm/src/tests/scripts/prometheus-kind-o11y-values.yaml)` — placeholders `**@SCRAPE_TARGET_AGENT@`** (agent `Service` cluster DNS on port **8088**) and `**@SCRAPE_TARGET_RAG@`** (managed RAG `Service` on port **8090** by default).
 - **Pytest wrapper (opt-in):** `RUN_KIND_O11Y_INTEGRATION=1 pytest tests/integration/test_kind_o11y_prometheus.py -v --no-cov` from `helm/src/` (avoids coverage floor when only this test runs).

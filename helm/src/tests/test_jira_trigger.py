@@ -192,7 +192,11 @@ def test_jira_trigger_metrics_counter_has_no_secret_labels() -> None:
     """[DALC-REQ-JIRA-TRIGGER-005] Prometheus labels are fixed strings (transport/result)."""
     from agent.metrics import JIRA_TRIGGER_INBOUND
 
-    assert list(JIRA_TRIGGER_INBOUND._labelnames) == ["transport", "result"]  # noqa: SLF001
+    assert list(JIRA_TRIGGER_INBOUND._labelnames) == [
+        "trigger",
+        "transport",
+        "result",
+    ]  # noqa: SLF001
 
 
 def test_jira_trigger_event_dedupe_skips_second_delivery(

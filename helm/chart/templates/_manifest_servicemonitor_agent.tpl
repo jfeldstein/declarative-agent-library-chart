@@ -1,5 +1,5 @@
 {{- define "declarative-agent-library-chart.manifest.servicemonitorAgent" -}}
-{{- if .Values.observability.serviceMonitor.enabled }}
+{{- if and .Values.observability.serviceMonitor.enabled .Values.observability.plugins.prometheus.enabled }}
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
