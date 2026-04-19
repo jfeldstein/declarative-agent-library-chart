@@ -27,14 +27,14 @@ These **root** `openspec/specs/*/spec.md` files are **byte-identical** to at lea
 **No** change folder has a **byte-identical** copy of these **root** files. For each: compare root to the **newest relevant** delta (often `archive/2026-04-16-dalc-traceability-migration/` or topic-specific archives), merge intentionally—**prefer shipped behavior + stable `[DALC-REQ-*]` / `[DALC-VER-*]` lines**; do **not** blindly overwrite root from archive.
 
 - [x] `openspec/specs/dalc-agent-o11y-logs-dashboards/spec.md` — also compare `changes/token-metrics-dashboard/specs/dalc-agent-o11y-logs-dashboards/spec.md` (aligned: change copy matches root)
-- [ ] `openspec/specs/dalc-agent-o11y-scrape/spec.md`
-- [ ] `openspec/specs/dalc-chart-runtime-values/spec.md`
+- [x] `openspec/specs/dalc-agent-o11y-scrape/spec.md`
+- [x] `openspec/specs/dalc-chart-runtime-values/spec.md`
 - [x] `openspec/specs/dalc-chart-testing-ct/spec.md`
 - [x] `openspec/specs/dalc-helm-unittest/spec.md`
-- [ ] `openspec/specs/dalc-postgres-agent-persistence/spec.md`
-- [ ] `openspec/specs/dalc-rag-from-scrapers/spec.md`
-- [ ] `openspec/specs/dalc-requirement-verification/spec.md` — archive copies may be **older slices**; root likely includes extra `[DALC-VER-*]` content
-- [ ] `openspec/specs/dalc-scraper-cursor-store/spec.md`
+- [x] `openspec/specs/dalc-postgres-agent-persistence/spec.md`
+- [x] `openspec/specs/dalc-rag-from-scrapers/spec.md`
+- [x] `openspec/specs/dalc-requirement-verification/spec.md` — archive copies may be **older slices**; root likely includes extra `[DALC-VER-*]` content
+- [x] `openspec/specs/dalc-scraper-cursor-store/spec.md`
 
 ---
 

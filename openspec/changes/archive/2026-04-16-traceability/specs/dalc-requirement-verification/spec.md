@@ -1,8 +1,12 @@
+## Reader note (non-normative)
+
+Contributor docs and OpenSpec changes may use **test-to-spec traceability** as shorthand for the obligations in this file (IDs on promoted requirements, matrix rows, pytest/Helm citations). The English word **traceability** alone is overloaded; prefer **test-to-spec** when you mean this repository’s spec↔test gate.
+
 ## ADDED Requirements
 
 ### Requirement: [DALC-VER-001] Normative requirements carry stable identifiers
 
-Every **normative** requirement block in each **`openspec/specs/<capability>/spec.md`** file SHALL include a **stable identifier** that is **unique within that spec file**, formatted as **`[DALC-REQ-<CAPABILITY>-<NNN>]`** or **`[DALC-VER-<NNN>]`** on the **same line** as the **`### Requirement:`** Markdown heading (heading form **`### Requirement: [<ID>] <title>`**). The ID SHALL NOT be placed only on a following line. **`<CAPABILITY>`** is a short uppercase slug derived from the capability folder name (for example **`HELM-UNITTEST`** for `cfha-helm-unittest`) and **`<NNN>`** is a three-digit decimal number. New requirements SHALL receive new IDs; retired IDs SHALL not be reused.
+Every **normative** requirement block in each **`openspec/specs/<capability>/spec.md`** file SHALL include a **stable identifier** that is **unique within that spec file**, formatted as **`[DALC-REQ-<CAPABILITY>-<NNN>]`** or **`[DALC-VER-<NNN>]`** on the **same line** as the **`### Requirement:`** Markdown heading (heading form **`### Requirement: [<ID>] <title>`**). The ID SHALL NOT be placed only on a following line. **`<CAPABILITY>`** is a short uppercase slug derived from the capability folder name (for example **`HELM-UNITTEST`** for `dalc-helm-unittest`) and **`<NNN>`** is a three-digit decimal number. New requirements SHALL receive new IDs; retired IDs SHALL not be reused.
 
 #### Scenario: Promoted spec requirement is identifiable
 
@@ -11,7 +15,7 @@ Every **normative** requirement block in each **`openspec/specs/<capability>/spe
 
 ### Requirement: [DALC-VER-002] Tests explicitly claim which requirements they evidence
 
-For **Python** tests under **`helm/src/tests/`**: when the traceability matrix lists evidence as **`path.py::test_function`**, that **test function’s** docstring SHALL contain the **requirement ID** string. When the matrix lists only **`path.py`**, the ID SHALL appear in the **module, class, or any test function** docstring in that file. For **Helm unittest** suites under **`examples/*/tests/`**, the ID SHALL appear in a **`#` comment** on the suite or on the relevant **`it:`** block; a single top-of-file **`# Traceability:`** line is acceptable when one file evidences many requirements, but **prefer** a comment adjacent to the **`it:`** when one case maps to one requirement.
+For **Python** tests under **`helm/src/tests/`**: when the traceability matrix lists evidence as **`path.py::test_function`**, that **test function’s** docstring SHALL contain the **requirement ID** string. When the matrix lists only **`path.py`**, the ID SHALL appear in the **module, class, or any test function** docstring in that file. For **Helm unittest** suite files under **`helm/tests/`** (for example **`helm/tests/*_test.yaml`**), the ID SHALL appear in a **`#` comment** on the suite or on the relevant **`it:`** block; a single top-of-file **`# Traceability:`** line is acceptable when one file evidences many requirements, but **prefer** a comment adjacent to the **`it:`** when one case maps to one requirement.
 
 #### Scenario: Pytest evidence references IDs
 
