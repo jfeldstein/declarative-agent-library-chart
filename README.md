@@ -105,6 +105,16 @@ See the [examples](examples) directory for more examples.
 | `helm/src/hosted_agents/`   | Python app: FastAPI entry, trigger logic, RAG, scrapers      |
 | `examples/hello-world/`     | Minimal example chart, uses the agent subchart               |
 
+### Helm chart tests ([DALC-REQ-HELM-UNITTEST-003])
+
+Install the **helm-unittest** plugin (same source as CI — `.github/workflows/ci.yml`):
+
+```bash
+helm plugin install https://github.com/helm-unittest/helm-unittest.git --version v1.0.3
+```
+
+Run suites from each example chart against **`helm/tests/`** (full loop and **`ct lint`** parity): see **[docs/local-ci.md](docs/local-ci.md)**.
+
 
 ## Features:
 

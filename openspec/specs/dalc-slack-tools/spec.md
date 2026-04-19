@@ -1,8 +1,8 @@
 ## ADDED Requirements
 
-### Requirement: [DALC-REQ-SLACK-TOOLS-001] Slack tools operate during agent invocation and do not ingest tool I/O into managed RAG by default
+### Requirement: [DALC-REQ-SLACK-TOOLS-001] Slack tools do not ingest tool I/O into managed RAG by default
 
-Slack tools **SHALL** be invocable **only** during an active agent run (for example via **`run_tool_json`** while handling a trigger), and **SHALL NOT** automatically submit tool payloads or returned Slack message bodies to **`POST /v1/embed`** or the managed RAG index **unless** a separate capability explicitly enables that.
+Slack tools **SHALL NOT** automatically submit tool payloads or returned Slack message bodies to **`POST /v1/embed`** or the managed RAG index **unless** a separate capability explicitly enables that.
 
 #### Scenario: Default configuration
 

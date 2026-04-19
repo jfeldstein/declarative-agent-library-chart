@@ -1,8 +1,8 @@
 ## ADDED Requirements
 
-### Requirement: [DALC-REQ-JIRA-TOOLS-001] Jira tools operate during agent invocation and do not ingest tool I/O into managed RAG by default
+### Requirement: [DALC-REQ-JIRA-TOOLS-001] Jira tools do not ingest tool I/O into managed RAG by default
 
-Jira tools **SHALL** be invocable **only** during an active agent run (for example via **`run_tool_json`** while handling a trigger), and **SHALL NOT** automatically submit tool payloads or returned Jira issue bodies to **`POST /v1/embed`** or the managed RAG index **unless** a separate capability explicitly enables that.
+Jira tools **SHALL NOT** automatically submit tool payloads or returned Jira issue bodies to **`POST /v1/embed`** or the managed RAG index **unless** a separate capability explicitly enables that.
 
 #### Scenario: Default configuration
 
