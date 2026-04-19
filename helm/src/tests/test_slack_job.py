@@ -83,7 +83,7 @@ def test_rts_messages_parses_results() -> None:
     assert len(slack_job._rts_messages(page)) == 1
 
 
-@patch("hosted_agents.scrapers.slack_job.httpx.Client")
+@patch("hosted_agents.scrapers.base.httpx.Client")
 @patch("hosted_agents.scrapers.slack_job.WebClient")
 def test_run_slack_channel_posts_embed(
     mock_wc_class, mock_hx_cls, tmp_path, monkeypatch
@@ -120,7 +120,7 @@ def test_run_slack_channel_posts_embed(
     hx_inst.post.assert_called_once()
 
 
-@patch("hosted_agents.scrapers.slack_job.httpx.Client")
+@patch("hosted_agents.scrapers.base.httpx.Client")
 @patch("hosted_agents.scrapers.slack_job.WebClient")
 def test_run_slack_search_posts_embed(
     mock_wc_class, mock_hx_cls, tmp_path, monkeypatch

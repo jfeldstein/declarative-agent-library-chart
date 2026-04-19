@@ -26,31 +26,20 @@ import json
 import os
 import re
 import sys
-import time
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-import httpx
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 
-from hosted_agents.scrapers.metrics import (
-    bounded_integration_label,
-    classify_rag_submission_result,
-    maybe_start_scraper_metrics_http,
-    observe_rag_embed_attempt,
-    observe_scraper_run,
-    stop_scraper_metrics_http,
+from hosted_agents.scrapers.base import (
+    ScrapedEmbeds,
+    ingest_scraped_embeds,
+    integration_label,
+    run_scraper_main,
 )
 from hosted_agents.scrapers.cursor_store import CursorStore, cursor_store_from_env
-
-
-def _integration_label() -> str:
-    return bounded_integration_label(
-        os.environ.get("SCRAPER_INTEGRATION", ""),
-        fallback="slack",
-    )
 
 
 _TOKEN_LIKE = re.compile(r"xox[bpa]-[A-Za-z0-9+/=-]+")
@@ -436,18 +425,6 @@ def _embed_payload(scope: str, items: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
-def _post_embed(
-    client: httpx.Client, base: str, payload: dict[str, Any], integration: str
-) -> None:
-    try:
-        r = client.post(f"{base}/v1/embed", json=payload)
-        r.raise_for_status()
-    except httpx.HTTPError as exc:
-        observe_rag_embed_attempt(integration, classify_rag_submission_result(exc))
-        raise
-    observe_rag_embed_attempt(integration, "success")
-
-
 def _rts_messages(page: dict[str, Any]) -> list[dict[str, Any]]:
     results = page.get("results") or {}
     if isinstance(results, dict):
@@ -526,9 +503,7 @@ def _run_slack_search(
     bot_client: WebClient | None,
     norm: dict[str, Any],
     scope: str,
-    rag_base: str,
-    integration: str,
-) -> None:
+) -> dict[str, Any] | None:
     query = str(norm["query"])
     before_m = float(norm["contextBeforeMinutes"])
     after_m = float(norm["contextAfterMinutes"])
@@ -575,10 +550,8 @@ def _run_slack_search(
 
     items = _build_items_from_messages(collected)
     if not items:
-        return
-    payload = _embed_payload(scope, items)
-    with httpx.Client(timeout=120.0) as hx:
-        _post_embed(hx, rag_base, payload, integration)
+        return None
+    return _embed_payload(scope, items)
 
 
 def _merge_max_slack_ts(
@@ -649,10 +622,8 @@ def _run_slack_channel(
     bot: WebClient,
     norm: dict[str, Any],
     scope: str,
-    rag_base: str,
-    integration: str,
     store: CursorStore,
-) -> None:
+) -> ScrapedEmbeds:
     cid = str(norm["conversationId"])
     hist_limit = int(norm["historyLimit"])
     max_msgs = int(norm["maxMessagesPerRun"])
@@ -667,12 +638,17 @@ def _run_slack_channel(
 
     items = _build_items_from_messages(collected)
     if not items:
-        return
+        return ScrapedEmbeds([], None)
     payload = _embed_payload(scope, items)
-    with httpx.Client(timeout=120.0) as hx:
-        _post_embed(hx, rag_base, payload, integration)
-    if max_seen is not None:
-        store.set_state("slack", scope, cid, _float_to_slack_ts(max_seen))
+
+    def commit_cursor() -> None:
+        if max_seen is not None:
+            store.set_state("slack", scope, cid, _float_to_slack_ts(max_seen))
+
+    return ScrapedEmbeds(
+        [payload],
+        commit_cursor if max_seen is not None else None,
+    )
 
 
 def _slack_run_job_body(
@@ -694,33 +670,34 @@ def _slack_run_job_body(
         user_client = WebClient(token=user_token)
         bot_client = WebClient(token=bot_token) if bot_token else None
         try:
-            _run_slack_search(
-                user_client,
-                bot_client,
-                norm,
-                scope,
-                rag_base,
-                integration,
-            )
+            payload = _run_slack_search(user_client, bot_client, norm, scope)
         except SlackApiError as exc:
             _die(f"Slack API error: {_redact_token_like(str(exc))}")
+        if payload:
+            ingest_scraped_embeds(
+                rag_base,
+                integration,
+                ScrapedEmbeds([payload], None),
+            )
         return
 
     if not bot_token:
         _die("SLACK_BOT_TOKEN is required for slack_channel (conversations.history).")
     bot = WebClient(token=bot_token)
     try:
-        _run_slack_channel(bot, norm, scope, rag_base, integration, store)
+        batch = _run_slack_channel(bot, norm, scope, store)
     except SlackApiError as exc:
         _die(f"Slack API error: {_redact_token_like(str(exc))}")
+    ingest_scraped_embeds(rag_base, integration, batch)
 
 
 def run() -> None:
-    t0 = time.perf_counter()
-    integration = _integration_label()
-    httpd = maybe_start_scraper_metrics_http()
-    run_ok = False
-    try:
+    integration = integration_label(
+        os.environ.get("SCRAPER_INTEGRATION", ""),
+        fallback="slack",
+    )
+
+    def main() -> None:
         cfg = _load_job_config()
         source, norm = _normalize_slack_job(cfg)
         rag_base = os.environ.get("RAG_SERVICE_URL", "").strip().rstrip("/")
@@ -729,11 +706,8 @@ def run() -> None:
         scope = os.environ.get("SCRAPER_SCOPE", "slack").strip() or "slack"
         store = cursor_store_from_env()
         _slack_run_job_body(source, norm, store, scope, rag_base, integration)
-        run_ok = True
-    finally:
-        elapsed = time.perf_counter() - t0
-        observe_scraper_run(integration, run_ok, elapsed)
-        stop_scraper_metrics_http(httpd)
+
+    run_scraper_main(integration, main)
 
 
 if __name__ == "__main__":

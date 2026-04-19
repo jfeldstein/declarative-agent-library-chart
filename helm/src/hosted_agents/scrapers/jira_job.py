@@ -23,22 +23,13 @@ from typing import Any
 
 import httpx
 
-from hosted_agents.scrapers.metrics import (
-    bounded_integration_label,
-    classify_rag_submission_result,
-    maybe_start_scraper_metrics_http,
-    observe_rag_embed_attempt,
-    observe_scraper_run,
-    stop_scraper_metrics_http,
+from hosted_agents.scrapers.base import (
+    ScrapedEmbeds,
+    ingest_scraped_embeds,
+    integration_label,
+    run_scraper_main,
 )
 from hosted_agents.scrapers.cursor_store import cursor_store_from_env
-
-
-def _integration_label() -> str:
-    return bounded_integration_label(
-        os.environ.get("SCRAPER_INTEGRATION", ""),
-        fallback="jira",
-    )
 
 
 def _eprint(msg: str) -> None:
@@ -430,22 +421,6 @@ def _jira_build_embed_payloads(
     return all_payloads, max_upd
 
 
-def _jira_post_embed_payloads(
-    rag_base: str, integration: str, payloads: list[dict[str, Any]]
-) -> None:
-    with httpx.Client(timeout=120.0) as hx:
-        for payload in payloads:
-            try:
-                r = hx.post(f"{rag_base}/v1/embed", json=payload)
-                r.raise_for_status()
-            except httpx.HTTPError as exc:
-                observe_rag_embed_attempt(
-                    integration, classify_rag_submission_result(exc)
-                )
-                raise
-            observe_rag_embed_attempt(integration, "success")
-
-
 def _jira_validate_config_and_env(
     cfg: dict[str, Any],
 ) -> tuple[str, str, str, str, str, str]:
@@ -472,11 +447,12 @@ def _jira_validate_config_and_env(
 
 
 def run() -> None:
-    t0 = time.perf_counter()
-    integration = _integration_label()
-    httpd = maybe_start_scraper_metrics_http()
-    run_ok = False
-    try:
+    integration = integration_label(
+        os.environ.get("SCRAPER_INTEGRATION", ""),
+        fallback="jira",
+    )
+
+    def main() -> None:
         cfg = _load_job_config()
         site, email, token, rag_base, scope, base_query = _jira_validate_config_and_env(
             cfg
@@ -501,18 +477,18 @@ def run() -> None:
             all_payloads, max_upd = _jira_build_embed_payloads(
                 client, site, jql, fields, scope, max_issues, max_comments
             )
+
+        def commit_watermark() -> None:
             if max_upd:
                 store.set_state("jira", scope, base_query, max_upd)
 
-        if not all_payloads:
-            run_ok = True
-        else:
-            _jira_post_embed_payloads(rag_base, integration, all_payloads)
-            run_ok = True
-    finally:
-        elapsed = time.perf_counter() - t0
-        observe_scraper_run(integration, run_ok, elapsed)
-        stop_scraper_metrics_http(httpd)
+        ingest_scraped_embeds(
+            rag_base,
+            integration,
+            ScrapedEmbeds(all_payloads, commit_watermark if max_upd else None),
+        )
+
+    run_scraper_main(integration, main)
 
 
 if __name__ == "__main__":
