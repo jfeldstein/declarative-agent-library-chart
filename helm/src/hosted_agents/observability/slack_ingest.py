@@ -13,6 +13,7 @@ from hosted_agents.observability.stores import (
 from hosted_agents.observability.label_registry import get_label_registry
 from hosted_agents.observability.settings import ObservabilitySettings
 from hosted_agents.observability.trajectory import trajectory_recorder
+from hosted_agents.observability.wandb_run_tags import wandb_mandatory_tags_for_run
 from hosted_agents.observability.wandb_trace import WandbTraceSession
 
 
@@ -94,16 +95,7 @@ def handle_slack_reaction_event(
         late = WandbTraceSession(
             settings=settings,
             run_name=corr.run_id,
-            tags=WandbTraceSession.mandatory_tags(
-                agent_id=None,
-                environment=None,
-                skill_id=None,
-                skill_version=None,
-                model_id=None,
-                prompt_hash=None,
-                rollout_arm="primary",
-                thread_id=corr.thread_id,
-            ),
+            tags=wandb_mandatory_tags_for_run(thread_id=corr.thread_id),
         )
     try:
         if late is not None:

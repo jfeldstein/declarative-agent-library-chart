@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import json
+import sys
 import uuid
 from typing import TypedDict
+from unittest.mock import MagicMock
 
 import pytest
 from fastapi.testclient import TestClient
@@ -124,6 +126,56 @@ def test_side_effects_route_lists_slack_post(monkeypatch: pytest.MonkeyPatch) ->
     items = r.json()["side_effects"]
     assert len(items) == 1
     assert items[0]["tool_name"] == "slack.post_message"
+
+
+def test_slack_reaction_logs_feedback_via_wandb_sdk_when_enabled(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Reaction → correlation → W&B ``run.log`` / ``finish`` (mock SDK), not only in-memory store."""
+    monkeypatch.setenv("HOSTED_AGENT_SLACK_FEEDBACK_ENABLED", "true")
+    monkeypatch.setenv("HOSTED_AGENT_WANDB_ENABLED", "true")
+    monkeypatch.setenv("WANDB_PROJECT", "e2e-proj")
+    monkeypatch.setenv("WANDB_API_KEY", "test-key")
+    monkeypatch.setenv(
+        "HOSTED_AGENT_SLACK_EMOJI_LABEL_MAP_JSON",
+        json.dumps({"+1": "positive"}),
+    )
+    feedback_store.reset()
+    correlation_store.reset()
+    mock_wandb = MagicMock()
+    wb_run = MagicMock()
+    wb_run.id = "wandb-run-e2e"
+    mock_wandb.init = MagicMock(return_value=wb_run)
+    mock_wandb.finish = MagicMock()
+    monkeypatch.setitem(sys.modules, "wandb", mock_wandb)
+
+    ref = SlackMessageRef(channel_id="C1", message_ts="1.0")
+    correlation_store.put_slack_message(
+        ref,
+        ToolCorrelation(
+            tool_call_id="tc-e2e",
+            run_id="r-e2e",
+            thread_id="t-e2e",
+            checkpoint_id="cp-e2e",
+            tool_name="slack.post_message",
+        ),
+    )
+    app = create_app(system_prompt='Respond, "Hi"')
+    client = TestClient(app)
+    r = client.post(
+        "/api/v1/integrations/slack/reactions",
+        json={
+            "channel_id": "C1",
+            "message_ts": "1.0",
+            "reaction": "+1",
+            "event_id": "evt-e2e",
+            "user_id": "U1",
+        },
+    )
+    assert r.status_code == 200
+    mock_wandb.init.assert_called_once()
+    wb_run.log.assert_called()
+    wb_run.finish.assert_called_once()
 
 
 def test_slack_reaction_records_human_feedback(monkeypatch: pytest.MonkeyPatch) -> None:

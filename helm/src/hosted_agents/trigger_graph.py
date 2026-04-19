@@ -22,6 +22,7 @@ from hosted_agents.observability.run_context import (
 )
 from hosted_agents.observability.settings import ObservabilitySettings
 from hosted_agents.observability.trajectory import trajectory_recorder
+from hosted_agents.observability.wandb_run_tags import wandb_mandatory_tags_for_run
 from hosted_agents.observability.wandb_trace import WandbTraceSession
 from hosted_agents.reply import trigger_reply_text
 from hosted_agents.run_context import (
@@ -276,15 +277,9 @@ def run_trigger_graph(ctx: TriggerContext) -> str:
     )
     trajectory_recorder.start(ctx.run_id, ctx.thread_id)
 
-    tags = WandbTraceSession.mandatory_tags(
-        agent_id=None,
-        environment=None,
-        skill_id=None,
-        skill_version=None,
-        model_id=None,
-        prompt_hash=None,
-        rollout_arm="primary",
+    tags = wandb_mandatory_tags_for_run(
         thread_id=ctx.thread_id,
+        ctx=ctx,
         request_correlation_id=ctx.request_id,
     )
     wandb_session = WandbTraceSession(settings=obs, run_name=ctx.run_id, tags=tags)

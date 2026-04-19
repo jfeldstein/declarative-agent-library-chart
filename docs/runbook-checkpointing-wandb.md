@@ -57,6 +57,16 @@ The runtime applies bundled DDL from `hosted_agents/migrations/001_hosted_agents
 
 **Rollback:** take a logical or physical snapshot before upgrades; to roll back behavior flip `HOSTED_AGENT_OBSERVABILITY_STORE` to `memory` and `HOSTED_AGENT_CHECKPOINT_BACKEND` to `memory`, then redeploy (data remains in Postgres until explicitly removed).
 
+## Label registry change process
+
+The global feedback taxonomy is loaded from **`HOSTED_AGENT_LABEL_REGISTRY_JSON`** (Helm: optional **`scrapers.slack.feedback.labelRegistry`**). When changing labels in production:
+
+1. **Draft** updates in a GitOps PR (values or ConfigMap) with a short rationale (new emoji mapping, scalar semantics, or registry/schema version bump).
+2. **Review** with the owning team for ML/training impact: changing **`scalar`** or **`label_id`** affects downstream aggregates and historical comparability.
+3. **Version** bumps: increment **`schema_version`** when removing or renaming **`label_id`** values; prefer additive labels when possible.
+4. **Roll out** via staged deploy (canary namespace or single replica) and verify **`GET /api/v1/runtime/feedback/human`** and Slack reaction mappings before full fleet rollout.
+5. **Rollback** by reverting the ConfigMap/values commit; in-memory defaults remain safe when JSON is absent.
+
 ## Helm values (short)
 
 See `helm/chart/values.yaml` → top-level **`checkpoints`**, **`wandb`**, and **`scrapers.slack.feedback`** for toggles that map to the env vars above. **`checkpoints.postgresUrl`** sets **`HOSTED_AGENT_POSTGRES_URL`**. Optional **`scrapers.slack.feedback.labelRegistry`** overrides the default global feedback label registry JSON (`HOSTED_AGENT_LABEL_REGISTRY_JSON`).
