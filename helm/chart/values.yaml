@@ -103,6 +103,7 @@ scrapers:
     # Optional scraper-specific DSN Secret override. When set, this wins over checkpoints.postgresUrl.
     postgresUrlSecretName: ""
     postgresUrlSecretKey: url
+  # Traceability: [DALC-REQ-JIRA-SCRAPER-001]
   jira:
     enabled: false
     siteUrl: ""

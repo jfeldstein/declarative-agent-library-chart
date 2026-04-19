@@ -110,7 +110,7 @@
         },
         "jira": {
           "type": "object",
-          "description": "Jira Cloud scraper jobs; each job mounts job.json (source=jira, query=JQL). Secrets via auth Secret refs only.",
+          "description": "Jira Cloud scraper jobs; each job mounts job.json (source=jira, query=JQL). Secrets via auth Secret refs only. Traceability: [DALC-REQ-JIRA-SCRAPER-001]",
           "properties": {
             "enabled": { "type": "boolean" },
             "siteUrl": { "type": "string" },

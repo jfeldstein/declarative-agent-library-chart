@@ -28,4 +28,4 @@ Operators need **project-scoped Jira context** (issues, workflow state, ownershi
 
 ## Promotion status (DALC sync checklist §D)
 
-The **Jira scraper** ships under **`scrapers.jira`** and shares RAG/embed contracts with **`dalc-rag-from-scrapers`**. The **`jira-scraper`** delta spec remains the OpenSpec workspace for this change; a dedicated **`openspec/specs/jira-scraper/`** tree is **optional** and **deferred** (extract when Jira-specific **`[DALC-REQ-*]`** rows are split out from **`dalc-rag-from-scrapers`**).
+Promoted to **`openspec/specs/dalc-jira-scraper/spec.md`** with **`[DALC-REQ-JIRA-SCRAPER-001]` … `[DALC-REQ-JIRA-SCRAPER-005]`** and rows in **`docs/spec-test-traceability.md`** (IDs in **`helm/chart/values.schema.json`**, **`helm/chart/values.yaml`**, **`helm/tests/with_scrapers_test.yaml`**, **`helm/src/tests/test_jira_job.py`**). Requirement text aligns with shipped behavior (**`jobs[].query`** / JQL rather than an unused **`projects`** list).

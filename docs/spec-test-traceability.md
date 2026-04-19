@@ -39,6 +39,11 @@ The table is parsed by `scripts/check_spec_traceability.py`; keep the **Matrix**
 | [DALC-REQ-SLACK-SCRAPER-003] | `openspec/specs/dalc-rag-from-scrapers/spec.md` | `helm/src/tests/test_slack_job.py::test_run_slack_search_posts_embed` | default PR | - | - |
 | [DALC-REQ-SLACK-SCRAPER-004] | `openspec/specs/dalc-rag-from-scrapers/spec.md` | `helm/src/tests/test_scraper_metrics.py::test_bounded_integration_label_sanitizes_and_truncates` | default PR | - | - |
 | [DALC-REQ-SLACK-SCRAPER-005] | `openspec/specs/dalc-rag-from-scrapers/spec.md` | `helm/src/tests/test_slack_job.py::test_redact_token_like_strips_slack_token_patterns` | default PR | - | - |
+| [DALC-REQ-JIRA-SCRAPER-001] | `openspec/specs/dalc-jira-scraper/spec.md` | `helm/chart/values.schema.json`, `helm/chart/values.yaml` | default PR | - | - |
+| [DALC-REQ-JIRA-SCRAPER-002] | `openspec/specs/dalc-jira-scraper/spec.md` | `helm/tests/with_scrapers_test.yaml` | default PR | - | - |
+| [DALC-REQ-JIRA-SCRAPER-003] | `openspec/specs/dalc-jira-scraper/spec.md` | `helm/src/tests/test_jira_job.py` | default PR | - | - |
+| [DALC-REQ-JIRA-SCRAPER-004] | `openspec/specs/dalc-jira-scraper/spec.md` | `helm/src/tests/test_jira_job.py` | default PR | - | - |
+| [DALC-REQ-JIRA-SCRAPER-005] | `openspec/specs/dalc-jira-scraper/spec.md` | `helm/src/tests/test_jira_job.py` | default PR | - | - |
 | [DALC-REQ-SCRAPER-CURSOR-001] | `openspec/specs/dalc-scraper-cursor-store/spec.md` | `helm/src/tests/test_cursor_store.py::test_file_store_jira_compat_roundtrip`, `helm/src/tests/test_cursor_store.py::test_file_store_slack_compat_roundtrip`, `helm/src/hosted_agents/scrapers/cursor_store.py` | default PR | - | - |
 | [DALC-REQ-SCRAPER-CURSOR-002] | `openspec/specs/dalc-scraper-cursor-store/spec.md` | `helm/src/tests/test_cursor_store.py::test_postgres_store_issues_idempotent_ddl_and_upsert`, `helm/src/hosted_agents/scrapers/cursor_store.py` | default PR | - | - |
 | [DALC-REQ-SCRAPER-CURSOR-003] | `openspec/specs/dalc-scraper-cursor-store/spec.md` | `helm/tests/with_scrapers_test.yaml`, `helm/chart/templates/_manifest_scraper_cronjobs.tpl`, `helm/chart/values.yaml`, `helm/chart/values.schema.json` | default PR | - | - |
