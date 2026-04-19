@@ -28,12 +28,12 @@ Business tools (Slack/Jira MCP modules) SHALL NOT call Prometheus or legacy `obs
 
 ### Requirement: [DALC-REQ-OBS-LIFE-003] Legacy metrics shim until Prometheus plugin
 
-When the legacy Prometheus bridge is registered on a process bus, publishing completion events for tools, triggers, LLM generations, RAG HTTP paths, and scraper runs SHALL preserve existing `agent_runtime_*` metric series and label semantics exposed before this refactor (Phase 2 renames to `dalc_*`).
+When the legacy Prometheus bridge is registered on a process bus, publishing completion events for tools, triggers, LLM generations, RAG HTTP paths, and scraper runs SHALL preserve **`dalc_*` Prometheus metric names** (see **ADR 0011**) and label semantics expected by dashboards and scrape docs.
 
 #### Scenario: HTTP trigger counters unchanged
 
 - **WHEN** `POST /api/v1/trigger` completes successfully
-- **THEN** `agent_runtime_http_trigger_requests_total{result="success"}` SHALL increment as observed by the existing test suite
+- **THEN** `dalc_http_trigger_requests_total{result="success"}` SHALL increment as observed by the existing test suite
 
 ---
 

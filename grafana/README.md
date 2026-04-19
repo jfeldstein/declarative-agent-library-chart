@@ -2,6 +2,15 @@
 
 <!-- Traceability: [DALC-REQ-O11Y-LOGS-003] [DALC-REQ-O11Y-LOGS-005] [DALC-REQ-O11Y-LOGS-006] -->
 
+## Optional Helm ConfigMap (`observability.plugins.grafana.enabled`)
+
+When **`agent.observability.plugins.grafana.enabled`** is **true**, the Declarative Agent Library chart renders a **`ConfigMap`** named **`{release}-{chart}-grafana-dashboards`** containing the same JSON as this directory:
+
+- `dalc-overview.json`
+- `cfha-token-metrics.json` (filename retained for import paths and tests; panels use **`dalc_*`** PromQL)
+
+Mount or provision these keys into Grafana as needed (for example sidecar `label: grafana_dashboard` is **not** set here—operators wire their own Grafana provisioning). The bundled copies live under **`helm/chart/files/grafana/`** and are kept in sync with the repo-root **`grafana/`** files.
+
 ## `cfha-token-metrics.json`
 
 Additional dashboard for **LLM token economics and streaming health** on the agent **`/metrics`** endpoint (same scrape path as `dalc-overview.json`):
@@ -13,14 +22,14 @@ Additional dashboard for **LLM token economics and streaming health** on the age
 1. Grafana → **Dashboards** → **New** → **Import** → upload `cfha-token-metrics.json`.
 2. Select a **Prometheus** data source (placeholder uid **`prometheus`**, same as `dalc-overview.json`).
 
-Metric names and label semantics: **`docs/observability.md`** (LLM token metrics section).
+Metric names and label semantics: **`docs/observability.md`** (LLM token metrics section). PromQL uses the **`dalc_*`** prefixes (see **ADR 0011**).
 
 ## `dalc-overview.json`
 
 Starter dashboard for the **Declarative Agent Library** runtime (import one dashboard):
 
-- **Agent** (port 8088): rate of `dalc_trigger_requests_total` by `result` (plus `trigger` / `transport` labels); p95 latency from `dalc_trigger_duration_seconds`
-- **Optional rows** (see section titles in the JSON): when the chart deploys additional metrics endpoints, matching panels apply—for example **managed RAG HTTP** (embed/query rates on the RAG Service port, default **8090** when scraper jobs enable RAG) and **scraper CronJob** metrics (`dalc_scraper_*` on port **9091** when `observability.prometheusAnnotations.enabled` **and** `observability.plugins.prometheus.enabled`)
+- **Agent** (port 8088): rate of `dalc_http_trigger_requests_total` by `result`; p95 latency from `dalc_http_trigger_duration_seconds`
+- **Optional rows** (see section titles in the JSON): when the chart deploys additional metrics endpoints, matching panels apply—for example **managed RAG HTTP** (embed/query rates on the RAG Service port, default **8090** when scraper jobs enable RAG) and **scraper CronJob** metrics (`dalc_scraper_*` on port **9091** when `observability.prometheusAnnotations.enabled`)
 
 The dashboard groups optional workloads under **row** headings so agent-only deployments stay readable; empty series for absent components are expected.
 

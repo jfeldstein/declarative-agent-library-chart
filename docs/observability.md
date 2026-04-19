@@ -6,19 +6,19 @@
 
 ## Runtime architecture: lifecycle events and plugins (Phase 1)
 
-**Phase 1** ships under OpenSpec change **`openspec/changes/observability-lifecycle-events/`** (chart/runtime alignment and follow-on OpenSpec promotion may track in parallel using branch prefix **`feature--observability-plugins-parallel*`** until a change directory is promoted). It introduces a **synchronous lifecycle event bus** (`SyncEventBus`, `EventName`) and **`agent.observability.middleware`** helpers so trigger handling, tools, LLM callbacks, RAG HTTP, scrapers, and Slack/Jira inbound paths emit **structured events**. **Existing subscribers** keep **`agent_runtime_*` Prometheus series** aligned with prior behavior while decoupling future sinks.
+**Phase 1** ships under OpenSpec change **`openspec/changes/observability-lifecycle-events/`** (chart/runtime alignment and follow-on OpenSpec promotion may track in parallel using branch prefix **`feature--observability-plugins-parallel*`** until a change directory is promoted). It introduces a **synchronous lifecycle event bus** (`SyncEventBus`, `EventName`) and **`agent.observability.middleware`** helpers so trigger handling, tools, LLM callbacks, RAG HTTP, scrapers, and Slack/Jira inbound paths emit **structured events**. Phase **2** registers optional plugins (Prometheus **`dalc_*`**, traces, dashboards) on that bus — see **`openspec/changes/observability-plugin-prometheus/`** and related plugin changes.
 
-**Helm** declares optional integrations under a **single tree**: **`agent.observability.plugins`** with boolean **`enabled`** defaults (**false**) for **`prometheus`**, **`langfuse`**, **`wandb`**, **`grafana`**, and **`logShipping`**. Phase 1 **scaffolds** these keys; template wiring and env injection land in later phases. **Operational configuration today** still uses **`observability.*`** (scrape annotations, JSON logs, Postgres pools for correlation), **`wandb.*`** (Weights & Biases tracing), and the checkpoint/cursor tables documented below—do not assume **`observability.plugins.*`** toggles behavior until the release notes say so.
+**Helm** declares **`agent.observability.plugins`** with **`enabled`** defaults for **`prometheus`**, **`langfuse`**, **`wandb`**, **`grafana`**, and **`logShipping`** (**`helm/chart/values.yaml`**). Several keys are already wired (Prometheus **`/metrics`**, W&B traces, Langfuse lifecycle export, structured JSON logs / log-shipping toggle, Grafana dashboard **`ConfigMap`**); exact env and template behavior is spelled out below and in **`docs/release-notes/`** when breaking.
 
-Per-plugin operator guides are **stubbed** here until each integration’s Helm/env contract is finalized; shared metrics, scrape, logs, and checkpoint content remain authoritative in the sections that follow.
+Per-plugin summaries:
 
-| Plugin key (`observability.plugins.<key>`) | Stub — read next |
+| Plugin key (`observability.plugins.<key>`) | Summary |
 | --- | --- |
-| **`prometheus`** | Default **`GET /metrics`** on the agent/RAG workloads and scraper listeners is unchanged; see [Metrics (Prometheus)](#metrics-prometheus). The plugin flag is **reserved** for future gating ([ADR 0014](adrs/0014-observability-plugin-architecture.md)). |
-| **`langfuse`** | *Planned* export of redacted LLM spans to Langfuse; not wired in Phase 1. |
-| **`wandb`** | Runtime tracing uses top-level **`wandb.*`** + env vars in the **Checkpoints, W&B traces, and Slack correlation** section below; **`observability.plugins.wandb`** is reserved for chart alignment—follow **`docs/release-notes/`** when migration switches. |
-| **`grafana`** | In-repo dashboards remain **`grafana/*.json`**; remote_write/stack automation is future work. |
-| **`logShipping`** | Stdout **`HOSTED_AGENT_LOG_FORMAT=json`** via **`observability.structuredLogs`** today; sidecar/collector templates TBD. |
+| **`prometheus`** | **`GET /metrics`** (**`dalc_*`**) when enabled — see [Metrics (Prometheus)](#metrics-prometheus). |
+| **`langfuse`** | Lifecycle export via **`HOSTED_AGENT_LANGFUSE_*`** when **`observability.plugins.langfuse.enabled`** — details in middleware/plugin sections and chart values. |
+| **`wandb`** | **`observability.plugins.wandb`** aligns with **`wandb.*`** / **`HOSTED_AGENT_WANDB_*`** — see **Checkpoints, W&B traces, and Slack correlation** below. |
+| **`grafana`** | Optional **`ConfigMap`** (**`templates/_manifest_grafana_dashboards.tpl`**) packaging **`helm/chart/files/grafana/*.json`** when enabled (mirrors **`grafana/*.json`**); remote_write/stack automation is future work. |
+| **`logShipping`** | **`HOSTED_AGENT_LOG_FORMAT=json`** when **`observability.plugins.logShipping.enabled`** or **`observability.structuredLogs.json`** — see **[DALC-REQ-PLUGIN-LOG-SHIPPING-001]** / structured logs sections. |
 
 Design record: **[ADR 0014 — Observability plugin architecture](adrs/0014-observability-plugin-architecture.md)** (terminology alongside **[ADR 0005](adrs/0005-observability-vs-execution-persistence.md)**, schema rules in **[ADR 0011](adrs/0011-prometheus-metrics-schema-and-cardinality.md)**).
 

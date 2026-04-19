@@ -26,7 +26,7 @@ Worktree validation snapshot: promoted specs under `openspec/specs/` vs `docs/sp
 | [DALC-REQ-O11Y-LOGS-003] | OK | `grafana/dalc-overview.json`, `grafana/README.md` | Starter dashboard JSON exists; README documents import path, placeholder datasource uid, and optional RAG/scraper sections. |
 | [DALC-REQ-O11Y-LOGS-004] | OK | `docs/observability.md`, `README.md` | `docs/observability.md` documents stdout JSON and collectors (Fluent Bit / Promtail / Vector) and `HOSTED_AGENT_LOG_FORMAT`. |
 | [DALC-REQ-O11Y-LOGS-005] | OK | `grafana/README.md` | “Prometheus scrape alignment” section describes variable target counts and optional components; avoids a fixed mandatory RAG scrape count. |
-| [DALC-REQ-O11Y-LOGS-006] | OK | `grafana/cfha-token-metrics.json`, `grafana/README.md`, `docs/observability.md`; `helm/src/tests/test_token_metrics.py::test_o11y_logs_token_dashboard_capability_documented`, `helm/src/tests/test_token_metrics.py::test_cfha_token_dashboard_promql_matches_observability_metric_names` | README cross-link preserved; **`test_cfha_token_dashboard_promql_matches_observability_metric_names`** parses dashboard `expr` strings and asserts each `agent_runtime_*` token maps to documentation in **`docs/observability.md`**. |
+| [DALC-REQ-O11Y-LOGS-006] | OK | `grafana/cfha-token-metrics.json`, `grafana/README.md`, `docs/observability.md`; `helm/src/tests/test_token_metrics.py::test_o11y_logs_token_dashboard_capability_documented`, `helm/src/tests/test_token_metrics.py::test_cfha_token_dashboard_promql_matches_observability_metric_names` | README cross-link preserved; **`test_cfha_token_dashboard_promql_matches_observability_metric_names`** parses dashboard `expr` strings and asserts each `dalc_*` token maps to documentation in **`docs/observability.md`**. |
 
 ---
 
@@ -34,9 +34,9 @@ Worktree validation snapshot: promoted specs under `openspec/specs/` vs `docs/sp
 
 | ID | Status | Evidence (matrix) | Spot-check |
 | --- | --- | --- | --- |
-| [DALC-REQ-O11Y-SCRAPE-001] | OK | `helm/src/tests/test_o11y_metrics.py::test_metrics_endpoint_exposes_registry` | `GET /metrics` returns 200 and exposition text with `# TYPE` and `agent_runtime_http_trigger`. |
+| [DALC-REQ-O11Y-SCRAPE-001] | OK | `helm/src/tests/test_o11y_metrics.py::test_metrics_endpoint_exposes_registry` | `GET /metrics` returns 200 and exposition text with `# TYPE` and `dalc_http_trigger`. |
 | [DALC-REQ-O11Y-SCRAPE-002] | OK | adds `helm/src/tests/test_o11y_metrics.py::test_trigger_unhandled_exception_increments_server_error`, `test_trigger_http_error_5xx_increments_server_error`, `test_trigger_http_error_4xx_stays_client_error` | Success/client_error counters unchanged; **`server_error`** asserted for unhandled `RuntimeError`, `TriggerHttpError` ≥500; `<500` **`TriggerHttpError`** maps to **`client_error`**. |
-| [DALC-REQ-O11Y-SCRAPE-003] | OK | `helm/src/tests/test_o11y_metrics.py::test_subagent_and_skill_and_mcp_metrics` | `/metrics` includes `agent_runtime_subagent_*`, `agent_runtime_skill_*`, `agent_runtime_mcp_tool_*` series after exercised paths. |
+| [DALC-REQ-O11Y-SCRAPE-003] | OK | `helm/src/tests/test_o11y_metrics.py::test_subagent_and_skill_and_mcp_metrics` | `/metrics` includes `dalc_subagent_*`, `dalc_skill_*`, `dalc_mcp_tool_*` series after exercised paths. |
 | [DALC-REQ-O11Y-SCRAPE-004] | OK | `helm/tests/with_observability_test.yaml`, `helm/tests/with_scrapers_test.yaml` (`it: scraper CronJob pod template has prometheus scrape annotations when enabled`), `examples/with-scrapers/values.prometheus-annotations.yaml` | Agent/RAG unchanged; **`with_scrapers_test`** overlays **`values.prometheus-annotations.yaml`** and asserts CronJob **`spec.jobTemplate.spec.template.metadata.annotations`** `prometheus.io/scrape|port|path`. |
 | [DALC-REQ-O11Y-SCRAPE-005] | OK | `helm/tests/with_observability_test.yaml` | ServiceMonitor for agent and optional RAG; RAG absent → single ServiceMonitor document. |
 | [DALC-REQ-O11Y-SCRAPE-006] | OK | `helm/tests/with_observability_test.yaml` | Agent container env `HOSTED_AGENT_LOG_FORMAT` = `json` when observability values require it. |
@@ -49,8 +49,8 @@ Worktree validation snapshot: promoted specs under `openspec/specs/` vs `docs/sp
 | --- | --- | --- | --- |
 | [DALC-REQ-TOKEN-MET-001] | OK | `helm/src/agent/metrics.py`, `helm/src/agent/llm_metrics.py`, `helm/src/tests/test_token_metrics.py` | Counters and `test_llm_usage_missing_when_no_usage_metadata` / token tests. |
 | [DALC-REQ-TOKEN-MET-002] | OK | same | Input tokens asserted in `test_llm_token_counters_and_cost_with_usage_metadata`. |
-| [DALC-REQ-TOKEN-MET-003] | OK | same | `agent_runtime_llm_time_to_first_token_seconds` + streaming labels covered by TTFT tests. |
-| [DALC-REQ-TOKEN-MET-004] | OK | same + `helm/src/tests/test_token_metrics.py::test_trigger_payload_histograms_record_response_size` | Request histogram coverage unchanged; **`test_trigger_payload_histograms_record_response_size`** asserts **`agent_runtime_http_trigger_response_bytes_sum`** increases by at least the UTF-8 length of the successful plain-text trigger response body. |
+| [DALC-REQ-TOKEN-MET-003] | OK | same | `dalc_llm_time_to_first_token_seconds` + streaming labels covered by TTFT tests. |
+| [DALC-REQ-TOKEN-MET-004] | OK | same + `helm/src/tests/test_token_metrics.py::test_trigger_payload_histograms_record_response_size` | Request histogram coverage unchanged; **`test_trigger_payload_histograms_record_response_size`** asserts **`dalc_http_trigger_response_bytes_sum`** increases by at least the UTF-8 length of the successful plain-text trigger response body. |
 | [DALC-REQ-TOKEN-MET-005] | OK | same + `docs/observability.md` | Cost counter increments when pricing env vars set in test. |
 | [DALC-REQ-TOKEN-MET-006] | OK | same | `test_new_metric_help_lines_include_semantics` checks HELP for estimated cost includes “estimate”; HELP strings in `metrics.py` document provider vs runtime semantics. |
 
