@@ -8,6 +8,8 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ## 2026-04-18
 
+**OpenSpec remediation checklist** — Added **[`docs/openspec-sync-remediation-checklist.md`](openspec-sync-remediation-checklist.md)** for follow-up on spec drift vs archives, promotion gaps, and housekeeping after merges (pairs with **`openspec/AGENTS.md`**).
+
 **Jira scraper (`jira-scraper` tasks)** — **`jira_request`** wraps httpx for Jira REST calls with **429** / **`Retry-After`** backoff; stderr uses **`_eprint`** (redacts **`JIRA_EMAIL`** / **`JIRA_API_TOKEN`** substrings); **`/v1/embed`** payloads include **`relationships[]`** derived from **`issuelinks`** plus **`jira_project_key`** / **`jira_issue_url`** metadata. Helm: merged **`job.json`** strips Helm-only **`siteUrl`** / **`watermarkDir`** keys; CronJob env uses **`default`** merge so per-job overrides win. Tests: **`helm/src/tests/test_jira_job.py`**, **`helm/tests/with_scrapers_test.yaml`**; **`python3 scripts/check_spec_traceability.py`** ok.
 
 **OpenSpec `agent-checkpointing-wandb-feedback` tasks** — Closed **1.1–1.2**, **2.2** as delivered in-repo (Postgres checkpoint + observability Postgres correlation paths; Redis checkpoint + Slack reaction reconcile explicitly deferred); **`tasks.md`** § **2.4** remains open as deferred scope.
