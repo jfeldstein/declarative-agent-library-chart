@@ -79,28 +79,30 @@ spec:
                   value: "0.0.0.0:9091"
                 - name: SCRAPER_METRICS_GRACE_SECONDS
                   value: "35"
-                {{- with $root.Values.scrapers.jira }}
-                {{- if .siteUrl }}
+                {{- $siteUrl := default $root.Values.scrapers.jira.siteUrl $job.siteUrl }}
+                {{- if $siteUrl }}
                 - name: JIRA_SITE_URL
-                  value: {{ .siteUrl | quote }}
+                  value: {{ $siteUrl | quote }}
                 {{- end }}
-                {{- if .watermarkDir }}
+                {{- $wmDir := default $root.Values.scrapers.jira.watermarkDir $job.watermarkDir }}
+                {{- if $wmDir }}
                 - name: JIRA_WATERMARK_DIR
-                  value: {{ .watermarkDir | quote }}
+                  value: {{ $wmDir | quote }}
                 {{- end }}
-                {{- if .auth.emailSecretName }}
+                {{- with $root.Values.scrapers.jira.auth }}
+                {{- if .emailSecretName }}
                 - name: JIRA_EMAIL
                   valueFrom:
                     secretKeyRef:
-                      name: {{ .auth.emailSecretName | quote }}
-                      key: {{ .auth.emailSecretKey | quote }}
+                      name: {{ .emailSecretName | quote }}
+                      key: {{ .emailSecretKey | quote }}
                 {{- end }}
-                {{- if .auth.tokenSecretName }}
+                {{- if .tokenSecretName }}
                 - name: JIRA_API_TOKEN
                   valueFrom:
                     secretKeyRef:
-                      name: {{ .auth.tokenSecretName | quote }}
-                      key: {{ .auth.tokenSecretKey | quote }}
+                      name: {{ .tokenSecretName | quote }}
+                      key: {{ .tokenSecretKey | quote }}
                 {{- end }}
                 {{- end }}
                 {{- if eq $cursorBackend "postgres" }}

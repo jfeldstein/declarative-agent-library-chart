@@ -210,3 +210,49 @@ tests:
           path: spec.jobTemplate.spec.template.spec.containers[0].env
           content:
             name: HOSTED_AGENT_POSTGRES_URL
+  - it: jira ConfigMap job.json excludes Helm-only siteUrl and watermarkDir keys
+    template: templates/agent.yaml
+    documentSelector:
+      path: metadata.name
+      value: dalc-ci-scrapers-declarative-agent-library-chart-scraper-job-jira-0
+    set:
+      agent.scrapers.jira.jobs:
+        - schedule: "0 * * * *"
+          source: jira
+          query: 'project = DEMO ORDER BY updated ASC'
+          scope: demo-jira-scope
+          siteUrl: https://only-env.example.net
+          watermarkDir: /only-env/wm
+    asserts:
+      - notMatchRegex:
+          path: data["job.json"]
+          pattern: siteUrl
+      - notMatchRegex:
+          path: data["job.json"]
+          pattern: watermarkDir
+  - it: jira CronJob env prefers per-job siteUrl and watermarkDir over scrapers.jira defaults
+    template: templates/agent.yaml
+    documentSelector:
+      path: metadata.name
+      value: dalc-ci-scrapers-declarative-agent-library-chart-scraper-jira-0
+    set:
+      agent.scrapers.jira.siteUrl: https://parent.example.net
+      agent.scrapers.jira.watermarkDir: /parent/wm
+      agent.scrapers.jira.jobs:
+        - schedule: "0 * * * *"
+          source: jira
+          query: 'project = DEMO ORDER BY updated ASC'
+          scope: demo-jira-scope
+          siteUrl: https://child.example.net
+          watermarkDir: /child/wm
+    asserts:
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.containers[0].env
+          content:
+            name: JIRA_SITE_URL
+            value: https://child.example.net
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.containers[0].env
+          content:
+            name: JIRA_WATERMARK_DIR
+            value: /child/wm

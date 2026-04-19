@@ -144,6 +144,14 @@
                 "properties": {
                   "enabled": { "type": "boolean" },
                   "schedule": { "type": "string", "minLength": 1 },
+                  "siteUrl": {
+                    "type": "string",
+                    "description": "Optional per-job Jira Cloud base URL; overrides scrapers.jira.siteUrl for env JIRA_SITE_URL only (not mounted in job.json)"
+                  },
+                  "watermarkDir": {
+                    "type": "string",
+                    "description": "Optional per-job on-disk watermark directory; overrides scrapers.jira.watermarkDir for env JIRA_WATERMARK_DIR only"
+                  },
                   "scope": { "type": "string" },
                   "source": {
                     "type": "string",

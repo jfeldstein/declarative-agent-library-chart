@@ -17,6 +17,7 @@ import re
 import sys
 import time
 from datetime import datetime, timedelta, timezone
+from email.utils import parsedate_to_datetime
 from pathlib import Path
 from typing import Any
 
@@ -40,19 +41,81 @@ def _integration_label() -> str:
     )
 
 
+def _eprint(msg: str) -> None:
+    """Print to stderr with secrets from env redacted (Jira email + API token)."""
+    t = str(msg)
+    tok = os.environ.get("JIRA_API_TOKEN", "").strip()
+    if tok:
+        t = t.replace(tok, "<redacted>")
+    em = os.environ.get("JIRA_EMAIL", "").strip()
+    if em:
+        t = t.replace(em, "<redacted>")
+    print(t, file=sys.stderr)  # noqa: T201
+
+
+def _retry_after_sleep_s(headers: httpx.Headers) -> float:
+    raw = (headers.get("retry-after") or "").strip()
+    if not raw:
+        return 1.0
+    try:
+        sec = float(raw)
+        return min(max(sec, 0.0), 600.0)
+    except ValueError:
+        try:
+            dt = parsedate_to_datetime(raw)
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            delta = (dt - datetime.now(timezone.utc)).total_seconds()
+            return min(max(delta, 0.0), 600.0)
+        except (TypeError, ValueError, OverflowError):
+            return 1.0
+
+
+def jira_request(
+    client: httpx.Client,
+    method: str,
+    url: str,
+    *,
+    max_rate_limit_retries: int = 10,
+    **kwargs: Any,
+) -> httpx.Response:
+    """Perform a Jira REST request with **429** handling via ``Retry-After`` backoff."""
+    attempt = 0
+    while True:
+        r = client.request(method, url, **kwargs)
+        if r.status_code != 429:
+            r.raise_for_status()
+            return r
+        attempt += 1
+        if attempt > max_rate_limit_retries:
+            r.raise_for_status()
+            return r
+        time.sleep(_retry_after_sleep_s(r.headers))
+
+
+def _http_timeout_seconds() -> float:
+    raw = os.environ.get("JIRA_HTTP_TIMEOUT_SECONDS", "").strip()
+    if not raw:
+        return 120.0
+    try:
+        return max(float(raw), 1.0)
+    except ValueError:
+        return 120.0
+
+
 def _load_job_config() -> dict[str, Any]:
     raw_path = os.environ.get("SCRAPER_JOB_CONFIG", "/config/job.json").strip()
     p = Path(raw_path)
     if not p.is_file():
-        print(f"SCRAPER_JOB_CONFIG file not found: {p}", file=sys.stderr)  # noqa: T201
+        _eprint(f"SCRAPER_JOB_CONFIG file not found: {p}")
         sys.exit(1)
     try:
         data = json.loads(p.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
-        print(f"Invalid job config JSON: {exc}", file=sys.stderr)  # noqa: T201
+        _eprint(f"Invalid job config JSON: {exc}")
         sys.exit(1)
     if not isinstance(data, dict):
-        print("Job config must be a JSON object", file=sys.stderr)  # noqa: T201
+        _eprint("Job config must be a JSON object")
         sys.exit(1)
     return data
 
@@ -60,7 +123,7 @@ def _load_job_config() -> dict[str, Any]:
 def _site_base(url: str) -> str:
     u = url.strip().rstrip("/")
     if not u.startswith("https://"):
-        print("JIRA_SITE_URL must be an https URL", file=sys.stderr)  # noqa: T201
+        _eprint("JIRA_SITE_URL must be an https URL")
         sys.exit(1)
     return u
 
@@ -145,8 +208,7 @@ def search_issues(
         }
         if next_page_token:
             body["nextPageToken"] = next_page_token
-        r = client.post(url, json=body)
-        r.raise_for_status()
+        r = jira_request(client, "POST", url, json=body)
         data = r.json()
         batch = data.get("issues", []) or []
         if not batch:
@@ -172,11 +234,12 @@ def _fetch_comments(
     start = 0
     root = base.rstrip("/")
     while len(out) < cap:
-        r = client.get(
+        r = jira_request(
+            client,
+            "GET",
             f"{root}/rest/api/3/issue/{issue_key}/comment",
             params={"startAt": start, "maxResults": min(100, cap - len(out))},
         )
-        r.raise_for_status()
         data = r.json()
         comments = data.get("comments", []) or []
         if not comments:
@@ -209,6 +272,55 @@ def _issue_field_lines(fields: dict[str, Any], key: str) -> list[str]:
         for ln in links[:50]:
             lines.append(json.dumps(ln)[:500])
     return lines
+
+
+def _relationships_from_issue_links(
+    issue_key: str,
+    links: Any,
+    *,
+    max_links: int = 200,
+) -> list[dict[str, str]]:
+    """Structured RAG edges from ``fields.issuelinks`` (distinct from flattened link text)."""
+    out: list[dict[str, str]] = []
+    if not isinstance(links, list):
+        return out
+    cur = f"jira:{issue_key}"
+    seen: set[tuple[str, str, str]] = set()
+    for ln in links[:max_links]:
+        if not isinstance(ln, dict):
+            continue
+        typ = ln.get("type") if isinstance(ln.get("type"), dict) else {}
+        inward_issue = ln.get("inwardIssue")
+        outward_issue = ln.get("outwardIssue")
+        inward = inward_issue if isinstance(inward_issue, dict) else {}
+        outward = outward_issue if isinstance(outward_issue, dict) else {}
+        ik = inward.get("key") if inward.get("key") is not None else None
+        ok = outward.get("key") if outward.get("key") is not None else None
+        ik_s = str(ik) if ik else ""
+        ok_s = str(ok) if ok else ""
+        name = str(typ.get("name") or "related")
+
+        if ik_s == issue_key and ok_s:
+            rt = str(typ.get("outward") or name)[:256]
+            key_t = (cur, f"jira:{ok_s}", rt)
+            if key_t not in seen:
+                seen.add(key_t)
+                out.append(
+                    {"source": cur, "target": f"jira:{ok_s}", "relationship_type": rt}
+                )
+        elif ok_s == issue_key and ik_s:
+            rt = str(typ.get("inward") or name)[:256]
+            key_t = (f"jira:{ik_s}", cur, rt)
+            if key_t not in seen:
+                seen.add(key_t)
+                out.append(
+                    {
+                        "source": f"jira:{ik_s}",
+                        "target": cur,
+                        "relationship_type": rt,
+                    }
+                )
+    return out
 
 
 def _issue_comment_lines(
@@ -246,19 +358,29 @@ def _embed_for_issue(
     scope: str,
     issue: dict[str, Any],
     text: str,
+    site_base: str,
 ) -> dict[str, Any]:
-    key = issue.get("key", "unknown")
+    fields = issue.get("fields") or {}
+    key = str(issue.get("key") or "unknown")
+    proj = fields.get("project") if isinstance(fields.get("project"), dict) else {}
+    proj_key = str(proj.get("key") or "")
+    root = site_base.rstrip("/")
+    issue_url = f"{root}/browse/{key}" if key != "unknown" else ""
+    links = fields.get("issuelinks")
+    rels = _relationships_from_issue_links(key, links)
     return {
         "scope": scope,
         "entities": [],
-        "relationships": [],
+        "relationships": rels,
         "items": [
             {
                 "text": text,
                 "metadata": {
                     "source": "jira-scraper",
                     "jira_issue_key": key,
-                    "jira_updated": (issue.get("fields") or {}).get("updated", ""),
+                    "jira_project_key": proj_key,
+                    "jira_issue_url": issue_url,
+                    "jira_updated": fields.get("updated", ""),
                 },
                 "entity_id": f"jira:{key}",
             },
@@ -301,7 +423,7 @@ def _jira_build_embed_payloads(
         truncated = len(raw_comments) > max_comments
         comments = raw_comments[:max_comments]
         text = _issue_text(issue, comments, max_comments, truncated)
-        all_payloads.append(_embed_for_issue(scope, issue, text))
+        all_payloads.append(_embed_for_issue(scope, issue, text, site))
         upd = (issue.get("fields") or {}).get("updated")
         if isinstance(upd, str):
             max_upd = max(max_upd, upd) if max_upd else upd
@@ -328,22 +450,22 @@ def _jira_validate_config_and_env(
     cfg: dict[str, Any],
 ) -> tuple[str, str, str, str, str, str]:
     if str(cfg.get("source", "")).strip().lower() != "jira":
-        print("Job config source must be jira", file=sys.stderr)  # noqa: T201
+        _eprint("Job config source must be jira")
         sys.exit(1)
     base_query = str(cfg.get("query", "")).strip()
     if not base_query:
-        print("Job config query (JQL) is required", file=sys.stderr)  # noqa: T201
+        _eprint("Job config query (JQL) is required")
         sys.exit(1)
 
     site = _site_base(os.environ.get("JIRA_SITE_URL", ""))
     email = os.environ.get("JIRA_EMAIL", "").strip()
     token = os.environ.get("JIRA_API_TOKEN", "").strip()
     if not email or not token:
-        print("JIRA_EMAIL and JIRA_API_TOKEN are required", file=sys.stderr)  # noqa: T201
+        _eprint("JIRA_EMAIL and JIRA_API_TOKEN are required")
         sys.exit(1)
     rag_base = os.environ.get("RAG_SERVICE_URL", "").strip().rstrip("/")
     if not rag_base:
-        print("RAG_SERVICE_URL is required", file=sys.stderr)  # noqa: T201
+        _eprint("RAG_SERVICE_URL is required")
         sys.exit(1)
     scope = os.environ.get("SCRAPER_SCOPE", "jira").strip() or "jira"
     return site, email, token, rag_base, scope, base_query
@@ -370,8 +492,9 @@ def run() -> None:
         )
         jql = _build_jql(base_query, wm)
 
+        tout = _http_timeout_seconds()
         with httpx.Client(
-            timeout=120.0,
+            timeout=httpx.Timeout(tout),
             auth=(email, token),
             headers={"Accept": "application/json"},
         ) as client:
