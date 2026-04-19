@@ -119,6 +119,21 @@ tests:
           content:
             name: HOSTED_AGENT_SLACK_TOOLS_TIMEOUT_SECONDS
             value: "45"
+  # [DALC-REQ-PLUGIN-LOG-SHIPPING-001]
+  - it: observability.plugins.logShipping.enabled injects HOSTED_AGENT_LOG_FORMAT json without structuredLogs json
+    set:
+      agent.observability.plugins.logShipping.enabled: true
+      agent.observability.structuredLogs.json: false
+    template: templates/agent.yaml
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HOSTED_AGENT_LOG_FORMAT
+            value: json
   # [DALC-REQ-SLACK-TRIGGER-004] distinct HOSTED_AGENT_SLACK_TRIGGER_* from Secrets (not slackTools/scrapers)
   - it: slackTrigger wires trigger env toggles and secret refs on agent Deployment
     set:

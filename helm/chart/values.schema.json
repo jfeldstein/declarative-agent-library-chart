@@ -416,7 +416,13 @@
             },
             "logShipping": {
               "type": "object",
-              "properties": { "enabled": { "type": "boolean" } }
+              "description": "Intent to ship container stdout logs through a centralized pipeline. When enabled=true, the chart sets HOSTED_AGENT_LOG_FORMAT=json so application logs are one JSON object per line ([DALC-REQ-PLUGIN-LOG-SHIPPING-001]). Equivalent to observability.structuredLogs.json=true; if either is true, JSON logs are enabled.",
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "description": "When true, inject HOSTED_AGENT_LOG_FORMAT=json on the agent Deployment."
+                }
+              }
             }
           }
         }

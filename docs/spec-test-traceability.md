@@ -71,6 +71,9 @@ The table is parsed by `scripts/check_spec_traceability.py`; keep the **Matrix**
 | [DALC-REQ-O11Y-LOGS-004] | `openspec/specs/dalc-agent-o11y-logs-dashboards/spec.md` | `docs/observability.md`, `README.md` | default PR | - | - |
 | [DALC-REQ-O11Y-LOGS-005] | `openspec/specs/dalc-agent-o11y-logs-dashboards/spec.md` | `grafana/README.md` | default PR | - | - |
 | [DALC-REQ-O11Y-LOGS-006] | `openspec/specs/dalc-agent-o11y-logs-dashboards/spec.md` | `grafana/cfha-token-metrics.json`, `grafana/README.md`, `docs/observability.md`, `helm/src/tests/test_token_metrics.py::test_o11y_logs_token_dashboard_capability_documented`, `helm/src/tests/test_token_metrics.py::test_cfha_token_dashboard_promql_matches_observability_metric_names` | default PR | - | - |
+| [DALC-REQ-PLUGIN-LOG-SHIPPING-001] | `openspec/specs/dalc-plugin-log-shipping/spec.md` | `helm/tests/hello_world_test.yaml`, `helm/chart/templates/_manifest_deployment.tpl` | default PR | - | - |
+| [DALC-REQ-PLUGIN-LOG-SHIPPING-002] | `openspec/specs/dalc-plugin-log-shipping/spec.md` | `helm/src/tests/test_chart_values_contract.py::test_observability_plugins_log_shipping_schema_documents_enabled_key` | default PR | - | - |
+| [DALC-REQ-PLUGIN-LOG-SHIPPING-003] | `openspec/specs/dalc-plugin-log-shipping/spec.md` | `docs/observability.md` | default PR | - | - |
 | [DALC-REQ-TOKEN-MET-001] | `openspec/specs/dalc-runtime-token-metrics/spec.md` | `helm/src/agent/metrics.py`, `helm/src/agent/llm_metrics.py`, `helm/src/tests/test_token_metrics.py` | default PR | - | - |
 | [DALC-REQ-TOKEN-MET-002] | `openspec/specs/dalc-runtime-token-metrics/spec.md` | `helm/src/agent/metrics.py`, `helm/src/agent/llm_metrics.py`, `helm/src/tests/test_token_metrics.py` | default PR | - | - |
 | [DALC-REQ-TOKEN-MET-003] | `openspec/specs/dalc-runtime-token-metrics/spec.md` | `helm/src/agent/metrics.py`, `helm/src/agent/llm_metrics.py`, `helm/src/tests/test_token_metrics.py` | default PR | - | - |

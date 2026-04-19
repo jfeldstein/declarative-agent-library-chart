@@ -77,7 +77,10 @@ spec:
               value: {{ default 50 $st.historyLimit | toString | quote }}
             - name: HOSTED_AGENT_SLACK_TOOLS_TIMEOUT_SECONDS
               value: {{ default 30 $st.timeoutSeconds | toString | quote }}
-            {{- if .Values.observability.structuredLogs.json }}
+            {{- $obsSl := .Values.observability.structuredLogs | default dict }}
+            {{- $plog := .Values.observability.plugins.logShipping | default dict }}
+            {{- $wantJsonLogs := or ($obsSl.json | default false) ($plog.enabled | default false) }}
+            {{- if $wantJsonLogs }}
             - name: HOSTED_AGENT_LOG_FORMAT
               value: "json"
             {{- end }}

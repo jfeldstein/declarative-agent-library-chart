@@ -85,6 +85,9 @@ observability:
       enabled: false
     grafana:
       enabled: false
+    # dalc-plugin-log-shipping: when enabled, chart sets HOSTED_AGENT_LOG_FORMAT=json on the agent
+    # (same effect as observability.structuredLogs.json). Use this flag to express “ship stdout logs”
+    # alongside other observability.plugins toggles without duplicating structuredLogs.
     logShipping:
       enabled: false
 
