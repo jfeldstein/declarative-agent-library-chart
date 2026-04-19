@@ -25,7 +25,7 @@ import httpx
 
 from hosted_agents.scrapers.base import (
     ScrapedEmbeds,
-    ingest_scraped_embeds,
+    ingest_from_integration,
     integration_label,
     run_scraper_main,
 )
@@ -446,6 +446,63 @@ def _jira_validate_config_and_env(
     return site, email, token, rag_base, scope, base_query
 
 
+class _JiraIntegration:
+    """Fetch Jira REST + comment pages; emit ``ScrapedEmbeds`` only (no RAG HTTP here)."""
+
+    __slots__ = ("_cfg", "_site", "_email", "_token", "_scope", "_base_query")
+
+    def __init__(
+        self,
+        cfg: dict[str, Any],
+        *,
+        site: str,
+        email: str,
+        token: str,
+        scope: str,
+        base_query: str,
+    ) -> None:
+        self._cfg = cfg
+        self._site = site
+        self._email = email
+        self._token = token
+        self._scope = scope
+        self._base_query = base_query
+
+    def build_batch(self) -> ScrapedEmbeds:
+        max_issues = int(self._cfg.get("maxIssuesPerRun", 50))
+        max_comments = int(self._cfg.get("maxCommentsPerIssue", 100))
+        overlap = int(self._cfg.get("overlapMinutes", 5))
+        fields = _jira_issue_fields(self._cfg)
+
+        store = cursor_store_from_env()
+        wm = _jql_watermark_after_overlap(
+            store.get_state("jira", self._scope, self._base_query), overlap
+        )
+        jql = _build_jql(self._base_query, wm)
+
+        tout = _http_timeout_seconds()
+        with httpx.Client(
+            timeout=httpx.Timeout(tout),
+            auth=(self._email, self._token),
+            headers={"Accept": "application/json"},
+        ) as client:
+            all_payloads, max_upd = _jira_build_embed_payloads(
+                client,
+                self._site,
+                jql,
+                fields,
+                self._scope,
+                max_issues,
+                max_comments,
+            )
+
+        def commit_watermark() -> None:
+            if max_upd:
+                store.set_state("jira", self._scope, self._base_query, max_upd)
+
+        return ScrapedEmbeds(all_payloads, commit_watermark if max_upd else None)
+
+
 def run() -> None:
     integration = integration_label(
         os.environ.get("SCRAPER_INTEGRATION", ""),
@@ -457,35 +514,14 @@ def run() -> None:
         site, email, token, rag_base, scope, base_query = _jira_validate_config_and_env(
             cfg
         )
-        max_issues = int(cfg.get("maxIssuesPerRun", 50))
-        max_comments = int(cfg.get("maxCommentsPerIssue", 100))
-        overlap = int(cfg.get("overlapMinutes", 5))
-        fields = _jira_issue_fields(cfg)
-
-        store = cursor_store_from_env()
-        wm = _jql_watermark_after_overlap(
-            store.get_state("jira", scope, base_query), overlap
+        scraper = _JiraIntegration(
+            cfg, site=site, email=email, token=token, scope=scope, base_query=base_query
         )
-        jql = _build_jql(base_query, wm)
-
-        tout = _http_timeout_seconds()
-        with httpx.Client(
-            timeout=httpx.Timeout(tout),
-            auth=(email, token),
-            headers={"Accept": "application/json"},
-        ) as client:
-            all_payloads, max_upd = _jira_build_embed_payloads(
-                client, site, jql, fields, scope, max_issues, max_comments
-            )
-
-        def commit_watermark() -> None:
-            if max_upd:
-                store.set_state("jira", scope, base_query, max_upd)
-
-        ingest_scraped_embeds(
-            rag_base,
-            integration,
-            ScrapedEmbeds(all_payloads, commit_watermark if max_upd else None),
+        ingest_from_integration(
+            rag_base=rag_base,
+            integration=integration,
+            scraper=scraper,
+            timeout=_http_timeout_seconds(),
         )
 
     run_scraper_main(integration, main)

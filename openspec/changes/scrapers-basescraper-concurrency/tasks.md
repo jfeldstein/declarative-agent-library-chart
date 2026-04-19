@@ -1,9 +1,9 @@
 ## 1. Scraper runtime (`base.py`)
 
-- [ ] 1.1 Add **`hosted_agents/scrapers/base.py`**: shared **`run()`** orchestration — load **`job.json`**, env validation, metrics HTTP lifecycle, **sole owner of `POST /v1/embed`** to managed RAG, **cursor/watermark read/write** via **`cursor_store`**, bounded **`integration`** label, exit codes
-- [ ] 1.2 Define **`ScraperIntegration`** **`Protocol`** (or ABC): methods return **normalized in-memory payloads** (and optional proposed watermark/cursor updates as **data** only); **no** RAG HTTP, **no** persistence side effects inside integration implementations
-- [ ] 1.3 Refactor **`jira_job`** to integration-only **return-data** pattern; entrypoint delegates to **`base.py`**; tests green
-- [ ] 1.4 Refactor **`slack_job`** the same way; tests green
+- [x] 1.1 Add **`hosted_agents/scrapers/base.py`**: shared **`run()`** orchestration — load **`job.json`**, env validation, metrics HTTP lifecycle, **sole owner of `POST /v1/embed`** to managed RAG, **cursor/watermark read/write** via **`cursor_store`**, bounded **`integration`** label, exit codes
+- [x] 1.2 Define **`ScraperIntegration`** **`Protocol`** (or ABC): methods return **normalized in-memory payloads** (and optional proposed watermark/cursor updates as **data** only); **no** RAG HTTP, **no** persistence side effects inside integration implementations
+- [x] 1.3 Refactor **`jira_job`** to integration-only **return-data** pattern; entrypoint delegates to **`base.py`**; tests green
+- [x] 1.4 Refactor **`slack_job`** the same way; tests green
 
 ## 2. Helm: concurrencyPolicy
 

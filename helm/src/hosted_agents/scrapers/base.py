@@ -11,7 +11,7 @@ from __future__ import annotations
 import time
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Protocol
 
 import httpx
 
@@ -58,6 +58,27 @@ class ScrapedEmbeds:
 
     payloads: list[dict[str, Any]]
     commit: Callable[[], None] | None = None
+
+
+class ScraperIntegration(Protocol):
+    """Integration hook: fetch + map upstream data into embed payloads only.
+
+    Implementations **must not** call ``POST .../v1/embed`` or write cursor stores;
+    this runtime performs ingestion and persistence after a successful embed batch.
+    """
+
+    def build_batch(self) -> ScrapedEmbeds: ...
+
+
+def ingest_from_integration(
+    *,
+    rag_base: str,
+    integration: str,
+    scraper: ScraperIntegration,
+    timeout: float = 120.0,
+) -> None:
+    """POST embed payloads from ``scraper.build_batch()`` then run optional commit."""
+    ingest_scraped_embeds(rag_base, integration, scraper.build_batch(), timeout=timeout)
 
 
 def ingest_scraped_embeds(

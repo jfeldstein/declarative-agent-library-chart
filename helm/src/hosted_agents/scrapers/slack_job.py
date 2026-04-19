@@ -35,7 +35,7 @@ from slack_sdk.errors import SlackApiError
 
 from hosted_agents.scrapers.base import (
     ScrapedEmbeds,
-    ingest_scraped_embeds,
+    ingest_from_integration,
     integration_label,
     run_scraper_main,
 )
@@ -651,44 +651,53 @@ def _run_slack_channel(
     )
 
 
-def _slack_run_job_body(
-    source: str,
-    norm: dict[str, Any],
-    store: CursorStore,
-    scope: str,
-    rag_base: str,
-    integration: str,
-) -> None:
-    user_token = os.environ.get("SLACK_USER_TOKEN", "").strip()
-    bot_token = os.environ.get("SLACK_BOT_TOKEN", "").strip()
+class _SlackIntegration:
+    """Resolve Slack APIs into ``ScrapedEmbeds`` only (no RAG HTTP here)."""
 
-    if source == "slack_search":
-        if not user_token:
+    __slots__ = ("_source", "_norm", "_store", "_scope")
+
+    def __init__(
+        self,
+        source: str,
+        norm: dict[str, Any],
+        store: CursorStore,
+        scope: str,
+    ) -> None:
+        self._source = source
+        self._norm = norm
+        self._store = store
+        self._scope = scope
+
+    def build_batch(self) -> ScrapedEmbeds:
+        user_token = os.environ.get("SLACK_USER_TOKEN", "").strip()
+        bot_token = os.environ.get("SLACK_BOT_TOKEN", "").strip()
+
+        if self._source == "slack_search":
+            if not user_token:
+                _die(
+                    "SLACK_USER_TOKEN is required for slack_search (assistant.search.context / RTS)."
+                )
+            user_client = WebClient(token=user_token)
+            bot_client = WebClient(token=bot_token) if bot_token else None
+            try:
+                payload = _run_slack_search(
+                    user_client, bot_client, self._norm, self._scope
+                )
+            except SlackApiError as exc:
+                _die(f"Slack API error: {_redact_token_like(str(exc))}")
+            if not payload:
+                return ScrapedEmbeds([], None)
+            return ScrapedEmbeds([payload], None)
+
+        if not bot_token:
             _die(
-                "SLACK_USER_TOKEN is required for slack_search (assistant.search.context / RTS)."
+                "SLACK_BOT_TOKEN is required for slack_channel (conversations.history)."
             )
-        user_client = WebClient(token=user_token)
-        bot_client = WebClient(token=bot_token) if bot_token else None
+        bot = WebClient(token=bot_token)
         try:
-            payload = _run_slack_search(user_client, bot_client, norm, scope)
+            return _run_slack_channel(bot, self._norm, self._scope, self._store)
         except SlackApiError as exc:
             _die(f"Slack API error: {_redact_token_like(str(exc))}")
-        if payload:
-            ingest_scraped_embeds(
-                rag_base,
-                integration,
-                ScrapedEmbeds([payload], None),
-            )
-        return
-
-    if not bot_token:
-        _die("SLACK_BOT_TOKEN is required for slack_channel (conversations.history).")
-    bot = WebClient(token=bot_token)
-    try:
-        batch = _run_slack_channel(bot, norm, scope, store)
-    except SlackApiError as exc:
-        _die(f"Slack API error: {_redact_token_like(str(exc))}")
-    ingest_scraped_embeds(rag_base, integration, batch)
 
 
 def run() -> None:
@@ -705,7 +714,12 @@ def run() -> None:
             _die("RAG_SERVICE_URL is required.")
         scope = os.environ.get("SCRAPER_SCOPE", "slack").strip() or "slack"
         store = cursor_store_from_env()
-        _slack_run_job_body(source, norm, store, scope, rag_base, integration)
+        scraper = _SlackIntegration(source, norm, store, scope)
+        ingest_from_integration(
+            rag_base=rag_base,
+            integration=integration,
+            scraper=scraper,
+        )
 
     run_scraper_main(integration, main)
 
