@@ -79,8 +79,20 @@ observability:
   plugins:
     prometheus:
       enabled: false
+    # Traceability: [DALC-REQ-LANGFUSE-TRACE-002]
     langfuse:
       enabled: false
+      # Langfuse Cloud / self-hosted OTLP ingest base URL (maps to HOSTED_AGENT_LANGFUSE_HOST).
+      host: ""
+      # SDK batch flush interval (seconds); maps to HOSTED_AGENT_LANGFUSE_FLUSH_INTERVAL_SECONDS.
+      flushIntervalSeconds: null
+      # API keys via Kubernetes Secret refs (recommended).
+      publicKeySecret:
+        secretName: ""
+        secretKey: public-key
+      secretKeySecret:
+        secretName: ""
+        secretKey: secret-key
     wandb:
       enabled: false
     grafana:

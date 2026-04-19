@@ -7,9 +7,13 @@ from typing import Literal
 from agent.observability.events import SyncEventBus
 from agent.observability.legacy_agent_metrics import register_agent_legacy_metrics
 from agent.observability.legacy_scraper_metrics import register_scraper_legacy_metrics
+from agent.observability.plugins.langfuse_bridge import (
+    build_langfuse_client,
+    register_langfuse_plugin,
+)
 from agent.observability.plugins_config import (
     ObservabilityPluginsConfig,
-    default_plugins_config,
+    plugins_config_from_env,
 )
 
 ProcessKind = Literal["agent", "scraper"]
@@ -24,11 +28,11 @@ def build_event_bus(
 ) -> SyncEventBus:
     """Construct an isolated bus instance and attach Phase 1 legacy Prometheus subscribers."""
 
-    cfg = _config or default_plugins_config()
+    cfg = _config or plugins_config_from_env()
     bus = SyncEventBus()
-    _ = cfg  # Future: gate plugin subscribers (Langfuse, Prometheus plugin, …).
     if process == "agent":
         register_agent_legacy_metrics(bus)
+        register_langfuse_plugin(bus, build_langfuse_client(cfg.langfuse))
     else:
         register_scraper_legacy_metrics(bus)
     return bus

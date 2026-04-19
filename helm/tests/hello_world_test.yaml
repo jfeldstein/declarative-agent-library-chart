@@ -38,6 +38,52 @@ tests:
           content:
             name: WANDB_PROJECT
             value: myproj
+  # [DALC-REQ-LANGFUSE-TRACE-002]
+  - it: observability.plugins.langfuse wires Langfuse SDK env from secrets
+    set:
+      agent.observability.plugins.langfuse.enabled: true
+      agent.observability.plugins.langfuse.host: https://cloud.langfuse.com
+      agent.observability.plugins.langfuse.flushIntervalSeconds: 12
+      agent.observability.plugins.langfuse.publicKeySecret.secretName: lf-keys
+      agent.observability.plugins.langfuse.publicKeySecret.secretKey: pk
+      agent.observability.plugins.langfuse.secretKeySecret.secretName: lf-keys
+      agent.observability.plugins.langfuse.secretKeySecret.secretKey: sk
+    template: templates/agent.yaml
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HOSTED_AGENT_LANGFUSE_ENABLED
+            value: "true"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HOSTED_AGENT_LANGFUSE_HOST
+            value: https://cloud.langfuse.com
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HOSTED_AGENT_LANGFUSE_FLUSH_INTERVAL_SECONDS
+            value: "12"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HOSTED_AGENT_LANGFUSE_PUBLIC_KEY
+            valueFrom:
+              secretKeyRef:
+                name: lf-keys
+                key: pk
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HOSTED_AGENT_LANGFUSE_SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                name: lf-keys
+                key: sk
   - it: scrapers.slack.feedback.enabled wires Slack feedback env
     set:
       agent.scrapers.slack.feedback.enabled: true

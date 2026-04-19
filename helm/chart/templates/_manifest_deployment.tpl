@@ -113,6 +113,41 @@ spec:
               value: {{ .Values.wandb.entity | quote }}
             {{- end }}
             {{- end }}
+            {{- $lf := .Values.observability.plugins.langfuse | default dict }}
+            {{- if $lf.enabled | default false }}
+            - name: HOSTED_AGENT_LANGFUSE_ENABLED
+              value: "true"
+            {{- $lfHost := $lf.host | default "" | trim }}
+            {{- if $lfHost }}
+            - name: HOSTED_AGENT_LANGFUSE_HOST
+              value: {{ $lfHost | quote }}
+            {{- end }}
+            {{- $lfFlush := $lf.flushIntervalSeconds }}
+            {{- if $lfFlush }}
+            - name: HOSTED_AGENT_LANGFUSE_FLUSH_INTERVAL_SECONDS
+              value: {{ $lfFlush | toString | quote }}
+            {{- end }}
+            {{- $lfPk := $lf.publicKeySecret | default dict }}
+            {{- $lfPkName := $lfPk.secretName | default "" | trim }}
+            {{- $lfPkKey := $lfPk.secretKey | default "public-key" | trim }}
+            {{- if and $lfPkName $lfPkKey }}
+            - name: HOSTED_AGENT_LANGFUSE_PUBLIC_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $lfPkName | quote }}
+                  key: {{ $lfPkKey | quote }}
+            {{- end }}
+            {{- $lfSk := $lf.secretKeySecret | default dict }}
+            {{- $lfSkName := $lfSk.secretName | default "" | trim }}
+            {{- $lfSkKey := $lfSk.secretKey | default "secret-key" | trim }}
+            {{- if and $lfSkName $lfSkKey }}
+            - name: HOSTED_AGENT_LANGFUSE_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $lfSkName | quote }}
+                  key: {{ $lfSkKey | quote }}
+            {{- end }}
+            {{- end }}
             {{- if .Values.scrapers.slack.feedback.enabled }}
             - name: HOSTED_AGENT_SLACK_FEEDBACK_ENABLED
               value: "true"
