@@ -17,6 +17,11 @@ def test_pyproject_declares_three_builtin_entry_points() -> None:
     assert 'builtin-sample = "agent.tools.sample_echo:TOOLS"' in raw
     assert 'builtin-slack = "agent.tools.slack:TOOLS"' in raw
     assert 'builtin-jira = "agent.tools.jira:TOOLS"' in raw
+    assert '[project.entry-points."declarative_agent.observability_plugins"]' in raw
+    assert (
+        'noop-consumer = "agent.observability.plugins.noop_consumer_plugin:PLUGIN"'
+        in raw
+    )
 
 
 def test_entry_point_group_matches_registry_constant() -> None:

@@ -28,6 +28,13 @@ def _positive_float(key: str) -> float | None:
     return v if v > 0 else None
 
 
+def _comma_allowlist_env(key: str) -> tuple[str, ...]:
+    raw = _trim(key)
+    if not raw:
+        return ()
+    return tuple(p.strip() for p in raw.split(",") if p.strip())
+
+
 @dataclass(frozen=True)
 class PluginToggle:
     enabled: bool = False
@@ -45,6 +52,19 @@ class LangfusePluginSettings:
 
 
 @dataclass(frozen=True)
+class ConsumerPluginsSettings:
+    """Optional distribution-provided observability hooks (PEP 621 entry-point group).
+
+    Traceability: [DALC-REQ-CUSTOM-O11Y-004]
+    """
+
+    enabled: bool = False
+    entry_point_allowlist: tuple[str, ...] = ()
+    strict: bool = False
+    json_config: str | None = None
+
+
+@dataclass(frozen=True)
 class ObservabilityPluginsConfig:
     """Parsed configuration for optional observability plugins (Helm/env)."""
 
@@ -53,6 +73,7 @@ class ObservabilityPluginsConfig:
     wandb: PluginToggle = PluginToggle(enabled=False)
     grafana: PluginToggle = PluginToggle(enabled=False)
     log_shipping: PluginToggle = PluginToggle(enabled=False)
+    consumer_plugins: ConsumerPluginsSettings = ConsumerPluginsSettings()
 
 
 def default_plugins_config() -> ObservabilityPluginsConfig:
@@ -77,6 +98,15 @@ def plugins_config_from_env() -> ObservabilityPluginsConfig:
     wandb_enabled = _truthy(
         "HOSTED_AGENT_OBSERVABILITY_PLUGINS_WANDB_ENABLED",
     ) or _truthy("HOSTED_AGENT_WANDB_ENABLED")
+    consumer_cfg = ConsumerPluginsSettings(
+        enabled=_truthy("HOSTED_AGENT_OBSERVABILITY_PLUGINS_CONSUMER_ENABLED"),
+        entry_point_allowlist=_comma_allowlist_env(
+            "HOSTED_AGENT_OBSERVABILITY_PLUGINS_ENTRY_POINTS",
+        ),
+        strict=_truthy("HOSTED_AGENT_OBSERVABILITY_PLUGINS_STRICT"),
+        json_config=_trim("HOSTED_AGENT_OBSERVABILITY_PLUGINS_CONSUMER_CONFIG_JSON")
+        or None,
+    )
     return ObservabilityPluginsConfig(
         prometheus=PluginToggle(
             enabled=_truthy("HOSTED_AGENT_OBSERVABILITY_PLUGINS_PROMETHEUS_ENABLED"),
@@ -91,4 +121,5 @@ def plugins_config_from_env() -> ObservabilityPluginsConfig:
                 "HOSTED_AGENT_OBSERVABILITY_PLUGINS_LOG_SHIPPING_ENABLED",
             ),
         ),
+        consumer_plugins=consumer_cfg,
     )

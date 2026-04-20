@@ -40,10 +40,15 @@ spec:
             - name: http
               containerPort: {{ .Values.scrapers.ragService.service.port }}
               protocol: TCP
-          {{- if .Values.observability.plugins.prometheus.enabled }}
+          {{- $cp := .Values.observability.plugins.consumerPlugins | default dict }}
+          {{- if or (.Values.observability.plugins.prometheus.enabled) ($cp.enabled | default false) }}
           env:
+            {{- if .Values.observability.plugins.prometheus.enabled }}
             - name: HOSTED_AGENT_OBSERVABILITY_PLUGINS_PROMETHEUS_ENABLED
               value: "true"
+            {{- end }}
+            {{/* [DALC-REQ-CHART-RTV-005] */}}
+            {{- include "declarative-agent-library-chart.consumerPluginsEnv" . | nindent 12 }}
           {{- end }}
           readinessProbe:
             httpGet:

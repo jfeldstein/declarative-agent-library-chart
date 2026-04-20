@@ -104,6 +104,16 @@ observability:
     # alongside other observability.plugins toggles without duplicating structuredLogs.
     logShipping:
       enabled: false
+    # Disabled by default — install a wheel that registers ``declarative_agent.observability_plugins`` entry points.
+    # Traceability: [DALC-REQ-CHART-RTV-005]
+    consumerPlugins:
+      enabled: false
+      strict: false
+      entryPoints: []
+      configJson: ""
+      configJsonSecret:
+        secretName: ""
+        secretKey: config.json
 
 # LangGraph checkpoint store (maps to HOSTED_AGENT_CHECKPOINT_* when enabled).
 checkpoints:

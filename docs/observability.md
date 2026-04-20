@@ -19,6 +19,17 @@ Per-plugin summaries:
 | **`wandb`** | **`observability.plugins.wandb`** aligns with **`wandb.*`** / **`HOSTED_AGENT_WANDB_*`** — see **Checkpoints, W&B traces, and Slack correlation** below. |
 | **`grafana`** | Optional **`ConfigMap`** (**`templates/_manifest_grafana_dashboards.tpl`**) packaging **`helm/chart/files/grafana/*.json`** when enabled (mirrors **`grafana/*.json`**); remote_write/stack automation is future work. |
 | **`logShipping`** | **`HOSTED_AGENT_LOG_FORMAT=json`** when **`observability.plugins.logShipping.enabled`** or **`observability.structuredLogs.json`** — see **[DALC-REQ-PLUGIN-LOG-SHIPPING-001]** / structured logs sections. |
+| **`consumerPlugins`** | Optional PEP 621 hooks under **`declarative_agent.observability_plugins`** (disabled by default). Enables **`HOSTED_AGENT_OBSERVABILITY_PLUGINS_CONSUMER_ENABLED`** plus optional allowlist (**`HOSTED_AGENT_OBSERVABILITY_PLUGINS_ENTRY_POINTS`**), **`HOSTED_AGENT_OBSERVABILITY_PLUGINS_STRICT`**, and opaque **`HOSTED_AGENT_OBSERVABILITY_PLUGINS_CONSUMER_CONFIG_JSON`** — see **[DALC-REQ-CHART-RTV-005]** / **`dalc-custom-observability-plugins`**.
+
+### Consumer observability plugins (extensions)
+
+<!-- Traceability: [DALC-REQ-CUSTOM-O11Y-006] -->
+
+Downstream images can ship additional Python distributions that register **`[project.entry-points."declarative_agent.observability_plugins"]`** objects (same packaging story as **`declarative_agent.tools`**). Hooks mirror the built-in **`enqueue`** / **`attach`** phases documented in **`agent.observability.bootstrap`**: **`enqueue(process_kind, cfg, enqueue_subscription)`** runs before **`SyncEventBus`** construction; **`attach(process_kind, cfg, bus)`** runs afterward. **`process_kind`** is **`agent`** or **`scraper`** (managed RAG uses **`ensure_agent_observability`**, so it follows **`agent`** semantics today).
+
+Treat optional JSON config (**`consumerPlugins.configJson`** or **`configJsonSecret`**) like other bounded operator fields — avoid stuffing high-cardinality or sensitive payloads; follow **[ADR 0011 — Prometheus metrics schema and cardinality](adrs/0011-prometheus-metrics-schema-and-cardinality.md)** for labels emitted from hooks and **[ADR 0015 — Integration-agnostic observability plugins](adrs/0015-integration-agnostic-observability-plugins.md)** for metrics that belong in **`agent.observability.plugins.prometheus`**. Trace redaction references: Langfuse middleware docs (**`openspec/specs/dalc-plugin-langfuse-traces/`**).
+
+**Non-goals:** Helm values SHALL NOT configure arbitrary **`importlib`** import paths for observability hooks — operators install wheels that declare PEP 621 entry points (audit-friendly, aligns with **[DALC-REQ-CUSTOM-O11Y-001]**).
 
 Design record: **[ADR 0014 — Observability plugin architecture](adrs/0014-observability-plugin-architecture.md)** (terminology alongside **[ADR 0005](adrs/0005-observability-vs-execution-persistence.md)**, schema rules in **[ADR 0011](adrs/0011-prometheus-metrics-schema-and-cardinality.md)**).
 

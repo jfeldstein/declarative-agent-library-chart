@@ -1,4 +1,4 @@
-# Traceability: [DALC-REQ-HELM-UNITTEST-001] [DALC-REQ-HELM-UNITTEST-002] [DALC-REQ-RAG-SCRAPERS-002] [DALC-REQ-RAG-SCRAPERS-004] [DALC-REQ-CHART-RTV-001] [DALC-REQ-CHART-RTV-002] [DALC-REQ-CHART-RTV-003] [DALC-REQ-CHART-PRESENCE-001] [DALC-REQ-CHART-PRESENCE-002] [DALC-REQ-CHART-PRESENCE-003] [DALC-REQ-DALC-PKG-002] [DALC-REQ-POSTGRES-AGENT-PERSISTENCE-002] [DALC-VER-002]
+# Traceability: [DALC-REQ-HELM-UNITTEST-001] [DALC-REQ-HELM-UNITTEST-002] [DALC-REQ-RAG-SCRAPERS-002] [DALC-REQ-RAG-SCRAPERS-004] [DALC-REQ-CHART-RTV-001] [DALC-REQ-CHART-RTV-002] [DALC-REQ-CHART-RTV-003] [DALC-REQ-CHART-RTV-005] [DALC-REQ-CHART-PRESENCE-001] [DALC-REQ-CHART-PRESENCE-002] [DALC-REQ-CHART-PRESENCE-003] [DALC-REQ-DALC-PKG-002] [DALC-REQ-POSTGRES-AGENT-PERSISTENCE-002] [DALC-VER-002]
 values:
   - ../../examples/hello-world/values.yaml
 suite: hello-world default values
@@ -362,6 +362,44 @@ tests:
           path: spec.template.spec.containers[0].env
           content:
             name: HOSTED_AGENT_JIRA_BOT_ACCOUNT_ID
+      # [DALC-REQ-CHART-RTV-005]
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HOSTED_AGENT_OBSERVABILITY_PLUGINS_CONSUMER_ENABLED
+  # [DALC-REQ-CHART-RTV-005]
+  - it: consumerPlugins enabled wires HOSTED_AGENT_OBSERVABILITY_PLUGINS_* env on agent Deployment
+    set:
+      agent.observability.plugins.consumerPlugins.enabled: true
+      agent.observability.plugins.consumerPlugins.strict: true
+      agent.observability.plugins.consumerPlugins.entryPoints:
+        - noop-consumer
+      agent.observability.plugins.consumerPlugins.configJson: '{"demo":true}'
+    template: templates/agent.yaml
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HOSTED_AGENT_OBSERVABILITY_PLUGINS_CONSUMER_ENABLED
+            value: "true"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HOSTED_AGENT_OBSERVABILITY_PLUGINS_STRICT
+            value: "true"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HOSTED_AGENT_OBSERVABILITY_PLUGINS_ENTRY_POINTS
+            value: noop-consumer
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HOSTED_AGENT_OBSERVABILITY_PLUGINS_CONSUMER_CONFIG_JSON
+            value: '{"demo":true}'
   # [DALC-REQ-CHART-PRESENCE-002] incomplete Secret ref (secretName without secretKey)
   - it: presence slack botUserId without secretKey omits HOSTED_AGENT_SLACK_BOT_USER_ID
     set:

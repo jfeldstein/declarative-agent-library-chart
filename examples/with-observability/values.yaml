@@ -12,6 +12,8 @@ agent:
     pullPolicy: Never
   observability:
     plugins:
+      # Optional: merge examples/with-observability/values-consumer-plugins.yaml to exercise
+      # PEP 621 consumer observability hooks (disabled by default in the library chart).
       prometheus:
         enabled: true
     prometheusAnnotations:

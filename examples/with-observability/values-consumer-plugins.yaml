@@ -1,0 +1,11 @@
+# Opt-in overlay: enables consumer observability hooks for charts depending on this example.
+# Merge after values.yaml (helm upgrade -f values.yaml -f values-consumer-plugins.yaml …).
+# Runtime expects wheels that register declarative_agent.observability_plugins entry points.
+agent:
+  observability:
+    plugins:
+      consumerPlugins:
+        enabled: true
+        strict: false
+        entryPoints:
+          - noop-consumer

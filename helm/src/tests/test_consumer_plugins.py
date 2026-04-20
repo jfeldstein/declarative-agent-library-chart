@@ -1,0 +1,226 @@
+"""Tests for distribution-provided observability plugins (entry-point discovery)."""
+
+from __future__ import annotations
+
+from importlib.metadata import EntryPoint
+from unittest.mock import patch
+
+import pytest
+
+from agent.observability.bootstrap import build_event_bus, reset_observability_for_tests
+from agent.observability.plugins import noop_consumer_plugin
+from agent.observability.plugins.consumer_plugins import (
+    OBSERVABILITY_PLUGINS_ENTRY_POINT_GROUP,
+)
+from agent.observability.plugins_config import (
+    ConsumerPluginsSettings,
+    LangfusePluginSettings,
+    ObservabilityPluginsConfig,
+    PluginToggle,
+)
+
+
+@pytest.fixture(autouse=True)
+def _reset_bus() -> None:
+    reset_observability_for_tests()
+    yield
+    reset_observability_for_tests()
+
+
+def _cfg(
+    *,
+    prometheus_enabled: bool = False,
+    consumer_plugins: ConsumerPluginsSettings | None = None,
+) -> ObservabilityPluginsConfig:
+    return ObservabilityPluginsConfig(
+        prometheus=PluginToggle(enabled=prometheus_enabled),
+        langfuse=LangfusePluginSettings(),
+        wandb=PluginToggle(enabled=False),
+        grafana=PluginToggle(enabled=False),
+        log_shipping=PluginToggle(enabled=False),
+        consumer_plugins=consumer_plugins or ConsumerPluginsSettings(),
+    )
+
+
+class _FakeEntryPointGroups:
+    def __init__(self, eps: list[EntryPoint]) -> None:
+        self._eps = eps
+
+    def select(self, *, group: str) -> list[EntryPoint]:
+        del group
+        return list(self._eps)
+
+
+def test_builtin_enqueue_and_attach_run_before_consumer_hooks(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """[DALC-REQ-CUSTOM-O11Y-002] Built-in wiring runs before consumer hooks in each phase."""
+
+    phases: list[str] = []
+
+    monkeypatch.setattr(
+        "agent.observability.bootstrap.enqueue_plugins_from_config",
+        lambda cfg, register: phases.append("enqueue_builtin"),
+    )
+    monkeypatch.setattr(
+        "agent.observability.bootstrap.enqueue_consumer_plugins",
+        lambda proc, cfg, register: phases.append("enqueue_consumer"),
+    )
+    monkeypatch.setattr(
+        "agent.observability.bootstrap.attach_plugins_from_config",
+        lambda proc, cfg, bus: phases.append("attach_builtin"),
+    )
+    monkeypatch.setattr(
+        "agent.observability.bootstrap.attach_consumer_plugins",
+        lambda proc, cfg, bus: phases.append("attach_consumer"),
+    )
+
+    build_event_bus(
+        "agent",
+        _cfg(
+            consumer_plugins=ConsumerPluginsSettings(enabled=True),
+        ),
+    )
+
+    assert phases == [
+        "enqueue_builtin",
+        "enqueue_consumer",
+        "attach_builtin",
+        "attach_consumer",
+    ]
+
+
+def test_disabled_does_not_query_entry_points() -> None:
+    """[DALC-REQ-CUSTOM-O11Y-001] When consumer plugins are disabled, skip metadata discovery."""
+
+    def _boom() -> None:
+        raise AssertionError("entry_points should not be queried when disabled")
+
+    with patch("agent.observability.plugins.consumer_plugins.entry_points", _boom):
+        build_event_bus("agent", _cfg())
+
+
+def test_enabled_invokes_hooks_for_allowlisted_entry_point(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """[DALC-REQ-CUSTOM-O11Y-001] [DALC-REQ-CUSTOM-O11Y-003] Hooks receive process kind."""
+
+    recorded: list[tuple[str, str]] = []
+
+    def _fake_enqueue(
+        process_kind: str,
+        cfg: ObservabilityPluginsConfig,
+        enqueue: object,
+    ) -> None:
+        del cfg, enqueue
+        recorded.append(("enqueue", process_kind))
+
+    def _fake_attach(
+        process_kind: str,
+        cfg: ObservabilityPluginsConfig,
+        bus: object,
+    ) -> None:
+        del cfg, bus
+        recorded.append(("attach", process_kind))
+
+    monkeypatch.setattr(noop_consumer_plugin.PLUGIN, "enqueue", _fake_enqueue)
+    monkeypatch.setattr(noop_consumer_plugin.PLUGIN, "attach", _fake_attach)
+
+    ep = EntryPoint(
+        name="noop-consumer",
+        value="agent.observability.plugins.noop_consumer_plugin:PLUGIN",
+        group=OBSERVABILITY_PLUGINS_ENTRY_POINT_GROUP,
+    )
+
+    with patch(
+        "agent.observability.plugins.consumer_plugins.entry_points",
+        lambda: _FakeEntryPointGroups([ep]),
+    ):
+        build_event_bus(
+            "scraper",
+            _cfg(
+                consumer_plugins=ConsumerPluginsSettings(
+                    enabled=True,
+                    entry_point_allowlist=("noop-consumer",),
+                ),
+            ),
+        )
+
+    assert recorded == [("enqueue", "scraper"), ("attach", "scraper")]
+
+
+def test_non_strict_skips_import_error_entry_point() -> None:
+    """[DALC-REQ-CUSTOM-O11Y-005] Broken plugins are skipped when strict is off."""
+
+    bad = EntryPoint(
+        name="bad-import",
+        value="tests.consumer_plugin_error_on_import:PLUGIN",
+        group=OBSERVABILITY_PLUGINS_ENTRY_POINT_GROUP,
+    )
+
+    with patch(
+        "agent.observability.plugins.consumer_plugins.entry_points",
+        lambda: _FakeEntryPointGroups([bad]),
+    ):
+        build_event_bus(
+            "agent",
+            _cfg(
+                consumer_plugins=ConsumerPluginsSettings(
+                    enabled=True,
+                    entry_point_allowlist=("bad-import",),
+                    strict=False,
+                ),
+            ),
+        )
+
+
+def test_strict_mode_surfaces_import_error() -> None:
+    """[DALC-REQ-CUSTOM-O11Y-005] Strict mode fails closed on broken entry points."""
+
+    bad = EntryPoint(
+        name="bad-import",
+        value="tests.consumer_plugin_error_on_import:PLUGIN",
+        group=OBSERVABILITY_PLUGINS_ENTRY_POINT_GROUP,
+    )
+
+    with (
+        patch(
+            "agent.observability.plugins.consumer_plugins.entry_points",
+            lambda: _FakeEntryPointGroups([bad]),
+        ),
+        pytest.raises(RuntimeError, match="consumer_plugin_error_on_import"),
+    ):
+        build_event_bus(
+            "agent",
+            _cfg(
+                consumer_plugins=ConsumerPluginsSettings(
+                    enabled=True,
+                    entry_point_allowlist=("bad-import",),
+                    strict=True,
+                ),
+            ),
+        )
+
+
+def test_plugins_config_from_env_maps_consumer_keys(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """[DALC-REQ-CUSTOM-O11Y-004] [DALC-REQ-CHART-RTV-005] Env keys map to ConsumerPluginsSettings."""
+
+    from agent.observability.plugins_config import plugins_config_from_env
+
+    monkeypatch.setenv("HOSTED_AGENT_OBSERVABILITY_PLUGINS_CONSUMER_ENABLED", "true")
+    monkeypatch.setenv(
+        "HOSTED_AGENT_OBSERVABILITY_PLUGINS_ENTRY_POINTS",
+        "noop-consumer,other",
+    )
+    monkeypatch.setenv("HOSTED_AGENT_OBSERVABILITY_PLUGINS_STRICT", "true")
+    monkeypatch.setenv(
+        "HOSTED_AGENT_OBSERVABILITY_PLUGINS_CONSUMER_CONFIG_JSON", '{"k":"v"}'
+    )
+
+    cfg = plugins_config_from_env()
+    assert cfg.consumer_plugins.enabled is True
+    assert cfg.consumer_plugins.entry_point_allowlist == ("noop-consumer", "other")
+    assert cfg.consumer_plugins.strict is True
+    assert cfg.consumer_plugins.json_config == '{"k":"v"}'

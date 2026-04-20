@@ -69,6 +69,8 @@ spec:
                 - name: HOSTED_AGENT_OBSERVABILITY_PLUGINS_PROMETHEUS_ENABLED
                   value: "true"
                 {{- end }}
+                {{/* [DALC-REQ-CHART-RTV-005] */}}
+                {{- include "declarative-agent-library-chart.consumerPluginsEnv" $root | nindent 16 }}
                 - name: RAG_SERVICE_URL
                   value: {{ include "declarative-agent-library-chart.ragInternalBaseUrl" $root | quote }}
                 - name: SCRAPER_JOB_CONFIG
@@ -191,6 +193,8 @@ spec:
                 - name: HOSTED_AGENT_OBSERVABILITY_PLUGINS_PROMETHEUS_ENABLED
                   value: "true"
                 {{- end }}
+                {{/* [DALC-REQ-CHART-RTV-005] */}}
+                {{- include "declarative-agent-library-chart.consumerPluginsEnv" $root | nindent 16 }}
                 - name: RAG_SERVICE_URL
                   value: {{ include "declarative-agent-library-chart.ragInternalBaseUrl" $root | quote }}
                 - name: SCRAPER_JOB_CONFIG

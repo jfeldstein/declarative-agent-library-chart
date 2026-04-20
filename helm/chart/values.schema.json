@@ -449,6 +449,37 @@
                   "description": "When true, inject HOSTED_AGENT_LOG_FORMAT=json on the agent Deployment."
                 }
               }
+            },
+            "consumerPlugins": {
+              "type": "object",
+              "description": "Optional PEP 621 consumer observability hooks under declarative_agent.observability_plugins. Disabled by default ([DALC-REQ-CHART-RTV-005]).",
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "description": "When true, inject HOSTED_AGENT_OBSERVABILITY_PLUGINS_CONSUMER_ENABLED and optional allowlist/config env on agent, scraper CronJobs, and managed RAG Deployment."
+                },
+                "strict": {
+                  "type": "boolean",
+                  "description": "When true, inject HOSTED_AGENT_OBSERVABILITY_PLUGINS_STRICT so the runtime fails fast on broken consumer plugin entry points."
+                },
+                "entryPoints": {
+                  "type": "array",
+                  "items": { "type": "string" },
+                  "description": "Optional allowlist of entry-point names mapped to HOSTED_AGENT_OBSERVABILITY_PLUGINS_ENTRY_POINTS as a comma-separated list."
+                },
+                "configJson": {
+                  "type": "string",
+                  "description": "Optional opaque JSON string mapped to HOSTED_AGENT_OBSERVABILITY_PLUGINS_CONSUMER_CONFIG_JSON when configJsonSecret is unset."
+                },
+                "configJsonSecret": {
+                  "type": "object",
+                  "description": "Optional Secret reference for opaque JSON (overrides inline configJson when secretName is non-empty).",
+                  "properties": {
+                    "secretName": { "type": "string" },
+                    "secretKey": { "type": "string" }
+                  }
+                }
+              }
             }
           }
         }
