@@ -6,12 +6,10 @@ from typing import Literal
 
 from agent.observability.events import EventName, SyncEventBus
 from agent.observability.events.bus import Subscriber
-from agent.observability.plugins.langfuse_bridge import (
-    build_langfuse_client,
-    register_langfuse_plugin,
+from agent.observability.plugins.wiring import (
+    attach_plugins_from_config,
+    enqueue_plugins_from_config,
 )
-from agent.observability.plugins.prometheus import enqueue_prometheus_subscriptions
-from agent.observability.plugins.wandb.plugin import register_wandb_trace_plugin
 from agent.observability.plugins_config import (
     ObservabilityPluginsConfig,
     plugins_config_from_env,
@@ -35,16 +33,13 @@ def build_event_bus(
     def register_plugin(event_name: EventName, subscriber: Subscriber) -> None:
         subscriptions.append((event_name, subscriber))
 
-    if cfg.prometheus.enabled:
-        enqueue_prometheus_subscriptions(register_plugin)
+    enqueue_plugins_from_config(cfg, register_plugin)
 
     bus = SyncEventBus()
     for event_name, subscriber in subscriptions:
         bus.subscribe(event_name, subscriber)
 
-    register_langfuse_plugin(bus, build_langfuse_client(cfg.langfuse))
-    if process == "agent":
-        register_wandb_trace_plugin(bus, cfg)
+    attach_plugins_from_config(process, cfg, bus)
     return bus
 
 
