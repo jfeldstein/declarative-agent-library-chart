@@ -104,6 +104,10 @@ observability:
     # alongside other observability.plugins toggles without duplicating structuredLogs.
     logShipping:
       enabled: false
+    # PEP 621 consumer observability hooks: non-empty list selects entry-point **names**
+    # (maps to HOSTED_AGENT_OBSERVABILITY_PLUGINS_ENTRY_POINTS). Empty = disabled.
+    # Traceability: [DALC-REQ-CHART-RTV-005]
+    consumerPlugins: []
 
 # LangGraph checkpoint store (maps to HOSTED_AGENT_CHECKPOINT_* when enabled).
 checkpoints:

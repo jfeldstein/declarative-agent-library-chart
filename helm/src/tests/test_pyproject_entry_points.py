@@ -17,6 +17,11 @@ def test_pyproject_declares_three_builtin_entry_points() -> None:
     assert 'builtin-sample = "agent.tools.sample_echo:TOOLS"' in raw
     assert 'builtin-slack = "agent.tools.slack:TOOLS"' in raw
     assert 'builtin-jira = "agent.tools.jira:TOOLS"' in raw
+    assert '[project.entry-points."declarative_agent.observability_plugins"]' in raw
+    assert (
+        'noop-consumer = "agent.observability.plugins.noop_consumer_plugin:PLUGIN"'
+        in raw
+    )
 
 
 def test_entry_point_group_matches_registry_constant() -> None:
@@ -38,3 +43,12 @@ def test_entry_points_resolve_to_tuple_of_toolspec(name: str) -> None:
     from agent.tools.contract import ToolSpec
 
     assert specs and all(isinstance(s, ToolSpec) for s in specs)
+
+
+def test_observability_plugins_entry_point_resolves() -> None:
+    eps = entry_points().select(group="declarative_agent.observability_plugins")
+    noop = [ep for ep in eps if ep.name == "noop-consumer"]
+    assert noop
+    loaded = noop[0].load()
+    plugin = loaded() if callable(loaded) else loaded
+    assert hasattr(plugin, "enqueue") or hasattr(plugin, "attach")

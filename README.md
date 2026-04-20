@@ -104,6 +104,7 @@ See the [examples](examples) directory for more examples.
 | `helm/chart/`               | Declarative Agent Library Helm chart (**`type: library`**; render via parent `templates/agent.yaml` + `declarative-agent.system`) |
 | `helm/src/agent/`   | Python app: FastAPI entry, trigger logic, RAG, scrapers      |
 | `examples/hello-world/`     | Minimal example chart, uses the agent subchart               |
+| `examples/with-plugins/`    | Consumer observability plugins (PEP 621 wheel + list values) |
 
 ### Helm chart tests ([DALC-REQ-HELM-UNITTEST-003])
 

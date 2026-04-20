@@ -1,0 +1,19 @@
+# Traceability: [DALC-REQ-CHART-RTV-005] [DALC-REQ-HELM-UNITTEST-001]
+values:
+  - ../../examples/with-plugins/values.yaml
+suite: with-plugins consumerPlugins list
+release:
+  name: dalc-ci-plugins
+tests:
+  # [DALC-REQ-CHART-RTV-005]
+  - it: consumerPlugins list renders ENTRY_POINTS on agent Deployment
+    template: templates/agent.yaml
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HOSTED_AGENT_OBSERVABILITY_PLUGINS_ENTRY_POINTS
+            value: with-plugins-demo

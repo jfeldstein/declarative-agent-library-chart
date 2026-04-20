@@ -42,3 +42,19 @@ The Helm library chart SHALL NOT expose values keys for **ATIF trajectory export
 
 - **WHEN** a maintainer inspects **`values.yaml`** and **`values.schema.json`** for the library chart
 - **THEN** there SHALL be no **`atifExport`**, **`shadow`**, or equivalent keys under any path
+
+### Requirement: [DALC-REQ-CHART-RTV-005] Consumer observability plugins as entry-point name list
+
+The Helm library chart SHALL expose **`observability.plugins.consumerPlugins`** as an **array of strings** (entry-point **names** registered under **`declarative_agent.observability_plugins`**).
+
+When the array is **empty** (default), rendered manifests SHALL NOT inject **`HOSTED_AGENT_OBSERVABILITY_PLUGINS_ENTRY_POINTS`** solely for consumer plugins.
+
+#### Scenario: Non-empty list wires allowlist env
+
+- **WHEN** **`observability.plugins.consumerPlugins`** lists one or more non-empty strings
+- **THEN** rendered manifests for agent, scraper CronJobs, and managed RAG (when deployed) SHALL include **`HOSTED_AGENT_OBSERVABILITY_PLUGINS_ENTRY_POINTS`** as a comma-separated list matching those names in order suitable for the runtime allowlist
+
+#### Scenario: Defaults omit consumer plugin env
+
+- **WHEN** an operator applies chart defaults (**`consumerPlugins: []`** or unset)
+- **THEN** rendered manifests SHALL NOT add **`HOSTED_AGENT_OBSERVABILITY_PLUGINS_ENTRY_POINTS`** for consumer plugins

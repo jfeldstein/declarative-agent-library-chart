@@ -1,0 +1,11 @@
+agent:
+  systemPrompt: |
+    Respond, "Hello plugins"
+  image:
+    repository: declarative-agent-library-chart
+    tag: local
+    pullPolicy: Never
+  observability:
+    plugins:
+      consumerPlugins:
+        - with-plugins-demo

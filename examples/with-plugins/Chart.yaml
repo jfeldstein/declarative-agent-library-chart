@@ -1,0 +1,11 @@
+# Traceability: [DALC-REQ-DALC-PKG-002]
+apiVersion: v2
+name: with-plugins
+description: Example — PEP 621 consumer observability plugins ( aftermarket wheel )
+type: application
+version: 0.1.0
+dependencies:
+  - name: declarative-agent-library-chart
+    version: 0.1.0
+    repository: file://../../helm/chart
+    alias: agent

@@ -1,0 +1,1 @@
+{{- include "declarative-agent.system" . }}

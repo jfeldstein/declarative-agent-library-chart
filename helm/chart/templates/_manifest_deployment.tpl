@@ -88,6 +88,8 @@ spec:
             - name: HOSTED_AGENT_OBSERVABILITY_PLUGINS_PROMETHEUS_ENABLED
               value: "true"
             {{- end }}
+            {{/* [DALC-REQ-CHART-RTV-005] */}}
+            {{- include "declarative-agent-library-chart.consumerPluginsEnv" . | nindent 12 }}
             - name: HOSTED_AGENT_OBSERVABILITY_STORE
               value: {{ .Values.observability.store | default "memory" | quote }}
             - name: HOSTED_AGENT_POSTGRES_POOL_MAX

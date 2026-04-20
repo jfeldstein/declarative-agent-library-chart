@@ -19,6 +19,13 @@ Per-plugin summaries:
 | **`wandb`** | **`observability.plugins.wandb`** aligns with **`wandb.*`** / **`HOSTED_AGENT_WANDB_*`** — see **Checkpoints, W&B traces, and Slack correlation** below. |
 | **`grafana`** | Optional **`ConfigMap`** (**`templates/_manifest_grafana_dashboards.tpl`**) packaging **`helm/chart/files/grafana/*.json`** when enabled (mirrors **`grafana/*.json`**); remote_write/stack automation is future work. |
 | **`logShipping`** | **`HOSTED_AGENT_LOG_FORMAT=json`** when **`observability.plugins.logShipping.enabled`** or **`observability.structuredLogs.json`** — see **[DALC-REQ-PLUGIN-LOG-SHIPPING-001]** / structured logs sections. |
+| **`consumerPlugins`** | **List of strings** (entry-point **names** in group **`declarative_agent.observability_plugins`**). A **non-empty** list sets **`HOSTED_AGENT_OBSERVABILITY_PLUGINS_ENTRY_POINTS`**. See **[examples/with-plugins](../examples/with-plugins)**. |
+
+### Consumer plugins (PEP 621)
+
+<!-- Traceability: [DALC-REQ-CUSTOM-O11Y-006] -->
+
+Downstream **wheels** register hooks the same way as **[`declarative_agent.tools`](../helm/src/pyproject.toml)**. The runtime calls optional **`enqueue(process_kind, cfg, enqueue_subscription)`** (pre-bus) and **`attach(process_kind, cfg, bus)`** (post-bus). Use **[ADR 0011](adrs/0011-prometheus-metrics-schema-and-cardinality.md)** / **[ADR 0015](adrs/0015-integration-agnostic-observability-plugins.md)** for shared vs custom metrics. **Not supported:** arbitrary import strings from ConfigMap values (use installed distributions and entry points only).
 
 Design record: **[ADR 0014 — Observability plugin architecture](adrs/0014-observability-plugin-architecture.md)** (terminology alongside **[ADR 0005](adrs/0005-observability-vs-execution-persistence.md)**, schema rules in **[ADR 0011](adrs/0011-prometheus-metrics-schema-and-cardinality.md)**).
 

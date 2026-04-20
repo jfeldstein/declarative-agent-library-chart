@@ -38,6 +38,9 @@ builtin-sample = "agent.tools.sample_echo:TOOLS"
 builtin-slack = "agent.tools.slack:TOOLS"
 builtin-jira = "agent.tools.jira:TOOLS"
 
+[project.entry-points."declarative_agent.observability_plugins"]
+noop-consumer = "agent.observability.plugins.noop_consumer_plugin:PLUGIN"
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

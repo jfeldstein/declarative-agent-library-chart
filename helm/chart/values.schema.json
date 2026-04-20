@@ -449,6 +449,11 @@
                   "description": "When true, inject HOSTED_AGENT_LOG_FORMAT=json on the agent Deployment."
                 }
               }
+            },
+            "consumerPlugins": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Entry-point names under declarative_agent.observability_plugins. Non-empty enables HOSTED_AGENT_OBSERVABILITY_PLUGINS_ENTRY_POINTS ([DALC-REQ-CHART-RTV-005])."
             }
           }
         }
