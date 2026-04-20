@@ -19,7 +19,6 @@ from agent.observability.middleware import publish_run_ended, publish_run_starte
 from agent.observability.run_context import bind_run_context, get_run_id
 from agent.observability.settings import ObservabilitySettings
 from agent.observability.trajectory import trajectory_recorder
-from agent.observability.wandb_run_tags import wandb_mandatory_tags_for_run
 from agent.reply import trigger_reply_text
 from agent.run_context import (
     TriggerRunIds,
@@ -28,6 +27,7 @@ from agent.run_context import (
     set_trigger_ids,
 )
 from agent.runtime_config import RuntimeConfig
+from agent.runtime_identity import resolve_run_identity
 from agent.supervisor import run_supervisor_agent
 from agent.trigger_context import TriggerContext
 from agent.trigger_errors import TriggerHttpError
@@ -242,6 +242,7 @@ def compiled_trigger_graph_for_tests(*, with_checkpointer: bool = True) -> Any:
         return compiled_trigger_graph(
             TriggerContext(
                 cfg=ctx.cfg,
+                run_identity=ctx.run_identity,
                 body=ctx.body,
                 system_prompt=ctx.system_prompt,
                 request_id=ctx.request_id,
@@ -270,18 +271,15 @@ def run_trigger_graph(ctx: TriggerContext) -> str:
         run_id=ctx.run_id,
         thread_id=ctx.thread_id,
         request_correlation_id=ctx.request_id,
+        run_identity=ctx.run_identity,
     )
     trajectory_recorder.start(ctx.run_id, ctx.thread_id)
 
-    tags = wandb_mandatory_tags_for_run(
-        thread_id=ctx.thread_id,
-        ctx=ctx,
-        request_correlation_id=ctx.request_id,
-    )
     publish_run_started(
         run_id=ctx.run_id,
         thread_id=ctx.thread_id,
-        tags=tags,
+        run_identity=ctx.run_identity.as_flat_str_dict(),
+        request_correlation_id=ctx.request_id,
         observability=obs,
     )
 
@@ -304,6 +302,7 @@ def trigger_context_for_admin_reads() -> TriggerContext:
 
     return TriggerContext(
         cfg=RuntimeConfig.from_env(),
+        run_identity=resolve_run_identity(body=None),
         body=None,
         system_prompt="-",
         request_id="admin-read",

@@ -9,6 +9,7 @@ from agent.agent_models import TriggerBody
 from agent.chat_model import FakeToolChatModel
 from agent.llm_metrics import SupervisorLlmMetricsCallback
 from agent.runtime_config import RuntimeConfig
+from agent.runtime_identity import resolve_run_identity
 from agent.supervisor import run_supervisor_agent
 from agent.trigger_context import TriggerContext
 from agent.trigger_errors import TriggerHttpError
@@ -23,6 +24,7 @@ def _ctx(enabled: list[str] | None = None) -> TriggerContext:
     )
     return TriggerContext(
         cfg=cfg,
+        run_identity=resolve_run_identity(body=TriggerBody(message="m")),
         body=TriggerBody(message="m"),
         system_prompt="s",
         request_id="r",

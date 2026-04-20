@@ -6,6 +6,8 @@ import contextvars
 from typing import Any
 from uuid import uuid4
 
+from agent.runtime_identity import RunIdentity
+
 _run_id: contextvars.ContextVar[str | None] = contextvars.ContextVar(
     "obs_run_id", default=None
 )
@@ -21,6 +23,9 @@ _request_correlation_id: contextvars.ContextVar[str | None] = contextvars.Contex
 _wandb_session: contextvars.ContextVar[Any | None] = contextvars.ContextVar(
     "obs_wandb_session", default=None
 )
+_run_identity: contextvars.ContextVar[Any | None] = contextvars.ContextVar(
+    "obs_run_identity", default=None
+)
 
 
 def bind_run_context(
@@ -28,10 +33,12 @@ def bind_run_context(
     run_id: str,
     thread_id: str,
     request_correlation_id: str | None = None,
+    run_identity: RunIdentity | None = None,
 ) -> None:
     _run_id.set(run_id)
     _thread_id.set(thread_id)
     _request_correlation_id.set(request_correlation_id or run_id)
+    _run_identity.set(run_identity)
 
 
 def get_run_id() -> str | None:
@@ -48,6 +55,10 @@ def get_tool_call_id() -> str | None:
 
 def get_request_correlation_id() -> str | None:
     return _request_correlation_id.get()
+
+
+def get_run_identity() -> RunIdentity | None:
+    return _run_identity.get()
 
 
 def new_tool_call_id(*, prefix: str = "tc") -> str:

@@ -6,11 +6,16 @@ from importlib import resources
 
 
 def observability_ddl_text() -> str:
-    return (
-        resources.files("agent.migrations")
-        .joinpath("001_hosted_agents_observability.sql")
-        .read_text(encoding="utf-8")
+    root = resources.files("agent.migrations")
+    parts = (
+        root.joinpath("001_hosted_agents_observability.sql").read_text(
+            encoding="utf-8"
+        ),
+        root.joinpath("002_slack_correlation_run_identity.sql").read_text(
+            encoding="utf-8"
+        ),
     )
+    return "\n".join(parts)
 
 
 def iter_observability_statements() -> list[str]:

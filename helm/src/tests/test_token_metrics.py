@@ -255,9 +255,7 @@ def test_trigger_payload_histograms_record_response_size(
     after = _metrics_text(client)
     assert "dalc_trigger_response_bytes" in after
     assert _histogram_sum(after, "dalc_trigger_response_bytes") >= (
-        _histogram_sum(before, "dalc_trigger_response_bytes")
-        + out_len
-        - 1e-9
+        _histogram_sum(before, "dalc_trigger_response_bytes") + out_len - 1e-9
     )
 
 

@@ -27,6 +27,7 @@ from .payloads import (
     TriggerRequestRespondedPayload,
 )
 
+
 def _utc_now() -> datetime:
     return datetime.now(timezone.utc)
 

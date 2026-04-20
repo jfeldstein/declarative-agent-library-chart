@@ -8,6 +8,7 @@ from pydantic import BaseModel
 
 from agent.agent_models import TriggerBody
 from agent.runtime_config import RuntimeConfig
+from agent.runtime_identity import resolve_run_identity
 from agent.supervisor import _bind
 from agent.tools.contract import ToolSpec
 from agent.tools.registry import load_registry, sanitize_tool_name
@@ -56,6 +57,7 @@ def test_bind_invokes_run_tool_json_with_spec_id(
     )
     ctx = TriggerContext(
         cfg=cfg,
+        run_identity=resolve_run_identity(body=TriggerBody(message="m")),
         body=TriggerBody(message="m"),
         system_prompt="s",
         request_id="r",

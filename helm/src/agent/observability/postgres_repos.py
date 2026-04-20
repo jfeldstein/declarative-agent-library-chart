@@ -10,6 +10,7 @@ from psycopg_pool import ConnectionPool
 
 from agent.migrations.schema import apply_observability_schema
 from agent.observability.correlation import SlackMessageRef, ToolCorrelation
+from agent.runtime_identity import RunIdentity, run_identity_from_flat_dict
 from agent.observability.feedback import HumanFeedbackEvent, OrphanReactionEvent
 from agent.observability.side_effects import SideEffectCheckpoint
 from agent.observability.span_summaries import ToolSpanSummary
@@ -30,10 +31,11 @@ class PostgresCorrelationStore:
                     """
                     INSERT INTO hosted_agents.slack_correlation (
                       channel_id, message_ts, tool_call_id, run_id, thread_id,
-                      checkpoint_id, tool_name, wandb_run_id
+                      checkpoint_id, tool_name, wandb_run_id, run_identity
                     ) VALUES (
                       %(channel_id)s, %(message_ts)s, %(tool_call_id)s, %(run_id)s,
-                      %(thread_id)s, %(checkpoint_id)s, %(tool_name)s, %(wandb_run_id)s
+                      %(thread_id)s, %(checkpoint_id)s, %(tool_name)s, %(wandb_run_id)s,
+                      %(run_identity)s
                     )
                     ON CONFLICT (channel_id, message_ts) DO UPDATE SET
                       tool_call_id = EXCLUDED.tool_call_id,
@@ -41,7 +43,8 @@ class PostgresCorrelationStore:
                       thread_id = EXCLUDED.thread_id,
                       checkpoint_id = EXCLUDED.checkpoint_id,
                       tool_name = EXCLUDED.tool_name,
-                      wandb_run_id = EXCLUDED.wandb_run_id
+                      wandb_run_id = EXCLUDED.wandb_run_id,
+                      run_identity = EXCLUDED.run_identity
                     """,
                     {
                         "channel_id": ref.channel_id,
@@ -52,6 +55,9 @@ class PostgresCorrelationStore:
                         "checkpoint_id": corr.checkpoint_id,
                         "tool_name": corr.tool_name,
                         "wandb_run_id": corr.wandb_run_id,
+                        "run_identity": Json(corr.run_identity.as_flat_str_dict())
+                        if corr.run_identity is not None
+                        else None,
                     },
                 )
 
@@ -60,7 +66,8 @@ class PostgresCorrelationStore:
             with conn.cursor(row_factory=dict_row) as cur:
                 cur.execute(
                     """
-                    SELECT tool_call_id, run_id, thread_id, checkpoint_id, tool_name, wandb_run_id
+                    SELECT tool_call_id, run_id, thread_id, checkpoint_id, tool_name,
+                           wandb_run_id, run_identity
                     FROM hosted_agents.slack_correlation
                     WHERE channel_id = %s AND message_ts = %s
                     """,
@@ -69,6 +76,10 @@ class PostgresCorrelationStore:
                 row = cur.fetchone()
         if row is None:
             return None
+        rid = row.get("run_identity")
+        ri: RunIdentity | None = None
+        if isinstance(rid, dict) and rid:
+            ri = run_identity_from_flat_dict(dict(rid))
         return ToolCorrelation(
             tool_call_id=str(row["tool_call_id"]),
             run_id=str(row["run_id"]),
@@ -76,6 +87,7 @@ class PostgresCorrelationStore:
             checkpoint_id=str(row["checkpoint_id"]) if row["checkpoint_id"] else None,
             tool_name=str(row["tool_name"]),
             wandb_run_id=str(row["wandb_run_id"]) if row["wandb_run_id"] else None,
+            run_identity=ri,
         )
 
 

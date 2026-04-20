@@ -8,7 +8,7 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ## 2026-04-20
 
-**ADR 0016 — Run identity on `TriggerContext` and plugin-interpreted lifecycle events** — Documents the practice: resolve agent/model identity once at trigger entry; core publishes neutral facts on the lifecycle bus; integration plugins map to vendor formats; durable correlation carries identity when `TriggerContext` is not available (for example async feedback). See [docs/adrs/0016-run-identity-on-context-and-plugin-events.md](adrs/0016-run-identity-on-context-and-plugin-events.md); relates to [ADR 0014](adrs/0014-observability-plugin-architecture.md), [ADR 0015](adrs/0015-integration-agnostic-observability-plugins.md), [ADR 0011](adrs/0011-prometheus-metrics-schema-and-cardinality.md).
+**ADR 0016 implementation** — Added **`agent.runtime_identity`** (**`RunIdentity`**, **`resolve_run_identity`**), **`TriggerContext.run_identity`**, **`bind_run_context(..., run_identity=)`** / **`get_run_identity()`**. **`RUN_STARTED`** / **`FEEDBACK_RECORDED`** payloads carry **`run_identity`** + **`request_correlation_id`** instead of vendor **`tags`**; **`observability.plugins.wandb`** builds mandatory tags from those facts. **`ToolCorrelation.run_identity`** + Postgres **`slack_correlation.run_identity`** (migration **`002_slack_correlation_run_identity.sql`**) persist identity for Slack reaction feedback; Prometheus LLM labels and **`wandb_session`** read from context. Docs: [ADR 0016](adrs/0016-run-identity-on-context-and-plugin-events.md). Gates: **`cd helm/src && uv run pytest tests/`**, **`python3 scripts/check_spec_traceability.py`**, **`uv run ruff check agent tests`**.
 
 ## 2026-04-19
 

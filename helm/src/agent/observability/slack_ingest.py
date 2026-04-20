@@ -14,7 +14,7 @@ from agent.observability.label_registry import get_label_registry
 from agent.observability.settings import ObservabilitySettings
 from agent.observability.trajectory import trajectory_recorder
 from agent.observability.middleware import publish_feedback_recorded
-from agent.observability.wandb_run_tags import wandb_mandatory_tags_for_run
+from agent.runtime_identity import resolve_run_identity
 
 
 def _feedback_dedupe_key(user_id: str, checkpoint_id: str | None, label_id: str) -> str:
@@ -124,11 +124,16 @@ def handle_slack_reaction_event(
         },
     )
 
+    ri = (
+        corr.run_identity
+        if corr.run_identity is not None
+        else resolve_run_identity(body=None)
+    )
     publish_feedback_recorded(
         observability_settings=settings,
         run_id=corr.run_id,
         thread_id=corr.thread_id,
-        tags=wandb_mandatory_tags_for_run(thread_id=corr.thread_id),
+        run_identity=ri.as_flat_str_dict(),
         tool_call_id=corr.tool_call_id,
         checkpoint_id=corr.checkpoint_id,
         feedback_label=entry.label_id,

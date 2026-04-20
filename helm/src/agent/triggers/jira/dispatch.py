@@ -16,6 +16,7 @@ from agent.observability.middleware import publish_jira_trigger_inbound
 from agent.observability.settings import ObservabilitySettings
 from agent.runtime_config import RuntimeConfig
 from agent.triggers.guarded_run import run_guarded
+from agent.runtime_identity import resolve_run_identity
 from agent.trigger_graph import TriggerContext, run_trigger_graph
 
 
@@ -56,6 +57,7 @@ def dispatch_jira_webhook(
     run_id = str(uuid.uuid4())
     ctx = TriggerContext(
         cfg=cfg,
+        run_identity=resolve_run_identity(body=body),
         body=body,
         system_prompt=system_prompt_from_env(),
         request_id=request_id,
@@ -76,5 +78,7 @@ def dispatch_jira_webhook(
 
     run_guarded(
         _run_graph,
-        on_error=lambda: publish_jira_trigger_inbound(transport="http", outcome="error"),
+        on_error=lambda: publish_jira_trigger_inbound(
+            transport="http", outcome="error"
+        ),
     )

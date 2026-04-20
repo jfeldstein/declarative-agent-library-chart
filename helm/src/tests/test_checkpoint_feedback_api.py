@@ -409,13 +409,16 @@ def test_get_thread_state_functions_directly(monkeypatch: pytest.MonkeyPatch) ->
     _reset_graph()
     from agent.agent_models import TriggerBody
     from agent.runtime_config import RuntimeConfig
+    from agent.runtime_identity import resolve_run_identity
     from agent.trigger_context import TriggerContext
     from agent.trigger_graph import run_trigger_graph
 
     tid = "direct-api"
+    tb = TriggerBody(tool="sample.echo", tool_arguments={"message": "y"})
     ctx = TriggerContext(
         cfg=RuntimeConfig.from_env(),
-        body=TriggerBody(tool="sample.echo", tool_arguments={"message": "y"}),
+        run_identity=resolve_run_identity(body=tb),
+        body=tb,
         system_prompt='Respond, "Hi"',
         request_id="req",
         thread_id=tid,

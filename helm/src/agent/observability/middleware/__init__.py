@@ -9,6 +9,7 @@ from agent.observability.bootstrap import agent_event_bus
 from agent.observability.events import SyncEventBus
 from agent.observability.events.payloads import (
     FeedbackRecordedPayload,
+    RunStartedPayload,
     ToolCallCompletedPayload,
     ToolCallFailedPayload,
 )
@@ -41,23 +42,26 @@ def publish_run_started(
     *,
     run_id: str,
     thread_id: str,
-    tags: dict[str, str],
+    run_identity: dict[str, str],
+    request_correlation_id: str,
     observability: Any,
     bus: SyncEventBus | None = None,
 ) -> None:
     """Emit when a trigger run begins (LangGraph invoke wrapper)."""
 
     b = bus or agent_event_bus()
+    payload: RunStartedPayload = {
+        "run_id": run_id,
+        "run_name": run_id,
+        "thread_id": thread_id,
+        "run_identity": dict(run_identity),
+        "request_correlation_id": request_correlation_id,
+        "observability": observability,
+    }
     b.publish(
         RunStartedLifecycleEvent(
             name=EventName.RUN_STARTED,
-            payload={
-                "run_id": run_id,
-                "run_name": run_id,
-                "thread_id": thread_id,
-                "tags": dict(tags),
-                "observability": observability,
-            },
+            payload=payload,
             occurred_at=_utc_now(),
         )
     )
@@ -81,11 +85,12 @@ def publish_feedback_recorded(
     observability_settings: Any,
     run_id: str,
     thread_id: str,
-    tags: dict[str, str],
+    run_identity: dict[str, str],
     tool_call_id: str,
     checkpoint_id: str | None,
     feedback_label: str,
     feedback_source: str,
+    request_correlation_id: str | None = None,
     feedback_scalar: int | None = None,
     bus: SyncEventBus | None = None,
 ) -> None:
@@ -96,12 +101,14 @@ def publish_feedback_recorded(
         "observability_settings": observability_settings,
         "run_id": run_id,
         "thread_id": thread_id,
-        "tags": dict(tags),
+        "run_identity": dict(run_identity),
         "tool_call_id": tool_call_id,
         "checkpoint_id": checkpoint_id,
         "feedback_label": feedback_label,
         "feedback_source": feedback_source,
     }
+    if request_correlation_id is not None:
+        fb["request_correlation_id"] = request_correlation_id
     if feedback_scalar is not None:
         fb["feedback_scalar"] = feedback_scalar
     b.publish(

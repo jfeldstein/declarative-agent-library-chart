@@ -19,7 +19,8 @@ class RunStartedPayload(TypedDict):
     run_id: str
     run_name: str
     thread_id: str
-    tags: dict[str, str]
+    run_identity: dict[str, str]
+    request_correlation_id: str
     observability: Any
 
 
@@ -51,7 +52,9 @@ class TriggerJiraRespondedPayload(TypedDict):
 
 
 TriggerRequestRespondedPayload: TypeAlias = (
-    TriggerHttpRespondedPayload | TriggerSlackRespondedPayload | TriggerJiraRespondedPayload
+    TriggerHttpRespondedPayload
+    | TriggerSlackRespondedPayload
+    | TriggerJiraRespondedPayload
 )
 
 
@@ -154,7 +157,8 @@ class FeedbackRecordedPayload(TypedDict):
     observability_settings: Any
     run_id: str
     thread_id: str
-    tags: dict[str, str]
+    run_identity: dict[str, str]
+    request_correlation_id: NotRequired[str]
     tool_call_id: str
     checkpoint_id: str | None
     feedback_label: str

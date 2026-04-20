@@ -45,10 +45,7 @@ def test_parse_scraper_metrics_addr_rejects_invalid() -> None:
 def test_observe_scraper_run_records_metric() -> None:
     observe_scraper_run("unit-test", True, 0.01)
     text = generate_latest(SCRAPER_REGISTRY).decode()
-    assert (
-        'dalc_scraper_runs_total{integration="unit-test",result="success"}'
-        in text
-    )
+    assert 'dalc_scraper_runs_total{integration="unit-test",result="success"}' in text
 
 
 def test_bounded_integration_label_empty_uses_fallback() -> None:

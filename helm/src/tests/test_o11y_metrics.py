@@ -172,20 +172,11 @@ def test_subagent_and_skill_and_mcp_metrics(monkeypatch: pytest.MonkeyPatch) -> 
     client.post("/api/v1/trigger", json={"tool": "sample.echo", "tool_arguments": {}})
 
     text = _metrics_text(client)
-    assert (
-        'dalc_subagent_invocations_total{result="success",subagent="s1"}'
-        in text
-    )
-    assert (
-        'dalc_subagent_invocations_total{result="error",subagent="missing"}'
-        in text
-    )
+    assert 'dalc_subagent_invocations_total{result="success",subagent="s1"}' in text
+    assert 'dalc_subagent_invocations_total{result="error",subagent="missing"}' in text
     assert 'dalc_skill_loads_total{result="success",skill="sk"}' in text
     assert 'dalc_skill_loads_total{result="error",skill="nope"}' in text
-    assert (
-        'dalc_tool_calls_total{result="success",tool="sample.echo"}'
-        in text
-    )
+    assert 'dalc_tool_calls_total{result="success",tool="sample.echo"}' in text
     assert "dalc_tool_calls_duration_seconds" in text
 
 

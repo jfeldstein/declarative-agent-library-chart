@@ -10,6 +10,7 @@ from slack_sdk.errors import SlackApiError
 from agent.observability.correlation import SlackMessageRef, ToolCorrelation
 from agent.observability.run_context import (
     get_run_id,
+    get_run_identity,
     get_thread_id,
     get_tool_call_id,
 )
@@ -45,6 +46,7 @@ def _record_post_message_correlation(
             checkpoint_id=se.checkpoint_id,
             tool_name="slack.post_message",
             wandb_run_id=None,
+            run_identity=get_run_identity(),
         ),
     )
     return tool_call_id, se.checkpoint_id

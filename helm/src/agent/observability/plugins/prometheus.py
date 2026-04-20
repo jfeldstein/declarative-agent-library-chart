@@ -200,11 +200,22 @@ def tagify_metric_label(value: str, max_len: int = 64) -> str:
     return f"h_{digest}"
 
 
-def llm_metric_label_values(_ctx: TriggerContext, *, result: str) -> dict[str, str]:
-    """Bounded labels for LLM metrics (agent_id, model_id, result)."""
-    agent_raw = _first_env("HOSTED_AGENT_ID", "HOSTED_AGENT_AGENT_ID") or "unknown"
+def llm_metric_label_values(ctx: TriggerContext, *, result: str) -> dict[str, str]:
+    """Bounded labels for LLM metrics (agent_id, model_id, result).
+
+    Prefer :attr:`~agent.trigger_context.TriggerContext.run_identity`; fall back to env
+    only when fields are unset (ADR 0016).
+    """
+    ri = ctx.run_identity
+    agent_raw = (
+        ri.agent_id
+        or _first_env("HOSTED_AGENT_ID", "HOSTED_AGENT_AGENT_ID")
+        or "unknown"
+    )
     model_raw = (
-        _first_env("HOSTED_AGENT_CHAT_MODEL", "HOSTED_AGENT_MODEL_ID") or "unknown"
+        ri.model_id
+        or _first_env("HOSTED_AGENT_CHAT_MODEL", "HOSTED_AGENT_MODEL_ID")
+        or "unknown"
     )
     res = result if result in ("success", "error") else "success"
     return {

@@ -68,10 +68,7 @@ def test_subagent_tool_via_supervisor(
     assert r.status_code == 200
     assert r.text == "ok"
     metrics = client.get("/metrics").text
-    assert (
-        'dalc_subagent_invocations_total{result="success",subagent="s1"}'
-        in metrics
-    )
+    assert 'dalc_subagent_invocations_total{result="success",subagent="s1"}' in metrics
 
 
 def test_legacy_subagent_field_rejected(client: TestClient) -> None:

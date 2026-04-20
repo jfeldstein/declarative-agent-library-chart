@@ -9,6 +9,7 @@ import pytest
 
 from agent.feedback_registry import load_feedback_registry
 from agent.runtime_config import RuntimeConfig
+from agent.runtime_identity import resolve_run_identity
 from agent.trigger_context import TriggerContext
 from agent.wandb_session import _tag_dict_for_run, wandb_run_scope
 
@@ -21,6 +22,7 @@ def _ctx() -> TriggerContext:
             skills=[],
             enabled_mcp_tools=[],
         ),
+        run_identity=resolve_run_identity(body=None),
         body=None,
         system_prompt="sys",
         request_id="req-1",

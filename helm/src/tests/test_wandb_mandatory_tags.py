@@ -7,6 +7,7 @@ import pytest
 from agent.agent_models import TriggerBody
 from agent.observability.wandb_run_tags import wandb_mandatory_tags_for_run
 from agent.runtime_config import RuntimeConfig
+from agent.runtime_identity import resolve_run_identity
 from agent.trigger_context import TriggerContext
 
 
@@ -18,6 +19,7 @@ def _ctx(body: TriggerBody | None) -> TriggerContext:
             skills=[],
             enabled_mcp_tools=[],
         ),
+        run_identity=resolve_run_identity(body=body),
         body=body,
         system_prompt="s",
         request_id="req-99",

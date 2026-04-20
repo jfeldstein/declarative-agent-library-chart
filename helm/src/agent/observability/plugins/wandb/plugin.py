@@ -3,13 +3,15 @@
 from __future__ import annotations
 
 import time
-from typing import Any
+from typing import Any, Mapping
 
 from agent.observability.events import EventName, LifecycleEvent, SyncEventBus
 from agent.observability.plugins.wandb.trace import WandbTraceSession
 from agent.observability.plugins_config import ObservabilityPluginsConfig
 from agent.observability.run_context import get_wandb_session, set_wandb_session
 from agent.observability.settings import ObservabilitySettings
+from agent.observability.wandb_run_tags import wandb_mandatory_tags_from_run_identity
+from agent.runtime_identity import RunIdentity, run_identity_from_flat_dict
 
 
 def register_wandb_trace_plugin(
@@ -23,15 +25,31 @@ def register_wandb_trace_plugin(
     bus.subscribe(EventName.FEEDBACK_RECORDED, _on_feedback_recorded)
 
 
+def _wandb_tags_from_payload(p: Mapping[str, Any]) -> dict[str, str]:
+    """Build W&B mandatory tags from neutral lifecycle payload fields (ADR 0016)."""
+
+    raw = p.get("run_identity")
+    data = raw if isinstance(raw, dict) else {}
+    ri = run_identity_from_flat_dict({str(k): v for k, v in data.items()})
+    if ri is None:
+        ri = RunIdentity()
+    tid = str(p.get("thread_id") or "")
+    rid_raw = p.get("request_correlation_id")
+    rc = str(rid_raw).strip() if rid_raw is not None else ""
+    return wandb_mandatory_tags_from_run_identity(
+        ri,
+        thread_id=tid,
+        request_correlation_id=rc or None,
+    )
+
+
 def _on_run_started(event: LifecycleEvent) -> None:
     p = event.payload
     obs = p.get("observability")
     if not isinstance(obs, ObservabilitySettings):
         return
-    tags = p.get("tags")
     run_id = str(p.get("run_id") or "")
-    if not isinstance(tags, dict):
-        tags = {}
+    tags = _wandb_tags_from_payload(p)
     run_name = run_id or str(p.get("run_name") or "")
     if obs.wandb_enabled:
         sess = WandbTraceSession(settings=obs, run_name=run_name, tags=dict(tags))
@@ -77,8 +95,7 @@ def _on_feedback_recorded(event: LifecycleEvent) -> None:
     if not isinstance(settings, ObservabilitySettings) or not settings.wandb_enabled:
         return
     run_id = str(p.get("run_id") or "")
-    tags_raw = p.get("tags")
-    tags: dict[str, str] = dict(tags_raw) if isinstance(tags_raw, dict) else {}
+    tags = _wandb_tags_from_payload(p)
     late = WandbTraceSession(settings=settings, run_name=run_id, tags=tags)
     try:
         late.log_feedback(

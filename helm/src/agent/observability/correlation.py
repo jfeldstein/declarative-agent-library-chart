@@ -5,6 +5,8 @@ from __future__ import annotations
 import threading
 from dataclasses import dataclass
 
+from agent.runtime_identity import RunIdentity
+
 
 @dataclass(frozen=True)
 class SlackMessageRef:
@@ -20,6 +22,8 @@ class ToolCorrelation:
     checkpoint_id: str | None
     tool_name: str
     wandb_run_id: str | None = None
+    #: Captured when the Slack post was recorded (ADR 0016); enables async feedback labeling.
+    run_identity: RunIdentity | None = None
 
 
 class CorrelationStore:

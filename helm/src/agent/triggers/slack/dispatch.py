@@ -20,6 +20,7 @@ from agent.triggers.slack.mention import (
 )
 from agent.tools.slack.support import optional_tools_client, timeout_seconds
 from agent.triggers.guarded_run import run_guarded
+from agent.runtime_identity import resolve_run_identity
 from agent.trigger_graph import TriggerContext, run_trigger_graph
 
 Transport = Literal["http", "socket"]
@@ -112,6 +113,7 @@ def dispatch_app_mention(
     run_id = str(uuid.uuid4())
     ctx = TriggerContext(
         cfg=cfg,
+        run_identity=resolve_run_identity(body=payload),
         body=payload,
         system_prompt=system_prompt_from_env(),
         request_id=request_id,

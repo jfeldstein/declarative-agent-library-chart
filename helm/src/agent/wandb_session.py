@@ -17,31 +17,10 @@ def active_wandb_run_id() -> str | None:
     return _wandb_run_id.get()
 
 
-def _first_nonempty_env(*keys: str) -> str | None:
-    for k in keys:
-        v = os.environ.get(k, "").strip()
-        if v:
-            return v
-    return None
-
-
-# (env var names..., wandb config key)
-_ENV_TO_TAG: tuple[tuple[tuple[str, ...], str], ...] = (
-    (("HOSTED_AGENT_ID", "HOSTED_AGENT_AGENT_ID"), "agent_id"),
-    (("HOSTED_AGENT_ENV", "ENVIRONMENT", "ENV"), "environment"),
-    (("HOSTED_AGENT_SKILL_ID",), "skill_id"),
-    (("HOSTED_AGENT_SKILL_VERSION",), "skill_version"),
-    (("HOSTED_AGENT_CHAT_MODEL", "HOSTED_AGENT_MODEL_ID"), "model_id"),
-    (("HOSTED_AGENT_PROMPT_HASH",), "prompt_hash"),
-)
-
-
 def _tag_dict_for_run(ctx: TriggerContext) -> dict[str, str]:
-    tags: dict[str, str] = {}
-    for env_keys, tag_key in _ENV_TO_TAG:
-        v = _first_nonempty_env(*env_keys)
-        if v:
-            tags[tag_key] = v
+    """Config tags from :attr:`~agent.trigger_context.TriggerContext.run_identity` (ADR 0016)."""
+
+    tags = dict(ctx.run_identity.as_flat_str_dict())
     tags["thread_id"] = ctx.thread_id
     tags["run_id"] = ctx.run_id
     return {k: v for k, v in tags.items() if v}

@@ -7,11 +7,13 @@ from dataclasses import dataclass
 from agent.agent_models import TriggerBody
 from agent.observability.settings import ObservabilitySettings
 from agent.runtime_config import RuntimeConfig
+from agent.runtime_identity import RunIdentity
 
 
 @dataclass(frozen=True)
 class TriggerContext:
     cfg: RuntimeConfig
+    run_identity: RunIdentity
     body: TriggerBody | None
     system_prompt: str
     request_id: str

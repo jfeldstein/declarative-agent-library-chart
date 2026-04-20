@@ -7,6 +7,7 @@ from langchain.tools import ToolRuntime
 
 from agent.agent_models import SubagentInvokeBody, TriggerBody
 from agent.runtime_config import RuntimeConfig
+from agent.runtime_identity import resolve_run_identity
 from agent.supervisor import _build_subagent_tool
 from agent.trigger_context import TriggerContext
 
@@ -20,6 +21,7 @@ def _ctx(*, subagents: list[dict]) -> TriggerContext:
     )
     return TriggerContext(
         cfg=cfg,
+        run_identity=resolve_run_identity(body=TriggerBody(message="m")),
         body=TriggerBody(message="m"),
         system_prompt="s",
         request_id="rid-1",

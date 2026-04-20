@@ -11,13 +11,17 @@ from agent.observability.events.types import (
     LlmGenerationCompletedLifecycleEvent,
     TriggerRequestRespondedLifecycleEvent,
 )
-from agent.observability.middleware import publish_feedback_recorded, publish_tool_call_completed
+from agent.observability.middleware import (
+    publish_feedback_recorded,
+    publish_tool_call_completed,
+)
 from agent.observability.plugins.langfuse_bridge import LangfuseLifecycleBridge
 from agent.observability.plugins.prometheus import register_prometheus_agent_plugin
 from agent.observability.plugins_config import LangfusePluginSettings
 from agent.observability.run_context import bind_run_context
 from agent.observability.settings import ObservabilitySettings
 from agent.runtime_config import RuntimeConfig
+from agent.runtime_identity import resolve_run_identity
 from agent.trigger_context import TriggerContext
 
 
@@ -38,6 +42,7 @@ class _DummyObs:
 def _trigger_ctx() -> TriggerContext:
     return TriggerContext(
         cfg=RuntimeConfig.from_env(),
+        run_identity=resolve_run_identity(body=None),
         body=None,
         system_prompt="-",
         request_id="req-1",
@@ -126,7 +131,7 @@ def test_langfuse_feedback_uses_registry_trace_and_middleware_payload() -> None:
         observability_settings=ObservabilitySettings.from_env(),
         run_id=ctx.run_id,
         thread_id=ctx.thread_id,
-        tags={},
+        run_identity={},
         tool_call_id="tc-1",
         checkpoint_id="cp-1",
         feedback_label="thumbs_up",
@@ -156,7 +161,7 @@ def test_langfuse_feedback_skips_when_trace_unknown() -> None:
                 "observability_settings": ObservabilitySettings.from_env(),
                 "run_id": "unknown-run",
                 "thread_id": "t",
-                "tags": {},
+                "run_identity": {},
                 "tool_call_id": "x",
                 "checkpoint_id": None,
                 "feedback_label": "ok",

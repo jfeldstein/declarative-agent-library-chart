@@ -30,6 +30,7 @@ from agent.observability.slack_ingest import handle_slack_reaction_event
 from agent.o11y_logging import configure_request_logging
 from agent.o11y_middleware import ObservabilityMiddleware
 from agent.runtime_config import RuntimeConfig
+from agent.runtime_identity import resolve_run_identity
 from agent.tools.registry import load_registry
 from agent.skills_state import unlocked_tools
 from agent.triggers.jira.config import JiraTriggerSettings
@@ -155,6 +156,7 @@ def _register_trigger_route(app: FastAPI, system_prompt: str | None) -> None:
         tenant_hdr = (request.headers.get("x-tenant-id") or "").strip()
         ctx = TriggerContext(
             cfg=cfg,
+            run_identity=resolve_run_identity(body=payload),
             body=payload,
             system_prompt=prompt,
             request_id=req_id,
