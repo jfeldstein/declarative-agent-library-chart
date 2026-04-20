@@ -35,4 +35,4 @@ New ADRs can follow the structure in `0001-use-python-for-runtime.md` (Context, 
 - **0012 — [CI parity as merge gate](0012-ci-parity-as-merge-gate.md)** — local parity with `.github/workflows/ci.yml`.
 - **0013 — [Core architectural shape: IaC, agent, scaffolding](0013-core-architectural-shape-iac-agent-scaffolding.md)** — taxonomy: IaC vs agent vs non-agentic scaffolding; observability first-class; tool layers; trigger vs tool.
 - **0014 — [Observability plugin architecture](0014-observability-plugin-architecture.md)** — lifecycle event bus, single `observability.plugins` Helm tree, tool boundary; alerts/checkpointing out of scope here.
-- **0015 — [Integration-agnostic core and tool-call `extra`](0015-integration-agnostic-core-and-tool-call-extra.md)** — no integration-specific fields in core middleware; namespaced `extra` on tool results; Slack metrics via optional bus subscriber.
+- **0015 — [Integration-agnostic observability plugins](0015-integration-agnostic-observability-plugins.md)** — Prometheus and other plugins stay vendor-neutral; tool metrics use catalog `tool` ids only.

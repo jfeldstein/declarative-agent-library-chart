@@ -186,6 +186,7 @@ def test_subagent_and_skill_and_mcp_metrics(monkeypatch: pytest.MonkeyPatch) -> 
         'dalc_tool_calls_total{result="success",tool="sample.echo"}'
         in text
     )
+    assert "dalc_tool_calls_duration_seconds" in text
 
 
 def test_json_logs_emit_structured_correlation_for_trigger_route() -> None:

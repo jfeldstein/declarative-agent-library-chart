@@ -124,17 +124,13 @@ Helm: set `observability.structuredLogs.json: true` **or** `observability.plugin
 | `dalc_llm_usage_missing_total` | `agent_id`, `model_id`, `result` | Completions with incomplete token usage metadata. |
 | `dalc_llm_time_to_first_token_seconds` | `agent_id`, `model_id`, `result`, `streaming` | TTFT (streaming vs non-streaming). |
 | `dalc_llm_estimated_cost_usd_total` | `agent_id`, `model_id`, `result` | Estimated USD (see env table; not billing). |
-| `dalc_tool_calls_total`          | `tool`, `result` = `success` | `error`                            |
-| `dalc_tool_duration_seconds`     | `tool`, `result`             | Tool call latency                  |
+| `dalc_tool_calls_total`          | `tool`, `result`             | Cumulative tool invocations; **`tool`** is the registry id (`toolset.tool_name`). |
+| `dalc_tool_calls_duration_seconds` | `tool`, `result`          | Tool call latency.                 |
 | `dalc_subagent_invocations_total`    | `subagent`, `result`         | Subagent delegations               |
 | `dalc_subagent_duration_seconds`     | `subagent`, `result`         | Subagent latency                   |
 | `dalc_skill_loads_total`             | `skill`, `result`            | Skill load operations              |
 | `dalc_skill_load_duration_seconds`   | `skill`, `result`            | Skill load latency                 |
-| `dalc_slack_tool_web_api_calls_total` | `method`, `result` (`success` / `error`) | Slack Web API calls from **`agent.tools`** (LLM-time tools, not scraper CronJobs). |
-| `dalc_slack_tool_web_api_duration_seconds` | `method`, `result` | Latency for those Slack Web API calls. |
-
-
-`tool`, `subagent`, and `skill` label values come from **configuration** only (bounded), not user-supplied free text. For Slack tools metrics, **`method`** is a fixed Slack Web API surface name from the runtime (for example `chat.postMessage`), not channel ids or message text.
+`tool`, `subagent`, and `skill` label values come from **configuration** only (bounded), not user-supplied free text.
 
 For **`agent_id`** and **`model_id`** on LLM metrics, the runtime uses `HOSTED_AGENT_ID` / `HOSTED_AGENT_AGENT_ID` and `HOSTED_AGENT_CHAT_MODEL` / `HOSTED_AGENT_MODEL_ID` when set; long values are shortened via stable hashes (see `agent.observability.plugins.prometheus.tagify_metric_label`).
 

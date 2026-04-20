@@ -4,6 +4,7 @@ Traceability: [DALC-REQ-O11Y-SCRAPE-001] [DALC-REQ-O11Y-SCRAPE-002] [DALC-REQ-O1
 [DALC-REQ-TOKEN-MET-002] [DALC-REQ-TOKEN-MET-003] [DALC-REQ-TOKEN-MET-004]
 [DALC-REQ-TOKEN-MET-005] [DALC-REQ-TOKEN-MET-006] [DALC-REQ-SLACK-TOOLS-006]
 [DALC-REQ-SLACK-TRIGGER-005] [DALC-REQ-JIRA-TRIGGER-005]
+See ADR 0015 (``docs/adrs/0015-integration-agnostic-observability-plugins.md``): no integration-specific names in this module.
 """
 
 from __future__ import annotations
@@ -118,13 +119,13 @@ DALC_LLM_ESTIMATED_COST_USD = Counter(
     ("agent_id", "model_id", "result"),
 )
 
-DALC_TOOL_CALLS = Counter(
+DALC_TOOL_CALLS_TOTAL = Counter(
     "dalc_tool_calls_total",
-    "Tool invocations (label-driven tool id).",
+    "Tool invocations; label ``tool`` is ``{toolset}.{tool_name}`` (catalog id).",
     ("tool", "result"),
 )
-DALC_TOOL_DURATION = Histogram(
-    "dalc_tool_duration_seconds",
+DALC_TOOL_CALLS_DURATION = Histogram(
+    "dalc_tool_calls_duration_seconds",
     "Latency of tool invocations.",
     ("tool", "result"),
     buckets=_DURATION_BUCKETS,
@@ -151,18 +152,6 @@ DALC_SKILL_LOAD_DURATION = Histogram(
     "dalc_skill_load_duration_seconds",
     "Latency of skill load operations.",
     ("skill", "result"),
-    buckets=_DURATION_BUCKETS,
-)
-
-DALC_SLACK_TOOL_WEB_API_CALLS = Counter(
-    "dalc_slack_tool_web_api_calls_total",
-    "Slack Web API calls issued from LLM-time tools.",
-    ("method", "result"),
-)
-DALC_SLACK_TOOL_WEB_API_DURATION = Histogram(
-    "dalc_slack_tool_web_api_duration_seconds",
-    "Latency of Slack Web API calls from LLM-time tools.",
-    ("method", "result"),
     buckets=_DURATION_BUCKETS,
 )
 
@@ -248,10 +237,10 @@ def observe_trigger_http_payloads(
         )
 
 
-def observe_mcp_tool(tool: str, result: BinaryResult, start: float) -> None:
+def observe_tool_call(tool: str, result: BinaryResult, start: float) -> None:
     dt = _elapsed(start)
-    DALC_TOOL_CALLS.labels(tool=tool, result=result).inc()
-    DALC_TOOL_DURATION.labels(tool=tool, result=result).observe(dt)
+    DALC_TOOL_CALLS_TOTAL.labels(tool=tool, result=result).inc()
+    DALC_TOOL_CALLS_DURATION.labels(tool=tool, result=result).observe(dt)
 
 
 def observe_subagent(subagent: str, result: BinaryResult, start: float) -> None:
@@ -266,26 +255,11 @@ def observe_skill_load(skill: str, result: BinaryResult, start: float) -> None:
     DALC_SKILL_LOAD_DURATION.labels(skill=skill, result=result).observe(dt)
 
 
-def observe_slack_tool_api(
-    method: str, result: BinaryResult, start: float | None = None
-) -> None:
-    dt = _elapsed(start) if start is not None else 0.0
-    DALC_SLACK_TOOL_WEB_API_CALLS.labels(method=method, result=result).inc()
-    if start is not None:
-        DALC_SLACK_TOOL_WEB_API_DURATION.labels(method=method, result=result).observe(
-            dt,
-        )
+def observe_trigger_inbound(trigger: str, transport: str, outcome: str) -> None:
+    """Record an inbound bridge trigger outcome (any integration; ``trigger`` is the label axis)."""
 
-
-def observe_slack_trigger_inbound(transport: str, result: str) -> None:
     DALC_TRIGGER_REQUESTS.labels(
-        trigger="slack", transport=transport, result=result
-    ).inc()
-
-
-def observe_jira_trigger_inbound(transport: str, result: str) -> None:
-    DALC_TRIGGER_REQUESTS.labels(
-        trigger="jira", transport=transport, result=result
+        trigger=trigger, transport=transport, result=outcome
     ).inc()
 
 
@@ -374,17 +348,13 @@ def _on_trigger_responded(event: LifecycleEvent) -> None:
         rsp = p.get("response_bytes")
         observe_trigger_http_payloads(rb, int(rsp) if rsp is not None else None)
         return
-    if trigger == "slack":
-        observe_slack_trigger_inbound(
+    if trigger in ("slack", "jira"):
+        observe_trigger_inbound(
+            trigger,
             str(p.get("transport") or "http"),
             str(p.get("outcome") or "ignored"),
         )
         return
-    if trigger == "jira":
-        observe_jira_trigger_inbound(
-            str(p.get("transport") or "http"),
-            str(p.get("outcome") or "ignored"),
-        )
 
 
 def _tool_result_label(ok: Any) -> str:
@@ -396,14 +366,14 @@ def _on_tool_call_completed(event: LifecycleEvent) -> None:
     tool = str(p["tool"])
     started_at = float(p["started_at"])
     ok = bool(p.get("ok", True))
-    observe_mcp_tool(tool, _tool_result_label(ok), started_at)
+    observe_tool_call(tool, _tool_result_label(ok), started_at)
 
 
 def _on_tool_call_failed(event: LifecycleEvent) -> None:
     p = event.payload
     tool = str(p["tool"])
     started_at = float(p["started_at"])
-    observe_mcp_tool(tool, "error", started_at)
+    observe_tool_call(tool, "error", started_at)
 
 
 def _on_skill_completed(event: LifecycleEvent) -> None:

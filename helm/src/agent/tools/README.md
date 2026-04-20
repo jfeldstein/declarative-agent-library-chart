@@ -49,7 +49,7 @@ End-to-end validation needs **`openspec/changes/slack-trigger`** applied so `@me
 1. Create a Secret with an `xoxb` token; set `slackTools.botTokenSecretName` / `botTokenSecretKey`.
 2. Allow-list tools in `mcp.enabledTools` (e.g. `slack.post_message`, `slack.reactions_add`).
 3. Deploy the agent **with** the Slack ingress/Socket Mode listener from `slack-trigger`.
-4. Mention the bot; confirm threaded reply and reaction via real API (check Slack UI); verify agent logs/metrics show `dalc_slack_tool_web_api_calls_total` without token material in stdout.
+4. Mention the bot; confirm threaded reply and reaction via real API (check Slack UI); verify agent logs/metrics show `dalc_tool_calls_total{tool=~"slack\\..*"}` (or exact tool ids such as `slack.post_message`) without token material in stdout.
 
 There is **no** requirement that the tools path call `/v1/embed`.
 

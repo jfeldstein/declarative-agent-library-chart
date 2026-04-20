@@ -9,17 +9,17 @@ from __future__ import annotations
 
 from agent.observability.metric_semantics import BinaryResult, TriggerResult
 from agent.observability.plugins.prometheus import (
+    DALC_TOOL_CALLS_DURATION,
+    DALC_TOOL_CALLS_TOTAL,
     DALC_TRIGGER_REQUESTS,
     observe_http_trigger,
-    observe_jira_trigger_inbound,
     observe_llm_completion_metrics,
     observe_llm_time_to_first_token,
-    observe_mcp_tool,
     observe_skill_load,
-    observe_slack_tool_api,
-    observe_slack_trigger_inbound,
     observe_subagent,
+    observe_tool_call,
     observe_trigger_http_payloads,
+    observe_trigger_inbound,
     llm_metric_label_values,
     tagify_metric_label,
 )
@@ -30,20 +30,20 @@ JIRA_TRIGGER_INBOUND = DALC_TRIGGER_REQUESTS
 
 __all__ = (
     "BinaryResult",
+    "DALC_TOOL_CALLS_DURATION",
+    "DALC_TOOL_CALLS_TOTAL",
     "DALC_TRIGGER_REQUESTS",
     "JIRA_TRIGGER_INBOUND",
     "SLACK_TRIGGER_INBOUND",
     "TriggerResult",
     "llm_metric_label_values",
     "observe_http_trigger",
-    "observe_jira_trigger_inbound",
     "observe_llm_completion_metrics",
     "observe_llm_time_to_first_token",
-    "observe_mcp_tool",
     "observe_skill_load",
-    "observe_slack_tool_api",
-    "observe_slack_trigger_inbound",
     "observe_subagent",
+    "observe_tool_call",
     "observe_trigger_http_payloads",
+    "observe_trigger_inbound",
     "tagify_metric_label",
 )
