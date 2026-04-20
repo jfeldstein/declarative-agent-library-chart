@@ -6,6 +6,10 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ---
 
+## 2026-04-20
+
+**ADR 0016 — Run identity on `TriggerContext` and plugin-interpreted lifecycle events** — Documents the practice: resolve agent/model identity once at trigger entry; core publishes neutral facts on the lifecycle bus; integration plugins map to vendor formats; durable correlation carries identity when `TriggerContext` is not available (for example async feedback). See [docs/adrs/0016-run-identity-on-context-and-plugin-events.md](adrs/0016-run-identity-on-context-and-plugin-events.md); relates to [ADR 0014](adrs/0014-observability-plugin-architecture.md), [ADR 0015](adrs/0015-integration-agnostic-observability-plugins.md), [ADR 0011](adrs/0011-prometheus-metrics-schema-and-cardinality.md).
+
 ## 2026-04-19
 
 **Integration-agnostic Prometheus plugin ([ADR 0015](adrs/0015-integration-agnostic-observability-plugins.md))** — Removed Slack-only metric families and middleware payload keys; unified tool instrumentation uses **`dalc_tool_calls_total`** + **`dalc_tool_calls_duration_seconds`** with **`tool`** = registry id (`toolset.tool_name`). Renamed Python symbols (**`DALC_TOOL_CALLS_TOTAL`**, **`observe_tool_call`**, **`observe_trigger_inbound`**); histogram **`dalc_tool_duration_seconds`** → **`dalc_tool_calls_duration_seconds`** (breaking for saved PromQL). Gates: **`cd helm/src && uv run pytest`**, **`python3 scripts/check_spec_traceability.py`**.
