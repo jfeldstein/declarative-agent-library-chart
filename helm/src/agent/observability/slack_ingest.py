@@ -133,6 +133,7 @@ def handle_slack_reaction_event(
         checkpoint_id=corr.checkpoint_id,
         feedback_label=entry.label_id,
         feedback_source="slack_reaction",
+        feedback_scalar=entry.scalar,
     )
 
     return {"status": "recorded", "label_id": entry.label_id}

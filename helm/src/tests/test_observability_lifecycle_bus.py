@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 from agent.observability.events import EventName, LifecycleEvent, SyncEventBus
+from agent.observability.events.types import ToolCallCompletedLifecycleEvent
 
 
 def test_sync_event_bus_delivers_to_subscribers() -> None:
@@ -22,9 +23,13 @@ def test_sync_event_bus_delivers_to_subscribers() -> None:
     bus.subscribe(EventName.TOOL_CALL_COMPLETED, first)
     bus.subscribe(EventName.TOOL_CALL_COMPLETED, second)
     bus.publish(
-        LifecycleEvent(
-            EventName.TOOL_CALL_COMPLETED,
-            {"tool": "sample.echo", "started_at": 0.0, "ok": True},
+        ToolCallCompletedLifecycleEvent(
+            name=EventName.TOOL_CALL_COMPLETED,
+            payload={
+                "tool": "sample.echo",
+                "started_at": 0.0,
+                "ok": True,
+            },
         )
     )
     assert seen == [

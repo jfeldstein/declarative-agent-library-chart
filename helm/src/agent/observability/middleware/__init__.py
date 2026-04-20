@@ -3,10 +3,30 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, cast
 
 from agent.observability.bootstrap import agent_event_bus
-from agent.observability.events import EventName, LifecycleEvent, SyncEventBus
+from agent.observability.events import SyncEventBus
+from agent.observability.events.payloads import FeedbackRecordedPayload, ToolCallCompletedPayload
+from agent.observability.events.types import (
+    EventName,
+    FeedbackRecordedLifecycleEvent,
+    LlmGenerationCompletedLifecycleEvent,
+    LlmGenerationFirstTokenLifecycleEvent,
+    RagEmbedCompletedLifecycleEvent,
+    RagQueryCompletedLifecycleEvent,
+    RunEndedLifecycleEvent,
+    RunStartedLifecycleEvent,
+    ScraperRagEmbedAttemptLifecycleEvent,
+    ScraperRunCompletedLifecycleEvent,
+    SkillLoadCompletedLifecycleEvent,
+    SkillLoadFailedLifecycleEvent,
+    SubagentInvocationCompletedLifecycleEvent,
+    SubagentInvocationFailedLifecycleEvent,
+    ToolCallCompletedLifecycleEvent,
+    ToolCallFailedLifecycleEvent,
+    TriggerRequestRespondedLifecycleEvent,
+)
 
 _SLACK_TOOL_WEB_API_METHOD: dict[str, str] = {
     "slack.post_message": "chat.postMessage",
@@ -34,9 +54,9 @@ def publish_run_started(
 
     b = bus or agent_event_bus()
     b.publish(
-        LifecycleEvent(
-            EventName.RUN_STARTED,
-            {
+        RunStartedLifecycleEvent(
+            name=EventName.RUN_STARTED,
+            payload={
                 "run_id": run_id,
                 "run_name": run_id,
                 "thread_id": thread_id,
@@ -52,7 +72,13 @@ def publish_run_ended(*, bus: SyncEventBus | None = None) -> None:
     """Emit when a trigger run completes (paired with :func:`publish_run_started`)."""
 
     b = bus or agent_event_bus()
-    b.publish(LifecycleEvent(EventName.RUN_ENDED, {}, occurred_at=_utc_now()))
+    b.publish(
+        RunEndedLifecycleEvent(
+            name=EventName.RUN_ENDED,
+            payload={},
+            occurred_at=_utc_now(),
+        )
+    )
 
 
 def publish_feedback_recorded(
@@ -65,24 +91,28 @@ def publish_feedback_recorded(
     checkpoint_id: str | None,
     feedback_label: str,
     feedback_source: str,
+    feedback_scalar: int | None = None,
     bus: SyncEventBus | None = None,
 ) -> None:
     """Emit after durable human feedback is recorded (Slack reactions, API, …)."""
 
     b = bus or agent_event_bus()
+    fb: FeedbackRecordedPayload = {
+        "observability_settings": observability_settings,
+        "run_id": run_id,
+        "thread_id": thread_id,
+        "tags": dict(tags),
+        "tool_call_id": tool_call_id,
+        "checkpoint_id": checkpoint_id,
+        "feedback_label": feedback_label,
+        "feedback_source": feedback_source,
+    }
+    if feedback_scalar is not None:
+        fb["feedback_scalar"] = feedback_scalar
     b.publish(
-        LifecycleEvent(
-            EventName.FEEDBACK_RECORDED,
-            {
-                "observability_settings": observability_settings,
-                "run_id": run_id,
-                "thread_id": thread_id,
-                "tags": dict(tags),
-                "tool_call_id": tool_call_id,
-                "checkpoint_id": checkpoint_id,
-                "feedback_label": feedback_label,
-                "feedback_source": feedback_source,
-            },
+        FeedbackRecordedLifecycleEvent(
+            name=EventName.FEEDBACK_RECORDED,
+            payload=fb,
             occurred_at=_utc_now(),
         )
     )
@@ -98,9 +128,9 @@ def publish_http_trigger_response(
 ) -> None:
     b = bus or agent_event_bus()
     b.publish(
-        LifecycleEvent(
-            EventName.TRIGGER_REQUEST_RESPONDED,
-            {
+        TriggerRequestRespondedLifecycleEvent(
+            name=EventName.TRIGGER_REQUEST_RESPONDED,
+            payload={
                 "trigger": "http",
                 "http_result": http_result,
                 "started_at": started_at,
@@ -120,9 +150,9 @@ def publish_slack_trigger_inbound(
 ) -> None:
     b = bus or agent_event_bus()
     b.publish(
-        LifecycleEvent(
-            EventName.TRIGGER_REQUEST_RESPONDED,
-            {
+        TriggerRequestRespondedLifecycleEvent(
+            name=EventName.TRIGGER_REQUEST_RESPONDED,
+            payload={
                 "trigger": "slack",
                 "transport": transport,
                 "outcome": outcome,
@@ -140,9 +170,9 @@ def publish_jira_trigger_inbound(
 ) -> None:
     b = bus or agent_event_bus()
     b.publish(
-        LifecycleEvent(
-            EventName.TRIGGER_REQUEST_RESPONDED,
-            {
+        TriggerRequestRespondedLifecycleEvent(
+            name=EventName.TRIGGER_REQUEST_RESPONDED,
+            payload={
                 "trigger": "jira",
                 "transport": transport,
                 "outcome": outcome,
@@ -177,9 +207,9 @@ def publish_tool_call_completed(
     if duration_s is not None:
         payload["duration_s"] = duration_s
     b.publish(
-        LifecycleEvent(
-            EventName.TOOL_CALL_COMPLETED,
-            payload,
+        ToolCallCompletedLifecycleEvent(
+            name=EventName.TOOL_CALL_COMPLETED,
+            payload=cast(ToolCallCompletedPayload, payload),
             occurred_at=_utc_now(),
         )
     )
@@ -197,9 +227,9 @@ def publish_tool_call_failed(
     if sm is not None:
         extra["slack_web_api_method"] = sm
     b.publish(
-        LifecycleEvent(
-            EventName.TOOL_CALL_FAILED,
-            {"tool": tool, "started_at": started_at, **extra},
+        ToolCallFailedLifecycleEvent(
+            name=EventName.TOOL_CALL_FAILED,
+            payload={"tool": tool, "started_at": started_at, **extra},
             occurred_at=_utc_now(),
         )
     )
@@ -213,9 +243,9 @@ def publish_skill_load_completed(
 ) -> None:
     b = bus or agent_event_bus()
     b.publish(
-        LifecycleEvent(
-            EventName.SKILL_LOAD_COMPLETED,
-            {"skill": skill, "started_at": started_at},
+        SkillLoadCompletedLifecycleEvent(
+            name=EventName.SKILL_LOAD_COMPLETED,
+            payload={"skill": skill, "started_at": started_at},
             occurred_at=_utc_now(),
         )
     )
@@ -229,9 +259,9 @@ def publish_skill_load_failed(
 ) -> None:
     b = bus or agent_event_bus()
     b.publish(
-        LifecycleEvent(
-            EventName.SKILL_LOAD_FAILED,
-            {"skill": skill, "started_at": started_at},
+        SkillLoadFailedLifecycleEvent(
+            name=EventName.SKILL_LOAD_FAILED,
+            payload={"skill": skill, "started_at": started_at},
             occurred_at=_utc_now(),
         )
     )
@@ -245,9 +275,9 @@ def publish_subagent_completed(
 ) -> None:
     b = bus or agent_event_bus()
     b.publish(
-        LifecycleEvent(
-            EventName.SUBAGENT_INVOCATION_COMPLETED,
-            {"subagent": subagent, "started_at": started_at},
+        SubagentInvocationCompletedLifecycleEvent(
+            name=EventName.SUBAGENT_INVOCATION_COMPLETED,
+            payload={"subagent": subagent, "started_at": started_at},
             occurred_at=_utc_now(),
         )
     )
@@ -261,9 +291,9 @@ def publish_subagent_failed(
 ) -> None:
     b = bus or agent_event_bus()
     b.publish(
-        LifecycleEvent(
-            EventName.SUBAGENT_INVOCATION_FAILED,
-            {"subagent": subagent, "started_at": started_at},
+        SubagentInvocationFailedLifecycleEvent(
+            name=EventName.SUBAGENT_INVOCATION_FAILED,
+            payload={"subagent": subagent, "started_at": started_at},
             occurred_at=_utc_now(),
         )
     )
@@ -279,9 +309,9 @@ def publish_llm_first_token(
 ) -> None:
     b = bus or agent_event_bus()
     b.publish(
-        LifecycleEvent(
-            EventName.LLM_GENERATION_FIRST_TOKEN,
-            {
+        LlmGenerationFirstTokenLifecycleEvent(
+            name=EventName.LLM_GENERATION_FIRST_TOKEN,
+            payload={
                 "ctx": ctx,
                 "seconds": seconds,
                 "streaming_label": streaming_label,
@@ -304,9 +334,9 @@ def publish_llm_generation_completed(
 ) -> None:
     b = bus or agent_event_bus()
     b.publish(
-        LifecycleEvent(
-            EventName.LLM_GENERATION_COMPLETED,
-            {
+        LlmGenerationCompletedLifecycleEvent(
+            name=EventName.LLM_GENERATION_COMPLETED,
+            payload={
                 "ctx": ctx,
                 "input_tokens": input_tokens,
                 "output_tokens": output_tokens,
@@ -327,9 +357,9 @@ def publish_rag_embed_completed(
 ) -> None:
     b = bus or agent_event_bus()
     b.publish(
-        LifecycleEvent(
-            EventName.RAG_EMBED_COMPLETED,
-            {"result": result, "elapsed_seconds": elapsed_seconds},
+        RagEmbedCompletedLifecycleEvent(
+            name=EventName.RAG_EMBED_COMPLETED,
+            payload={"result": result, "elapsed_seconds": elapsed_seconds},
             occurred_at=_utc_now(),
         )
     )
@@ -343,9 +373,9 @@ def publish_rag_query_completed(
 ) -> None:
     b = bus or agent_event_bus()
     b.publish(
-        LifecycleEvent(
-            EventName.RAG_QUERY_COMPLETED,
-            {"result": result, "elapsed_seconds": elapsed_seconds},
+        RagQueryCompletedLifecycleEvent(
+            name=EventName.RAG_QUERY_COMPLETED,
+            payload={"result": result, "elapsed_seconds": elapsed_seconds},
             occurred_at=_utc_now(),
         )
     )
@@ -362,9 +392,9 @@ def publish_scraper_run_completed(
 
     b = bus or scraper_event_bus()
     b.publish(
-        LifecycleEvent(
-            EventName.SCRAPER_RUN_COMPLETED,
-            {
+        ScraperRunCompletedLifecycleEvent(
+            name=EventName.SCRAPER_RUN_COMPLETED,
+            payload={
                 "integration": integration,
                 "success": success,
                 "elapsed_seconds": elapsed_seconds,
@@ -384,9 +414,9 @@ def publish_scraper_rag_embed_attempt(
 
     b = bus or scraper_event_bus()
     b.publish(
-        LifecycleEvent(
-            EventName.SCRAPER_RAG_EMBED_ATTEMPT,
-            {"integration": integration, "result": result},
+        ScraperRagEmbedAttemptLifecycleEvent(
+            name=EventName.SCRAPER_RAG_EMBED_ATTEMPT,
+            payload={"integration": integration, "result": result},
             occurred_at=_utc_now(),
         )
     )

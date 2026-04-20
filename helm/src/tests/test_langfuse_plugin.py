@@ -5,10 +5,15 @@ from __future__ import annotations
 import inspect
 from unittest.mock import MagicMock
 
-from agent.observability.events import EventName, LifecycleEvent, SyncEventBus
-from agent.observability.plugins.prometheus import register_prometheus_agent_plugin
-from agent.observability.middleware import publish_tool_call_completed
+from agent.observability.events import EventName, SyncEventBus
+from agent.observability.events.types import (
+    FeedbackRecordedLifecycleEvent,
+    LlmGenerationCompletedLifecycleEvent,
+    TriggerRequestRespondedLifecycleEvent,
+)
+from agent.observability.middleware import publish_feedback_recorded, publish_tool_call_completed
 from agent.observability.plugins.langfuse_bridge import LangfuseLifecycleBridge
+from agent.observability.plugins.prometheus import register_prometheus_agent_plugin
 from agent.observability.plugins_config import LangfusePluginSettings
 from agent.observability.run_context import bind_run_context
 from agent.observability.settings import ObservabilitySettings
@@ -60,9 +65,9 @@ def test_langfuse_bridge_maps_llm_tool_and_flush() -> None:
     bind_run_context(run_id=ctx.run_id, thread_id=ctx.thread_id)
 
     bus.publish(
-        LifecycleEvent(
-            EventName.LLM_GENERATION_COMPLETED,
-            {
+        LlmGenerationCompletedLifecycleEvent(
+            name=EventName.LLM_GENERATION_COMPLETED,
+            payload={
                 "ctx": ctx,
                 "input_tokens": 3,
                 "output_tokens": 5,
@@ -74,9 +79,9 @@ def test_langfuse_bridge_maps_llm_tool_and_flush() -> None:
         tool="slack.post_message", started_at=0.0, ok=True, bus=bus
     )
     bus.publish(
-        LifecycleEvent(
-            EventName.TRIGGER_REQUEST_RESPONDED,
-            {
+        TriggerRequestRespondedLifecycleEvent(
+            name=EventName.TRIGGER_REQUEST_RESPONDED,
+            payload={
                 "trigger": "http",
                 "http_result": "success",
                 "started_at": 0.0,
@@ -89,6 +94,77 @@ def test_langfuse_bridge_maps_llm_tool_and_flush() -> None:
     assert mock.create_trace_id.called
     assert mock.start_observation.call_count >= 3
     assert mock.flush.called
+
+
+def test_langfuse_feedback_uses_registry_trace_and_middleware_payload() -> None:
+    """Feedback score uses Langfuse trace from bridge registry and middleware-shaped payload."""
+
+    mock = MagicMock()
+    mock.create_trace_id.return_value = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    mock.start_observation.return_value = _DummyObs()
+
+    bridge = LangfuseLifecycleBridge(mock)
+    bus = SyncEventBus()
+    bridge.register(bus)
+
+    ctx = _trigger_ctx()
+    bind_run_context(run_id=ctx.run_id, thread_id=ctx.thread_id)
+
+    bus.publish(
+        LlmGenerationCompletedLifecycleEvent(
+            name=EventName.LLM_GENERATION_COMPLETED,
+            payload={
+                "ctx": ctx,
+                "input_tokens": 1,
+                "output_tokens": 2,
+                "result": "success",
+            },
+        )
+    )
+
+    publish_feedback_recorded(
+        observability_settings=ObservabilitySettings.from_env(),
+        run_id=ctx.run_id,
+        thread_id=ctx.thread_id,
+        tags={},
+        tool_call_id="tc-1",
+        checkpoint_id="cp-1",
+        feedback_label="thumbs_up",
+        feedback_source="slack_reaction",
+        feedback_scalar=1,
+        bus=bus,
+    )
+
+    mock.create_score.assert_called_once()
+    call_kw = mock.create_score.call_args.kwargs
+    assert call_kw["trace_id"] == "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    assert call_kw["session_id"] == ctx.thread_id
+    assert call_kw["name"] == "human_feedback"
+    assert call_kw["value"] == 1
+
+
+def test_langfuse_feedback_skips_when_trace_unknown() -> None:
+    mock = MagicMock()
+    bridge = LangfuseLifecycleBridge(mock)
+    bus = SyncEventBus()
+    bridge.register(bus)
+
+    bus.publish(
+        FeedbackRecordedLifecycleEvent(
+            name=EventName.FEEDBACK_RECORDED,
+            payload={
+                "observability_settings": ObservabilitySettings.from_env(),
+                "run_id": "unknown-run",
+                "thread_id": "t",
+                "tags": {},
+                "tool_call_id": "x",
+                "checkpoint_id": None,
+                "feedback_label": "ok",
+                "feedback_source": "test",
+            },
+        )
+    )
+    mock.create_score.assert_not_called()
 
 
 def test_build_langfuse_client_requires_complete_settings() -> None:

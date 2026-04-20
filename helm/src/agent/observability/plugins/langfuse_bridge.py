@@ -10,12 +10,14 @@ structured labels). See ``openspec/changes/observability-plugin-langfuse/design.
 from __future__ import annotations
 
 import time
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import Any
 
 from langfuse import Langfuse, propagate_attributes
 
 from agent.observability.events import EventName, LifecycleEvent, SyncEventBus
+from agent.observability.events.types import FeedbackRecordedLifecycleEvent
 from agent.observability.plugins_config import LangfusePluginSettings
 from agent.observability.run_context import get_run_id, get_thread_id
 from agent.trigger_context import TriggerContext
@@ -74,7 +76,7 @@ class LangfuseLifecycleBridge:
         bus.subscribe(EventName.FEEDBACK_RECORDED, self._on_feedback_recorded)
 
     def _resolve_ctx(
-        self, payload: dict[str, Any]
+        self, payload: Mapping[str, Any]
     ) -> tuple[str | None, TriggerContext | None]:
         ctx = payload.get("ctx")
         if isinstance(ctx, TriggerContext):
@@ -163,7 +165,7 @@ class LangfuseLifecycleBridge:
 
         self._with_attrs(meta, _emit)
 
-    def _tool_span(self, payload: dict[str, Any], *, ok: bool | None) -> None:
+    def _tool_span(self, payload: Mapping[str, Any], *, ok: bool | None) -> None:
         run_id, tc = self._resolve_ctx(payload)
         if not run_id:
             return
@@ -280,21 +282,32 @@ class LangfuseLifecycleBridge:
             return
 
     def _on_feedback_recorded(self, event: LifecycleEvent) -> None:
-        """Map feedback to a Langfuse score when payload includes structured fields."""
+        """Record human feedback as a Langfuse score when we can resolve the trace."""
 
-        p = event.payload
-        trace_id = p.get("trace_id") or p.get("langfuse_trace_id")
-        name = p.get("score_name") or p.get("name")
-        value = p.get("value")
-        session_id = p.get("session_id") or p.get("thread_id")
-        if trace_id is None or name is None or value is None:
+        if not isinstance(event, FeedbackRecordedLifecycleEvent):
             return
+        p = event.payload
+        run_id = str(p["run_id"])
+        meta = self._runs.get(run_id)
+        if meta is None:
+            return
+        meta_fb: dict[str, Any] = {
+            "feedback_label": p["feedback_label"],
+            "feedback_source": p["feedback_source"],
+            "tool_call_id": p["tool_call_id"],
+            "checkpoint_id": p["checkpoint_id"],
+        }
+        scalar = p.get("feedback_scalar")
+        if scalar is not None:
+            value: Any = scalar
+        else:
+            value = p["feedback_label"]
         self._client.create_score(
-            name=str(name),
-            value=value,  # numeric or string per SDK
-            trace_id=str(trace_id),
-            session_id=str(session_id) if session_id is not None else None,
-            metadata=p.get("metadata"),
+            name="human_feedback",
+            value=value,
+            trace_id=meta.trace_id,
+            session_id=str(p["thread_id"]),
+            metadata=meta_fb,
         )
 
 
