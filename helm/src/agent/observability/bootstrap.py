@@ -4,15 +4,13 @@ from __future__ import annotations
 
 from typing import Literal
 
-from agent.observability.events import SyncEventBus
+from agent.observability.events import EventName, SyncEventBus
+from agent.observability.events.bus import Subscriber
 from agent.observability.plugins.langfuse_bridge import (
     build_langfuse_client,
     register_langfuse_plugin,
 )
-from agent.observability.plugins.prometheus import (
-    register_prometheus_agent_plugin,
-    register_prometheus_scraper_plugin,
-)
+from agent.observability.plugins.prometheus import enqueue_prometheus_subscriptions
 from agent.observability.plugins.wandb.plugin import register_wandb_trace_plugin
 from agent.observability.plugins_config import (
     ObservabilityPluginsConfig,
@@ -32,12 +30,18 @@ def build_event_bus(
     """Construct an isolated bus instance and attach optional observability plugins."""
 
     cfg = config or plugins_config_from_env()
-    bus = SyncEventBus()
+    subscriptions: list[tuple[EventName, Subscriber]] = []
+
+    def register_plugin(event_name: EventName, subscriber: Subscriber) -> None:
+        subscriptions.append((event_name, subscriber))
+
     if cfg.prometheus.enabled:
-        if process == "agent":
-            register_prometheus_agent_plugin(bus)
-        else:
-            register_prometheus_scraper_plugin(bus)
+        enqueue_prometheus_subscriptions(register_plugin)
+
+    bus = SyncEventBus()
+    for event_name, subscriber in subscriptions:
+        bus.subscribe(event_name, subscriber)
+
     register_langfuse_plugin(bus, build_langfuse_client(cfg.langfuse))
     if process == "agent":
         register_wandb_trace_plugin(bus, cfg)
