@@ -7,16 +7,9 @@ from __future__ import annotations
 
 from typing import Literal
 
-from agent.observability.events import EventName, SyncEventBus
-from agent.observability.events.bus import Subscriber
-from agent.observability.plugins.consumer_plugins import (
-    attach_consumer_plugins,
-    enqueue_consumer_plugins,
-)
-from agent.observability.plugins.wiring import (
-    attach_plugins_from_config,
-    enqueue_plugins_from_config,
-)
+from agent.observability.events import SyncEventBus
+from agent.observability.plugins.consumer_plugins import attach_consumer_plugins
+from agent.observability.plugins.wiring import attach_plugins_from_config
 from agent.observability.plugins_config import (
     ObservabilityPluginsConfig,
     plugins_config_from_env,
@@ -35,18 +28,7 @@ def build_event_bus(
     """Construct an isolated bus instance and attach optional observability plugins."""
 
     cfg = config or plugins_config_from_env()
-    subscriptions: list[tuple[EventName, Subscriber]] = []
-
-    def register_plugin(event_name: EventName, subscriber: Subscriber) -> None:
-        subscriptions.append((event_name, subscriber))
-
-    enqueue_plugins_from_config(cfg, register_plugin)
-    enqueue_consumer_plugins(process, cfg, register_plugin)
-
     bus = SyncEventBus()
-    for event_name, subscriber in subscriptions:
-        bus.subscribe(event_name, subscriber)
-
     attach_plugins_from_config(process, cfg, bus)
     attach_consumer_plugins(process, cfg, bus)
     return bus

@@ -4,12 +4,9 @@ When this wheel is installed alongside the ``declarative-agent-library-chart`` r
 (``agent`` package), hooks receive library types:
 
 - ``cfg``: :class:`agent.observability.plugins_config.ObservabilityPluginsConfig`
-- ``enqueue_subscription``: ``Callable[[EventName, Subscriber], None]`` before the bus exists
 - ``bus``: :class:`agent.observability.events.SyncEventBus` in ``attach``
 
-Expected hook shapes (implement any subset; duck typing):
-
-``enqueue(process_kind, cfg, enqueue_subscription) -> None``
+Expected hook shape (optional; duck typing):
 
 ``attach(process_kind, cfg, bus) -> None``
 
@@ -20,25 +17,15 @@ For scraper CronJobs, keep hooks light (lazy-import heavy SDKs inside the method
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from typing import TYPE_CHECKING, Literal
 
 if TYPE_CHECKING:
-    from agent.observability.events import EventName, SyncEventBus
-    from agent.observability.events.bus import Subscriber
+    from agent.observability.events import SyncEventBus
     from agent.observability.plugins_config import ObservabilityPluginsConfig
 
 
 class WithPluginsDemoPlugin:
     """No-op implementation."""
-
-    def enqueue(
-        self,
-        process_kind: Literal["agent", "scraper"],
-        cfg: ObservabilityPluginsConfig,
-        enqueue_subscription: Callable[[EventName, Subscriber], None],
-    ) -> None:
-        del process_kind, cfg, enqueue_subscription
 
     def attach(
         self,

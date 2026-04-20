@@ -18,21 +18,16 @@ The runtime SHALL NOT treat unstructured Helm/ConfigMap strings as authoritative
 
 ---
 
-### Requirement: [DALC-REQ-CUSTOM-O11Y-002] Hook lifecycle matches enqueue-then-attach bus bootstrap
+### Requirement: [DALC-REQ-CUSTOM-O11Y-002] Hook lifecycle matches attach-only bus bootstrap
 
-Consumer observability plugins SHALL integrate with **`build_event_bus`** using two phases consistent with **`enqueue_plugins_from_config`** and **`attach_plugins_from_config`**.
+Consumer observability plugins SHALL integrate with **`build_event_bus`** by registering on the **post-bus** path only: **`attach_consumer_plugins`** runs after **`attach_plugins_from_config`** (built-in Prometheus, Langfuse, Weights & Biases when enabled).
 
-Built-in wiring from **`agent.observability.plugins.wiring`** SHALL run **before** consumer hooks within each phase.
-
-#### Scenario: Built-in enqueue runs before consumer enqueue
-
-- **WHEN** **`build_event_bus`** runs with consumer plugins configured
-- **THEN** the runtime SHALL call built-in **`enqueue_plugins_from_config`** before invoking consumer enqueue hooks
+Built-in wiring from **`agent.observability.plugins.wiring`** SHALL run **before** consumer **`attach`** hooks.
 
 #### Scenario: Built-in attach runs before consumer attach
 
 - **WHEN** **`build_event_bus`** runs with consumer plugins configured
-- **THEN** the runtime SHALL call built-in **`attach_plugins_from_config`** before invoking consumer attach hooks
+- **THEN** the runtime SHALL call built-in **`attach_plugins_from_config`** before invoking consumer **`attach`** hooks
 
 ---
 

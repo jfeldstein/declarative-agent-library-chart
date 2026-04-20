@@ -51,4 +51,4 @@ def test_observability_plugins_entry_point_resolves() -> None:
     assert noop
     loaded = noop[0].load()
     plugin = loaded() if callable(loaded) else loaded
-    assert hasattr(plugin, "enqueue") or hasattr(plugin, "attach")
+    assert hasattr(plugin, "attach")

@@ -5,14 +5,12 @@ Traceability: [DALC-REQ-CUSTOM-O11Y-001] [DALC-REQ-CUSTOM-O11Y-002] [DALC-REQ-CU
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from importlib.metadata import EntryPoint, entry_points
 from typing import Any, Literal
 
 import structlog
 
-from agent.observability.events import EventName, SyncEventBus
-from agent.observability.events.bus import Subscriber
+from agent.observability.events import SyncEventBus
 from agent.observability.plugins_config import ObservabilityPluginsConfig
 
 log = structlog.get_logger(__name__)
@@ -34,26 +32,6 @@ def _materialize_plugin(ep: EntryPoint) -> Any:
     return loaded() if callable(loaded) else loaded
 
 
-def _enqueue_one(
-    ep: EntryPoint,
-    process: Literal["agent", "scraper"],
-    cfg: ObservabilityPluginsConfig,
-    enqueue: Callable[[EventName, Subscriber], None],
-) -> None:
-    try:
-        plugin = _materialize_plugin(ep)
-        hook = getattr(plugin, "enqueue", None)
-        if hook is None:
-            return
-        hook(process, cfg, enqueue)
-    except Exception:
-        log.warning(
-            "consumer_observability_enqueue_failed",
-            entry_point=ep.name,
-            exc_info=True,
-        )
-
-
 def _attach_one(
     ep: EntryPoint,
     process: Literal["agent", "scraper"],
@@ -72,19 +50,6 @@ def _attach_one(
             entry_point=ep.name,
             exc_info=True,
         )
-
-
-def enqueue_consumer_plugins(
-    process: Literal["agent", "scraper"],
-    cfg: ObservabilityPluginsConfig,
-    enqueue: Callable[[EventName, Subscriber], None],
-) -> None:
-    """Invoke consumer ``enqueue`` hooks after built-in enqueue wiring."""
-    allowlist = cfg.consumer_plugins.entry_point_allowlist
-    if not allowlist:
-        return
-    for ep in _selected_entry_points(allowlist):
-        _enqueue_one(ep, process, cfg, enqueue)
 
 
 def attach_consumer_plugins(

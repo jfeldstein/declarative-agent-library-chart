@@ -326,10 +326,10 @@ def observe_llm_completion_metrics(
             DALC_LLM_ESTIMATED_COST_USD.labels(*lbl).inc(delta)
 
 
-def enqueue_prometheus_subscriptions(
+def attach_prometheus_subscriptions(
     register_plugin: Callable[[EventName, Subscriber], None],
 ) -> None:
-    """Queue all Prometheus bus subscriptions (agent + scraper ``EventName``s do not overlap)."""
+    """Subscribe all Prometheus lifecycle handlers via ``register_plugin`` (typically ``bus.subscribe``)."""
 
     register_plugin(EventName.TRIGGER_REQUEST_RESPONDED, _on_trigger_responded)
     register_plugin(EventName.TOOL_CALL_COMPLETED, _on_tool_call_completed)
@@ -349,7 +349,7 @@ def enqueue_prometheus_subscriptions(
 def register_prometheus_plugin(bus: SyncEventBus) -> None:
     """Subscribe all Prometheus handlers on ``bus`` (tests and callers outside bootstrap)."""
 
-    enqueue_prometheus_subscriptions(bus.subscribe)
+    attach_prometheus_subscriptions(bus.subscribe)
 
 
 def _on_trigger_responded(event: LifecycleEvent) -> None:

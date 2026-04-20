@@ -51,21 +51,13 @@ class _FakeEntryPointGroups:
         return list(self._eps)
 
 
-def test_builtin_enqueue_and_attach_run_before_consumer_hooks(
+def test_builtin_attach_runs_before_consumer_attach(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """[DALC-REQ-CUSTOM-O11Y-002] Built-in wiring runs before consumer hooks in each phase."""
+    """[DALC-REQ-CUSTOM-O11Y-002] Built-in attach wiring runs before consumer attach hooks."""
 
     phases: list[str] = []
 
-    monkeypatch.setattr(
-        "agent.observability.bootstrap.enqueue_plugins_from_config",
-        lambda cfg, register: phases.append("enqueue_builtin"),
-    )
-    monkeypatch.setattr(
-        "agent.observability.bootstrap.enqueue_consumer_plugins",
-        lambda proc, cfg, register: phases.append("enqueue_consumer"),
-    )
     monkeypatch.setattr(
         "agent.observability.bootstrap.attach_plugins_from_config",
         lambda proc, cfg, bus: phases.append("attach_builtin"),
@@ -84,12 +76,7 @@ def test_builtin_enqueue_and_attach_run_before_consumer_hooks(
         ),
     )
 
-    assert phases == [
-        "enqueue_builtin",
-        "enqueue_consumer",
-        "attach_builtin",
-        "attach_consumer",
-    ]
+    assert phases == ["attach_builtin", "attach_consumer"]
 
 
 def test_disabled_does_not_query_entry_points() -> None:
@@ -109,14 +96,6 @@ def test_enabled_invokes_hooks_for_allowlisted_entry_point(
 
     recorded: list[tuple[str, str]] = []
 
-    def _fake_enqueue(
-        process_kind: str,
-        cfg: ObservabilityPluginsConfig,
-        enqueue: object,
-    ) -> None:
-        del cfg, enqueue
-        recorded.append(("enqueue", process_kind))
-
     def _fake_attach(
         process_kind: str,
         cfg: ObservabilityPluginsConfig,
@@ -125,7 +104,6 @@ def test_enabled_invokes_hooks_for_allowlisted_entry_point(
         del cfg, bus
         recorded.append(("attach", process_kind))
 
-    monkeypatch.setattr(noop_consumer_plugin.PLUGIN, "enqueue", _fake_enqueue)
     monkeypatch.setattr(noop_consumer_plugin.PLUGIN, "attach", _fake_attach)
 
     ep = EntryPoint(
@@ -147,7 +125,7 @@ def test_enabled_invokes_hooks_for_allowlisted_entry_point(
             ),
         )
 
-    assert recorded == [("enqueue", "scraper"), ("attach", "scraper")]
+    assert recorded == [("attach", "scraper")]
 
 
 def test_broken_import_does_not_fail_startup() -> None:
