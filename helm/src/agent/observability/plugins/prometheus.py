@@ -12,11 +12,13 @@ from __future__ import annotations
 import math
 import os
 import time
+from collections.abc import Callable
 from typing import Any
 
 from prometheus_client import Counter, Histogram
 
 from agent.observability.events import EventName, LifecycleEvent, SyncEventBus
+from agent.observability.events.bus import Subscriber
 from agent.observability.metric_semantics import BinaryResult, TriggerResult
 from agent.trigger_context import TriggerContext
 
@@ -324,27 +326,30 @@ def observe_llm_completion_metrics(
             DALC_LLM_ESTIMATED_COST_USD.labels(*lbl).inc(delta)
 
 
-def register_prometheus_agent_plugin(bus: SyncEventBus) -> None:
-    """Subscribe agent-process lifecycle events and record ``dalc_*`` metrics."""
+def enqueue_prometheus_subscriptions(
+    register_plugin: Callable[[EventName, Subscriber], None],
+) -> None:
+    """Queue all Prometheus bus subscriptions (agent + scraper ``EventName``s do not overlap)."""
 
-    bus.subscribe(EventName.TRIGGER_REQUEST_RESPONDED, _on_trigger_responded)
-    bus.subscribe(EventName.TOOL_CALL_COMPLETED, _on_tool_call_completed)
-    bus.subscribe(EventName.TOOL_CALL_FAILED, _on_tool_call_failed)
-    bus.subscribe(EventName.SKILL_LOAD_COMPLETED, _on_skill_completed)
-    bus.subscribe(EventName.SKILL_LOAD_FAILED, _on_skill_failed)
-    bus.subscribe(EventName.SUBAGENT_INVOCATION_COMPLETED, _on_subagent_completed)
-    bus.subscribe(EventName.SUBAGENT_INVOCATION_FAILED, _on_subagent_failed)
-    bus.subscribe(EventName.LLM_GENERATION_FIRST_TOKEN, _on_llm_first_token)
-    bus.subscribe(EventName.LLM_GENERATION_COMPLETED, _on_llm_completed)
-    bus.subscribe(EventName.RAG_EMBED_COMPLETED, _on_rag_embed)
-    bus.subscribe(EventName.RAG_QUERY_COMPLETED, _on_rag_query)
+    register_plugin(EventName.TRIGGER_REQUEST_RESPONDED, _on_trigger_responded)
+    register_plugin(EventName.TOOL_CALL_COMPLETED, _on_tool_call_completed)
+    register_plugin(EventName.TOOL_CALL_FAILED, _on_tool_call_failed)
+    register_plugin(EventName.SKILL_LOAD_COMPLETED, _on_skill_completed)
+    register_plugin(EventName.SKILL_LOAD_FAILED, _on_skill_failed)
+    register_plugin(EventName.SUBAGENT_INVOCATION_COMPLETED, _on_subagent_completed)
+    register_plugin(EventName.SUBAGENT_INVOCATION_FAILED, _on_subagent_failed)
+    register_plugin(EventName.LLM_GENERATION_FIRST_TOKEN, _on_llm_first_token)
+    register_plugin(EventName.LLM_GENERATION_COMPLETED, _on_llm_completed)
+    register_plugin(EventName.RAG_EMBED_COMPLETED, _on_rag_embed)
+    register_plugin(EventName.RAG_QUERY_COMPLETED, _on_rag_query)
+    register_plugin(EventName.SCRAPER_RUN_COMPLETED, _on_scraper_run)
+    register_plugin(EventName.SCRAPER_RAG_EMBED_ATTEMPT, _on_rag_embed_attempt)
 
 
-def register_prometheus_scraper_plugin(bus: SyncEventBus) -> None:
-    """Subscribe scraper CronJob lifecycle events and record scraper ``dalc_*`` metrics."""
+def register_prometheus_plugin(bus: SyncEventBus) -> None:
+    """Subscribe all Prometheus handlers on ``bus`` (tests and callers outside bootstrap)."""
 
-    bus.subscribe(EventName.SCRAPER_RUN_COMPLETED, _on_scraper_run)
-    bus.subscribe(EventName.SCRAPER_RAG_EMBED_ATTEMPT, _on_rag_embed_attempt)
+    enqueue_prometheus_subscriptions(bus.subscribe)
 
 
 def _on_trigger_responded(event: LifecycleEvent) -> None:

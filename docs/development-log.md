@@ -8,6 +8,8 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ## 2026-04-20
 
+**Observability bootstrap + Prometheus bus registration** — `build_event_bus` defers handler wiring: nested `register_plugin` appends `(EventName, subscriber)` pairs, then the bus is created and subscriptions are applied; `enqueue_prometheus_subscriptions` registers all agent- and scraper-originated `EventName` handlers in one list (no `ProcessKind` split). Tests and ad-hoc wiring use `register_prometheus_plugin(bus)` (alias of the same list via `bus.subscribe`). Branch **`feature--bootstrap-plugin-queue--agents--agent-k8p2--prometheus-unify`**. Gates: **`cd helm/src && uv run pytest`**, **`python3 scripts/check_spec_traceability.py`**.
+
 **ADR 0016 implementation** — Added **`agent.runtime_identity`** (**`RunIdentity`**, **`resolve_run_identity`**), **`TriggerContext.run_identity`**, **`bind_run_context(..., run_identity=)`** / **`get_run_identity()`**. **`RUN_STARTED`** / **`FEEDBACK_RECORDED`** payloads carry **`run_identity`** + **`request_correlation_id`** instead of vendor **`tags`**; **`observability.plugins.wandb`** builds mandatory tags from those facts. **`ToolCorrelation.run_identity`** + Postgres **`slack_correlation.run_identity`** (migration **`002_slack_correlation_run_identity.sql`**) persist identity for Slack reaction feedback; Prometheus LLM labels and **`wandb_session`** read from context. Docs: [ADR 0016](adrs/0016-run-identity-on-context-and-plugin-events.md). Gates: **`cd helm/src && uv run pytest tests/`**, **`python3 scripts/check_spec_traceability.py`**, **`uv run ruff check agent tests`**.
 
 ## 2026-04-19

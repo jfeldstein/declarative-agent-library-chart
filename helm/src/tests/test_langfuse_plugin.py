@@ -16,7 +16,7 @@ from agent.observability.middleware import (
     publish_tool_call_completed,
 )
 from agent.observability.plugins.langfuse_bridge import LangfuseLifecycleBridge
-from agent.observability.plugins.prometheus import register_prometheus_agent_plugin
+from agent.observability.plugins.prometheus import register_prometheus_plugin
 from agent.observability.plugins_config import LangfusePluginSettings
 from agent.observability.run_context import bind_run_context
 from agent.observability.settings import ObservabilitySettings
@@ -63,7 +63,7 @@ def test_langfuse_bridge_maps_llm_tool_and_flush() -> None:
 
     bridge = LangfuseLifecycleBridge(mock)
     bus = SyncEventBus()
-    register_prometheus_agent_plugin(bus)
+    register_prometheus_plugin(bus)
     bridge.register(bus)
 
     ctx = _trigger_ctx()
