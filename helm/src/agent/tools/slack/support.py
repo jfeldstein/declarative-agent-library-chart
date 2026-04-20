@@ -1,4 +1,7 @@
-"""Shared helpers for LLM-time Slack tools (distinct from scraper ``SLACK_*`` env)."""
+"""Shared helpers for LLM-time Slack tools (distinct from scraper ``SLACK_*`` env).
+
+Traceability: [DALC-REQ-SLACK-TOOLS-006]
+"""
 
 from __future__ import annotations
 
@@ -104,12 +107,26 @@ def slack_api_error_payload(exc: SlackApiError, *, method: str) -> dict[str, Any
     out: dict[str, Any] = {"ok": False, "error": err}
     if req_id:
         out["slack_req_id"] = req_id
+    return with_slack_tool_extra(method, out)
+
+
+def with_slack_tool_extra(method: str, payload: dict[str, Any]) -> dict[str, Any]:
+    """Attach ``extra["slack"]["web_api_method"]`` for observability plugins (ADR 0015)."""
+    out = dict(payload)
+    prev = out.pop("extra", None)
+    extra: dict[str, Any] = dict(prev) if isinstance(prev, dict) else {}
+    slack_inner: dict[str, Any] = (
+        dict(extra["slack"]) if isinstance(extra.get("slack"), dict) else {}
+    )
+    slack_inner["web_api_method"] = method
+    extra["slack"] = slack_inner
+    out["extra"] = extra
     return out
 
 
-def finish_ok(_method: str, payload: dict[str, Any]) -> dict[str, Any]:
-    """Return tool JSON; Prometheus metrics are emitted in :mod:`agent.trigger_steps`."""
-    return payload
+def finish_ok(web_api_method: str, payload: dict[str, Any]) -> dict[str, Any]:
+    """Return tool JSON with Slack ``extra`` for lifecycle/metrics plugins."""
+    return with_slack_tool_extra(web_api_method, payload)
 
 
 def api_start() -> float:

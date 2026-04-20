@@ -397,13 +397,6 @@ def _on_tool_call_completed(event: LifecycleEvent) -> None:
     started_at = float(p["started_at"])
     ok = bool(p.get("ok", True))
     observe_mcp_tool(tool, _tool_result_label(ok), started_at)
-    method = p.get("slack_web_api_method")
-    if isinstance(method, str) and method.strip():
-        observe_slack_tool_api(
-            method.strip(),
-            _tool_result_label(ok),
-            started_at,
-        )
 
 
 def _on_tool_call_failed(event: LifecycleEvent) -> None:
@@ -411,9 +404,6 @@ def _on_tool_call_failed(event: LifecycleEvent) -> None:
     tool = str(p["tool"])
     started_at = float(p["started_at"])
     observe_mcp_tool(tool, "error", started_at)
-    method = p.get("slack_web_api_method")
-    if isinstance(method, str) and method.strip():
-        observe_slack_tool_api(method.strip(), "error", started_at)
 
 
 def _on_skill_completed(event: LifecycleEvent) -> None:

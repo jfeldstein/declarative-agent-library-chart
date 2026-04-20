@@ -7,7 +7,11 @@ from typing import Any, cast
 
 from agent.observability.bootstrap import agent_event_bus
 from agent.observability.events import SyncEventBus
-from agent.observability.events.payloads import FeedbackRecordedPayload, ToolCallCompletedPayload
+from agent.observability.events.payloads import (
+    FeedbackRecordedPayload,
+    ToolCallCompletedPayload,
+    ToolCallFailedPayload,
+)
 from agent.observability.events.types import (
     EventName,
     FeedbackRecordedLifecycleEvent,
@@ -27,15 +31,6 @@ from agent.observability.events.types import (
     ToolCallFailedLifecycleEvent,
     TriggerRequestRespondedLifecycleEvent,
 )
-
-_SLACK_TOOL_WEB_API_METHOD: dict[str, str] = {
-    "slack.post_message": "chat.postMessage",
-    "slack.reactions_add": "reactions.add",
-    "slack.reactions_remove": "reactions.remove",
-    "slack.chat_update": "chat.update",
-    "slack.conversations_history": "conversations.history",
-    "slack.conversations_replies": "conversations.replies",
-}
 
 
 def _utc_now() -> datetime:
@@ -189,19 +184,17 @@ def publish_tool_call_completed(
     ok: bool,
     tool_call_id: str | None = None,
     duration_s: float | None = None,
+    extra: dict[str, Any] | None = None,
     bus: SyncEventBus | None = None,
 ) -> None:
     b = bus or agent_event_bus()
-    extra: dict[str, Any] = {}
-    sm = _SLACK_TOOL_WEB_API_METHOD.get(tool)
-    if sm is not None:
-        extra["slack_web_api_method"] = sm
     payload: dict[str, Any] = {
         "tool": tool,
         "started_at": started_at,
         "ok": ok,
-        **extra,
     }
+    if extra:
+        payload["extra"] = extra
     if tool_call_id is not None:
         payload["tool_call_id"] = tool_call_id
     if duration_s is not None:
@@ -219,17 +212,17 @@ def publish_tool_call_failed(
     *,
     tool: str,
     started_at: float,
+    extra: dict[str, Any] | None = None,
     bus: SyncEventBus | None = None,
 ) -> None:
     b = bus or agent_event_bus()
-    extra: dict[str, Any] = {}
-    sm = _SLACK_TOOL_WEB_API_METHOD.get(tool)
-    if sm is not None:
-        extra["slack_web_api_method"] = sm
+    p: dict[str, Any] = {"tool": tool, "started_at": started_at}
+    if extra:
+        p["extra"] = extra
     b.publish(
         ToolCallFailedLifecycleEvent(
             name=EventName.TOOL_CALL_FAILED,
-            payload={"tool": tool, "started_at": started_at, **extra},
+            payload=cast(ToolCallFailedPayload, p),
             occurred_at=_utc_now(),
         )
     )

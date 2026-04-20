@@ -13,6 +13,9 @@ from agent.observability.plugins.prometheus import (
     register_prometheus_agent_plugin,
     register_prometheus_scraper_plugin,
 )
+from agent.observability.plugins.slack_tool_metrics_plugin import (
+    register_slack_tool_metrics_plugin,
+)
 from agent.observability.plugins.wandb.plugin import register_wandb_trace_plugin
 from agent.observability.plugins_config import (
     ObservabilityPluginsConfig,
@@ -36,6 +39,7 @@ def build_event_bus(
     if cfg.prometheus.enabled:
         if process == "agent":
             register_prometheus_agent_plugin(bus)
+            register_slack_tool_metrics_plugin(bus)
         else:
             register_prometheus_scraper_plugin(bus)
     register_langfuse_plugin(bus, build_langfuse_client(cfg.langfuse))

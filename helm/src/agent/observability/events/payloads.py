@@ -83,12 +83,14 @@ class ToolCallCompletedPayload(TypedDict):
     ok: bool
     tool_call_id: NotRequired[str]
     duration_s: NotRequired[float]
+    extra: NotRequired[dict[str, Any]]
     slack_web_api_method: NotRequired[str]
 
 
 class ToolCallFailedPayload(TypedDict):
     tool: str
     started_at: float
+    extra: NotRequired[dict[str, Any]]
     slack_web_api_method: NotRequired[str]
 
 

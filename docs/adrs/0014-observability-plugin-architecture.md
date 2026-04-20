@@ -22,7 +22,7 @@ Operators still need a **single, predictable Helm surface** for turning optional
    The process **`GET /metrics`** endpoint and existing **`agent_runtime_*`** naming remain the default **Prometheus observability metrics** surface ([ADR 0011](0011-prometheus-metrics-schema-and-cardinality.md)). Phase 1 preserves prior series via bus subscribers; the **`observability.plugins.prometheus`** flag is reserved for future gating or secondary registries if we ever split surfaces—**today** scraping does not require flipping this flag.
 
 4. **Tool boundary**  
-   **User-invoked tools** (MCP / LangChain tools, Slack Web API helpers, Jira REST helpers) **SHALL** emit observability through the **trigger / runtime** instrumentation paths (event bus → subscribers), not by importing metric helpers directly from arbitrary tool modules. Tools remain **capabilities of the agent**; observability remains **platform instrumentation** around those calls.
+   **User-invoked tools** (MCP / LangChain tools, Slack Web API helpers, Jira REST helpers) **SHALL** emit observability through the **trigger / runtime** instrumentation paths (event bus → subscribers), not by importing metric helpers directly from arbitrary tool modules. Tools remain **capabilities of the agent**; observability remains **platform instrumentation** around those calls. Core middleware **SHALL NOT** embed integration-specific lifecycle fields; tools pass optional namespaced **`extra`** on results per **[ADR 0015](0015-integration-agnostic-core-and-tool-call-extra.md)**.
 
 5. **Explicitly out of scope for this ADR**  
    - **Alerting rules** and **SLO** policy (PrometheusRule, Alertmanager/on-call routing): product/ops choices, not bus shape.  

@@ -13,6 +13,7 @@ from agent.tools.slack.support import (
     optional_tools_client,
     slack_api_error_payload,
     slack_response_data,
+    with_slack_tool_extra,
 )
 
 
@@ -25,13 +26,16 @@ def chat_update(arguments: dict[str, Any]) -> dict[str, Any]:
 
     client = optional_tools_client()
     if client is None:
-        return {
-            "ok": True,
-            "simulated": True,
-            "channel_id": channel_id,
-            "ts": ts,
-            "text": text,
-        }
+        return with_slack_tool_extra(
+            "chat.update",
+            {
+                "ok": True,
+                "simulated": True,
+                "channel_id": channel_id,
+                "ts": ts,
+                "text": text,
+            },
+        )
 
     try:
         resp = client.chat_update(channel=channel_id, ts=ts, text=text)
@@ -77,13 +81,16 @@ def conversations_history(arguments: dict[str, Any]) -> dict[str, Any]:
 
     client = optional_tools_client()
     if client is None:
-        return {
-            "ok": True,
-            "simulated": True,
-            "channel_id": channel_id,
-            "messages": [],
-            "limit": lim,
-        }
+        return with_slack_tool_extra(
+            "conversations.history",
+            {
+                "ok": True,
+                "simulated": True,
+                "channel_id": channel_id,
+                "messages": [],
+                "limit": lim,
+            },
+        )
 
     try:
         resp = client.conversations_history(channel=channel_id, limit=lim)
@@ -115,14 +122,17 @@ def conversations_replies(arguments: dict[str, Any]) -> dict[str, Any]:
 
     client = optional_tools_client()
     if client is None:
-        return {
-            "ok": True,
-            "simulated": True,
-            "channel_id": channel_id,
-            "thread_ts": thread_ts,
-            "messages": [],
-            "limit": lim,
-        }
+        return with_slack_tool_extra(
+            "conversations.replies",
+            {
+                "ok": True,
+                "simulated": True,
+                "channel_id": channel_id,
+                "thread_ts": thread_ts,
+                "messages": [],
+                "limit": lim,
+            },
+        )
 
     try:
         resp = client.conversations_replies(

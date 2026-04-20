@@ -14,6 +14,7 @@ from agent.tools.slack.support import (
     optional_tools_client,
     slack_api_error_payload,
     slack_response_ok,
+    with_slack_tool_extra,
 )
 
 
@@ -38,13 +39,16 @@ def _reaction_tool(
 
     client = optional_tools_client()
     if client is None:
-        return {
-            "ok": True,
-            "simulated": True,
-            "channel_id": channel_id,
-            "timestamp": ts,
-            "name": name,
-        }
+        return with_slack_tool_extra(
+            metric_method,
+            {
+                "ok": True,
+                "simulated": True,
+                "channel_id": channel_id,
+                "timestamp": ts,
+                "name": name,
+            },
+        )
 
     try:
         resp = invoke(client, channel_id, ts, name)

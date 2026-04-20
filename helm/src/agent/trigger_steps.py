@@ -27,6 +27,21 @@ from agent.tools.dispatch import invoke_tool
 from agent.trigger_errors import TriggerHttpError
 
 
+def _instrumentation_extra_from_tool_result(result: Any) -> dict[str, Any] | None:
+    """Return ``invoke_tool`` result ``extra`` for lifecycle events (opaque to core)."""
+    if not isinstance(result, dict):
+        return None
+    raw = result.get("extra")
+    return raw if isinstance(raw, dict) and raw else None
+
+
+def _strip_instrumentation_extra(result: Any) -> Any:
+    """Remove instrumentation-only ``extra`` from JSON returned to API callers."""
+    if isinstance(result, dict) and "extra" in result:
+        return {k: v for k, v in result.items() if k != "extra"}
+    return result
+
+
 def run_skill_load_json(cfg: RuntimeConfig, name: str) -> str:
     start = time.perf_counter()
     entry = next((s for s in cfg.skills if str(s.get("name")) == name), None)
@@ -62,12 +77,14 @@ def run_tool_json(cfg: RuntimeConfig, tool: str, arguments: dict[str, Any]) -> s
     if isinstance(result, dict) and result.get("ok") is False:
         ok = False
     duration = time.perf_counter() - start
+    publish_extra = _instrumentation_extra_from_tool_result(result)
     publish_tool_call_completed(
         tool=tool,
         started_at=start,
         ok=ok,
         tool_call_id=tool_call_id,
         duration_s=duration,
+        extra=publish_extra,
     )
     run_id = get_run_id()
     if run_id:
@@ -78,7 +95,7 @@ def run_tool_json(cfg: RuntimeConfig, tool: str, arguments: dict[str, Any]) -> s
                 "tool": tool,
                 "tool_call_id": tool_call_id,
                 "arguments": arguments,
-                "result": result,
+                "result": _strip_instrumentation_extra(result),
             },
         )
         get_span_summary_store().record(
@@ -92,4 +109,6 @@ def run_tool_json(cfg: RuntimeConfig, tool: str, arguments: dict[str, Any]) -> s
                 args_hash=redacted_args_hash(arguments),
             )
         )
-    return json.dumps({"tool": tool, "result": result})
+    return json.dumps(
+        {"tool": tool, "result": _strip_instrumentation_extra(result)},
+    )

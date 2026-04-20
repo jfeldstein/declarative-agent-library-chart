@@ -21,6 +21,7 @@ from agent.tools.slack.support import (
     optional_tools_client,
     slack_api_error_payload,
     slack_response_data,
+    with_slack_tool_extra,
 )
 
 
@@ -62,15 +63,18 @@ def _simulated_post(arguments: dict[str, Any]) -> dict[str, Any]:
     tool_call_id, checkpoint_id = _record_post_message_correlation(
         channel_id, message_ts
     )
-    return {
-        "ok": True,
-        "simulated": True,
-        "channel_id": channel_id,
-        "ts": message_ts,
-        "text": text,
-        "tool_call_id": tool_call_id,
-        "checkpoint_id": checkpoint_id,
-    }
+    return with_slack_tool_extra(
+        "chat.postMessage",
+        {
+            "ok": True,
+            "simulated": True,
+            "channel_id": channel_id,
+            "ts": message_ts,
+            "text": text,
+            "tool_call_id": tool_call_id,
+            "checkpoint_id": checkpoint_id,
+        },
+    )
 
 
 def _response_ts(resp: object) -> str:
