@@ -35,7 +35,7 @@ pre-push:
       run: uv run complexipy
     pytest:
       root: helm/src
-      run: uv run pytest tests/ -q --tb=short --no-cov
+      run: uv run pytest tests/ -q --tb=short
     smoke-rag:
       root: helm/src
       run: uv run python tests/integration/smoke_rag.py
