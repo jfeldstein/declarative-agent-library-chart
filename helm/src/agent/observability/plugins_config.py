@@ -28,6 +28,30 @@ def _positive_float(key: str) -> float | None:
     return v if v > 0 else None
 
 
+def _truthy_any(*keys: str) -> bool:
+    """True if any named env var is truthy (canonical ``HOSTED_AGENT_OBSERVABILITY_PLUGINS_*`` first)."""
+
+    return any(_truthy(k, False) for k in keys)
+
+
+def _trim_first(*keys: str) -> str:
+    """First non-empty trimmed value among env keys (canonical ``HOSTED_AGENT_OBSERVABILITY_PLUGINS_*`` first)."""
+
+    for k in keys:
+        v = _trim(k)
+        if v:
+            return v
+    return ""
+
+
+def _positive_float_first(*keys: str) -> float | None:
+    for k in keys:
+        v = _positive_float(k)
+        if v is not None:
+            return v
+    return None
+
+
 def _comma_allowlist_env(key: str) -> tuple[str, ...]:
     raw = _trim(key)
     if not raw:
@@ -42,7 +66,7 @@ class PluginToggle:
 
 @dataclass(frozen=True)
 class LangfusePluginSettings:
-    """Langfuse SDK plugin config (maps from ``observability.plugins.langfuse`` Helm keys)."""
+    """Langfuse SDK plugin config (maps from ``observability.plugins.langfuse`` Helm / env keys)."""
 
     enabled: bool = False
     host: str | None = None
@@ -79,23 +103,42 @@ def default_plugins_config() -> ObservabilityPluginsConfig:
 
 
 def plugins_config_from_env() -> ObservabilityPluginsConfig:
-    """Env wiring for plugin toggles (mirrors Helm ``observability.plugins.*``)."""
+    """Env wiring for plugin toggles (mirrors Helm ``observability.plugins.*``).
 
-    lf_enabled = _truthy(
-        "HOSTED_AGENT_OBSERVABILITY_PLUGINS_LANGFUSE_ENABLED",
-    ) or _truthy("HOSTED_AGENT_LANGFUSE_ENABLED")
+    Canonical names use the ``HOSTED_AGENT_OBSERVABILITY_PLUGINS_*`` prefix (aligned with
+    Prometheus). Legacy ``HOSTED_AGENT_LANGFUSE_*`` / ``HOSTED_AGENT_WANDB_ENABLED`` keys
+    remain accepted for backward-compatible deployments.
+    """
+
     lf = LangfusePluginSettings(
-        enabled=lf_enabled,
-        host=_trim("HOSTED_AGENT_LANGFUSE_HOST") or None,
-        public_key=_trim("HOSTED_AGENT_LANGFUSE_PUBLIC_KEY") or None,
-        secret_key=_trim("HOSTED_AGENT_LANGFUSE_SECRET_KEY") or None,
-        flush_interval_seconds=_positive_float(
+        enabled=_truthy_any(
+            "HOSTED_AGENT_OBSERVABILITY_PLUGINS_LANGFUSE_ENABLED",
+            "HOSTED_AGENT_LANGFUSE_ENABLED",
+        ),
+        host=_trim_first(
+            "HOSTED_AGENT_OBSERVABILITY_PLUGINS_LANGFUSE_HOST",
+            "HOSTED_AGENT_LANGFUSE_HOST",
+        )
+        or None,
+        public_key=_trim_first(
+            "HOSTED_AGENT_OBSERVABILITY_PLUGINS_LANGFUSE_PUBLIC_KEY",
+            "HOSTED_AGENT_LANGFUSE_PUBLIC_KEY",
+        )
+        or None,
+        secret_key=_trim_first(
+            "HOSTED_AGENT_OBSERVABILITY_PLUGINS_LANGFUSE_SECRET_KEY",
+            "HOSTED_AGENT_LANGFUSE_SECRET_KEY",
+        )
+        or None,
+        flush_interval_seconds=_positive_float_first(
+            "HOSTED_AGENT_OBSERVABILITY_PLUGINS_LANGFUSE_FLUSH_INTERVAL_SECONDS",
             "HOSTED_AGENT_LANGFUSE_FLUSH_INTERVAL_SECONDS",
         ),
     )
-    wandb_enabled = _truthy(
+    wandb_enabled = _truthy_any(
         "HOSTED_AGENT_OBSERVABILITY_PLUGINS_WANDB_ENABLED",
-    ) or _truthy("HOSTED_AGENT_WANDB_ENABLED")
+        "HOSTED_AGENT_WANDB_ENABLED",
+    )
     consumer = ConsumerPluginsSettings(
         entry_point_allowlist=_comma_allowlist_env(
             "HOSTED_AGENT_OBSERVABILITY_PLUGINS_ENTRY_POINTS",

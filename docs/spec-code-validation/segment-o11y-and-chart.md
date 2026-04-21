@@ -71,7 +71,7 @@ Worktree validation snapshot: promoted specs under `openspec/specs/` vs `docs/sp
 | ID | Status | Evidence (matrix) | Spot-check |
 | --- | --- | --- | --- |
 | [DALC-REQ-CHART-RTV-001] | OK | `helm/tests/hello_world_test.yaml`, `helm/tests/checkpointing_test.yaml`, `examples/checkpointing/values.yaml` | `checkpoints.postgresUrl` → `HOSTED_AGENT_POSTGRES_URL`; checkpoints not nested under `observability`. |
-| [DALC-REQ-CHART-RTV-002] | OK | `helm/tests/hello_world_test.yaml` | W&B enabled → `HOSTED_AGENT_WANDB_*` / project / entity env. |
+| [DALC-REQ-CHART-RTV-002] | OK | `helm/tests/hello_world_test.yaml`, `helm/src/tests/test_agent_tracing.py` | W&B enabled → `HOSTED_AGENT_OBSERVABILITY_PLUGINS_WANDB_ENABLED` / `WANDB_*` project / entity env. |
 | [DALC-REQ-CHART-RTV-003] | OK | `helm/tests/hello_world_test.yaml` | `scrapers.slack.feedback` → feedback env and label registry wiring per tests. |
 | [DALC-REQ-CHART-RTV-004] | OK | `helm/src/tests/test_chart_values_contract.py` | `test_library_values_yaml_excludes_atif_and_shadow` and schema test forbid `atifExport` / `shadow`. |
 

@@ -429,7 +429,7 @@
             },
             "wandb": {
               "type": "object",
-              "description": "Weights & Biases tracing plugin; maps to HOSTED_AGENT_WANDB_* / WANDB_*.",
+              "description": "Weights & Biases tracing plugin; maps to HOSTED_AGENT_OBSERVABILITY_PLUGINS_WANDB_ENABLED and WANDB_*.",
               "properties": {
                 "enabled": { "type": "boolean" },
                 "project": { "type": "string" },

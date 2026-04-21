@@ -88,7 +88,7 @@ Under `values.observability`, the chart wires optional runtime behavior (checkpo
 
 - **Postgres URL:** `observability.postgresUrl` → `HOSTED_AGENT_POSTGRES_URL` (shared DSN pattern for checkpointing and related features).
 - **Checkpoints:** `observability.checkpoints` → `HOSTED_AGENT_CHECKPOINTS_ENABLED`, `HOSTED_AGENT_CHECKPOINT_BACKEND`.
-- **Weights & Biases:** `observability.wandb` → `HOSTED_AGENT_WANDB_ENABLED`, `WANDB_PROJECT`, `WANDB_ENTITY` when enabled. The LangGraph trigger path integrates W&B session handling in code (`agent.observability.wandb_trace`, used from `trigger_graph.py`).
+- **Weights & Biases:** `observability.plugins.wandb` → `HOSTED_AGENT_OBSERVABILITY_PLUGINS_WANDB_ENABLED`, `WANDB_PROJECT`, `WANDB_ENTITY` when enabled (legacy `HOSTED_AGENT_WANDB_ENABLED` is still read by the agent). The LangGraph trigger path integrates W&B session handling in code (`agent.observability.wandb_trace`, used from `trigger_graph.py`).
 - **Slack feedback, ATIF export, shadow rollouts:** toggles and JSON maps from values → env / ConfigMap keys as rendered in `templates/deployment.yaml` and `templates/configmap.yaml`.
 
 These are **runtime** concerns; the chart’s role is to pass consistent env and mounted JSON so the same image can be used across environments.

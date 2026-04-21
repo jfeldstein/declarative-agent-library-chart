@@ -27,7 +27,7 @@ def fake_wandb(monkeypatch: pytest.MonkeyPatch) -> MagicMock:
 def test_wandb_trace_session_init_matches_sdk_entrypoint(
     monkeypatch: pytest.MonkeyPatch, fake_wandb: MagicMock
 ) -> None:
-    monkeypatch.setenv("HOSTED_AGENT_WANDB_ENABLED", "true")
+    monkeypatch.setenv("HOSTED_AGENT_OBSERVABILITY_PLUGINS_WANDB_ENABLED", "true")
     monkeypatch.setenv("WANDB_PROJECT", "contract-proj")
     obs = ObservabilitySettings.from_env()
 

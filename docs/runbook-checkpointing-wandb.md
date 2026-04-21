@@ -43,7 +43,7 @@ Set **`HOSTED_AGENT_USE_PGLITE=1`** to start an embedded [PGlite](https://pglite
 
 - **Secrets:** store `WANDB_API_KEY`, Slack tokens, and database URLs in Kubernetes Secrets; reference them from the Deployment (not committed to values).
 - **Retention:** checkpoint and trajectory retention are deployment-specific; the default in-memory stores reset on restart.
-- **Rollback:** disable feature flags (`HOSTED_AGENT_CHECKPOINTS_ENABLED`, `HOSTED_AGENT_WANDB_ENABLED`, `HOSTED_AGENT_SLACK_FEEDBACK_ENABLED`, etc.) via Helm values; the runtime remains compatible with older clients.
+- **Rollback:** disable feature flags (`HOSTED_AGENT_CHECKPOINTS_ENABLED`, `HOSTED_AGENT_OBSERVABILITY_PLUGINS_WANDB_ENABLED` / legacy `HOSTED_AGENT_WANDB_ENABLED`, `HOSTED_AGENT_SLACK_FEEDBACK_ENABLED`, etc.) via Helm values; the runtime remains compatible with older clients.
 - **PII:** scrub prompts, tokens, and user identifiers before sending data to W&B or external stores; keep W&B tags low-cardinality per `docs/observability.md`.
 
 ## Application observability store (correlation, feedback, side-effects, span summaries)

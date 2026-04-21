@@ -8,7 +8,7 @@ WORKDIR /app
 ENV UV_COMPILE_BYTECODE=1
 COPY helm/src/pyproject.toml helm/src/uv.lock ./
 COPY helm/src/agent ./agent
-# Optional extra `wandb` enables W&B when HOSTED_AGENT_WANDB_ENABLED is set.
+# Optional extra `wandb` enables W&B when HOSTED_AGENT_OBSERVABILITY_PLUGINS_WANDB_ENABLED is set.
 RUN uv sync --frozen --no-dev --extra wandb --extra postgres
 ENV PATH="/app/.venv/bin:$PATH"
 EXPOSE 8088

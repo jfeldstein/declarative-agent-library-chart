@@ -18,10 +18,12 @@ The chart SHALL NOT nest these fields under a key named **`observability`** (res
 
 The Helm library chart SHALL expose **`observability.plugins.wandb`** with **enabled**, **project**, and **entity** fields that map to the runtime’s documented **W&B** environment variables when enabled (breaking migration from the earlier top-level **`wandb`** values key).
 
+The agent runtime SHALL continue to accept legacy **`HOSTED_AGENT_WANDB_ENABLED`** as an alias when **`HOSTED_AGENT_OBSERVABILITY_PLUGINS_WANDB_ENABLED`** is unset.
+
 #### Scenario: W&B enabled from values
 
 - **WHEN** an operator sets **`observability.plugins.wandb.enabled`** to **true**
-- **THEN** rendered manifests SHALL set **`HOSTED_AGENT_WANDB_ENABLED`** and SHALL pass **project** and **entity** when provided
+- **THEN** rendered manifests SHALL set **`HOSTED_AGENT_OBSERVABILITY_PLUGINS_WANDB_ENABLED`** and SHALL pass **project** and **entity** when provided
 
 ### Requirement: [DALC-REQ-CHART-RTV-003] Slack feedback under scrapers
 

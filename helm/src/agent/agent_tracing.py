@@ -14,7 +14,8 @@ from agent.checkpointing import (
     effective_checkpoint_store,
 )
 
-# Canonical keys per openspec/changes/agent-checkpointing-wandb-feedback/specs/wandb-agent-traces/spec.md
+# W&B tracing intent: ``HOSTED_AGENT_OBSERVABILITY_PLUGINS_WANDB_ENABLED`` (Helm) with
+# ``HOSTED_AGENT_WANDB_ENABLED`` legacy alias — see ``openspec/specs/dalc-chart-runtime-values/spec.md``.
 MANDATORY_WANDB_TAG_KEYS: tuple[str, ...] = (
     "agent_id",
     "environment",
@@ -51,7 +52,10 @@ def wandb_trace_stub_config() -> WandbTraceStubConfig:
     )
     ent = os.environ.get("WANDB_ENTITY", "").strip() or None
     return WandbTraceStubConfig(
-        tracing_enabled_intent=_env_truthy("HOSTED_AGENT_WANDB_ENABLED"),
+        tracing_enabled_intent=_env_truthy(
+            "HOSTED_AGENT_OBSERVABILITY_PLUGINS_WANDB_ENABLED",
+        )
+        or _env_truthy("HOSTED_AGENT_WANDB_ENABLED"),
         api_key_configured=bool(key),
         project=proj,
         entity=ent,

@@ -18,7 +18,7 @@ This file is a **skeleton**: fill in concrete tokens, Helm paths, and PromQL del
 | Topic | Before | After | Operator action |
 | ----- | ------ | ----- | ---------------- |
 | **Prometheus metric names** | _(list prior series touched by the release — e.g. renamed histograms or dropped labels)_ | _(new canonical names / labels)_ | Update **Prometheus** rules and **Alertmanager** routes; refresh **`grafana/*.json`** imports that embed PromQL (see **`docs/observability.md`** metric tables). |
-| **Helm W&B paths** | Top-level **`wandb.*`** values + env (`HOSTED_AGENT_WANDB_*`, `WANDB_*`) | _(unchanged in Phase 1 scaffold; document when **`observability.plugins.wandb`** begins mapping env)_ | On migration releases: **`helm diff upgrade`** focusing on **`wandb.*`** vs **`observability.plugins.wandb`**; rotate Secrets if templates move. |
+| **Helm W&B / Langfuse env** | Legacy short names (`HOSTED_AGENT_WANDB_ENABLED`, `HOSTED_AGENT_LANGFUSE_*`) | Chart emits **`HOSTED_AGENT_OBSERVABILITY_PLUGINS_WANDB_ENABLED`** / **`HOSTED_AGENT_OBSERVABILITY_PLUGINS_LANGFUSE_*`**; runtime still accepts legacy names when canonical vars are unset | **`helm diff upgrade`** on agent Deployment env; custom **`extraEnv`** using legacy names keeps working. |
 | **Dashboards** | Imported **`grafana/dalc-overview.json`**, **`grafana/cfha-token-metrics.json`**, _(others)_ | Panels referencing renamed metrics or labels | **Re-import** refreshed JSON from this repo revision; verify datasource UIDs per **`grafana/README.md`**. |
 
 _Add rows per release for scraper-only or RAG-only series if they change._

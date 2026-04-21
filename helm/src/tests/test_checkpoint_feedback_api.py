@@ -38,7 +38,7 @@ def test_runtime_summary_includes_observability_flags(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setenv("HOSTED_AGENT_CHECKPOINTS_ENABLED", "1")
-    monkeypatch.setenv("HOSTED_AGENT_WANDB_ENABLED", "true")
+    monkeypatch.setenv("HOSTED_AGENT_OBSERVABILITY_PLUGINS_WANDB_ENABLED", "true")
     app = create_app(system_prompt='Respond, "Hi"')
     client = TestClient(app)
     r = client.get("/api/v1/runtime/summary")
@@ -137,7 +137,7 @@ def test_slack_reaction_logs_feedback_via_wandb_sdk_when_enabled(
 ) -> None:
     """Reaction → correlation → W&B ``run.log`` / ``finish`` (mock SDK), not only in-memory store."""
     monkeypatch.setenv("HOSTED_AGENT_SLACK_FEEDBACK_ENABLED", "true")
-    monkeypatch.setenv("HOSTED_AGENT_WANDB_ENABLED", "true")
+    monkeypatch.setenv("HOSTED_AGENT_OBSERVABILITY_PLUGINS_WANDB_ENABLED", "true")
     monkeypatch.setenv("WANDB_PROJECT", "e2e-proj")
     monkeypatch.setenv("WANDB_API_KEY", "test-key")
     monkeypatch.setenv(
@@ -389,7 +389,7 @@ def test_run_tool_json_logs_span_when_wandb_session_bound(
     monkeypatch.setenv(
         "HOSTED_AGENT_ENABLED_MCP_TOOLS_JSON", json.dumps(["sample.echo"])
     )
-    monkeypatch.setenv("HOSTED_AGENT_WANDB_ENABLED", "true")
+    monkeypatch.setenv("HOSTED_AGENT_OBSERVABILITY_PLUGINS_WANDB_ENABLED", "true")
     reset_observability_for_tests()
     ensure_agent_observability()
     calls: list[dict] = []

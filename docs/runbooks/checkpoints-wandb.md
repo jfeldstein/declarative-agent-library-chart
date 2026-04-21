@@ -10,7 +10,7 @@
 | Variable | Purpose |
 | -------- | ------- |
 | `HOSTED_AGENT_CHECKPOINT_STORE` | `memory` (default), `none`, or future `postgres` / `redis`. |
-| `HOSTED_AGENT_WANDB_ENABLED` | `true` / `1` / `yes` / `on` — intent to trace (requires `WANDB_API_KEY` + project). |
+| `HOSTED_AGENT_OBSERVABILITY_PLUGINS_WANDB_ENABLED` | `true` / `1` / `yes` / `on` — intent to trace (requires `WANDB_API_KEY` + project). Legacy `HOSTED_AGENT_WANDB_ENABLED` is still honored. |
 | `WANDB_PROJECT` or `HOSTED_AGENT_WANDB_PROJECT` | W&B project name. |
 | `HOSTED_AGENT_SLACK_FEEDBACK_ENABLED` | Reserved for Slack reaction ingestion (off until implemented). |
 
@@ -18,7 +18,7 @@ Verify configuration with **`GET /api/v1/runtime/summary`** → `observability`.
 
 ## Rollback
 
-1. Set `HOSTED_AGENT_WANDB_ENABLED` off and redeploy (traces stop; checkpoints unaffected).
+1. Set `HOSTED_AGENT_OBSERVABILITY_PLUGINS_WANDB_ENABLED` (or legacy `HOSTED_AGENT_WANDB_ENABLED`) off and redeploy (traces stop; checkpoints unaffected).
 2. Set `HOSTED_AGENT_CHECKPOINT_STORE=none` to disable persistence and state HTTP APIs (**503** on thread routes).
 3. Existing checkpoint data in memory is process-local; restarting pods clears it.
 

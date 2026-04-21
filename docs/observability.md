@@ -15,8 +15,8 @@ Per-plugin summaries:
 | Plugin key (`observability.plugins.<key>`) | Summary |
 | --- | --- |
 | **`prometheus`** | **`GET /metrics`** (**`dalc_*`**) when enabled — see [Metrics (Prometheus)](#metrics-prometheus). |
-| **`langfuse`** | Lifecycle export via **`HOSTED_AGENT_LANGFUSE_*`** when **`observability.plugins.langfuse.enabled`**; with the flag on, empty host or keys fails startup (**`ValueError`**, [ADR 0017](adrs/0017-gate-at-call-site-for-optional-capabilities.md)). Details in middleware/plugin sections and chart values. |
-| **`wandb`** | **`observability.plugins.wandb`** aligns with **`wandb.*`** / **`HOSTED_AGENT_WANDB_*`** — see **Checkpoints, W&B traces, and Slack correlation** below. |
+| **`langfuse`** | Lifecycle export via **`HOSTED_AGENT_OBSERVABILITY_PLUGINS_LANGFUSE_*`** when **`observability.plugins.langfuse.enabled`** (legacy **`HOSTED_AGENT_LANGFUSE_*`** still read when canonical vars unset); with the flag on, empty host or keys fails startup (**`ValueError`**, [ADR 0017](adrs/0017-gate-at-call-site-for-optional-capabilities.md)). Details in middleware/plugin sections and chart values. |
+| **`wandb`** | **`observability.plugins.wandb`** aligns with **`WANDB_*`** and **`HOSTED_AGENT_OBSERVABILITY_PLUGINS_WANDB_ENABLED`** — see **Checkpoints, W&B traces, and Slack correlation** below. |
 | **`grafana`** | Optional **`ConfigMap`** (**`templates/_manifest_grafana_dashboards.tpl`**) packaging **`helm/chart/files/grafana/*.json`** when enabled (mirrors **`grafana/*.json`**); remote_write/stack automation is future work. |
 | **`logShipping`** | **`HOSTED_AGENT_LOG_FORMAT=json`** when **`observability.plugins.logShipping.enabled`** or **`observability.structuredLogs.json`** — see **[DALC-REQ-PLUGIN-LOG-SHIPPING-001]** / structured logs sections. |
 | **`consumerPlugins`** | **List of strings** (entry-point **names** in pyproject.toml group **`declarative_agent.observability_plugins`**). A **non-empty** list sets **`HOSTED_AGENT_OBSERVABILITY_PLUGINS_ENTRY_POINTS`**. See **[examples/with-plugins](../examples/with-plugins)**. |
@@ -44,7 +44,7 @@ This section aligns with **`openspec/changes/agent-checkpointing-wandb-feedback`
 | Variable | Purpose |
 | -------- | ------- |
 | `HOSTED_AGENT_CHECKPOINT_STORE` | `memory` when unset (**default-on** in-process store), `none` to disable persistence, or reserved `postgres` / `redis` (not implemented). |
-| `HOSTED_AGENT_WANDB_ENABLED` | `1` / `true` / `yes` / `on` = **intent** to trace to W&B. |
+| `HOSTED_AGENT_OBSERVABILITY_PLUGINS_WANDB_ENABLED` | `1` / `true` / `yes` / `on` = **intent** to trace to W&B (Helm). Legacy **`HOSTED_AGENT_WANDB_ENABLED`** is still honored when unset. |
 | `WANDB_API_KEY` | Standard W&B credential (mount via Secret). |
 | `WANDB_PROJECT` or `HOSTED_AGENT_WANDB_PROJECT` | W&B project name. |
 | `WANDB_ENTITY` | Optional team/entity. |
@@ -58,7 +58,7 @@ This section aligns with **`openspec/changes/agent-checkpointing-wandb-feedback`
 ### Helm value paths (library subchart)
 
 - **`checkpoints.*`**: `postgresUrl` → `HOSTED_AGENT_POSTGRES_URL`; `enabled` / `backend` → LangGraph checkpoint env vars.
-- **`wandb.*`**: maps to `HOSTED_AGENT_WANDB_ENABLED`, `WANDB_PROJECT`, and `WANDB_ENTITY` when enabled.
+- **`observability.plugins.wandb.*`** / legacy **`wandb.*`**: maps to `HOSTED_AGENT_OBSERVABILITY_PLUGINS_WANDB_ENABLED`, `WANDB_PROJECT`, and `WANDB_ENTITY` when enabled.
 - **`scrapers.slack.feedback.*`**: `enabled` and `emojiLabelMap` configure reaction ingestion (`HOSTED_AGENT_SLACK_FEEDBACK_ENABLED`, `HOSTED_AGENT_SLACK_EMOJI_LABEL_MAP_JSON`). **`labelRegistry`** is the **human feedback label taxonomy** (ConfigMap `label-registry.json` → **`HOSTED_AGENT_LABEL_REGISTRY_JSON`**); it is **not** Kubernetes or Prometheus label metadata.
 - **`slackTools.*`**: optional Secret ref + tunables for **in-process** Slack tools (`HOSTED_AGENT_SLACK_TOOLS_*` on the agent Deployment only; not used by scraper CronJobs).
 - **`observability.*`**: cluster scrape hints—`prometheus.io/*` annotations, optional **`ServiceMonitor`**, **`structuredLogs.json`** or **`plugins.logShipping.enabled`** → `HOSTED_AGENT_LOG_FORMAT=json` (see **[DALC-REQ-PLUGIN-LOG-SHIPPING-001]** / `dalc-plugin-log-shipping`), Postgres pool caps for observability tables when configured, etc.

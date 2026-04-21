@@ -31,7 +31,7 @@ tests:
       - contains:
           path: spec.template.spec.containers[0].env
           content:
-            name: HOSTED_AGENT_WANDB_ENABLED
+            name: HOSTED_AGENT_OBSERVABILITY_PLUGINS_WANDB_ENABLED
             value: "true"
       - contains:
           path: spec.template.spec.containers[0].env
@@ -56,22 +56,22 @@ tests:
       - contains:
           path: spec.template.spec.containers[0].env
           content:
-            name: HOSTED_AGENT_LANGFUSE_ENABLED
+            name: HOSTED_AGENT_OBSERVABILITY_PLUGINS_LANGFUSE_ENABLED
             value: "true"
       - contains:
           path: spec.template.spec.containers[0].env
           content:
-            name: HOSTED_AGENT_LANGFUSE_HOST
+            name: HOSTED_AGENT_OBSERVABILITY_PLUGINS_LANGFUSE_HOST
             value: https://cloud.langfuse.com
       - contains:
           path: spec.template.spec.containers[0].env
           content:
-            name: HOSTED_AGENT_LANGFUSE_FLUSH_INTERVAL_SECONDS
+            name: HOSTED_AGENT_OBSERVABILITY_PLUGINS_LANGFUSE_FLUSH_INTERVAL_SECONDS
             value: "12"
       - contains:
           path: spec.template.spec.containers[0].env
           content:
-            name: HOSTED_AGENT_LANGFUSE_PUBLIC_KEY
+            name: HOSTED_AGENT_OBSERVABILITY_PLUGINS_LANGFUSE_PUBLIC_KEY
             valueFrom:
               secretKeyRef:
                 name: lf-keys
@@ -79,7 +79,7 @@ tests:
       - contains:
           path: spec.template.spec.containers[0].env
           content:
-            name: HOSTED_AGENT_LANGFUSE_SECRET_KEY
+            name: HOSTED_AGENT_OBSERVABILITY_PLUGINS_LANGFUSE_SECRET_KEY
             valueFrom:
               secretKeyRef:
                 name: lf-keys

@@ -45,7 +45,7 @@ def test_tag_dict_includes_thread_and_run(monkeypatch: pytest.MonkeyPatch) -> No
 def test_wandb_run_scope_calls_init_when_configured(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setenv("HOSTED_AGENT_WANDB_ENABLED", "true")
+    monkeypatch.setenv("HOSTED_AGENT_OBSERVABILITY_PLUGINS_WANDB_ENABLED", "true")
     monkeypatch.setenv("WANDB_API_KEY", "secret-key")
     monkeypatch.setenv("WANDB_PROJECT", "proj")
     mock_mod = MagicMock()

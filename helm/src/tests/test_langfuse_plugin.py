@@ -219,11 +219,16 @@ def test_require_langfuse_client_raises_when_credentials_incomplete() -> None:
 def test_plugins_config_from_env_reads_langfuse_keys(monkeypatch) -> None:
     """[DALC-REQ-LANGFUSE-TRACE-002] Env mirrors Helm keys for Langfuse plugin toggles."""
 
-    monkeypatch.setenv("HOSTED_AGENT_LANGFUSE_ENABLED", "true")
-    monkeypatch.setenv("HOSTED_AGENT_LANGFUSE_HOST", "https://lf.example")
-    monkeypatch.setenv("HOSTED_AGENT_LANGFUSE_PUBLIC_KEY", "pk")
-    monkeypatch.setenv("HOSTED_AGENT_LANGFUSE_SECRET_KEY", "sk")
-    monkeypatch.setenv("HOSTED_AGENT_LANGFUSE_FLUSH_INTERVAL_SECONDS", "7")
+    monkeypatch.setenv("HOSTED_AGENT_OBSERVABILITY_PLUGINS_LANGFUSE_ENABLED", "true")
+    monkeypatch.setenv(
+        "HOSTED_AGENT_OBSERVABILITY_PLUGINS_LANGFUSE_HOST", "https://lf.example"
+    )
+    monkeypatch.setenv("HOSTED_AGENT_OBSERVABILITY_PLUGINS_LANGFUSE_PUBLIC_KEY", "pk")
+    monkeypatch.setenv("HOSTED_AGENT_OBSERVABILITY_PLUGINS_LANGFUSE_SECRET_KEY", "sk")
+    monkeypatch.setenv(
+        "HOSTED_AGENT_OBSERVABILITY_PLUGINS_LANGFUSE_FLUSH_INTERVAL_SECONDS",
+        "7",
+    )
 
     from agent.observability.plugins_config import plugins_config_from_env
 
@@ -233,6 +238,27 @@ def test_plugins_config_from_env_reads_langfuse_keys(monkeypatch) -> None:
     assert cfg.langfuse.public_key == "pk"
     assert cfg.langfuse.secret_key == "sk"
     assert cfg.langfuse.flush_interval_seconds == 7.0
+
+
+def test_plugins_config_from_env_accepts_legacy_langfuse_env_aliases(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """[DALC-REQ-LANGFUSE-TRACE-002] Legacy ``HOSTED_AGENT_LANGFUSE_*`` env names remain readable."""
+
+    monkeypatch.setenv("HOSTED_AGENT_LANGFUSE_ENABLED", "true")
+    monkeypatch.setenv("HOSTED_AGENT_LANGFUSE_HOST", "https://legacy.example")
+    monkeypatch.setenv("HOSTED_AGENT_LANGFUSE_PUBLIC_KEY", "pk-legacy")
+    monkeypatch.setenv("HOSTED_AGENT_LANGFUSE_SECRET_KEY", "sk-legacy")
+    monkeypatch.setenv("HOSTED_AGENT_LANGFUSE_FLUSH_INTERVAL_SECONDS", "3")
+
+    from agent.observability.plugins_config import plugins_config_from_env
+
+    cfg = plugins_config_from_env()
+    assert cfg.langfuse.enabled is True
+    assert cfg.langfuse.host == "https://legacy.example"
+    assert cfg.langfuse.public_key == "pk-legacy"
+    assert cfg.langfuse.secret_key == "sk-legacy"
+    assert cfg.langfuse.flush_interval_seconds == 3.0
 
 
 def test_langfuse_bridge_avoids_prompt_bodies_in_source_contract() -> None:

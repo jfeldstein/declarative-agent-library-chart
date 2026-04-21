@@ -17,10 +17,12 @@ Implementations SHOULD limit observation inputs/outputs to **bounded operational
 
 The Helm library chart SHALL expose `observability.plugins.langfuse.*` keys that operators can tune without editing helpers directly:
 
-- `enabled` toggles plugin activation for the agent Deployment.
-- `host` maps to `HOSTED_AGENT_LANGFUSE_HOST`.
-- `flushIntervalSeconds` maps to `HOSTED_AGENT_LANGFUSE_FLUSH_INTERVAL_SECONDS` for SDK batching configuration.
-- `publicKeySecret` / `secretKeySecret` map to `HOSTED_AGENT_LANGFUSE_PUBLIC_KEY` / `HOSTED_AGENT_LANGFUSE_SECRET_KEY` via `secretKeyRef`.
+- `enabled` toggles plugin activation for the agent Deployment (`HOSTED_AGENT_OBSERVABILITY_PLUGINS_LANGFUSE_ENABLED`).
+- `host` maps to `HOSTED_AGENT_OBSERVABILITY_PLUGINS_LANGFUSE_HOST`.
+- `flushIntervalSeconds` maps to `HOSTED_AGENT_OBSERVABILITY_PLUGINS_LANGFUSE_FLUSH_INTERVAL_SECONDS` for SDK batching configuration.
+- `publicKeySecret` / `secretKeySecret` map to `HOSTED_AGENT_OBSERVABILITY_PLUGINS_LANGFUSE_PUBLIC_KEY` / `HOSTED_AGENT_OBSERVABILITY_PLUGINS_LANGFUSE_SECRET_KEY` via `secretKeyRef`.
+
+The agent runtime SHALL continue to accept legacy `HOSTED_AGENT_LANGFUSE_*` environment variable names as aliases when the canonical `HOSTED_AGENT_OBSERVABILITY_PLUGINS_LANGFUSE_*` variables are unset.
 
 When `enabled` is false, the chart SHALL emit none of these variables except what operators opt into via `extraEnv`.
 
@@ -46,9 +48,9 @@ The Langfuse bridge MUST NOT introduce parallel redaction pipelines or duplicate
 
 ### Requirement: [DALC-REQ-LANGFUSE-TRACE-004] Flush interval propagates to SDK batching
 
-When `HOSTED_AGENT_LANGFUSE_FLUSH_INTERVAL_SECONDS` is set to a positive floating-point value, the Langfuse SDK client SHALL be constructed with the matching `flush_interval` parameter so operators can tune batching latency versus overhead without rebuilding images.
+When `HOSTED_AGENT_OBSERVABILITY_PLUGINS_LANGFUSE_FLUSH_INTERVAL_SECONDS` (or the legacy `HOSTED_AGENT_LANGFUSE_FLUSH_INTERVAL_SECONDS` alias) is set to a positive floating-point value, the Langfuse SDK client SHALL be constructed with the matching `flush_interval` parameter so operators can tune batching latency versus overhead without rebuilding images.
 
 #### Scenario: Flush interval env honored
 
-- **WHEN** `HOSTED_AGENT_LANGFUSE_FLUSH_INTERVAL_SECONDS` is present and positive
+- **WHEN** `HOSTED_AGENT_OBSERVABILITY_PLUGINS_LANGFUSE_FLUSH_INTERVAL_SECONDS` is present and positive
 - **THEN** client construction SHALL forward the interval to `Langfuse(..., flush_interval=...)`

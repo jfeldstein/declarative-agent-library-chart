@@ -112,7 +112,7 @@ spec:
             {{- end }}
             {{- $wbPlug := .Values.observability.plugins.wandb | default dict }}
             {{- if $wbPlug.enabled }}
-            - name: HOSTED_AGENT_WANDB_ENABLED
+            - name: HOSTED_AGENT_OBSERVABILITY_PLUGINS_WANDB_ENABLED
               value: "true"
             {{- if $wbPlug.project }}
             - name: WANDB_PROJECT
@@ -125,23 +125,23 @@ spec:
             {{- end }}
             {{- $lf := .Values.observability.plugins.langfuse | default dict }}
             {{- if $lf.enabled | default false }}
-            - name: HOSTED_AGENT_LANGFUSE_ENABLED
+            - name: HOSTED_AGENT_OBSERVABILITY_PLUGINS_LANGFUSE_ENABLED
               value: "true"
             {{- $lfHost := $lf.host | default "" | trim }}
             {{- if $lfHost }}
-            - name: HOSTED_AGENT_LANGFUSE_HOST
+            - name: HOSTED_AGENT_OBSERVABILITY_PLUGINS_LANGFUSE_HOST
               value: {{ $lfHost | quote }}
             {{- end }}
             {{- $lfFlush := $lf.flushIntervalSeconds }}
             {{- if $lfFlush }}
-            - name: HOSTED_AGENT_LANGFUSE_FLUSH_INTERVAL_SECONDS
+            - name: HOSTED_AGENT_OBSERVABILITY_PLUGINS_LANGFUSE_FLUSH_INTERVAL_SECONDS
               value: {{ $lfFlush | toString | quote }}
             {{- end }}
             {{- $lfPk := $lf.publicKeySecret | default dict }}
             {{- $lfPkName := $lfPk.secretName | default "" | trim }}
             {{- $lfPkKey := $lfPk.secretKey | default "public-key" | trim }}
             {{- if and $lfPkName $lfPkKey }}
-            - name: HOSTED_AGENT_LANGFUSE_PUBLIC_KEY
+            - name: HOSTED_AGENT_OBSERVABILITY_PLUGINS_LANGFUSE_PUBLIC_KEY
               valueFrom:
                 secretKeyRef:
                   name: {{ $lfPkName | quote }}
@@ -151,7 +151,7 @@ spec:
             {{- $lfSkName := $lfSk.secretName | default "" | trim }}
             {{- $lfSkKey := $lfSk.secretKey | default "secret-key" | trim }}
             {{- if and $lfSkName $lfSkKey }}
-            - name: HOSTED_AGENT_LANGFUSE_SECRET_KEY
+            - name: HOSTED_AGENT_OBSERVABILITY_PLUGINS_LANGFUSE_SECRET_KEY
               valueFrom:
                 secretKeyRef:
                   name: {{ $lfSkName | quote }}

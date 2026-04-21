@@ -91,7 +91,8 @@ class ObservabilitySettings:
             checkpoint_postgres_url=postgres_url() or None,
             postgres_pool_max=_postgres_pool_max(),
             observability_store=obs_store,
-            wandb_enabled=_truthy("HOSTED_AGENT_WANDB_ENABLED"),
+            wandb_enabled=_truthy("HOSTED_AGENT_OBSERVABILITY_PLUGINS_WANDB_ENABLED")
+            or _truthy("HOSTED_AGENT_WANDB_ENABLED"),
             slack_feedback_enabled=_truthy("HOSTED_AGENT_SLACK_FEEDBACK_ENABLED"),
             wandb_project=os.environ.get("WANDB_PROJECT", "").strip() or None,
             wandb_entity=os.environ.get("WANDB_ENTITY", "").strip() or None,
