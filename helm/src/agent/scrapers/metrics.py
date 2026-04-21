@@ -3,8 +3,15 @@
 New integration checklist (keep in sync when adding a scraper implementation):
 
 - **Helm:** add a job shape under ``scrapers.jira.jobs`` or ``scrapers.slack.jobs``;
-  render ``scraper-job-configmaps.yaml`` + ``scraper-cronjobs.yaml`` with
+  render via ``helm/chart/templates/_manifest_scraper_job_configmaps.tpl`` and
+  ``helm/chart/templates/_manifest_scraper_cronjobs.tpl`` (included from
+  ``helm/chart/templates/_system_bundled.tpl``) with
   ``agent.scrapers.jira_job`` / ``slack_job``; unknown ``source`` must fail at runtime.
+- **Metrics gating:** the in-process ``/metrics`` server starts only when
+  ``SCRAPER_METRICS_ADDR`` is set **and** ``plugins_config_from_env().prometheus.enabled``
+  is true (Helm ``observability.plugins.prometheus.enabled`` →
+  ``HOSTED_AGENT_OBSERVABILITY_PLUGINS_PROMETHEUS_ENABLED``); see
+  :func:`maybe_start_scraper_metrics_http`.
 - **Example:** update ``examples/with-scrapers/values.yaml`` and
   ``helm/tests/with_scrapers_test.yaml`` so operators see every value key
   and CI asserts rendering for each built-in kind.
