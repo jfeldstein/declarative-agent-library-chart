@@ -1,3 +1,9 @@
+## Status (promotion)
+
+**Promoted 2026-04-21.** Canonical requirements live in **`openspec/specs/dalc-custom-observability-plugins/spec.md`** and **`openspec/specs/dalc-chart-runtime-values/spec.md`** (**`[DALC-REQ-CHART-RTV-005]`**). Shipped behavior uses **attach-only** consumer hooks, a **non-empty entry-point name list** for discovery, and **[ADR 0017](../../../../docs/adrs/0017-gate-at-call-site-for-optional-capabilities.md)** for built-in plugin gating; this folder is archived for history.
+
+---
+
 ## Why
 
 Consumers of the Declarative Agent **library chart** who need additional **observability sinks** (subscribers on `SyncEventBus`, optional metrics surfaces, or future OTLP bridges) today must **fork or patch** `agent.observability.plugins.wiring`—the only composition root that wires built-in plugins—because there is no supported extension point. That blocks upgrades and violates the intent of **ADR 0014** (single Helm tree `observability.plugins.*`, opt-in semantics) and **ADR 0015** / **ADR 0011** neutrality (shared plugins stay vendor-agnostic; cardinality and PII rules stay centralized). This change introduces a **first-class, disabled-by-default** mechanism to register **installed-distribution** hooks without modifying upstream wiring.

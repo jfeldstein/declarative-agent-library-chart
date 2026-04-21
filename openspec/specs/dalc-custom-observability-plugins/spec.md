@@ -35,11 +35,26 @@ Built-in wiring from **`agent.observability.plugins.wiring`** SHALL run **before
 
 Consumer observability hooks SHALL receive **`process_kind`** **`agent`** or **`scraper`** matching **`build_event_bus`** usage.
 
+#### Scenario: Scraper process receives scraper kind
+
+- **WHEN** **`ensure_scraper_observability`** constructs the bus
+- **THEN** consumer hooks SHALL be invoked with **`process_kind`** equal to **`scraper`**
+
+#### Scenario: Agent and RAG paths use agent kind
+
+- **WHEN** **`ensure_agent_observability`** constructs the bus (including RAG HTTP service bootstrap that shares agent observability initialization)
+- **THEN** consumer hooks SHALL be invoked with **`process_kind`** equal to **`agent`**
+
 ---
 
 ### Requirement: [DALC-REQ-CUSTOM-O11Y-004] Opt-in configuration independent of unrelated plugins
 
 Enabling consumer plugins via a non-empty entry-point allowlist SHALL NOT require Langfuse, Weights & Biases, Grafana, log-shipping, or Prometheus credentials when those integrations remain disabled.
+
+#### Scenario: Minimal deploy unchanged
+
+- **WHEN** the consumer plugin entry-point allowlist is empty (default)
+- **THEN** the runtime SHALL NOT require additional Secrets or environment variables solely for consumer plugin wiring beyond existing minimal agent/scraper configuration
 
 ---
 
@@ -52,3 +67,8 @@ When consumer plugins are configured, the runtime SHALL catch exceptions from in
 ### Requirement: [DALC-REQ-CUSTOM-O11Y-006] Shared Prometheus plugin remains integration-agnostic
 
 This capability SHALL NOT require adding integration-specific metric families inside **`agent.observability.plugins.prometheus`** as part of consumer plugin support; **ADR 0015** continues to govern shared Prometheus neutrality.
+
+#### Scenario: Consumer metrics stay in consumer code
+
+- **WHEN** a consumer observability plugin exposes Prometheus metrics
+- **THEN** those metric families SHALL be registered from consumer-owned modules rather than by extending shared integration-specific APIs inside **`agent.observability.plugins.prometheus`**
