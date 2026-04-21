@@ -36,7 +36,7 @@ When a feature **enters**, **changes materially**, or **exits** any stage, updat
 4. **Examples:** Under `examples/` (and chart defaults) so operators can see the supported shape; remove or rewrite when a feature is removed.
 5. **Development log:** `docs/development-log.md` — short entry for merge-worthy changes (add, change, deprecate, remove).
 
-For **chart/runtime** features, keep **template output and env contract** consistent with what `hosted_agents` reads (ADR 0006).
+For **chart/runtime** features, keep **template output and env contract** consistent with what the **`agent`** package reads (ADR 0006).
 
 ### 3. New ADR vs updating an existing ADR
 

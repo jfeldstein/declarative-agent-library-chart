@@ -14,7 +14,7 @@ Without an explicit stance, reviewers may treat every Helm or env rename as a po
 
 1. **Alpha posture:** Until a future ADR declares a stable **v1** config contract, **breaking changes to Helm `values.yaml` keys, `values.schema.json`, and runtime environment variables are allowed without a deprecation window**, as long as changes are **documented** (development log, chart README, examples, and promoted OpenSpec where applicable).
 
-2. **Single source of truth:** The **chart** and **runtime** stay aligned: template-rendered env vars and mounted files **SHALL** match what `hosted_agents` reads. Ambiguity between “Helm key” and “env name” SHOULD be resolved in docs with a small table or pointer to `ARCHITECTURE.md` rather than duplicate contradictory prose.
+2. **Single source of truth:** The **chart** and **runtime** stay aligned: template-rendered env vars and mounted files **SHALL** match what the **`agent`** Python package reads. Ambiguity between “Helm key” and “env name” SHOULD be resolved in docs with a small table or pointer to `ARCHITECTURE.md` rather than duplicate contradictory prose.
 
 3. **Traceability:** Normative **SHALL** requirements that touch config **SHALL** follow **[ADR 0003](0003-spec-test-traceability.md)** (IDs, matrix, test citations) when promoted under `openspec/specs/`.
 
