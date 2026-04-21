@@ -18,7 +18,7 @@ concurrency:
 
 jobs:
   python:
-    name: Python (ruff, complexipy, pytest, smoke)
+    name: Python (ruff, vulture, complexipy, pytest, smoke)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -39,6 +39,9 @@ jobs:
 
       - name: Ruff lint
         run: uv run ruff check agent tests
+
+      - name: Vulture (unused code in agent/)
+        run: uv run vulture agent
 
       - name: complexipy (cognitive complexity)
         run: uv run complexipy

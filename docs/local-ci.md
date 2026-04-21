@@ -24,6 +24,7 @@ uv sync --all-groups --project helm/src
 cd helm/src
 uv run ruff format --check agent tests
 uv run ruff check agent tests
+uv run vulture agent
 uv run complexipy
 uv run pytest tests/ -v --tb=short --cov-report=term-missing
 uv run python tests/integration/smoke_rag.py

@@ -95,6 +95,7 @@ dev = [
     "pytest>=9.0.3",
     "pytest-cov>=7.1.0",
     "ruff>=0.8.0",
+    "vulture>=2.16",
     "wandb>=0.25.1",
 ]
 
@@ -115,3 +116,12 @@ paths = ["agent", "tests"]
 # Ladder complete: cognitive cap 15 (complexipy default culture).
 max-complexity-allowed = 15
 quiet = true
+
+# Dead code in the shipped ``agent`` package only (tests are not scanned).
+# CLI still needs a path: ``uv run vulture agent`` (``paths`` below are not auto-applied without args).
+# Exclude LangChain callback / SimpleChatModel overrides: framework supplies keyword args Vulture
+# treats as unused locals.
+[tool.vulture]
+paths = ["agent"]
+exclude = ["agent/chat_model.py", "agent/llm_metrics.py"]
+min_confidence = 90

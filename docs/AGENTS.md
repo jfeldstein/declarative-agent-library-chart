@@ -33,7 +33,7 @@ When you add or change a normative **SHALL** under `openspec/specs/*/spec.md`:
 From the repo root:
 
 - **CI parity:** follow [docs/local-ci.md](local-ci.md) (Python via **uv**, Helm via **helm** + **ct** + **helm-unittest**, ADRs via `scripts/check_adr_numbers.sh`, spec traceability via `scripts/check_spec_traceability.py`). GitHub runs the same stages in [`.github/workflows/ci.yml`](../.github/workflows/ci.yml).
-- **Python only:** `uv sync --all-groups --project helm/src` then `cd helm/src` and `uv run ruff format --check agent tests`, `uv run ruff check agent tests`, `uv run complexipy`, `uv run pytest tests/ -v --tb=short`
+- **Python only:** `uv sync --all-groups --project helm/src` then `cd helm/src` and `uv run ruff format --check agent tests`, `uv run ruff check agent tests`, `uv run vulture agent`, `uv run complexipy`, `uv run pytest tests/ -v --tb=short`
 - **Helm unittest:** Suites under **`helm/tests/`** run from each chart under **`examples/`** (after **`helm dependency build --skip-refresh`** there), via **`helm unittest -f "../../helm/tests/${suite}_test.yaml" .`** — mirror the **`helm`** job loop in [`.github/workflows/ci.yml`](../.github/workflows/ci.yml). **`helm unittest`** pointed only at **`helm/chart`** does **not** execute those files.
 
 ## ADR numbering

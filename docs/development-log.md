@@ -8,6 +8,8 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ## 2026-04-20
 
+**Vulture dead-code gate** — **`vulture`** dev dependency; **`[tool.vulture]`** in **`helm/src/pyproject.toml`** (**`min_confidence = 90`**, exclude **`agent/chat_model.py`** and **`agent/llm_metrics.py`** where LangChain passes callback kwargs Vulture misreads as unused). CI and local parity: **`uv run vulture agent`** (Vulture requires at least one path on the CLI). Gates: **`uv run pytest tests/`**, **`uv run vulture agent`**.
+
 **Attach-only observability bootstrap** — **`build_event_bus`** creates **`SyncEventBus`** first, then **`attach_plugins_from_config`** (Prometheus via **`register_prometheus_plugin`** when enabled, Langfuse, W&B on agent), then **`attach_consumer_plugins`**. Removed pre-bus **`enqueue`** / subscription-queue wiring; Prometheus and consumer wheels use **`attach`** / **`bus.subscribe`** only. **`attach_prometheus_subscriptions`** (was **`enqueue_prometheus_subscriptions`**) feeds **`register_prometheus_plugin`**. Gates: **`cd helm/src && uv run pytest`**, **`python3 scripts/check_spec_traceability.py`**.
 
 **Consumer observability plugins — list-shaped Helm values** — **`observability.plugins.consumerPlugins`** is a **list of entry-point names** (non-empty ⇒ **`HOSTED_AGENT_OBSERVABILITY_PLUGINS_ENTRY_POINTS`**); removed separate **`enabled`** / strict flags. Example chart **`examples/with-plugins`** + **`consumer_plugin_wheel/`** (buildable **``pyproject.toml``**). Runtime: **`agent.observability.plugins.consumer_plugins`**, **`ConsumerPluginsSettings`**, **``build_event_bus``** ordering. Gates: **`cd helm/src && uv run pytest`**, **`helm unittest`**, **`ct lint --all`**, **`python3 scripts/check_spec_traceability.py`**.
