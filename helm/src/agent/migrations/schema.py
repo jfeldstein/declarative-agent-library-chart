@@ -1,4 +1,4 @@
-"""Load and apply bundled observability DDL (idempotent)."""
+"""Load and apply bundled execution persistence DDL (idempotent)."""
 
 from __future__ import annotations
 
