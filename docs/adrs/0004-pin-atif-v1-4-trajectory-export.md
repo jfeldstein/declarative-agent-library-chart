@@ -4,6 +4,10 @@
 
 Accepted
 
+## Scope note (current tree)
+
+**ATIF trajectory export** (adapter module and any batch/HTTP export path) has been **removed** from this repository. The decisions below remain normative for **what shape** a future or external adapter **SHOULD** produce if export is reintroduced; they do **not** assert that `export_atif_batch` or `agent/observability/atif.py` exists in-tree today.
+
 ## Context
 
 The runtime records a lightweight internal step log (`CanonicalTrajectory` / `TrajectoryStep`) for observability and export. Training and debugging pipelines increasingly expect **Agent Trajectory Interchange Format (ATIF)** — a JSON interchange used across Harbor-compatible tooling — rather than ad hoc JSON.
@@ -18,7 +22,7 @@ Earlier builds of this chart emitted a placeholder `schema_version` and a non-AT
 
 2. **Internal canonical format:** The runtime **SHALL** keep an explicit internal provenance label **`hosted-agents-canonical-v1`** (carried under `extra.hosted_agents.canonical_format`) so consumers can tell the document was **adapted** from internal steps, not authored natively by a Harbor agent.
 
-3. **Adapter location:** Mapping from `CanonicalTrajectory` to ATIF **SHALL** live in `hosted_agents/observability/atif.py` (`canonical_to_atif_v1_4` / `export_atif_batch`). ATIF is the **export** target; the internal trajectory remains the in-process source of truth until a future ADR merges them.
+3. **Adapter location (when export exists):** Mapping from `CanonicalTrajectory` to ATIF **SHALL** live under the **`agent`** package (for example `agent/observability/atif.py` with `canonical_to_atif_v1_4` / `export_atif_batch`). ATIF is the **export** target; the internal trajectory remains the in-process source of truth until a future ADR merges them.
 
 4. **Agent metadata:** `Trajectory.agent` fields **SHALL** be populated from environment (`HOSTED_AGENT_ATIF_AGENT_NAME`, `HOSTED_AGENT_ATIF_AGENT_VERSION`, `HOSTED_AGENT_ATIF_MODEL_NAME`) with safe defaults so exports validate structurally without silent misrepresentation.
 

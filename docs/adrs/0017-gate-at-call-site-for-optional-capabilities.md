@@ -29,6 +29,9 @@ This ADR is **not** specific to plugins: it applies to any optional capability w
 4. **Optional discovery helpers**  
    Helpers that **probe** configuration without committing to wiring (e.g. “return a client or `None` for tests or diagnostics”) **MAY** continue to return `None` when the feature is disabled or inputs are incomplete, provided **bootstrap paths** do not rely on that pattern after the operator has set **`enabled: true`**. After **`enabled`**, use a **strict** builder (or `register_*` that raises) so misconfiguration fails at startup.
 
+5. **Error handling expectation**  
+   When a gated capability is **on**, failures from validation or wiring (missing secret, bad URL, incompatible options) **SHALL** surface as **raised exceptions** at startup or first use—**not** as swallowed errors, log-only warnings that leave the feature half-registered, or “disable self” fallbacks. Call-site gates and strict builders make misconfiguration **loud**; callers **SHALL NOT** catch and discard these exceptions in a way that pretends the feature is safely off while partial state remains.
+
 ## Consequences
 
 - **Positive:** Wiring modules read as a checklist of what is active; failures are loud when operators enable a feature without required secrets.
