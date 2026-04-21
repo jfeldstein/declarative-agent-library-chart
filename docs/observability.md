@@ -15,7 +15,7 @@ Per-plugin summaries:
 | Plugin key (`observability.plugins.<key>`) | Summary |
 | --- | --- |
 | **`prometheus`** | **`GET /metrics`** (**`dalc_*`**) when enabled — see [Metrics (Prometheus)](#metrics-prometheus). |
-| **`langfuse`** | Lifecycle export via **`HOSTED_AGENT_LANGFUSE_*`** when **`observability.plugins.langfuse.enabled`** — details in middleware/plugin sections and chart values. |
+| **`langfuse`** | Lifecycle export via **`HOSTED_AGENT_LANGFUSE_*`** when **`observability.plugins.langfuse.enabled`**; with the flag on, empty host or keys fails startup (**`ValueError`**, [ADR 0017](adrs/0017-gate-at-call-site-for-optional-capabilities.md)). Details in middleware/plugin sections and chart values. |
 | **`wandb`** | **`observability.plugins.wandb`** aligns with **`wandb.*`** / **`HOSTED_AGENT_WANDB_*`** — see **Checkpoints, W&B traces, and Slack correlation** below. |
 | **`grafana`** | Optional **`ConfigMap`** (**`templates/_manifest_grafana_dashboards.tpl`**) packaging **`helm/chart/files/grafana/*.json`** when enabled (mirrors **`grafana/*.json`**); remote_write/stack automation is future work. |
 | **`logShipping`** | **`HOSTED_AGENT_LOG_FORMAT=json`** when **`observability.plugins.logShipping.enabled`** or **`observability.structuredLogs.json`** — see **[DALC-REQ-PLUGIN-LOG-SHIPPING-001]** / structured logs sections. |

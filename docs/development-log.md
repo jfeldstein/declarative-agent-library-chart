@@ -8,6 +8,8 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ## 2026-04-20
 
+**ADR 0017 — gate at call site** — Observability wiring uses explicit ``if cfg.*.enabled`` before ``register_*``; Langfuse bootstrap calls ``require_langfuse_client`` (``ValueError`` if host/keys incomplete after enable). W&B bus subscribers register only when ``cfg.wandb.enabled``. See [ADR 0017](adrs/0017-gate-at-call-site-for-optional-capabilities.md). Gates: **`cd helm/src && uv run pytest`**, **`bash scripts/check_adr_numbers.sh`**.
+
 **Vulture dead-code gate** — **`vulture`** dev dependency; **`[tool.vulture]`** in **`helm/src/pyproject.toml`** (**`min_confidence = 90`**, exclude **`agent/chat_model.py`** and **`agent/llm_metrics.py`** where LangChain passes callback kwargs Vulture misreads as unused). CI and local parity: **`uv run vulture agent`** (Vulture requires at least one path on the CLI). Gates: **`uv run pytest tests/`**, **`uv run vulture agent`**.
 
 **Attach-only observability bootstrap** — **`build_event_bus`** creates **`SyncEventBus`** first, then **`attach_plugins_from_config`** (Prometheus via **`register_prometheus_plugin`** when enabled, Langfuse, W&B on agent), then **`attach_consumer_plugins`**. Removed pre-bus **`enqueue`** / subscription-queue wiring; Prometheus and consumer wheels use **`attach`** / **`bus.subscribe`** only. **`attach_prometheus_subscriptions`** (was **`enqueue_prometheus_subscriptions`**) feeds **`register_prometheus_plugin`**. Gates: **`cd helm/src && uv run pytest`**, **`python3 scripts/check_spec_traceability.py`**.

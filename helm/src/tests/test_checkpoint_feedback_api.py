@@ -12,6 +12,10 @@ import pytest
 from fastapi.testclient import TestClient
 
 from agent.app import create_app
+from agent.observability.bootstrap import (
+    ensure_agent_observability,
+    reset_observability_for_tests,
+)
 from agent.observability.correlation import (
     SlackMessageRef,
     ToolCorrelation,
@@ -148,6 +152,8 @@ def test_slack_reaction_logs_feedback_via_wandb_sdk_when_enabled(
     mock_wandb.init = MagicMock(return_value=wb_run)
     mock_wandb.finish = MagicMock()
     monkeypatch.setitem(sys.modules, "wandb", mock_wandb)
+
+    reset_observability_for_tests()
 
     ref = SlackMessageRef(channel_id="C1", message_ts="1.0")
     correlation_store.put_slack_message(
@@ -383,6 +389,9 @@ def test_run_tool_json_logs_span_when_wandb_session_bound(
     monkeypatch.setenv(
         "HOSTED_AGENT_ENABLED_MCP_TOOLS_JSON", json.dumps(["sample.echo"])
     )
+    monkeypatch.setenv("HOSTED_AGENT_WANDB_ENABLED", "true")
+    reset_observability_for_tests()
+    ensure_agent_observability()
     calls: list[dict] = []
 
     class _Sess:
