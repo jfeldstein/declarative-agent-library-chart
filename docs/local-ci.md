@@ -11,7 +11,7 @@ lefthook install
 ```
 
 - **pre-commit:** `ruff format` on staged `helm/src` `*.py` (Lefthook `stage_fixed` re-stages), then `ruff check` on those paths — sequential.
-- **pre-push:** `ruff format --check` + full `ruff check` on `hosted_agents`/`tests`, then `complexipy` + `pytest` (no coverage), RAG smoke, spec traceability, ADR numbering — mirrors most of the Python + docs jobs; **Helm** (`helm unittest`, `ct lint`) is not in hooks (run manually or rely on Actions).
+- **pre-push:** `ruff format --check` + full `ruff check` on `agent`/`tests`, then `complexipy` + `pytest` (coverage per `helm/src/pyproject.toml`), RAG smoke, spec traceability, ADR numbering — mirrors most of the Python + docs jobs; **Helm** (`helm unittest`, `ct lint`) is not in hooks (run manually or rely on Actions).
 
 Per-repo overrides: `.lefthook-local.yml` (gitignored).
 
