@@ -14,6 +14,25 @@ class LabelEntry:
     scalar: int | None = None
 
 
+def _label_ids_with_scalar_sign(
+    labels: dict[str, LabelEntry],
+    *,
+    want_negative: bool,
+) -> list[str]:
+    """Ids whose scalar is ``< 0`` when ``want_negative`` else ``> 0``."""
+
+    out: list[str] = []
+    for lid, other in labels.items():
+        s = other.scalar
+        if s is None:
+            continue
+        if want_negative and s < 0:
+            out.append(lid)
+        if not want_negative and s > 0:
+            out.append(lid)
+    return out
+
+
 @dataclass(frozen=True)
 class LabelRegistry:
     registry_id: str
@@ -32,15 +51,13 @@ class LabelRegistry:
         entry = self.resolve(label_id)
         if entry is None or entry.scalar is None:
             return []
-        out: list[str] = []
-        if entry.scalar > 0:
-            for lid, other in self.labels.items():
-                if other.scalar is not None and other.scalar < 0:
-                    out.append(lid)
-        elif entry.scalar < 0:
-            for lid, other in self.labels.items():
-                if other.scalar is not None and other.scalar > 0:
-                    out.append(lid)
+        s = entry.scalar
+        if s > 0:
+            out = _label_ids_with_scalar_sign(self.labels, want_negative=True)
+        elif s < 0:
+            out = _label_ids_with_scalar_sign(self.labels, want_negative=False)
+        else:
+            return []
         return sorted(out)
 
 

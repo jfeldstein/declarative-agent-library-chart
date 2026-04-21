@@ -6,6 +6,10 @@ Chronological notes on **notable** chart and runtime changes—especially breaki
 
 ---
 
+## 2026-04-21
+
+**complexipy CI gate** — Several functions exceeded the configured cognitive cap (**15**): split helpers in **`label_registry`** (**`opposing_scalar_label_ids`**), **`jira_job`** (**`_relationships_from_issue_links`**), **`test_chart_values_contract`** (MCP values walk + subset test), and **`consumer_plugins`** (**`_attach_one`**). Restores green **`uv run complexipy`** alongside existing Ruff/pytest gates.
+
 ## 2026-04-20
 
 **Observability plugin env names (Langfuse / W&B)** — Helm agent Deployment now emits **`HOSTED_AGENT_OBSERVABILITY_PLUGINS_LANGFUSE_*`** and **`HOSTED_AGENT_OBSERVABILITY_PLUGINS_WANDB_ENABLED`** (same shape as Prometheus’s **`HOSTED_AGENT_OBSERVABILITY_PLUGINS_PROMETHEUS_ENABLED`**). **`plugins_config_from_env`**, **`ObservabilitySettings.from_env`**, and **`wandb_trace_stub_config`** prefer those keys and still read legacy **`HOSTED_AGENT_LANGFUSE_*`** / **`HOSTED_AGENT_WANDB_ENABLED`** when canonical vars are unset. Updated promoted specs (**`dalc-chart-runtime-values`**, **`dalc-plugin-langfuse-traces`**), **`docs/spec-test-traceability.md`**, **`helm/tests/hello_world_test.yaml`**, and operator docs. Gates: **`cd helm/src && uv run pytest`**, **`helm unittest`** (**`examples/hello-world`**), **`python3 scripts/check_spec_traceability.py`**.

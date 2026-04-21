@@ -5,6 +5,7 @@ Traceability: [DALC-REQ-CUSTOM-O11Y-001] [DALC-REQ-CUSTOM-O11Y-002] [DALC-REQ-CU
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from importlib.metadata import EntryPoint, entry_points
 from typing import Any, Literal
 
@@ -32,21 +33,19 @@ def _materialize_plugin(ep: EntryPoint) -> Any:
     return loaded() if callable(loaded) else loaded
 
 
-def _attach_one(
-    ep: EntryPoint,
-    process: Literal["agent", "scraper"],
-    cfg: ObservabilityPluginsConfig,
-    bus: SyncEventBus,
-) -> None:
+def _load_plugin_or_none(ep: EntryPoint) -> Any | None:
     try:
-        plugin = _materialize_plugin(ep)
+        return _materialize_plugin(ep)
     except Exception:
         log.warning(
             "consumer_observability_plugin_load_failed",
             entry_point=ep.name,
             exc_info=True,
         )
-        return
+        return None
+
+
+def _require_callable_attach(ep: EntryPoint, plugin: Any) -> Callable[..., None]:
     hook = getattr(plugin, "attach", None)
     if hook is None:
         msg = (
@@ -60,14 +59,33 @@ def _attach_one(
             f"'attach' ({type(hook).__name__!r}); expected attach(process_kind, cfg, bus)."
         )
         raise TypeError(msg)
+    return hook
+
+
+def _invoke_attach_safely(
+    ep: EntryPoint, hook: Callable[..., None], *args: object
+) -> None:
     try:
-        hook(process, cfg, bus)
+        hook(*args)
     except Exception:
         log.warning(
             "consumer_observability_attach_failed",
             entry_point=ep.name,
             exc_info=True,
         )
+
+
+def _attach_one(
+    ep: EntryPoint,
+    process: Literal["agent", "scraper"],
+    cfg: ObservabilityPluginsConfig,
+    bus: SyncEventBus,
+) -> None:
+    plugin = _load_plugin_or_none(ep)
+    if plugin is None:
+        return
+    hook = _require_callable_attach(ep, plugin)
+    _invoke_attach_safely(ep, hook, process, cfg, bus)
 
 
 def attach_consumer_plugins(
