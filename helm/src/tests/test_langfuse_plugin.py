@@ -5,6 +5,8 @@ from __future__ import annotations
 import inspect
 from unittest.mock import MagicMock
 
+import pytest
+
 from agent.observability.events import EventName, SyncEventBus
 from agent.observability.events.types import (
     FeedbackRecordedLifecycleEvent,
@@ -197,6 +199,21 @@ def test_build_langfuse_client_requires_complete_settings() -> None:
     )
     client = build_langfuse_client(full)
     assert client is not None
+
+
+def test_require_langfuse_client_raises_when_credentials_incomplete() -> None:
+    """ADR 0017: after the enable gate, incomplete credentials raise (no silent skip)."""
+
+    from agent.observability.plugins.langfuse_bridge import require_langfuse_client
+
+    bad = LangfusePluginSettings(
+        enabled=True,
+        host="https://example.com",
+        public_key="",
+        secret_key="sk",
+    )
+    with pytest.raises(ValueError, match="non-empty"):
+        require_langfuse_client(bad)
 
 
 def test_plugins_config_from_env_reads_langfuse_keys(monkeypatch) -> None:

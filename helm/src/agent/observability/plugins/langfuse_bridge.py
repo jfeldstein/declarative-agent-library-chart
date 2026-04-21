@@ -23,14 +23,12 @@ from agent.observability.run_context import get_run_id, get_thread_id
 from agent.trigger_context import TriggerContext
 
 
-def build_langfuse_client(settings: LangfusePluginSettings) -> Langfuse | None:
-    """Construct a Langfuse client when enabled and keys are present (else None)."""
+def _langfuse_sdk_kwargs(settings: LangfusePluginSettings) -> dict[str, Any] | None:
+    """Return ``Langfuse`` constructor kwargs, or ``None`` if host or keys are missing."""
 
-    if not settings.enabled:
-        return None
-    public_key = settings.public_key or ""
-    secret_key = settings.secret_key or ""
-    host = settings.host or ""
+    public_key = (settings.public_key or "").strip()
+    secret_key = (settings.secret_key or "").strip()
+    host = (settings.host or "").strip()
     if not public_key or not secret_key or not host:
         return None
     kwargs: dict[str, Any] = {
@@ -41,6 +39,36 @@ def build_langfuse_client(settings: LangfusePluginSettings) -> Langfuse | None:
     flush_interval = settings.flush_interval_seconds
     if flush_interval is not None and flush_interval > 0:
         kwargs["flush_interval"] = flush_interval
+    return kwargs
+
+
+def build_langfuse_client(settings: LangfusePluginSettings) -> Langfuse | None:
+    """Construct a Langfuse client when enabled and keys are present (else ``None``).
+
+    For bootstrap after ``cfg.langfuse.enabled``, use :func:`require_langfuse_client`
+    (see ADR 0017).
+    """
+
+    if not settings.enabled:
+        return None
+    kwargs = _langfuse_sdk_kwargs(settings)
+    if kwargs is None:
+        return None
+    return Langfuse(**kwargs)
+
+
+def require_langfuse_client(settings: LangfusePluginSettings) -> Langfuse:
+    """Build a Langfuse SDK client when the plugin is enabled at the call site.
+
+    Call only after ``cfg.langfuse.enabled`` (ADR 0017). Raises if host or keys are empty.
+    """
+
+    kwargs = _langfuse_sdk_kwargs(settings)
+    if kwargs is None:
+        raise ValueError(
+            "Langfuse is enabled but host, public_key, and secret_key must all be "
+            "non-empty strings (check Helm observability.plugins.langfuse and secret refs)."
+        )
     return Langfuse(**kwargs)
 
 
@@ -311,12 +339,13 @@ class LangfuseLifecycleBridge:
         )
 
 
-def register_langfuse_plugin(bus: SyncEventBus, client: Langfuse | None) -> None:
-    """Attach Langfuse subscribers when ``client`` is configured.
+def register_langfuse_plugin(bus: SyncEventBus, client: Langfuse) -> None:
+    """Attach Langfuse subscribers on ``bus`` for ``client``.
 
     [DALC-REQ-LANGFUSE-TRACE-001]
+
+    Gate with ``if cfg.langfuse.enabled`` at the call site (ADR 0017); do not pass
+    ``None`` for ``client``.
     """
 
-    if client is None:
-        return
     LangfuseLifecycleBridge(client).register(bus)

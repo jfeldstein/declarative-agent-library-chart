@@ -15,9 +15,13 @@ from agent.runtime_identity import RunIdentity, run_identity_from_flat_dict
 
 
 def register_wandb_trace_plugin(
-    bus: SyncEventBus, _cfg: ObservabilityPluginsConfig | None = None
+    bus: SyncEventBus, _cfg: ObservabilityPluginsConfig
 ) -> None:
-    """Wire W&B tracing to standard lifecycle events (agent process only)."""
+    """Wire W&B tracing to standard lifecycle events (agent process only).
+
+    Call only when ``cfg.wandb.enabled`` at the wiring site (ADR 0017). ``_cfg`` is
+    reserved for future wiring; handlers still read per-run flags from payloads.
+    """
 
     bus.subscribe(EventName.RUN_STARTED, _on_run_started)
     bus.subscribe(EventName.RUN_ENDED, _on_run_ended)

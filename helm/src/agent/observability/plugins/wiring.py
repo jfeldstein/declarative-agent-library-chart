@@ -2,6 +2,8 @@
 
 Bootstrap (:mod:`agent.observability.bootstrap`) stays free of provider-specific imports;
 this module is the single place that decides which optional plugins attach for a process.
+
+Plugin toggles are gated here explicitly (ADR 0017); ``register_*`` paths assume the gate passed.
 """
 
 from __future__ import annotations
@@ -10,8 +12,8 @@ from typing import Literal
 
 from agent.observability.events import SyncEventBus
 from agent.observability.plugins.langfuse_bridge import (
-    build_langfuse_client,
     register_langfuse_plugin,
+    require_langfuse_client,
 )
 from agent.observability.plugins.prometheus import register_prometheus_plugin
 from agent.observability.plugins.wandb.plugin import register_wandb_trace_plugin
@@ -27,6 +29,7 @@ def attach_plugins_from_config(
 
     if cfg.prometheus.enabled:
         register_prometheus_plugin(bus)
-    register_langfuse_plugin(bus, build_langfuse_client(cfg.langfuse))
-    if process == "agent":
+    if cfg.langfuse.enabled:
+        register_langfuse_plugin(bus, require_langfuse_client(cfg.langfuse))
+    if process == "agent" and cfg.wandb.enabled:
         register_wandb_trace_plugin(bus, cfg)
