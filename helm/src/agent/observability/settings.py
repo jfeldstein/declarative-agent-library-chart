@@ -55,7 +55,12 @@ def _postgres_pool_max() -> int:
 
 @dataclass(frozen=True)
 class ObservabilitySettings:
-    """Runtime integration flags (checkpoints, W&B, Slack feedback); env-driven."""
+    """Runtime integration flags (checkpoints, W&B, Slack feedback); env-driven.
+
+    ``HOSTED_AGENT_OBSERVABILITY_STORE=memory`` (default) and in-memory checkpoint
+    backends are appropriate only for automated tests and minimal local development
+    (ADR 0008), not for production-like durability or multi-replica sharing.
+    """
 
     checkpoints_enabled: bool
     checkpoint_backend: str
@@ -101,7 +106,7 @@ class ObservabilitySettings:
         )
 
     def effective_observability_postgres_url(self) -> str | None:
-        """URL for observability DDL when ``observability_store`` is ``postgres``."""
+        """URL for execution persistence DDL when ``observability_store`` is ``postgres``."""
 
         if self.observability_store != "postgres":
             return None

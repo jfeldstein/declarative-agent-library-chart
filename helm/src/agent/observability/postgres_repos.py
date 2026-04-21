@@ -1,4 +1,4 @@
-"""Postgres-backed observability repositories (psycopg v3 + pool)."""
+"""Postgres-backed execution persistence repositories (psycopg v3 + pool)."""
 
 from __future__ import annotations
 

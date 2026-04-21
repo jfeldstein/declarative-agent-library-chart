@@ -1,4 +1,8 @@
-"""Select in-memory vs Postgres observability repositories (per-process pool cache)."""
+"""Select in-memory vs Postgres execution persistence repositories (per-process pool cache).
+
+Default ``memory`` stores are for automated tests and local development only (ADR 0008);
+use Postgres when execution persistence must survive process restarts or be shared across replicas.
+"""
 
 from __future__ import annotations
 

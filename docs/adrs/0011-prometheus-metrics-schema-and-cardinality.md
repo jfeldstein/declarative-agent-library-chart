@@ -19,7 +19,10 @@ Implementation today lives in **`helm/src/agent/observability/plugins/prometheus
 - **Hosted agent runtime (default registry):** metric names **SHALL** use the prefix `dalc_` for counters and histograms that describe trigger handling, MCP-style tools, subagents, and skill loads (for example `dalc_trigger_requests_total`, `dalc_tool_calls_total`, `dalc_tool_calls_duration_seconds`). Integration-specific vocabulary **SHALL NOT** appear in shared observability plugins; see [ADR 0015](0015-integration-agnostic-observability-plugins.md).
 - **RAG HTTP service:** metric names **SHALL** use the prefix `dalc_rag_` so RAG request/latency series are distinct from the main trigger path (for example `dalc_rag_embed_requests_total`, `dalc_rag_query_duration_seconds`).
 - **Scraper jobs:** metric names **SHALL** use the prefix `dalc_scraper_` so batch/ingestion work is not confused with interactive runtime paths (for example `dalc_scraper_runs_total`, `dalc_scraper_rag_submissions_total`).
-- Histograms **SHALL** use the `_seconds` suffix and document wall-time or processing latency in the help string; counters **SHALL** use `_total` where they are cumulative counts.
+- Histograms **SHALL** use a **suffix that matches the unit**:
+  - **Durations** (wall time, latency, TTFT): names **SHALL** end with **`_seconds`** (for example `dalc_trigger_duration_seconds`, `dalc_tool_calls_duration_seconds`, `dalc_llm_time_to_first_token_seconds`). Help text **SHALL** describe elapsed time.
+  - **Sizes** (payload bytes observed for cardinality-safe summaries): names **SHALL** end with **`_bytes`** where they measure octets (for example `dalc_trigger_request_bytes`). Do **not** use `_seconds` for byte histograms or `_bytes` for time.
+- Counters **SHALL** use `_total` where they are cumulative counts.
 
 ### Label rules and cardinality
 

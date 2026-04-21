@@ -1,1 +1,1 @@
-"""Bundled SQL migrations for observability tables (see ``001_hosted_agents_observability.sql``)."""
+"""Bundled SQL migrations for execution persistence tables (see ``001_hosted_agents_observability.sql``)."""

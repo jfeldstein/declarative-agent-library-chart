@@ -14,7 +14,7 @@
 ## 3. Helm and values
 
 - [x] 3.1 Add **`scrapers.jira`** to **`values.yaml`** and **`values.schema.json`** per **[DALC-REQ-JIRA-SCRAPER-001]** (no top-level **`rag`**; no duplicate **`observability`** keys).
-- [x] 3.2 Update **`scraper-cronjobs.yaml`** to run **`hosted_agents.scrapers.jira_job`** when **`SCRAPER_INTEGRATION`** is **`jira`** per **[DALC-REQ-JIRA-SCRAPER-002]**.
+- [x] 3.2 Update **`scraper-cronjobs.yaml`** to run **`agent.scrapers.jira_job`** when **`SCRAPER_INTEGRATION`** is **`jira`** per **[DALC-REQ-JIRA-SCRAPER-002]**.
 - [x] 3.3 Render **env** + mounted **`job.json`** from merged **`scrapers.jira`** + job overrides: **`JIRA_SITE_URL`**, **`JIRA_WATERMARK_DIR`**, **`SCRAPER_SCOPE`**, secret-derived email/token; **JQL**, **`extraFields`**, caps, and overlap come from **`job.json`** (not a separate **`JIRA_PROJECT_KEYS`** env—project scope is inside the job payload). Optional per-job **`siteUrl`** / **`watermarkDir`** override parents for env only (stripped from **`job.json`**).
 
 ## 4. Examples and verification
