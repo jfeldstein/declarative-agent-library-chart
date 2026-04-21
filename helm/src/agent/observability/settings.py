@@ -101,7 +101,7 @@ class ObservabilitySettings:
         )
 
     def effective_observability_postgres_url(self) -> str | None:
-        """URL for observability DDL when ``observability_store`` is ``postgres``."""
+        """URL for execution persistence DDL when ``observability_store`` is ``postgres``."""
 
         if self.observability_store != "postgres":
             return None

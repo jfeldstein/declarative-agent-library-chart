@@ -1,4 +1,4 @@
-"""Select in-memory vs Postgres observability repositories (per-process pool cache)."""
+"""Select in-memory vs Postgres execution persistence repositories (per-process pool cache)."""
 
 from __future__ import annotations
 

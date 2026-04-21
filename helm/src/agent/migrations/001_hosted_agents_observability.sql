@@ -1,4 +1,4 @@
--- Application observability tables (correlation, feedback, side-effects, span summaries).
+-- Application execution persistence tables (correlation, feedback, side-effects, span summaries).
 -- [DALC-REQ-POSTGRES-AGENT-PERSISTENCE-004] Versioned DDL for operator apply (see runbook).
 -- Schema is namespaced for shared Postgres clusters. LangGraph checkpoint tables are
 -- created separately by langgraph-checkpoint-postgres via PostgresSaver.setup().

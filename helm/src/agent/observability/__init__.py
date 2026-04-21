@@ -1,4 +1,4 @@
-"""Checkpointing, feedback correlation, and W&B tracing."""
+"""Execution persistence (checkpoints, correlation, feedback) and W&B tracing helpers."""
 
 from __future__ import annotations
 
