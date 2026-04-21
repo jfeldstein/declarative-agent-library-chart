@@ -40,9 +40,27 @@ def _attach_one(
 ) -> None:
     try:
         plugin = _materialize_plugin(ep)
-        hook = getattr(plugin, "attach", None)
-        if hook is None:
-            return
+    except Exception:
+        log.warning(
+            "consumer_observability_plugin_load_failed",
+            entry_point=ep.name,
+            exc_info=True,
+        )
+        return
+    hook = getattr(plugin, "attach", None)
+    if hook is None:
+        msg = (
+            f"Consumer observability plugin {ep.name!r} ({ep.value}) is allowlisted "
+            "but exposes no 'attach' method; implement attach(process_kind, cfg, bus)."
+        )
+        raise ValueError(msg)
+    if not callable(hook):
+        msg = (
+            f"Consumer observability plugin {ep.name!r} ({ep.value}) has non-callable "
+            f"'attach' ({type(hook).__name__!r}); expected attach(process_kind, cfg, bus)."
+        )
+        raise TypeError(msg)
+    try:
         hook(process, cfg, bus)
     except Exception:
         log.warning(
