@@ -13,7 +13,7 @@ Optional runtime capabilities (observability plugins, HTTP routes, background wo
 
 Style (2) makes control flow harder to read: readers must open every `register_*` to learn when work happens, and **silent no-ops** can hide operator mistakes (feature enabled in Helm but secrets missing).
 
-This ADR is **not** plugin-specific: it applies to any optional capability wired from config in application bootstrap or similar composition roots.
+This ADR is **not** specific to plugins: it applies to any optional capability wired from config in application bootstrap or similar composition roots.
 
 ## Decision
 
