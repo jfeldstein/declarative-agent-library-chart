@@ -16,6 +16,13 @@ The runtime SHALL NOT treat unstructured Helm/ConfigMap strings as authoritative
 - **WHEN** the allowlist is non-empty
 - **THEN** the runtime SHALL load each listed entry-point **name** that exists in the declared entry-point group from installed distributions
 
+When an allowlisted entry point **loads successfully**, the resolved plugin object SHALL expose a callable **`attach`** method compatible with **`attach(process_kind, cfg, bus)`**; if **`attach`** is missing or not callable, the runtime SHALL raise during bootstrap (**`ValueError`** / **`TypeError`**) so operators fix the distribution. This is distinct from **[DALC-REQ-CUSTOM-O11Y-005]**, which isolates **import/load** failures and **hook invocation** exceptions after a valid **`attach`** is found.
+
+#### Scenario: Allowlisted plugin without attach fails fast
+
+- **WHEN** a listed entry point resolves to an object with no **`attach`** attribute
+- **THEN** **`attach_consumer_plugins`** SHALL raise **`ValueError`** before invoking other consumer hooks
+
 ---
 
 ### Requirement: [DALC-REQ-CUSTOM-O11Y-002] Hook lifecycle matches attach-only bus bootstrap

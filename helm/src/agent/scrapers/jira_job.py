@@ -267,6 +267,50 @@ def _issue_field_lines(fields: dict[str, Any], key: str) -> list[str]:
     return lines
 
 
+def _as_issue_dict(val: Any) -> dict[str, Any]:
+    return val if isinstance(val, dict) else {}
+
+
+def _issue_link_endpoint_keys(ln: dict[str, Any]) -> tuple[str, str, dict[str, Any]]:
+    typ = _as_issue_dict(ln.get("type"))
+    inward = _as_issue_dict(ln.get("inwardIssue"))
+    outward = _as_issue_dict(ln.get("outwardIssue"))
+    ik = inward.get("key")
+    ok = outward.get("key")
+    ik_s = str(ik) if ik else ""
+    ok_s = str(ok) if ok else ""
+    return ik_s, ok_s, typ
+
+
+def _append_issue_link_edges(
+    out: list[dict[str, str]],
+    seen: set[tuple[str, str, str]],
+    issue_key: str,
+    ik_s: str,
+    ok_s: str,
+    typ: dict[str, Any],
+    default_name: str,
+) -> None:
+    cur = f"jira:{issue_key}"
+    if ik_s == issue_key and ok_s:
+        rt = str(typ.get("outward") or default_name)[:256]
+        key_t = (cur, f"jira:{ok_s}", rt)
+        if key_t not in seen:
+            seen.add(key_t)
+            out.append(
+                {"source": cur, "target": f"jira:{ok_s}", "relationship_type": rt}
+            )
+        return
+    if ok_s == issue_key and ik_s:
+        rt = str(typ.get("inward") or default_name)[:256]
+        key_t = (f"jira:{ik_s}", cur, rt)
+        if key_t not in seen:
+            seen.add(key_t)
+            out.append(
+                {"source": f"jira:{ik_s}", "target": cur, "relationship_type": rt},
+            )
+
+
 def _relationships_from_issue_links(
     issue_key: str,
     links: Any,
@@ -277,42 +321,13 @@ def _relationships_from_issue_links(
     out: list[dict[str, str]] = []
     if not isinstance(links, list):
         return out
-    cur = f"jira:{issue_key}"
     seen: set[tuple[str, str, str]] = set()
     for ln in links[:max_links]:
         if not isinstance(ln, dict):
             continue
-        typ = ln.get("type") if isinstance(ln.get("type"), dict) else {}
-        inward_issue = ln.get("inwardIssue")
-        outward_issue = ln.get("outwardIssue")
-        inward = inward_issue if isinstance(inward_issue, dict) else {}
-        outward = outward_issue if isinstance(outward_issue, dict) else {}
-        ik = inward.get("key") if inward.get("key") is not None else None
-        ok = outward.get("key") if outward.get("key") is not None else None
-        ik_s = str(ik) if ik else ""
-        ok_s = str(ok) if ok else ""
-        name = str(typ.get("name") or "related")
-
-        if ik_s == issue_key and ok_s:
-            rt = str(typ.get("outward") or name)[:256]
-            key_t = (cur, f"jira:{ok_s}", rt)
-            if key_t not in seen:
-                seen.add(key_t)
-                out.append(
-                    {"source": cur, "target": f"jira:{ok_s}", "relationship_type": rt}
-                )
-        elif ok_s == issue_key and ik_s:
-            rt = str(typ.get("inward") or name)[:256]
-            key_t = (f"jira:{ik_s}", cur, rt)
-            if key_t not in seen:
-                seen.add(key_t)
-                out.append(
-                    {
-                        "source": f"jira:{ik_s}",
-                        "target": cur,
-                        "relationship_type": rt,
-                    }
-                )
+        ik_s, ok_s, typ = _issue_link_endpoint_keys(ln)
+        default_name = str(typ.get("name") or "related")
+        _append_issue_link_edges(out, seen, issue_key, ik_s, ok_s, typ, default_name)
     return out
 
 

@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 
 class NoopConsumerObservabilityPlugin:
-    """Minimal plugin object: optional ``attach`` hook is a no-op."""
+    """Minimal plugin object: ``attach`` is required when allowlisted; implementation is a no-op."""
 
     def attach(
         self,

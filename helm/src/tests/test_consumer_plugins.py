@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import types
 from importlib.metadata import EntryPoint
 from unittest.mock import patch
 
@@ -87,6 +88,68 @@ def test_disabled_does_not_query_entry_points() -> None:
 
     with patch("agent.observability.plugins.consumer_plugins.entry_points", _boom):
         build_event_bus("agent", _cfg())
+
+
+def test_allowlisted_plugin_without_attach_raises(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """[DALC-REQ-CUSTOM-O11Y-001] Misconfigured allowlist (no attach) fails bootstrap."""
+
+    monkeypatch.setattr(
+        "agent.observability.plugins.consumer_plugins._materialize_plugin",
+        lambda _ep: object(),
+    )
+    ep = EntryPoint(
+        name="bad-shape",
+        value="unused:unused",
+        group=OBSERVABILITY_PLUGINS_ENTRY_POINT_GROUP,
+    )
+    with (
+        patch(
+            "agent.observability.plugins.consumer_plugins.entry_points",
+            lambda: _FakeEntryPointGroups([ep]),
+        ),
+        pytest.raises(ValueError, match="allowlisted"),
+    ):
+        build_event_bus(
+            "agent",
+            _cfg(
+                consumer_plugins=ConsumerPluginsSettings(
+                    entry_point_allowlist=("bad-shape",),
+                ),
+            ),
+        )
+
+
+def test_allowlisted_plugin_non_callable_attach_raises(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """[DALC-REQ-CUSTOM-O11Y-001] Non-callable attach fails bootstrap."""
+
+    monkeypatch.setattr(
+        "agent.observability.plugins.consumer_plugins._materialize_plugin",
+        lambda _ep: types.SimpleNamespace(attach="not-callable"),
+    )
+    ep = EntryPoint(
+        name="bad-attach",
+        value="unused:unused",
+        group=OBSERVABILITY_PLUGINS_ENTRY_POINT_GROUP,
+    )
+    with (
+        patch(
+            "agent.observability.plugins.consumer_plugins.entry_points",
+            lambda: _FakeEntryPointGroups([ep]),
+        ),
+        pytest.raises(TypeError, match="non-callable"),
+    ):
+        build_event_bus(
+            "agent",
+            _cfg(
+                consumer_plugins=ConsumerPluginsSettings(
+                    entry_point_allowlist=("bad-attach",),
+                ),
+            ),
+        )
 
 
 def test_enabled_invokes_hooks_for_allowlisted_entry_point(

@@ -25,22 +25,28 @@ _VALUES_GLOBS = (
 )
 
 
+def _append_mcp_enabled_tool_strings(mcp: dict[str, Any], found: list[str]) -> None:
+    raw = mcp.get("enabledTools")
+    if not isinstance(raw, list):
+        return
+    for item in raw:
+        if isinstance(item, str):
+            found.append(item)
+            continue
+        msg = (
+            "mcp.enabledTools must be a list of strings; "
+            f"got {type(item).__name__}: {item!r}"
+        )
+        raise AssertionError(msg)
+
+
 def _iter_mcp_enabled_tool_strings(obj: Any) -> list[str]:
     """Collect `mcp.enabledTools` entries from nested Helm values documents."""
     found: list[str] = []
     if isinstance(obj, dict):
         mcp = obj.get("mcp")
         if isinstance(mcp, dict):
-            raw = mcp.get("enabledTools")
-            if isinstance(raw, list):
-                for item in raw:
-                    if isinstance(item, str):
-                        found.append(item)
-                    else:
-                        raise AssertionError(
-                            "mcp.enabledTools must be a list of strings; "
-                            f"got {type(item).__name__}: {item!r}"
-                        )
+            _append_mcp_enabled_tool_strings(mcp, found)
         for v in obj.values():
             found.extend(_iter_mcp_enabled_tool_strings(v))
     elif isinstance(obj, list):
@@ -122,6 +128,18 @@ def test_hello_world_example_uses_agent_alias_and_values_key() -> None:
     assert "declarative-agent" not in values
 
 
+def _bad_mcp_tool_refs_in_values_file(path: Path) -> list[str]:
+    rel = path.relative_to(_REPO_ROOT)
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    if data is None:
+        return []
+    bad_local: list[str] = []
+    for tid in _iter_mcp_enabled_tool_strings(data):
+        if tid not in REGISTERED_MCP_TOOL_IDS:
+            bad_local.append(f"{rel}: {tid}")
+    return bad_local
+
+
 def test_mcp_enabled_tools_are_subset_of_dispatch_registry() -> None:
     """Helm `mcp.enabledTools` must reference only ids implemented in `tools.dispatch`."""
     bad: list[str] = []
@@ -129,12 +147,7 @@ def test_mcp_enabled_tools_are_subset_of_dispatch_registry() -> None:
         for path in sorted(_REPO_ROOT.glob(pattern)):
             if not path.is_file():
                 continue
-            data = yaml.safe_load(path.read_text(encoding="utf-8"))
-            if data is None:
-                continue
-            for tid in _iter_mcp_enabled_tool_strings(data):
-                if tid not in REGISTERED_MCP_TOOL_IDS:
-                    bad.append(f"{path.relative_to(_REPO_ROOT)}: {tid}")
+            bad.extend(_bad_mcp_tool_refs_in_values_file(path))
     assert not bad, (
         "mcp.enabledTools entries must be in REGISTERED_MCP_TOOL_IDS "
         f"(tools.dispatch): {bad}"

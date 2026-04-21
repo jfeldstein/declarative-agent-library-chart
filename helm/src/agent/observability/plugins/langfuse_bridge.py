@@ -339,13 +339,16 @@ class LangfuseLifecycleBridge:
         )
 
 
-def register_langfuse_plugin(bus: SyncEventBus, client: Langfuse) -> None:
-    """Attach Langfuse subscribers on ``bus`` for ``client``.
+def register_langfuse_plugin(
+    bus: SyncEventBus, settings: LangfusePluginSettings
+) -> None:
+    """Attach Langfuse subscribers on ``bus`` when ``settings`` is complete.
 
     [DALC-REQ-LANGFUSE-TRACE-001]
 
-    Gate with ``if cfg.langfuse.enabled`` at the call site (ADR 0017); do not pass
-    ``None`` for ``client``.
+    Call only after ``cfg.langfuse.enabled`` (ADR 0017). Validates credentials and
+    constructs the SDK client here so wiring stays a thin gate.
     """
 
+    client = require_langfuse_client(settings)
     LangfuseLifecycleBridge(client).register(bus)
