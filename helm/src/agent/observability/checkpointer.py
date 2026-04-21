@@ -1,4 +1,10 @@
-"""LangGraph checkpointer construction (memory, Postgres, Redis contract)."""
+"""LangGraph checkpointer construction (memory, Postgres, Redis contract).
+
+In-process ``memory`` / ``MemorySaver`` defaults are for automated tests and simple
+local development only (ADR 0008); they do not satisfy durability when multiple
+replicas share state or execution persistence must survive restarts—use Postgres
+when those requirements apply.
+"""
 
 from __future__ import annotations
 
@@ -116,7 +122,8 @@ def _build_postgres_checkpointer(settings: ObservabilitySettings) -> Any:
 def build_checkpointer(settings: ObservabilitySettings) -> Any | None:
     """Return a LangGraph checkpointer or ``None`` when checkpointing is disabled.
 
-    * **memory** — ``MemorySaver`` (dev / single replica); ``thread_id`` and ``checkpoint_id``
+    * **memory** — ``MemorySaver`` (tests and local dev only; not durable across
+      replicas or restarts—see ADR 0008); ``thread_id`` and ``checkpoint_id``
       follow LangGraph semantics (see runbook).
     * **postgres** — ``langgraph-checkpoint-postgres`` + ``psycopg`` pool (optional ``[postgres]`` extra).
       Set ``HOSTED_AGENT_POSTGRES_URL``.
