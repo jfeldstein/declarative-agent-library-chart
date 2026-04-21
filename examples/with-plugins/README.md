@@ -23,4 +23,4 @@ RUN pip install --no-deps /tmp/dalc_consumer_demo-*.whl
 
 The runtime image must already include **`declarative-agent-library-chart`** (this repo’s **`helm/src`** package); the demo wheel only adds the entry point.
 
-See **`dalc_consumer_demo/plugin.py`** for hook signatures and links to library types (`ObservabilityPluginsConfig`, `SyncEventBus`, `EventName`, etc.).
+See **`dalc_consumer_demo/plugin.py`** for the ``attach`` hook and a minimal ``run.started`` subscriber. The canonical **event name** enum is **`EventName`** in the runtime source [`helm/src/agent/observability/events/types.py`](../../helm/src/agent/observability/events/types.py); per-event **payload** shapes live in [`helm/src/agent/observability/events/payloads.py`](../../helm/src/agent/observability/events/payloads.py).
