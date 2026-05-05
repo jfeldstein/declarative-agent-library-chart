@@ -301,9 +301,35 @@ spec:
                   key: {{ $jwkey | quote }}
             {{- end }}
             {{- end }}
+            {{- $cmak := .Values.chatModelApiKey | default dict }}
+            {{- $cmakSec := $cmak.secretName | default "" | trim }}
+            {{- $cmakKey := $cmak.secretKey | default "token" | trim }}
+            {{- if and $cmakSec $cmakKey }}
+            {{- $cmakEnv := $cmak.envVarName | default "" | trim }}
+            {{- if not $cmakEnv }}
+              {{- $model := .Values.chatModel | default "" | lower }}
+              {{- if or (hasPrefix "openai/" $model) (hasPrefix "openai:" $model) (hasPrefix "gpt-" $model) }}
+              {{- $cmakEnv = "OPENAI_API_KEY" }}
+              {{- else if or (hasPrefix "anthropic/" $model) (hasPrefix "anthropic:" $model) (hasPrefix "claude-" $model) }}
+              {{- $cmakEnv = "ANTHROPIC_API_KEY" }}
+              {{- else }}
+              {{- fail (printf "chatModelApiKey.secretName is set but the provider env var cannot be inferred from chatModel %q. Set chatModelApiKey.envVarName explicitly (e.g. OPENAI_API_KEY)." .Values.chatModel) }}
+              {{- end }}
+            {{- end }}
+            - name: {{ $cmakEnv }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $cmakSec | quote }}
+                  key: {{ $cmakKey | quote }}
+            {{- end }}
             {{- range .Values.extraEnv }}
             - name: {{ .name }}
-              value: {{ .value | quote }}
+              {{- if .valueFrom }}
+              valueFrom:
+                {{- toYaml .valueFrom | nindent 16 }}
+              {{- else }}
+              value: {{ .value | default "" | quote }}
+              {{- end }}
             {{- end }}
           {{- with .Values.resources }}
           resources:

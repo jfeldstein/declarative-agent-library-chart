@@ -1,0 +1,35 @@
+# Traceability: [DALC-REQ-DALC-PKG-002] [DALC-REQ-CHART-RTV-006] [DALC-REQ-CHART-RTV-007]
+# Example: prompt-from-file
+# Values for subchart alias `agent` (library chart name: declarative-agent-library-chart)
+#
+# Demonstrates loading prompts from files in THIS chart (not the library chart).
+# Paths are relative to the root of this example chart.
+agent:
+  # [DALC-REQ-CHART-RTV-006] Load supervisor prompt from a file in this chart.
+  # systemPrompt and systemPromptFile are mutually exclusive — setting both fails helm render.
+  systemPromptFile: prompts/supervisor.txt
+
+  # Model id (LiteLLM provider/model format, canonical):
+  #   openai/gpt-4o-mini        → requires langchain-openai  in the image
+  #   anthropic/claude-3-5-...  → requires langchain-anthropic in the image
+  chatModel: openai/gpt-4o-mini
+
+  # API key wired from a Kubernetes Secret. The chart infers OPENAI_API_KEY
+  # automatically from the openai:* model prefix. For Anthropic, swap model
+  # and point secretName at a secret containing your Anthropic key.
+  # Create the secret:
+  #   kubectl -n <ns> create secret generic llm-credentials \
+  #     --from-literal=token="$OPENAI_API_KEY"
+  chatModelApiKey:
+    secretName: llm-credentials
+    secretKey: token
+
+  image:
+    repository: declarative-agent-library-chart
+    tag: local
+    pullPolicy: Never
+
+  # Subagent prompt also loaded from a file in this chart.
+  subagents:
+    - name: file-subagent
+      systemPromptFile: prompts/file-subagent.txt

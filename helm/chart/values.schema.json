@@ -14,11 +14,24 @@
     },
     "systemPrompt": {
       "type": "string",
-      "description": "Supervisor instructions; rendered into ConfigMap as HOSTED_AGENT_SYSTEM_PROMPT (root agent when subagents are configured)"
+      "description": "Supervisor instructions; rendered into ConfigMap as HOSTED_AGENT_SYSTEM_PROMPT (root agent when subagents are configured). [DALC-REQ-CHART-RTV-006] Mutually exclusive with non-empty systemPromptFile; supplying both fails Helm render."
+    },
+    "systemPromptFile": {
+      "type": "string",
+      "description": "[DALC-REQ-CHART-RTV-006] Chart file path (Helm .Files.Get) for supervisor instructions; same ConfigMap/env surface as systemPrompt. Path is relative to the parent/user chart root (e.g. files/prompts/foo.txt). Mutually exclusive with non-empty systemPrompt; supplying both fails Helm render."
     },
     "chatModel": {
       "type": "string",
-      "description": "Optional LangChain chat model id when subagents are non-empty (e.g. openai:gpt-4o-mini) → HOSTED_AGENT_CHAT_MODEL; requires provider package + credentials in the image"
+      "description": "[DALC-REQ-CHART-RTV-007] Model id for the supervisor → HOSTED_AGENT_CHAT_MODEL. Use LiteLLM provider/model format (e.g. openai/gpt-4o-mini, anthropic/claude-3-5-haiku-latest); LangChain provider:model format also accepted. Provider package must be installed. When chatModelApiKey.secretName is also set, the chart infers and injects the provider env var automatically."
+    },
+    "chatModelApiKey": {
+      "type": "object",
+      "description": "[DALC-REQ-CHART-RTV-007] Kubernetes Secret reference for the LLM provider API key. The chart infers the correct env var from chatModel prefix (openai/* or gpt-* → OPENAI_API_KEY, anthropic/* or claude-* → ANTHROPIC_API_KEY). Use envVarName to override for other providers.",
+      "properties": {
+        "secretName": { "type": "string", "description": "Name of the Kubernetes Secret containing the API key." },
+        "secretKey": { "type": "string", "description": "Key within the Secret (default: token)." },
+        "envVarName": { "type": "string", "description": "Override the env var name injected into the agent container. When empty, inferred from chatModel prefix." }
+      }
     },
     "service": {
       "type": "object",
@@ -247,8 +260,22 @@
             "type": "string",
             "description": "Recommended: tool schema / supervisor discovery text (LangChain subagents enumeration)"
           },
-          "systemPrompt": { "type": "string" },
-          "system_prompt": { "type": "string" },
+          "systemPrompt": {
+            "type": "string",
+            "description": "[DALC-REQ-CHART-RTV-006] Mutually exclusive with systemPromptFile/system_prompt_file when non-empty; supplying inline prompt and file ref fails Helm render."
+          },
+          "system_prompt": {
+            "type": "string",
+            "description": "[DALC-REQ-CHART-RTV-006] Snake_case alias of systemPrompt; mutually exclusive with file reference keys when non-empty."
+          },
+          "systemPromptFile": {
+            "type": "string",
+            "description": "[DALC-REQ-CHART-RTV-006] Chart file path for this subagent prompt (.Files.Get), relative to the parent/user chart root. Mutually exclusive with non-empty systemPrompt/system_prompt. Mutually exclusive with system_prompt_file when both are non-empty."
+          },
+          "system_prompt_file": {
+            "type": "string",
+            "description": "[DALC-REQ-CHART-RTV-006] Snake_case alias of systemPromptFile. Mutually exclusive with non-empty inline prompts; mutually exclusive with systemPromptFile when both are non-empty."
+          },
           "role": { "type": "string" },
           "exposeAsTool": {
             "type": "boolean",
@@ -538,13 +565,17 @@
     },
     "extraEnv": {
       "type": "array",
-      "description": "Optional name/value env pairs on the agent container (e.g. HOSTED_AGENT_CHECKPOINT_STORE, WANDB_*)",
+      "description": "Optional env vars on the agent container. Supports plain value strings or full Kubernetes valueFrom (secretKeyRef, configMapKeyRef, fieldRef, etc.).",
       "items": {
         "type": "object",
-        "required": ["name", "value"],
+        "required": ["name"],
         "properties": {
           "name": { "type": "string" },
-          "value": { "type": "string" }
+          "value": { "type": "string" },
+          "valueFrom": {
+            "type": "object",
+            "description": "Kubernetes EnvVarSource (secretKeyRef, configMapKeyRef, fieldRef, resourceFieldRef)"
+          }
         }
       }
     },

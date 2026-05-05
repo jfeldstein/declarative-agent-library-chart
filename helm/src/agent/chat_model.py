@@ -50,10 +50,24 @@ class FakeToolChatModel(SimpleChatModel):
         return ChatResult(generations=[ChatGeneration(message=response)])
 
 
+def _to_langchain_model_spec(spec: str) -> str:
+    """Normalise LiteLLM-style ``provider/model`` to LangChain ``provider:model``.
+
+    LiteLLM uses ``openai/gpt-4o-mini``; LangChain ``init_chat_model`` expects
+    ``openai:gpt-4o-mini``.  Both forms are accepted; the slash form is canonical
+    for this chart (``[DALC-REQ-CHART-RTV-007]``).
+    """
+    if "/" in spec and ":" not in spec:
+        provider, _, model = spec.partition("/")
+        return f"{provider}:{model}"
+    return spec
+
+
 def resolve_chat_model() -> Any:
     """Return a chat model for the supervisor.
 
-    Uses ``HOSTED_AGENT_CHAT_MODEL`` (e.g. ``openai:gpt-4o-mini``) via
+    Uses ``HOSTED_AGENT_CHAT_MODEL`` (LiteLLM-style ``openai/gpt-4o-mini`` or
+    LangChain-style ``openai:gpt-4o-mini``) via
     :func:`langchain.chat_models.init_chat_model`. Install the matching provider
     package (e.g. ``langchain-openai``) when using a remote model.
 
@@ -67,10 +81,10 @@ def resolve_chat_model() -> Any:
     if not spec:
         msg = (
             "HOSTED_AGENT_CHAT_MODEL is required when subagents are configured "
-            "(e.g. openai:gpt-4o-mini). Install the provider integration package."
+            "(e.g. openai/gpt-4o-mini). Install the provider integration package."
         )
         raise ValueError(msg)
-    return init_chat_model(spec)
+    return init_chat_model(_to_langchain_model_spec(spec))
 
 
 def fake_model_from_env() -> FakeToolChatModel | None:

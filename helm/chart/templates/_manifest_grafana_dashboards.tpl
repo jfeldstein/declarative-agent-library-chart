@@ -9,8 +9,8 @@ metadata:
     dalc.agent.grafana.dashboards: "true"
 data:
   dalc-overview.json: |-
-{{ .Files.Get "files/grafana/dalc-overview.json" | nindent 4 }}
+{{ .DalcFiles.Get "files/grafana/dalc-overview.json" | nindent 4 }}
   cfha-token-metrics.json: |-
-{{ .Files.Get "files/grafana/cfha-token-metrics.json" | nindent 4 }}
+{{ .DalcFiles.Get "files/grafana/cfha-token-metrics.json" | nindent 4 }}
 {{- end }}
 {{- end }}

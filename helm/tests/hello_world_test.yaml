@@ -1,4 +1,4 @@
-# Traceability: [DALC-REQ-HELM-UNITTEST-001] [DALC-REQ-HELM-UNITTEST-002] [DALC-REQ-RAG-SCRAPERS-002] [DALC-REQ-RAG-SCRAPERS-004] [DALC-REQ-CHART-RTV-001] [DALC-REQ-CHART-RTV-002] [DALC-REQ-CHART-RTV-003] [DALC-REQ-CHART-RTV-005] [DALC-REQ-CHART-PRESENCE-001] [DALC-REQ-CHART-PRESENCE-002] [DALC-REQ-CHART-PRESENCE-003] [DALC-REQ-DALC-PKG-002] [DALC-REQ-POSTGRES-AGENT-PERSISTENCE-002] [DALC-VER-002]
+# Traceability: [DALC-REQ-HELM-UNITTEST-001] [DALC-REQ-HELM-UNITTEST-002] [DALC-REQ-RAG-SCRAPERS-002] [DALC-REQ-RAG-SCRAPERS-004] [DALC-REQ-CHART-RTV-001] [DALC-REQ-CHART-RTV-002] [DALC-REQ-CHART-RTV-003] [DALC-REQ-CHART-RTV-005] [DALC-REQ-CHART-RTV-006] [DALC-REQ-CHART-RTV-007] [DALC-REQ-CHART-PRESENCE-001] [DALC-REQ-CHART-PRESENCE-002] [DALC-REQ-CHART-PRESENCE-003] [DALC-REQ-DALC-PKG-002] [DALC-REQ-POSTGRES-AGENT-PERSISTENCE-002] [DALC-VER-002]
 values:
   - ../../examples/hello-world/values.yaml
 suite: hello-world default values
@@ -381,3 +381,143 @@ tests:
           path: spec.template.spec.containers[0].env
           content:
             name: HOSTED_AGENT_SLACK_BOT_USER_ID
+
+  # [DALC-REQ-CHART-RTV-006] Prompt files via values: supervisor + subagents.
+  - it: systemPromptFile loads supervisor prompt from chart files
+    set:
+      agent.systemPrompt: ""
+      agent.systemPromptFile: files/prompts/unittest-prompt.txt
+    template: templates/agent.yaml
+    documentSelector:
+      path: kind
+      value: ConfigMap
+    asserts:
+      - matchRegex:
+          path: data["system-prompt"]
+          pattern: TEST_PROMPT_FROM_FILE
+
+  - it: subagent systemPromptFile resolves text and strips file keys from JSON
+    set:
+      agent.subagents:
+        - name: sa
+          systemPromptFile: files/prompts/unittest-prompt.txt
+    template: templates/agent.yaml
+    documentSelector:
+      path: kind
+      value: ConfigMap
+    asserts:
+      - matchRegex:
+          path: data["subagents.json"]
+          pattern: TEST_PROMPT_FROM_FILE
+      - notMatchRegex:
+          path: data["subagents.json"]
+          pattern: systemPromptFile
+      - notMatchRegex:
+          path: data["subagents.json"]
+          pattern: system_prompt_file
+
+  - it: systemPrompt and systemPromptFile both set fails render
+    set:
+      agent.systemPrompt: inline
+      agent.systemPromptFile: files/prompts/unittest-prompt.txt
+    template: templates/agent.yaml
+    asserts:
+      - failedTemplate:
+          errorPattern: systemPrompt and systemPromptFile are mutually exclusive
+
+  - it: subagent inline prompt and systemPromptFile both set fails render
+    set:
+      agent.subagents:
+        - name: sa
+          systemPrompt: hi
+          systemPromptFile: files/prompts/unittest-prompt.txt
+    template: templates/agent.yaml
+    asserts:
+      - failedTemplate:
+          errorPattern: has both inline prompt and systemPromptFile
+
+  # [DALC-REQ-CHART-RTV-007] chatModelApiKey: provider env var inference from model prefix.
+  - it: chatModelApiKey openai model infers OPENAI_API_KEY from secret
+    set:
+      agent.chatModel: openai/gpt-4o-mini
+      agent.chatModelApiKey.secretName: my-llm-secret
+      agent.chatModelApiKey.secretKey: key
+    template: templates/agent.yaml
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: OPENAI_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: my-llm-secret
+                key: key
+
+  - it: chatModelApiKey anthropic model infers ANTHROPIC_API_KEY from secret
+    set:
+      agent.chatModel: anthropic/claude-3-5-haiku-latest
+      agent.chatModelApiKey.secretName: my-llm-secret
+      agent.chatModelApiKey.secretKey: key
+    template: templates/agent.yaml
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ANTHROPIC_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: my-llm-secret
+                key: key
+
+  - it: chatModelApiKey envVarName overrides auto-inference
+    set:
+      agent.chatModel: litellm:custom-model
+      agent.chatModelApiKey.secretName: my-llm-secret
+      agent.chatModelApiKey.secretKey: key
+      agent.chatModelApiKey.envVarName: CUSTOM_API_KEY
+    template: templates/agent.yaml
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CUSTOM_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: my-llm-secret
+                key: key
+
+  - it: chatModelApiKey unknown model without envVarName fails render
+    set:
+      agent.chatModel: litellm:custom-model
+      agent.chatModelApiKey.secretName: my-llm-secret
+      agent.chatModelApiKey.secretKey: key
+    template: templates/agent.yaml
+    asserts:
+      - failedTemplate:
+          errorPattern: cannot be inferred from chatModel
+
+  - it: chatModelApiKey omitted when secretName is empty
+    template: templates/agent.yaml
+    documentSelector:
+      path: kind
+      value: Deployment
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: OPENAI_API_KEY
+          any: true
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ANTHROPIC_API_KEY
+          any: true

@@ -1,6 +1,6 @@
 # Declarative Agent Library Chart
 
-<!-- Traceability: [DALC-REQ-HELM-UNITTEST-003] [DALC-REQ-CHART-CT-002] [DALC-REQ-CHART-PRESENCE-003] [DALC-REQ-O11Y-LOGS-004] -->
+<!-- Traceability: [DALC-REQ-HELM-UNITTEST-003] [DALC-REQ-CHART-CT-002] [DALC-REQ-CHART-PRESENCE-003] [DALC-REQ-O11Y-LOGS-004] [DALC-REQ-CHART-RTV-006] -->
 
 This repo is a Helm **library** chart (`helm/chart`: **`type: library`**). Add it as a dependency in your application chart’s `Chart.yaml`, then **render it from a template file** by including the library’s entry named template — typically create **`templates/agent.yaml`** with:
 
@@ -131,6 +131,7 @@ Values keys under the **`agent`** subchart (Helm dependency **`alias: agent`**; 
 | `scrapers.X` | **CronJobs** (one per enabled job) push normalized content into RAG. If **at least one** scraper is enabled, the chart deploys the **managed RAG HTTP** Deployment + Service — see [docs/rag-http-api.md](docs/rag-http-api.md). |
 | `scrapers.ragService` | Sane by default, but you can tune resource requests.|
 | `tools` | Enable tools by name to make them available to the agent. Out of the box, the chart offers: [TODO: list tools]|
-| `subagents` | JSON list of specialists compiled into **LangGraph subgraphs** and registered as **LangChain tools** on the root agent ([LangChain subagents](https://docs.langchain.com/oss/python/langchain/multi-agent/subagents)). **Recommended:** **`description`** for each entry (tool schema text). 
+| `systemPrompt` / `systemPromptFile` | Supervisor instructions for the root agent. Use `systemPromptFile` to load prompt text from a **chart-packaged file** (Helm `.Files.Get`, path relative to the library chart root like `files/prompts/foo.txt`). **Mutually exclusive**: non-empty `systemPrompt` and non-empty `systemPromptFile` in the same render fails. |
+| `subagents` | JSON list of specialists compiled into **LangGraph subgraphs** and registered as **LangChain tools** on the root agent ([LangChain subagents](https://docs.langchain.com/oss/python/langchain/multi-agent/subagents)). **Recommended:** **`description`** for each entry (tool schema text). Optional `systemPromptFile` / `system_prompt_file` can load each subagent prompt from a chart file (same `.Files.Get` constraints as `systemPromptFile`). Per entry, inline prompt keys and file reference keys are **mutually exclusive**; both file keys non-empty also fails render. |
 | `skills` | JSON catalog `{ "name", "prompt", "extraTools"? }` — load with **`POST /api/v1/trigger`** and `{"load_skill":"<name>"}` (progressive disclosure; aligns with [LangChain Skills](https://docs.langchain.com/oss/python/langchain/multi-agent/skills)). |
 | `chatModel` | LiteLLM-compatible model id to be used for the agent(s). |

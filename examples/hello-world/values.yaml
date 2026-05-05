@@ -3,6 +3,7 @@
 agent:
   systemPrompt: |
     Respond, "Hello :wave:"
+  systemPromptFile: ""
   image:
     repository: declarative-agent-library-chart
     tag: local
