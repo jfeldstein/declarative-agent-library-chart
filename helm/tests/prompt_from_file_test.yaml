@@ -1,0 +1,34 @@
+# Traceability: [DALC-REQ-HELM-UNITTEST-001] [DALC-REQ-HELM-UNITTEST-002] [DALC-REQ-DALC-PKG-002] [DALC-REQ-CHART-RTV-006]
+values:
+  - ../../examples/prompt-from-file/values.yaml
+suite: prompt-from-file loads prompt from chart file
+release:
+  name: dalc-ci-pff
+tests:
+  # [DALC-REQ-CHART-RTV-006] Supervisor: systemPromptFile resolved from example chart's own files.
+  - it: ConfigMap system-prompt includes text from example chart prompt file
+    template: templates/agent.yaml
+    documentSelector:
+      path: kind
+      value: ConfigMap
+    asserts:
+      - matchRegex:
+          path: data["system-prompt"]
+          pattern: prompt-from-file
+
+  # [DALC-REQ-CHART-RTV-006] Subagent: file prompt resolved and path keys stripped from JSON.
+  - it: subagents.json has resolved prompt text and no file path keys
+    template: templates/agent.yaml
+    documentSelector:
+      path: kind
+      value: ConfigMap
+    asserts:
+      - matchRegex:
+          path: data["subagents.json"]
+          pattern: file-subagent specialist
+      - notMatchRegex:
+          path: data["subagents.json"]
+          pattern: systemPromptFile
+      - notMatchRegex:
+          path: data["subagents.json"]
+          pattern: system_prompt_file

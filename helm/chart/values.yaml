@@ -8,12 +8,30 @@ image:
 
 # Maps to HOSTED_AGENT_SYSTEM_PROMPT (ConfigMap + env).
 # This is the **supervisor** system prompt when ``subagents`` is non-empty (LangChain subagents pattern).
-systemPrompt: |
-  Respond, "Hello :wave:"
+# [DALC-REQ-CHART-RTV-006] Exactly one of ``systemPrompt`` (inline text) or ``systemPromptFile``
+# (path relative to your application chart's root, Helm ``.Files.Get``) may be non-empty.
+# Supplying both fails template rendering. Example: systemPromptFile: prompts/supervisor.txt
+systemPrompt: ""
+systemPromptFile: ""
 
-# Optional chat model for the supervisor when ``subagents`` is non-empty, e.g. ``openai:gpt-4o-mini``.
-# Maps to HOSTED_AGENT_CHAT_MODEL. Install the matching LangChain provider package in the image.
+# Optional chat model for the supervisor when ``subagents`` is non-empty.
+# Maps to HOSTED_AGENT_CHAT_MODEL. Use LiteLLM provider/model format (canonical):
+#   openai/gpt-4o-mini  |  anthropic/claude-3-5-haiku-latest
+# LangChain provider:model format (openai:gpt-4o-mini) is also accepted.
+# [DALC-REQ-CHART-RTV-007]
 chatModel: ""
+
+# API key for the chat model provider, sourced from a Kubernetes Secret.
+# When chatModel and secretName are both set, the chart infers the provider env var:
+#   openai/* or gpt-* → OPENAI_API_KEY
+#   anthropic/* or claude-* → ANTHROPIC_API_KEY
+# For other providers (e.g. LiteLLM gateway), set envVarName explicitly.
+# [DALC-REQ-CHART-RTV-007]
+chatModelApiKey:
+  secretName: ""
+  secretKey: token
+  # Optional override: set the exact env var name when auto-detection is insufficient.
+  envVarName: ""
 
 service:
   type: ClusterIP
@@ -189,6 +207,9 @@ jiraTools:
     tokenSecretKey: token
 
 # Declarative subagents (JSON → HOSTED_AGENT_SUBAGENTS_JSON). See README (LangChain subagents pattern).
+# Per entry: optional ``systemPromptFile`` / ``system_prompt_file`` (chart files, same rules as supervisor).
+# Non-empty inline ``systemPrompt``/``system_prompt`` plus a file reference fails render; both file keys
+# non-empty also fails render.
 subagents: []
 
 # Skill catalog (JSON → HOSTED_AGENT_SKILLS_JSON). See README (LangChain skills pattern).

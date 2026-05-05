@@ -1,0 +1,6 @@
+dependencies:
+- name: declarative-agent-library-chart
+  repository: file://../../helm/chart
+  version: 0.1.0
+digest: sha256:2c57ee4a1acc8dd68e8a0db9eaa97a646c9d8b1422a414a11a73d09b044aa251
+generated: "2026-05-05T09:37:21.99729-04:00"

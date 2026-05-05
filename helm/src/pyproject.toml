@@ -32,6 +32,9 @@ postgres = [
     "langgraph-checkpoint-postgres==3.0.5",
     "psycopg[binary]==3.3.3",
 ]
+openai = [
+    "langchain-openai>=1.2.1",
+]
 
 [project.entry-points."declarative_agent.tools"]
 builtin-sample = "agent.tools.sample_echo:TOOLS"

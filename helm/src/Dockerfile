@@ -8,8 +8,9 @@ WORKDIR /app
 ENV UV_COMPILE_BYTECODE=1
 COPY helm/src/pyproject.toml helm/src/uv.lock ./
 COPY helm/src/agent ./agent
-# Optional extra `wandb` enables W&B when HOSTED_AGENT_OBSERVABILITY_PLUGINS_WANDB_ENABLED is set.
-RUN uv sync --frozen --no-dev --extra wandb --extra postgres
+# Optional extras: `wandb` enables W&B; `openai` adds langchain-openai for openai:* models.
+# Operators using Anthropic or other providers should build with --extra anthropic (add via: uv add --optional anthropic langchain-anthropic).
+RUN uv sync --frozen --no-dev --extra wandb --extra postgres --extra openai
 ENV PATH="/app/.venv/bin:$PATH"
 EXPOSE 8088
 CMD ["uvicorn", "agent.app:create_app", "--factory", "--host", "0.0.0.0", "--port", "8088"]

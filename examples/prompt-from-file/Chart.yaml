@@ -1,0 +1,11 @@
+# Traceability: [DALC-REQ-DALC-PKG-002] [DALC-REQ-CHART-RTV-006]
+apiVersion: v2
+name: prompt-from-file
+description: Minimal example chart that loads system prompt from a chart file
+type: application
+version: 0.1.0
+dependencies:
+  - name: declarative-agent-library-chart
+    version: 0.1.0
+    repository: file://../../helm/chart
+    alias: agent

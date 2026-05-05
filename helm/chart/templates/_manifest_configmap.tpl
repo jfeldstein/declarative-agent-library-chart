@@ -7,8 +7,8 @@ metadata:
     {{- include "declarative-agent-library-chart.labels" . | nindent 4 }}
 data:
   system-prompt: |
-{{ .Values.systemPrompt | nindent 4 }}
-  subagents.json: {{ .Values.subagents | toJson | quote }}
+{{ include "declarative-agent-library-chart.resolvedSystemPrompt" . | nindent 4 }}
+  subagents.json: {{ include "declarative-agent-library-chart.resolvedSubagentsJson" . | quote }}
   skills.json: {{ .Values.skills | toJson | quote }}
   enabled-mcp-tools.json: {{ .Values.mcp.enabledTools | toJson | quote }}
   label-registry.json: {{ .Values.scrapers.slack.feedback.labelRegistry | toJson | quote }}
